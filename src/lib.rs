@@ -4,9 +4,14 @@
 
 mod connection;
 mod events;
+mod raw;
+pub mod util {
+    pub use crate::raw::Rect;
+}
 
 pub use connection::connect;
 pub use connection::Connection;
+pub use connection::DisplayServer;
 
 pub use events::Event;
 
@@ -14,3 +19,9 @@ pub use events::notifications as notif;
 pub use events::queries as query;
 pub use events::replies as reply;
 pub use events::requests as req;
+
+pub use raw::Atom;
+pub use raw::ConnError;
+pub use raw::ConnResult;
+pub use raw::Resource;
+pub use raw::Xid;

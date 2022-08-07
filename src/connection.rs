@@ -10,16 +10,32 @@ impl Connection {
     pub fn send(event: impl Event) {}
 }
 
+/// Represents either the [Default](DisplayServer::Default) display server, or the display server
+/// [Of](DisplayServer::Of) the given name.
+pub enum DisplayServer<'a> {
+    /// Represents the default display server name, as provided by the `DISPLAY` environment
+    /// variable.
+    Default,
+    /// Represents a display server of the given name.
+    Of(&'a str),
+}
+
 /// Initiates a [Connection] to the X server.
 ///
-/// If provided, `preferred_screen` indicates the name of the screen to which this connection
-/// should be made. If `preferred_screen` is [`None`], the screen name provided by the
-/// `DISPLAY` environment variable will be used instead.
+/// The given `display_server` can be either the [Default](DisplayServer::Default) display server,
+/// as provided by the `DISPLAY` environment variable on POSIX-compliant systems, or a display
+/// server [Of](DisplayServer::Of) the given `&str` name. It specifies which display server (a.k.a.
+/// X server) the connection will be made to.
 ///
+/// # Examples
 /// ```rust
-/// // Connect to the X server on the default screen.
-/// let conn = xrs::connect(None);
+/// // Connect to the X server on the default display server.
+/// let conn = xrs::connect(xrs::DisplayServer::Default);
 /// ```
-pub fn connect(preferred_screen: Option<&str>) -> Connection {
+/// ```rust
+/// // Connect to the display server named `:0`: specifically refers to a local display server.
+/// let local_conn = xrs::connect(xrs::DisplayServer::Of(":0"));
+/// ```
+pub fn connect(display_server: DisplayServer) -> Connection {
     Connection {}
 }
