@@ -1,2 +1,3 @@
 /target
-/Cargo.lock
+/xrs/Cargo.lock
+/xrb/Cargo.lock

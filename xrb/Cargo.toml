@@ -1,0 +1,18 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+[package]
+name = "xrb"
+version = "0.0.0"
+authors = [ "AquariWM <contact@aquariwm.org>", "Antikyth <antikyth at gmail dot com>" ]
+edition = "2021"
+description = "Rust bindings for the raw messages sent with the X protocol. NOT an API."
+license = "MPL-2.0"
+keywords = [ "x11", "xorg", "xproto", "xrs" ]
+categories = [ "api-bindings", "gui", "network-programming", "rendering" ]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = "1.0"
