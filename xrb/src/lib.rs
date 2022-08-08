@@ -4,6 +4,11 @@
 
 //! An implementation of the
 //! [X11 protocol](https://x.org/releases/X11R7.7/doc/xproto/xprotocol.html/).
+//!
+//! TODO: Serialization/deserialization. Should this use `serde`? Should this use something else?
+//!       This serialization and deserialization is to and from raw bytes. We have no intention of
+//!       it ever being for anything other than bytes, so perhaps `serde` is a bit overkill and
+//!       adds needless complexity... need to look into which crates exist for bytes?
 
 /// The major version of the X protocol used in XRB. Should always be 11.
 ///
