@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::ToBytes;
+use xrb_derive_macros::{Deserialize, Serialize};
 
 /// The ID of a [Window], [Pixmap], [Cursor], [Font], [GraphicsContext], or [Colormap].
 ///
@@ -48,6 +48,7 @@ pub type Keycode = u8;
 pub type Button = u8;
 
 /// An enum representing the core X protocol events.
+// #[derive(Deserialize, Serialize)]
 pub enum Event {
     KeyPress,
     KeyRelease,
@@ -92,11 +93,12 @@ pub enum Event {
 /// The [ByteOrder] sent in the [ConnectionInitRequest] should probably match the system's
 /// endianness, so that all 16-bit and 32-bit values can be sent with no conversions. You can get
 /// the system's [ByteOrder] with [`ByteOrder::native()`].
+// #[derive(Deserialize, Serialize)]
 pub enum ByteOrder {
     /// Values are transmitted most significant byte first.
-    MostSignificantFirst,
+    MostSignificantFirst = 0o102,
     /// Values are transmitted least significant byte first.
-    LeastSignificantFirst,
+    LeastSignificantFirst = 0o154,
 }
 
 impl ByteOrder {
@@ -114,18 +116,8 @@ impl ByteOrder {
     }
 }
 
-impl ToBytes for ByteOrder {
-    fn to_bytes(&self) -> &[u8] {
-        match self {
-            // Octal 102.
-            Self::MostSignificantFirst => &[0o102u8],
-            // Octal 154.
-            Self::LeastSignificantFirst => &[0o154u8],
-        }
-    }
-}
-
 /// The ordering of bits in bitmaps.
+// #[derive(Deserialize, Serialize)]
 pub enum BitmapBitOrder {
     /// Bitmaps are ordered least-signficiant-bit first.
     LeastSignficantFirst,
@@ -133,6 +125,7 @@ pub enum BitmapBitOrder {
     MostSignficantFirst,
 }
 
+#[derive(Deserialize, Serialize)]
 pub struct Format {
     pub depth: u8,
     /// Can be `1u8`, `4u8`, `16u8`, `24u8`, or `32u8`.
@@ -141,6 +134,7 @@ pub struct Format {
     pub scanline_pad: u8,
 }
 
+// #[derive(Deserialize, Serialize)]
 pub enum VisualClass {
     StaticGray,
     StaticColor,
@@ -150,6 +144,7 @@ pub enum VisualClass {
     DirectColor,
 }
 
+// #[derive(Deserialize, Serialize)]
 pub struct VisualType {
     pub visual_id: VisualId,
     pub class: VisualClass,
@@ -160,17 +155,20 @@ pub struct VisualType {
     pub colormap_entries: u16,
 }
 
+// #[derive(Deserialize, Serialize)]
 pub struct Depth<'a> {
     pub depth: u8,
     pub visuals: &'a [VisualType],
 }
 
+// #[derive(Deserialize, Serialize)]
 pub enum BackingStores {
     Never,
     WhenMapped,
     Always,
 }
 
+// #[derive(Derserialize, Serialize)]
 pub struct Screen<'a> {
     pub root: Window,
     pub width_in_pixels: u16,

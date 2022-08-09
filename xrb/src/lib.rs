@@ -23,6 +23,7 @@ pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 
 mod events;
 mod general;
+mod serialization;
 
 pub use events::{ConnectionInitResult, RawEvent};
 pub use general::*;
@@ -37,9 +38,4 @@ pub mod requests {
 
 pub mod replies {
     pub use crate::events::ConnectionInitReply as ConnectionInit;
-}
-
-pub trait ToBytes {
-    /// Returns a representation of `Self` as bytes.
-    fn to_bytes(&self) -> &[u8];
 }

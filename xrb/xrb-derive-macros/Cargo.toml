@@ -1,0 +1,17 @@
+[package]
+name = "xrb-derive-macros"
+version = "0.1.0"
+authors = [ "AquariWM <contact@aquariwm.org>", "Antikyth <antikyth at gmail dot com>" ]
+edition = "2021"
+description = "Derive macros used in XRB."
+license = "MIT"
+
+[lib]
+proc-macro = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = { version = "1.0", features = ["full"] }
