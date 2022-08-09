@@ -15,4 +15,5 @@ categories = [ "api-bindings", "gui", "network-programming", "rendering" ]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde = "1.0"
+bytes = "1"
+xrb-derive-macros = { path = "xrb-derive-macros" }
