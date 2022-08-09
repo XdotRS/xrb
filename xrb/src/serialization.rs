@@ -69,7 +69,7 @@ impl Deserialize for u32 {
 /// TODO: What is the second byte used for, and why does XCB call it `pad`? Not just minor opcode.
 ///
 /// Every request contains an 8-bit _major opcode_ and a 16-bit _length field_ expressed in units
-/// of four bytes. Every reqeust consists of four bytes of a header (containing the major opcode,
+/// of four bytes. Every request consists of four bytes of a header (containing the major opcode,
 /// the length field, and a data byte) followed by zero or more additional bytes of data. The
 /// length field defines the total length of the request, including the header. The length field in
 /// a request must equal the minimum length required to contain the request. If the specified
