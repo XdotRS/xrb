@@ -58,7 +58,7 @@ predefined_atoms!(
     RGB_RED_MAP,
     /// Associated type: [String]
     STRING,
-    /// Associated type: [VisualId](Crate::VisualId)
+    /// Associated type: [VisualId](crate::VisualId)
     VISUALID,
     /// Associated type: [Window](crate::Window)
     WINDOW,
