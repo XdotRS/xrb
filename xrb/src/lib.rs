@@ -49,6 +49,7 @@ pub mod atoms;
 pub mod errors;
 
 mod common;
+mod events;
 
 mod macros;
 mod serialization;
@@ -62,6 +63,12 @@ pub mod queries {}
 
 pub mod notifications {}
 
-pub mod requests {}
+pub mod requests {
+    pub use crate::events::ConnectionInitRequest as ConnectionInit;
+}
 
-pub mod replies {}
+pub mod replies {
+    pub use crate::events::ConnectionInitReply as ConnectionInit;
+}
+
+pub use events::ConnectionInitResult;
