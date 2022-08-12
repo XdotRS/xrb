@@ -4,7 +4,7 @@
 
 use bitflags::bitflags;
 
-use crate::{Deserialize, Serialize};
+use crate::{bitmask, Deserialize, Serialize};
 
 /// [u32].
 pub type ResId = u32;

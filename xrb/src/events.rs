@@ -11,7 +11,7 @@ pub trait RawEvent {}
 
 /// A request to initiate a connection to the X server.
 pub struct ConnectionInitRequest<'a> {
-    pub byte_order: ByteOrder,
+    // pub byte_order: ByteOrder,
     /// Should always be 11.
     pub protocol_major_version: u16,
     /// Should always be 0.
@@ -55,14 +55,14 @@ pub enum ConnectionInitResult<'a> {
         /// required to be disjoint; for example, a given numeric value might be both a valid
         /// [Window] ID, a valid [Atom], and a valid [KeySym].
         resource_id_mask: u32,
-        image_byte_order: ByteOrder,
+        // image_byte_order: ByteOrder,
         /// Can be `8u8`, `16u8`, or `32u8`.
         bitmap_scanline_unit: u8,
         /// Can be `8u8`, `16u8`, or `32u8`.
         bitmap_scanline_pad: u8,
-        bitmap_bit_order: BitmapBitOrder,
-        pixmap_formats: &'a [Format],
-        roots: &'a [Screen<'a>],
+        // bitmap_bit_order: BitmapBitOrder,
+        // pixmap_formats: &'a [Format],
+        // roots: &'a [Screen<'a>],
         motion_buffer_size: u32,
         /// Specifies the maximum length of a request accepted by the server, in 4-byte units.
         ///

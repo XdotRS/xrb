@@ -14,9 +14,9 @@
 //! Once one [InternAtom](crate::replies::InternAtom) reply has been received, however, you can
 //! assume it will remain the same for the duration of the current connection.
 
-use crate::predefined_atoms;
+use crate::{predefine, Atom};
 
-predefined_atoms!(
+predefine!(for Atom {
     PRIMARY,
     SECONDARY,
     /// Associated type: [Arc](crate::Arc)
@@ -97,4 +97,4 @@ predefined_atoms!(
     CAP_HEIGHT,
     WM_CLASS,
     WM_TRANSIENT_FOR
-);
+});
