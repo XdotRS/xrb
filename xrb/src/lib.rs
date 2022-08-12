@@ -2,8 +2,36 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-//! An implementation of the
-//! [X11 protocol](https://x.org/releases/X11R7.7/doc/xproto/xprotocol.html/).
+//! # X Rust Bindings
+//! X Rust Bindings is a Rust library directly implementing the types and protocol messages of the
+//! [X11 protocol specification](https://x.org/releases/X11R7.7/doc/xproto/xprotocol.html/). XRB is
+//! _not_ a high-level API library, and it does not provide a direct connection to an X server, nor
+//! does it do anything else on its own. XRB's development purpose is to provide a foundation for
+//! higher-level Rust API wrapper libraries. It is used by [X.RS](https://crates.io/xrs), the
+//! official accompanying API library for XRB.
+//!
+//! To demonstrate the difference between X Rust Bindings and a higher-level API library, here is a
+//! comparison between the same protocol message in XRB and its higher-level equivalent in X.RS:
+//!
+//! ### [`ConnectionInit`](requests::ConnectionInit) request in XRB:
+//! ```rust
+//! /// A request to initiate a connection to the X server.
+//! pub struct ConnectionInit<'a> {
+//!     pub byte_order: ByteOrder,
+//!     /// Should always be 11.
+//!     pub protocol_major_version: u16,
+//!     /// Should always be 0.
+//!     pub protocol_minor_version: u16,
+//!     pub auth_protocol_name: &'a str,
+//!     pub auth_data: &'a str,
+//! }
+//! ```
+//!
+//! ### [`InitConnection`](xrs::req::InitConnection) request in X.RS:
+//! ```rust
+//! /// A request to initiate a connection to the X server.
+//! pub struct InitConnection {}
+//! ```
 
 /// The major version of the X protocol used in XRB. Should always be 11.
 ///
