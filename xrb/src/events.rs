@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use crate::KeyCode;
+
 /// A marker trait implemented for all 'raw' representations of events defined in XRB.
 ///
 /// You may use this trait as you see fit in distinguishing 'raw' events from XRB.
@@ -71,9 +73,9 @@ pub enum ConnectionInitResult<'a> {
         /// all servers).
         maximum_request_length: u16,
         /// Specifies the smallest keycode value transmitted by the server. Never less than 8.
-        min_keycode: Keycode,
+        min_keycode: KeyCode,
         /// Specifies the biggest keycode value transmitted by the server. Never more than 255.
-        max_keycode: Keycode,
+        max_keycode: KeyCode,
     },
     Authenticate {
         reason: &'a str,
