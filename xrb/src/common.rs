@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-// SETofFOO = bitmask
+use bitflags::bitflags;
 
 use crate::{Deserialize, Serialize};
 
@@ -151,35 +151,35 @@ pub enum WinGravity {
     Static,
 }
 
-/// A bitmask of X core protocol events.
-// TODO: More thorough docs of each variant.
-pub enum Event {
-    KeyPress,
-    KeyRelease,
-    ButtonPress,
-    ButtonRelease,
-    EnterWindow,
-    LeaveWindow,
-    PointerMotion,
-    PointerMotionHint,
-    Button1Motion,
-    Button2Motion,
-    Button3Motion,
-    Button4Motion,
-    Button5Motion,
-    ButtonMotion,
-    KeymapState,
-    Exposure,
-    VisibilityChange,
-    StructureNotify,
-    ResizeRedirect,
-    SubstructureNotify,
-    SubstructureRedirect,
-    FocusChange,
-    PropertyChange,
-    ColormapChange,
-    OwnerGrabButton,
-    // 0xFE000000 -> unused but must be zero (???)
+bitflags! {
+    /// A bitmask of X core protocol events.
+    // TODO: More thorough docs of each variant.
+    pub struct Event: u32 {
+        const KEY_PRESS = 0x00000001;
+        const KEY_RELEASE = 0x00000002;
+        const BUTTON_PRESS = 0x00000004;
+        const BUTTON_RELEASE = 0x00000008;
+        const ENTER_WINDOW = 0x00000010;
+        const LEAVE_WINDOW = 0x00000020;
+        const POINTER_MOTION = 0x00000040;
+        const POINTER_MOTION_HINT = 0x00000080;
+        const BUTTON_1_MOTION = 0x00000100;
+        const BUTTON_2_MOTION = 0x00000200;
+        const BUTTON_3_MOTION = 0x00000400;
+        const BUTTON_4_MOTION = 0x00000800;
+        const BUTTON_5_MOTION = 0x00001000;
+        const BUTTON_MOTION = 0x00002000;
+        const KEYMAP_STATE = 0x00004000;
+        const EXPOSURE = 0x00008000;
+        const VISIBILITY_CHANGE = 0x00010000;
+        const STRUCTURE_NOTIFY = 0x00020000;
+        const SUBSTRUCTURE_NOTIFY = 0x00040000;
+        const SUBSTRUCTURE_REDIRECT = 0x00080000;
+        const FOCUS_CHANGE = 0x00100000;
+        const PROPERTY_CHANGE = 0x00400000;
+        const COLORMAP_CHANGE = 0x00800000;
+        const OWNER_GRAB_BUTTON = 0x01000000;
+    }
 }
 
 /// Bitmask.
