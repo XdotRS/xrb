@@ -7,7 +7,7 @@
 /// This is needed so that the first identifier can be treated differently and be set to 1.
 /// This is because every second element is set to the first plus 1; the first is never defined
 /// in [`predef_atoms_recurse`].
-#[macro_export]
+#[macro_export(crate)]
 macro_rules! predef_atoms_recurse {
 	// Base case (only two atoms):
 	(
@@ -49,7 +49,7 @@ macro_rules! predef_atoms_recurse {
 
 /// Defines constants for [Atom](crate::Atom)s predefined in the X11 protocol, starting at index
 /// `1u8`.
-#[macro_export]
+#[macro_export(crate)]
 macro_rules! predefined_atoms {
     (
         $(#[$a_atrib:meta])* // capture `$a`'s attributes (includes doc comments)
