@@ -4,11 +4,6 @@
 
 //! An implementation of the
 //! [X11 protocol](https://x.org/releases/X11R7.7/doc/xproto/xprotocol.html/).
-//!
-//! TODO: Serialization/deserialization. Should this use `serde`? Should this use something else?
-//!       This serialization and deserialization is to and from raw bytes. We have no intention of
-//!       it ever being for anything other than bytes, so perhaps `serde` is a bit overkill and
-//!       adds needless complexity... need to look into which crates exist for bytes?
 
 /// The major version of the X protocol used in XRB. Should always be 11.
 ///
@@ -21,21 +16,23 @@ pub const PROTOCOL_MAJOR_VERSION: u16 = 11;
 /// protocol; seeing as this has not happened since the 80s, it's probably safe to assume it won't.
 pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 
-mod events;
-mod general;
+pub mod atoms;
+pub mod errors;
+
+mod common;
+
+mod macros;
 mod serialization;
 
-pub use events::{ConnectionInitResult, RawEvent};
-pub use general::*;
+pub use common::*;
+
+pub use serialization::{Deserialize, Serialize};
+pub use xrb_derive_macros::{Deserialize, Serialize};
 
 pub mod queries {}
 
 pub mod notifications {}
 
-pub mod requests {
-    pub use crate::events::ConnectionInitRequest as ConnectionInit;
-}
+pub mod requests {}
 
-pub mod replies {
-    pub use crate::events::ConnectionInitReply as ConnectionInit;
-}
+pub mod replies {}
