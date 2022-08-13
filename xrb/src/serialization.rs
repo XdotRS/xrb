@@ -8,6 +8,7 @@ pub trait Serialize {
     /// Write to a [BufMut](bytes::BufMut).
     fn write(self, buf: &mut impl BufMut);
 }
+
 pub trait Deserialize {
     /// Construct [`Self`] from a [Buf](bytes::Buf). Must be the inverse of [Serialize::write].
     fn read(buf: &mut impl Buf) -> Self;
