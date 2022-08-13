@@ -45,16 +45,12 @@ pub const PROTOCOL_MAJOR_VERSION: u16 = 11;
 /// protocol; seeing as this has not happened since the 80s, it's probably safe to assume it won't.
 pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 
-pub mod atoms;
-pub mod errors;
-
-mod common;
-mod events;
+mod proto;
 
 mod macros;
 mod serialization;
 
-pub use common::*;
+pub use proto::common::*;
 
 pub use serialization::{Deserialize, Serialize};
 pub use xrb_derive_macros::{Deserialize, Serialize};
@@ -64,11 +60,11 @@ pub mod queries {}
 pub mod notifications {}
 
 pub mod requests {
-    pub use crate::events::ConnectionInitRequest as ConnectionInit;
+    pub use crate::proto::events::ConnectionInitRequest as ConnectionInit;
 }
 
 pub mod replies {
-    pub use crate::events::ConnectionInitReply as ConnectionInit;
+    pub use crate::proto::events::ConnectionInitReply as ConnectionInit;
 }
 
-pub use events::ConnectionInitResult;
+pub use proto::events::ConnectionInitResult;

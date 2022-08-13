@@ -260,7 +260,7 @@ bitmask! {
         Button3 => 0x0400,
         Button4 => 0x0800,
         Button5 => 0x1000,
-        // unused but must be zero => 0xe000,
+        // unused but must be zero => 0xe000
     }
 
     /// A bitmask of modifier keys and mouse buttons, specifically used for key events.
