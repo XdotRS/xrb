@@ -29,6 +29,7 @@
 #[macro_export(crate)]
 macro_rules! predefine {
 	(
+		$(#[$universal_atribs:meta])*
 		for $T:ty {
 			$(#[$a_atribs:meta])*
 			$a:ident$(,
@@ -40,11 +41,11 @@ macro_rules! predefine {
 		$($t:tt)*
 	) => {
 		$(#[$a_atribs])*
-		#[allow(dead_code)]
+		$(#[$universal_atribs])*
 		pub const $a: $T = 1;
 
 		predefine! {
-			$T, $a$(,
+			$T, $a, $($universal_atribs)*$(,
 				$(#[$tail_atribs])*
 				$tail
 			)*
@@ -55,7 +56,7 @@ macro_rules! predefine {
 		}
 	};
 	(
-		$T:ty, $previous:ident,
+		$T:ty, $previous:ident, $($universal_atribs:meta)*,
 
 		$(#[$a_atribs:meta])*
 		$a:ident$(,
@@ -64,17 +65,17 @@ macro_rules! predefine {
 		)*
 	) => {
 		$(#[$a_atribs])*
-		#[allow(dead_code)]
+		$(#[$universal_atribs])*
 		pub const $a: $T = $previous + 1;
 
 		predefine! {
-			$T, $a$(,
+			$T, $a, $($universal_atribs)*$(,
 				$(#[$tail_atribs])*
 				$tail
 			)*
 		}
 	};
-	($T:ty, $a:ident) => {};
+	($T:ty, $a:ident, $($universal_atribs:meta)*) => {};
 	() => {};
 }
 

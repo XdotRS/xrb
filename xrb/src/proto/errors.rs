@@ -4,6 +4,7 @@
 
 use crate::{Atom, Deserialize, ResId, Serialize};
 
+#[allow(dead_code)]
 pub enum ErrorType {
     Request,
     Value(u32),
