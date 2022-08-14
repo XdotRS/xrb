@@ -53,6 +53,7 @@ mod proto;
 mod macros;
 mod serialization;
 
+pub use proto::bitmasks;
 pub use proto::common::*;
 
 pub use serialization::{Deserialize, Serialize};

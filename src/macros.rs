@@ -132,6 +132,7 @@ macro_rules! doc {
 /// The following enum will be generated:
 /// ```rust
 /// /// A mask of keys and buttons.
+/// #[derive(Copy, Clone)]
 /// pub enum KeyButtonMask {
 ///     Shift,
 ///     Lock,
@@ -223,6 +224,9 @@ macro_rules! doc {
 ///     }
 /// }
 /// ```
+/// Implementations of [PartialEq] for `Self` and `Self`, `Self` and [`u16`], [`u16`] and `Self`,
+/// [PartialOrd] for `Self` and `Self`, `Self` and [`u16`], [`u16`] and `Self`, [Eq], and [Ord]
+/// will also be generated.
 #[macro_export(crate)]
 macro_rules! bitmask {
 	(
@@ -236,7 +240,11 @@ macro_rules! bitmask {
 
 		$($t:tt)* // more bitmask definitions
 	) => {
+		////////////////
+		// $Mask enum //
+		////////////////
 		$(#[$outer])* // attributes/docs
+		#[derive(Copy, Clone)]
 		$vis enum $Mask { // pub enum Mask {
 			$(
 				$(#[$inner])* // variant attributes/docs
@@ -244,6 +252,9 @@ macro_rules! bitmask {
 			),+
 		}
 
+		////////////
+		// mask() //
+		////////////
 		impl $Mask {
 			// Docs for `mask()` (messy, I know).
 			crate::doc!(concat!("Gets the bitmask associated with this `",
@@ -267,6 +278,10 @@ match self {",
 			);
 		}
 
+		///////////////////////////////////////////////////////
+		// [`Serialize`] and [`Deserialize`] implementations //
+		///////////////////////////////////////////////////////
+
 		impl crate::Serialize for $Mask {
 			fn write(self, buf: &mut impl bytes::BufMut) {
 				self.mask().write(buf);
@@ -286,8 +301,59 @@ match self {",
 			}
 		}
 
+		/////////////////////////////////
+		// Equality: compare the masks //
+		/////////////////////////////////
+
+		impl Eq for $Mask {}
+
+		impl PartialEq<Self> for $Mask {
+			fn eq(&self, other: &Self) -> bool {
+				self.mask() == other.mask()
+			}
+		}
+
+		impl PartialEq<$T> for $Mask {
+			fn eq(&self, other: &$T) -> bool {
+				&self.mask() == other
+			}
+		}
+
+		impl PartialEq<$Mask> for $T {
+			fn eq(&self, other: &$Mask) -> bool {
+				self == &other.mask()
+			}
+		}
+
+		impl Ord for $Mask {
+			fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+				self.mask().cmp(&other.mask())
+			}
+		}
+
+		impl PartialOrd<Self> for $Mask {
+			fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+				self.mask().partial_cmp(&other.mask())
+			}
+		}
+
+		impl PartialOrd<$T> for $Mask {
+			fn partial_cmp(&self, other: &$T) -> Option<std::cmp::Ordering> {
+				self.mask().partial_cmp(other)
+			}
+		}
+
+		impl PartialOrd<$Mask> for $T {
+			fn partial_cmp(&self, other: &$Mask) -> Option<std::cmp::Ordering> {
+				self.partial_cmp(&other.mask())
+			}
+		}
+
+		/////////////////////////////////////////////
+		// Repeat for any more bitmask definitions //
+		/////////////////////////////////////////////
 		bitmask! {
-			$($t)* // repeat for any more bitmask definitions
+			$($t)*
 		}
 	};
 	() => {};
