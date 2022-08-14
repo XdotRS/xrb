@@ -8,7 +8,7 @@ bitmask! {
 	/// A bitmask of X core protocol events.
 	///
 	/// Bitmask value `0xfe000000` must be zero.
-	pub enum Event -> u32 {
+	pub enum Event: Bitmask<u32> {
 		KeyPress => 0x00000001,
 		KeyRelease => 0x00000002,
 		ButtonPress => 0x00000004,
@@ -39,7 +39,7 @@ bitmask! {
 	/// A bitmask of X core protocol events, specifically used in pointer events.
 	///
 	/// Bitmask value `0xffff8003` must be zero.
-	pub enum PointerEvent -> u32 {
+	pub enum PointerEvent: Bitmask<u32> {
 		KeyPress => 0x00000001,
 		KeyRelease => 0x00000002,
 		ButtonPress => 0x00000004,
@@ -70,7 +70,7 @@ bitmask! {
 	/// A bitmask of X core protocol events, specifically used in device events.
 	///
 	/// Bitmask value `0xffffc0b0` must be zero.
-	pub enum DeviceEvent -> u32 {
+	pub enum DeviceEvent: Bitmask<u32> {
 		KeyPress => 0x00000001,
 		KeyRelease => 0x00000002,
 		ButtonPress => 0x00000004,
@@ -101,7 +101,7 @@ bitmask! {
 	/// A bitmask of modifier keys and mouse buttons.
 	///
 	/// Bitmask value `0xe000` must be zero.
-	pub enum KeyButtonMask -> u16 {
+	pub enum KeyButtonMask: Bitmask<u16> {
 		Shift => 0x0001,
 		Lock => 0x0002,
 		Control => 0x0004,
@@ -121,7 +121,7 @@ bitmask! {
 	/// A bitmask of modifier keys and mouse buttons, specifically used in key events.
 	///
 	/// Bitmask value `0xff00` must be zero.
-	pub enum KeyMask -> u16 {
+	pub enum KeyMask: Bitmask<u16> {
 		Shift => 0x0001,
 		Lock => 0x0002,
 		Control => 0x0004,

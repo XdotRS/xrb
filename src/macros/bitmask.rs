@@ -44,7 +44,7 @@
 macro_rules! bitmask {
 	(
 		$(#[$outer:meta])* // attributes/docs
-		$vis:vis enum $Mask:ident -> $T:ty { // pub enum Mask -> Type {
+		$vis:vis enum $Mask:ident: Bitmask<$T:ty> { // pub enum Mask -> Type {
 			$(
 				$(#[$inner:meta])* // variant attributes/docs
 				$Variant:ident => $value:expr // Variant => value
@@ -202,7 +202,7 @@ variants.iter().filter(|variant| {
 
 		impl PartialEq<$T> for $Mask {
 			fn eq(&self, other: &$T) -> bool {
-				other == &match self { // other == self.mask()
+				other == &match self { // other == &self.mask()
 					$(Self::$Variant => $value,)+
 				}
 			}
