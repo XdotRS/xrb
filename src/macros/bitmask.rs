@@ -2,110 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-/// Defines a series of sequential constants, starting at `1`.
-///
-/// # Example
-/// Consider the following syntax:
-/// ```rust
-/// predefine!(for Atom {
-///     STRUCTURE_NOTIFY,
-///     SUBSTRUCTURE_NOTIFY,
-///     /// If you are creating a window manager, you need to register for substructure
-///     /// redirection on the root window.
-///     SUBSTRUCTURE_REDIRECT,
-/// });
-/// ```
-/// This will generate the following code:
-/// ```rust
-/// #[allow(dead_code)]
-/// pub const STRUCTURE_NOTIFY: Atom = 1;
-/// #[allow(dead_code)]
-/// pub const SUBSTRUCTURE_NOTIFY: Atom = STRUCTURE_NOTIFY + 1;
-/// /// If you are creating a window manager, you need to register for substructure redirection on
-/// /// the root window.
-/// #[allow(dead_code)]
-/// pub const SUBSTRUCTURE_REDIRECT: Atom = SUBSTRUCTURE_NOTIFY + 1;
-/// ```
-#[macro_export(crate)]
-macro_rules! predefine {
-	(
-		$(#[$universal_atribs:meta])*
-		for $T:ty {
-			$(#[$a_atribs:meta])*
-			$a:ident$(,
-				$(#[$tail_atribs:meta])*
-				$tail:ident
-			)*
-		}
-
-		$($t:tt)*
-	) => {
-		$(#[$a_atribs])*
-		$(#[$universal_atribs])*
-		pub const $a: $T = 1;
-
-		predefine! {
-			$T, $a, $($universal_atribs)*$(,
-				$(#[$tail_atribs])*
-				$tail
-			)*
-		}
-
-		predefine! {
-			$($t)*
-		}
-	};
-	(
-		$T:ty, $previous:ident, $($universal_atribs:meta)*,
-
-		$(#[$a_atribs:meta])*
-		$a:ident$(,
-			$(#[$tail_atribs:meta])*
-			$tail:ident
-		)*
-	) => {
-		$(#[$a_atribs])*
-		$(#[$universal_atribs])*
-		pub const $a: $T = $previous + 1;
-
-		predefine! {
-			$T, $a, $($universal_atribs)*$(,
-				$(#[$tail_atribs])*
-				$tail
-			)*
-		}
-	};
-	($T:ty, $a:ident, $($universal_atribs:meta)*) => {};
-	() => {};
-}
-
-/// Generates a doc comment for the given tokens.
-///
-/// # Example
-/// Consider the following syntax:
-/// ```rust
-/// doc! {
-///     "This is a doc comment.",
-/// 	const TEXT: &str = "Hello, world!";
-/// }
-/// ```
-/// This will generate:
-/// ```rust
-/// /// This is a doc comment.
-/// const TEXT: &str = "Hello, world!";
-/// ```
-#[macro_export(crate)]
-macro_rules! doc {
-    ($x:expr, $($t:tt)+) => {
-        #[doc = $x]
-        $($t)+
-    };
-}
-
 /// Creates a bitmask enum that can be serialized, deserialized, and compared.
 ///
 /// Implements [`Serialize`](crate::Serialize), [`Deserialize`](crate::Deserialize), [`PartialEq`],
-/// [`PartialOrd`], [`Eq`], [`Ord`], [`Clone`] and [`Copy`].
+/// [`PartialOrd`], [`Eq`], [`Ord`], [`Clone`], and [`Copy`].
 ///
 /// # Example
 /// Consider the following syntax:
@@ -229,7 +129,7 @@ macro_rules! doc {
 /// Implementations of [PartialEq] for `Self` and `Self`, `Self` and [`u16`], [`u16`] and `Self`,
 /// [PartialOrd] for `Self` and `Self`, `Self` and [`u16`], [`u16`] and `Self`, [Eq], and [Ord]
 /// will also be generated.
-#[macro_export(crate)]
+#[macro_export]
 macro_rules! bitmask {
 	(
 		$(#[$outer:meta])* // attributes/docs
@@ -354,7 +254,7 @@ match self {",
 		/////////////////////////////////////////////
 		// Repeat for any more bitmask definitions //
 		/////////////////////////////////////////////
-		bitmask! {
+		crate::bitmask! {
 			$($t)*
 		}
 	};

@@ -1,10 +1,10 @@
 [package]
-name = "xrb-derive-macros"
+name = "xrb-proc-macros"
 version = "0.1.0"
 authors = [ "Antikyth <antikyth at gmail dot com>" ]
 edition = "2021"
-description = "Derive macros used in XRB."
-license = "MIT"
+description = "Procedural macros used in X Rust Bindings."
+license = "MPL-2.0"
 
 [lib]
 proc-macro = true

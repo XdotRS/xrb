@@ -22,7 +22,7 @@
 // IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-// This crate is based on `syn`'s `heapsize` example:
+// This module is based on `syn`'s `heapsize` example:
 // https://github.com/dtolnay/syn/tree/master/examples/heapsize
 
 use proc_macro2::{self, TokenStream};
