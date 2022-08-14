@@ -102,8 +102,10 @@ macro_rules! doc {
     };
 }
 
-/// Creates a bitmask enum implementing [`Serialize`](crate::Serialize) and
-/// [`Deserialize`](crate::Deserialize).
+/// Creates a bitmask enum that can be serialized, deserialized, and compared.
+///
+/// Implements [`Serialize`](crate::Serialize), [`Deserialize`](crate::Deserialize), [`PartialEq`],
+/// [`PartialOrd`], [`Eq`], [`Ord`], [`Clone`] and [`Copy`].
 ///
 /// # Example
 /// Consider the following syntax:
