@@ -28,290 +28,290 @@
 use proc_macro2::{self, TokenStream};
 use quote::{quote, quote_spanned};
 use syn::{
-    parse_macro_input, parse_quote, spanned::Spanned, Data, DeriveInput, Fields, GenericParam,
-    Generics, Index,
+	parse_macro_input, parse_quote, spanned::Spanned, Data, DeriveInput, Fields, GenericParam,
+	Generics, Index,
 };
 
 #[proc_macro_derive(Serialize)]
 pub fn derive_serialize(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
+	let input = parse_macro_input!(input as DeriveInput);
 
-    let name = input.ident;
+	let name = input.ident;
 
-    let generics = add_serialize_bounds(input.generics);
-    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+	let generics = add_serialize_bounds(input.generics);
+	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-    let write = write(&input.data);
+	let write = write(&input.data);
 
-    let expanded = quote! {
-        impl #impl_generics crate::serialization::Serialize for #name #ty_generics #where_clause {
-            fn write(self, buf: &mut impl bytes::BufMut) {
-                #write
-            }
-        }
-    };
+	let expanded = quote! {
+		impl #impl_generics crate::serialization::Serialize for #name #ty_generics #where_clause {
+			fn write(self, buf: &mut impl bytes::BufMut) {
+				#write
+			}
+		}
+	};
 
-    expanded.into()
+	expanded.into()
 }
 
 fn add_serialize_bounds(mut generics: Generics) -> Generics {
-    for param in &mut generics.params {
-        if let GenericParam::Type(ref mut type_param) = *param {
-            type_param
-                .bounds
-                .push(parse_quote!(crate::serialization::Serialize));
-        }
-    }
+	for param in &mut generics.params {
+		if let GenericParam::Type(ref mut type_param) = *param {
+			type_param
+				.bounds
+				.push(parse_quote!(crate::serialization::Serialize));
+		}
+	}
 
-    generics
+	generics
 }
 
 fn write(data: &Data) -> TokenStream {
-    match *data {
-        Data::Struct(ref data) => match data.fields {
-            Fields::Named(ref fields) => {
-                let recurse = fields.named.iter().map(|field| {
-                    let name = &field.ident;
+	match *data {
+		Data::Struct(ref data) => match data.fields {
+			Fields::Named(ref fields) => {
+				let recurse = fields.named.iter().map(|field| {
+					let name = &field.ident;
 
-                    quote_spanned! { field.span()=>
-                        self.#name.write(buf);
-                    }
-                });
+					quote_spanned! { field.span()=>
+						self.#name.write(buf);
+					}
+				});
 
-                quote! {
-                    #(#recurse)*
-                }
-            }
-            Fields::Unnamed(ref fields) => {
-                let recurse = fields.unnamed.iter().enumerate().map(|(index, field)| {
-                    let index = Index::from(index);
+				quote! {
+					#(#recurse)*
+				}
+			}
+			Fields::Unnamed(ref fields) => {
+				let recurse = fields.unnamed.iter().enumerate().map(|(index, field)| {
+					let index = Index::from(index);
 
-                    quote_spanned! { field.span()=>
-                        self.#index.write(buf);
-                    }
-                });
+					quote_spanned! { field.span()=>
+						self.#index.write(buf);
+					}
+				});
 
-                quote! {
-                    #(#recurse)*
-                }
-            }
-            Fields::Unit => {
-                quote! {}
-            }
-        },
-        Data::Enum(ref data) => {
-            let recurse =
-                data.variants.iter().enumerate().map(|(index, variant)| {
-                    let index = if variant.discriminant.as_ref().is_some() {
-                        let discriminant = &variant.discriminant.as_ref().unwrap().1;
+				quote! {
+					#(#recurse)*
+				}
+			}
+			Fields::Unit => {
+				quote! {}
+			}
+		},
+		Data::Enum(ref data) => {
+			let recurse =
+				data.variants.iter().enumerate().map(|(index, variant)| {
+					let index = if variant.discriminant.as_ref().is_some() {
+						let discriminant = &variant.discriminant.as_ref().unwrap().1;
 
-                        quote! {
-                            (#discriminant as u8)
-                        }
-                    } else {
-                        quote! {
-                            (#index as u8)
-                        }
-                    };
+						quote! {
+							(#discriminant as u8)
+						}
+					} else {
+						quote! {
+							(#index as u8)
+						}
+					};
 
-                    let name = &variant.ident;
+					let name = &variant.ident;
 
-                    let fields =
-                        match variant.fields {
-                            Fields::Named(ref fields) => {
-                                let recurse_fields = fields.named.iter().map(|field| {
-                                    let field_name = &field.ident;
+					let fields =
+						match variant.fields {
+							Fields::Named(ref fields) => {
+								let recurse_fields = fields.named.iter().map(|field| {
+									let field_name = &field.ident;
 
-                                    quote_spanned! { field.span()=>
-                                        self.#name.#field_name.write(buf);
-                                    }
-                                });
+									quote_spanned! { field.span()=>
+										self.#name.#field_name.write(buf);
+									}
+								});
 
-                                quote! {
-                                    #(#recurse_fields)*
-                                }
-                            }
-                            Fields::Unnamed(ref fields) => {
-                                let recurse_fields = fields.unnamed.iter().enumerate().map(
-                                    |(field_index, field)| {
-                                        let field_index = Index::from(field_index);
+								quote! {
+									#(#recurse_fields)*
+								}
+							}
+							Fields::Unnamed(ref fields) => {
+								let recurse_fields = fields.unnamed.iter().enumerate().map(
+									|(field_index, field)| {
+										let field_index = Index::from(field_index);
 
-                                        quote_spanned! { field.span()=>
-                                            self.#name.#field_index.write(buf);
-                                        }
-                                    },
-                                );
+										quote_spanned! { field.span()=>
+											self.#name.#field_index.write(buf);
+										}
+									},
+								);
 
-                                quote! {
-                                    #(#recurse_fields)*
-                                }
-                            }
-                            Fields::Unit => {
-                                quote! {}
-                            }
-                        };
+								quote! {
+									#(#recurse_fields)*
+								}
+							}
+							Fields::Unit => {
+								quote! {}
+							}
+						};
 
-                    quote! {
-                        Self::#name => {
-                            #index.write(buf);
-                            #fields
-                        }
-                    }
-                });
+					quote! {
+						Self::#name => {
+							#index.write(buf);
+							#fields
+						}
+					}
+				});
 
-            quote! {
-                match self {
-                    #(#recurse)*
-                }
-            }
-        }
-        _ => {
-            quote! {}
-        }
-    }
+			quote! {
+				match self {
+					#(#recurse)*
+				}
+			}
+		}
+		_ => {
+			quote! {}
+		}
+	}
 }
 
 #[proc_macro_derive(Deserialize)]
 pub fn derive_deserialize(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
+	let input = parse_macro_input!(input as DeriveInput);
 
-    let name = input.ident;
+	let name = input.ident;
 
-    let generics = add_deserialize_bounds(input.generics);
-    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+	let generics = add_deserialize_bounds(input.generics);
+	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-    let read = read(&input.data);
+	let read = read(&input.data);
 
-    let expanded = quote! {
-        impl #impl_generics crate::serialization::Deserialize for #name #ty_generics #where_clause {
-            fn read(buf: &mut impl bytes::Buf) -> Self {
-                #read
-            }
-        }
-    };
+	let expanded = quote! {
+		impl #impl_generics crate::serialization::Deserialize for #name #ty_generics #where_clause {
+			fn read(buf: &mut impl bytes::Buf) -> Self {
+				#read
+			}
+		}
+	};
 
-    expanded.into()
+	expanded.into()
 }
 
 fn add_deserialize_bounds(mut generics: Generics) -> Generics {
-    for param in &mut generics.params {
-        if let GenericParam::Type(ref mut type_param) = *param {
-            type_param
-                .bounds
-                .push(parse_quote!(crate::serialization::Deserialize));
-        }
-    }
+	for param in &mut generics.params {
+		if let GenericParam::Type(ref mut type_param) = *param {
+			type_param
+				.bounds
+				.push(parse_quote!(crate::serialization::Deserialize));
+		}
+	}
 
-    generics
+	generics
 }
 
 fn read(data: &Data) -> TokenStream {
-    match *data {
-        Data::Struct(ref data) => match data.fields {
-            Fields::Named(ref fields) => {
-                let recurse = fields.named.iter().map(|field| {
-                    let name = &field.ident;
-                    let ty = &field.ty;
+	match *data {
+		Data::Struct(ref data) => match data.fields {
+			Fields::Named(ref fields) => {
+				let recurse = fields.named.iter().map(|field| {
+					let name = &field.ident;
+					let ty = &field.ty;
 
-                    quote_spanned! { field.span()=>
-                        #name: #ty::read(buf),
-                    }
-                });
+					quote_spanned! { field.span()=>
+						#name: #ty::read(buf),
+					}
+				});
 
-                quote! {
-                    Self {
-                        #(#recurse)*
-                    }
-                }
-            }
-            Fields::Unnamed(ref fields) => {
-                let recurse = fields.unnamed.iter().map(|field| {
-                    let ty = &field.ty;
+				quote! {
+					Self {
+						#(#recurse)*
+					}
+				}
+			}
+			Fields::Unnamed(ref fields) => {
+				let recurse = fields.unnamed.iter().map(|field| {
+					let ty = &field.ty;
 
-                    quote_spanned! { field.span()=>
-                        #ty::read(buf),
-                    }
-                });
+					quote_spanned! { field.span()=>
+						#ty::read(buf),
+					}
+				});
 
-                quote! {
-                    Self {
-                        #(#recurse)*
-                    }
-                }
-            }
-            Fields::Unit => {
-                quote! {
-                    Self {}
-                }
-            }
-        },
-        Data::Enum(ref data) => {
-            let recurse = data.variants.iter().enumerate().map(|(index, variant)| {
-                let index = index as u8;
+				quote! {
+					Self {
+						#(#recurse)*
+					}
+				}
+			}
+			Fields::Unit => {
+				quote! {
+					Self {}
+				}
+			}
+		},
+		Data::Enum(ref data) => {
+			let recurse = data.variants.iter().enumerate().map(|(index, variant)| {
+				let index = index as u8;
 
-                let index = if variant.discriminant.as_ref().is_some() {
-                    let discriminant = &variant.discriminant.as_ref().unwrap().1;
+				let index = if variant.discriminant.as_ref().is_some() {
+					let discriminant = &variant.discriminant.as_ref().unwrap().1;
 
-                    quote! {
-                        (#discriminant as u8)
-                    }
-                } else {
-                    quote! {
-                        #index
-                    }
-                };
+					quote! {
+						(#discriminant as u8)
+					}
+				} else {
+					quote! {
+						#index
+					}
+				};
 
-                let name = &variant.ident;
+				let name = &variant.ident;
 
-                let fields = match variant.fields {
-                    Fields::Named(ref fields) => {
-                        let recurse_fields = fields.named.iter().map(|field| {
-                            let field_name = &field.ident;
-                            let field_ty = &field.ty;
+				let fields = match variant.fields {
+					Fields::Named(ref fields) => {
+						let recurse_fields = fields.named.iter().map(|field| {
+							let field_name = &field.ident;
+							let field_ty = &field.ty;
 
-                            quote_spanned! { field.span()=>
-                                #field_name: #field_ty::read(buf),
-                            }
-                        });
+							quote_spanned! { field.span()=>
+								#field_name: #field_ty::read(buf),
+							}
+						});
 
-                        quote! {
-                            {#(#recurse_fields)*}
-                        }
-                    }
-                    Fields::Unnamed(ref fields) => {
-                        let recurse_fields = fields.unnamed.iter().map(|field| {
-                            let field_ty = &field.ty;
+						quote! {
+							{#(#recurse_fields)*}
+						}
+					}
+					Fields::Unnamed(ref fields) => {
+						let recurse_fields = fields.unnamed.iter().map(|field| {
+							let field_ty = &field.ty;
 
-                            quote_spanned! { field.span()=>
-                                #field_ty::read(buf),
-                            }
-                        });
+							quote_spanned! { field.span()=>
+								#field_ty::read(buf),
+							}
+						});
 
-                        quote! {
-                            {#(#recurse_fields)*}
-                        }
-                    }
-                    Fields::Unit => {
-                        quote! {}
-                    }
-                };
+						quote! {
+							{#(#recurse_fields)*}
+						}
+					}
+					Fields::Unit => {
+						quote! {}
+					}
+				};
 
-                quote! {
-                    #index => Self::#name #fields,
-                }
-            });
+				quote! {
+					#index => Self::#name #fields,
+				}
+			});
 
-            quote! {
-                match u8::read(buf) {
-                    #(#recurse)*
-                    _ => panic!("tried to read variant but an invalid discriminant was found"),
-                }
-            }
-        }
-        _ => {
-            quote! {
-                Self {}
-            }
-        }
-    }
+			quote! {
+				match u8::read(buf) {
+					#(#recurse)*
+					_ => panic!("tried to read variant but an invalid discriminant was found"),
+				}
+			}
+		}
+		_ => {
+			quote! {
+				Self {}
+			}
+		}
+	}
 }

@@ -33,6 +33,9 @@
 //! /// A request to initiate a connection to the X server.
 //! pub struct InitConnection {}
 //! ```
+//!
+// TODO: You can find a glossary for use in writing docs
+// [here](https://x.org/releases/X11R7.7/doc/xproto/x11protocol.html#glossary).
 
 /// The major version of the X protocol used in XRB. Should always be 11.
 ///
@@ -60,11 +63,11 @@ pub mod queries {}
 pub mod notifications {}
 
 pub mod requests {
-    pub use crate::proto::events::ConnectionInitRequest as ConnectionInit;
+	pub use crate::proto::events::ConnectionInitRequest as ConnectionInit;
 }
 
 pub mod replies {
-    pub use crate::proto::events::ConnectionInitReply as ConnectionInit;
+	pub use crate::proto::events::ConnectionInitReply as ConnectionInit;
 }
 
 pub use proto::events::ConnectionInitResult;
