@@ -4,8 +4,9 @@
 
 /// Creates a bitmask enum that can be serialized, deserialized, and compared.
 ///
-/// Implements [`Serialize`](crate::Serialize), [`Deserialize`](crate::Deserialize), [`PartialEq`],
-/// [`PartialOrd`], [`Eq`], [`Ord`], [`Clone`], and [`Copy`].
+/// Implements [`Bitmask`](crate::util::Bitmask), [`Serialize`](crate::Serialize),
+/// [`Deserialize`](crate::Deserialize), [`PartialEq`], [`PartialOrd`], [`Eq`], [`Ord`], [`Clone`],
+/// and [`Copy`].
 ///
 /// # Example
 /// Consider the following syntax:
@@ -31,104 +32,14 @@
 ///     }
 /// }
 /// ```
-/// The following enum will be generated:
-/// ```rust
-/// /// A mask of keys and buttons.
-/// #[derive(Copy, Clone)]
-/// pub enum KeyButtonMask {
-///     Shift,
-///     Lock,
-///     Control,
-///     Mod1,
-///     Mod2,
-///     Mod3,
-///     /// Super key.
-///     Mod4,
-///     Mod5,
-///     /// Primary mouse button.
-///     Button1,
-///     Button2,
-///     Button3,
-///     Button4,
-///     Button5,
-/// }
-/// ```
-/// With the following implementation to get the masks:
-/// ```rust
-/// impl KeyButtonMask {
-///     /// Gets the bitmask associated with this `KeyButtonMask`.
-///     ///
-///     /// ```rust
-///     /// match self {
-///     ///     Self::Shift => 0x0001,
-///     ///     Self::Lock => 0x0002,
-///     ///     Self::Control => 0x0004,
-///     ///     Self::Mod1 => 0x0008,
-///     ///     Self::Mod2 => 0x0010,
-///     ///     Self::Mod3 => 0x0020,
-///     ///     Self::Mod4 => 0x0040,
-///     ///     Self::Mod5 => 0x0080,
-///     ///     Self::Button1 => 0x0100,
-///     ///     Self::Button2 => 0x0200,
-///     ///     Self::Button3 => 0x0400,
-///     ///     Self::Button4 => 0x0800,
-///     ///     Self::Button5 => 0x1000,
-///     /// }
-///     /// ```
-///     pub fn mask(&self) -> u16 {
-///         match self {
-///             Self::Shift => 0x0001,
-///             Self::Lock => 0x0002,
-///             Self::Control => 0x0004,
-///             Self::Mod1 => 0x0008,
-///             Self::Mod2 => 0x0010,
-///             Self::Mod3 => 0x0020,
-///             Self::Mod4 => 0x0040,
-///             Self::Mod5 => 0x0080,
-///             Self::Button1 => 0x0100,
-///             Self::Button2 => 0x0200,
-///             Self::Button3 => 0x0400,
-///             Self::Button4 => 0x0800,
-///             Self::Button5 => 0x1000,
-///         }
-///     }
-/// }
-/// ```
-/// And the following implementations for [`Serialize`](crate::Serialize) and
-/// [`Deserialize`](crate::Deserialize):
-/// ```rust
-/// impl crate::Serialize for KeyButtonMask {
-///     fn write(self, buf: &mut impl bytes::BufMut) {
-///         self.mask().write(buf);
-///     }
-/// }
+/// An enum of the variants will be generated, and [`Bitmask<u16>`](crate::util::Bitmask<u16>)
+/// will be implemented for the enum according to the provided values.
 ///
-/// impl crate::Deserialize for KeyButtonMask {
-///     fn read(buf: &mut impl bytes::Buf) -> Self {
-///         match u16::read(buf) {
-///             0x0001 => Self::Shift,
-///             0x0002 => Self::Lock,
-///             0x0004 => Self::Control,
-///             0x0008 => Self::Mod1,
-///             0x0010 => Self::Mod2,
-///             0x0020 => Self::Mod3,
-///             0x0040 => Self::Mod4,
-///             0x0080 => Self::Mod5,
-///             0x0100 => Self::Button1,
-///             0x0200 => Self::Button2,
-///             0x0400 => Self::Button3,
-///             0x0800 => Self::Button4,
-///             0x1000 => Self::Button5,
-///             _ => panic!(
-///                 "tried to read KeyButtonMask from Buf but no matching variant was found"
-///             ),
-///         }
-///     }
-/// }
-/// ```
-/// Implementations of [PartialEq] for `Self` and `Self`, `Self` and [`u16`], [`u16`] and `Self`,
-/// [PartialOrd] for `Self` and `Self`, `Self` and [`u16`], [`u16`] and `Self`, [Eq], and [Ord]
-/// will also be generated.
+/// Implementations of [`Serialize`](crate::Serialize), [`Deserialize`](crate::Deserialize),
+/// [`PartialEq<Self>`]` for `[`Self`], [`PartialEq<Self>`]` for `[`u16`],
+/// [`PartialEq<u16>`]` for `[`Self`], [`PartialOrd<Self>`]` for `[`Self`],
+/// [`PartialOrd<Self>`]` for `[`u16`], [`PartialOrd<u16>`]` for `[`Self`], [Eq], and [Ord] will
+/// also be generated.
 #[macro_export]
 macro_rules! bitmask {
 	(
@@ -157,11 +68,12 @@ macro_rules! bitmask {
 		////////////
 		// mask() //
 		////////////
-		impl $Mask {
-			// Docs for `mask()` (messy, I know).
-			crate::doc!(concat!("Gets the bitmask associated with this `",
+		impl crate::util::Bitmask<$T> for $Mask {
+			// Docs for `mask(&self) -> T`
+			crate::doc!(concat!("Gets the bitmask value associated with this `",
 				stringify!($Mask), "`.
 
+# Implementation:
 ```rust
 match self {",
 				$(
@@ -171,11 +83,67 @@ match self {",
 				),+, "
 }
 ```"
-			),
-				pub fn mask(&self) -> $T { // pub fn mask(&self) -> Type {
+				),
+				fn mask(&self) -> $T { // pub fn mask(&self) -> Type {
 					match self {
 						$(Self::$Variant => $value),+ // Self::Variant => value,
 					}
+				}
+			);
+
+			// Docs for `match_mask(mask: T) -> Option<Self>`
+			crate::doc!(concat!("Gets the exactly matching `",
+				stringify!($Mask), "` variant for the given bitmask.
+
+# Implementation:
+```rust
+match mask {",
+				$(
+					concat!("
+    ", stringify!($value), " => Some(Self::", stringify!($Variant), "),"
+					)
+				),+, "
+    _ => None,
+}
+```"
+				),
+				fn match_mask(mask: $T) -> Option<Self> {
+					match mask {
+						$($value => Some(Self::$Variant),)+ // value => Some(Self::Variant)
+						_ => None,
+					}
+				}
+			);
+
+			// Docs for `from_mask(mask: T) -> Vec<Self>`
+			crate::doc!(concat!("Returns a [`Vec`] of all matching `",
+				stringify!($Mask), "` variants for the given bitmask.
+
+# Implementation:
+```rust
+let variants = vec![",
+				$(
+					concat!("
+    Self::", stringify!($Variant), ","
+					)
+				),+, "
+];
+
+variants.iter().filter(|variant| {
+    // Filter the variants by those which have their bitmask value's bits set in the given bitmask.
+    variant.mask() & mask == variant.mask()
+}).map(|variant| *variant).collect()
+```"
+				),
+				fn from_mask(mask: $T) -> Vec<Self> {
+					vec![$(Self::$Variant),+] // Given a [`Vec`] of all possible variants...
+						.iter().filter_map(|variant| {
+							// Filter the variants by those whose masks are contained in the given
+							// mask. A bitwise & will return only the bits that are both 1;
+							// therefore, using bitwise & on the variant's mask and the given mask
+							// will equal the variant's mask if the variant's mask is set.
+							(variant.mask() & mask == variant.mask()).then(|| *variant)
+						}).collect()
 				}
 			);
 		}
@@ -186,7 +154,9 @@ match self {",
 
 		impl crate::Serialize for $Mask {
 			fn write(self, buf: &mut impl bytes::BufMut) {
-				self.mask().write(buf);
+				match self {
+					$(Self::$Variant => $value.write(buf),)+ // Self::Variant => value.write(buf),
+				}
 			}
 		}
 
@@ -194,7 +164,7 @@ match self {",
 			fn read(buf: &mut impl bytes::Buf) -> Self {
 				match <$T>::read(buf) {
 					$($value => Self::$Variant,)+ // value => Self::Variant,
-					_ => panic!(concat!(
+					_ => panic!(concat!( // panic!("tried to read Mask from Buf but no matching...
 						"tried to read ",
 						stringify!($Mask),
 						" from Buf but no matching variant was found")
@@ -207,47 +177,82 @@ match self {",
 		// Equality: compare the masks //
 		/////////////////////////////////
 
+		// Since we cannot be sure that `crate::util::Bitmask<$T>` is in scope, we can't actually
+		// use `self.mask()` for these equality implementations. That's why `self.mask()`'s
+		// definition (`match self { $(Self::$Variant => $value,)+ }`) is repeated here so often.
+
 		impl Eq for $Mask {}
 
 		impl PartialEq<Self> for $Mask {
 			fn eq(&self, other: &Self) -> bool {
-				self.mask() == other.mask()
+				// Get `self`'s mask value.
+				let mask = match self {
+					$(Self::$Variant => $value,)+ // Self::Variant => value,
+				};
+
+				// Get `other`'s mask value.
+				let other_mask = match other {
+					$(Self::$Variant => $value,)+ // Self::Variant => value,
+				};
+
+				// Compare them.
+				mask == other_mask
 			}
 		}
 
 		impl PartialEq<$T> for $Mask {
 			fn eq(&self, other: &$T) -> bool {
-				&self.mask() == other
+				other == &match self { // other == self.mask()
+					$(Self::$Variant => $value,)+
+				}
 			}
 		}
 
 		impl PartialEq<$Mask> for $T {
 			fn eq(&self, other: &$Mask) -> bool {
-				self == &other.mask()
+				self == &match other { // self == &other.mask()
+					$($Mask::$Variant => $value,)+
+				}
 			}
 		}
 
 		impl Ord for $Mask {
 			fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-				self.mask().cmp(&other.mask())
+				// self.mask().cmp(&other.mask())
+				match self {
+					$(Self::$Variant => $value,)+
+				}.cmp(&match other {
+					$(Self::$Variant => $value,)+
+				})
 			}
 		}
 
 		impl PartialOrd<Self> for $Mask {
 			fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-				self.mask().partial_cmp(&other.mask())
+				// self.mask().partial_cmp(&other.mask())
+				match self {
+					$(Self::$Variant => $value,)+
+				}.partial_cmp(&match other {
+					$(Self::$Variant => $value,)+
+				})
 			}
 		}
 
 		impl PartialOrd<$T> for $Mask {
 			fn partial_cmp(&self, other: &$T) -> Option<std::cmp::Ordering> {
-				self.mask().partial_cmp(other)
+				// self.mask().partial_cmp(other)
+				match self {
+					$(Self::$Variant => $value,)+
+				}.partial_cmp(other)
 			}
 		}
 
 		impl PartialOrd<$Mask> for $T {
 			fn partial_cmp(&self, other: &$Mask) -> Option<std::cmp::Ordering> {
-				self.partial_cmp(&other.mask())
+				// self.partial_cmp(&other.mask())
+				self.partial_cmp(&match other {
+					$($Mask::$Variant => $value,)+
+				})
 			}
 		}
 
