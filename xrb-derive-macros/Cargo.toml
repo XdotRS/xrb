@@ -1,7 +1,7 @@
 [package]
 name = "xrb-derive-macros"
 version = "0.1.0"
-authors = [ "AquariWM <contact@aquariwm.org>", "Antikyth <antikyth at gmail dot com>" ]
+authors = [ "Antikyth <antikyth at gmail dot com>" ]
 edition = "2021"
 description = "Derive macros used in XRB."
 license = "MIT"

@@ -5,7 +5,7 @@
 [package]
 name = "xrb"
 version = "0.1.0-dev"
-authors = [ "AquariWM <contact@aquariwm.org>", "Antikyth <antikyth at gmail dot com>" ]
+authors = [ "Antikyth <antikyth at gmail dot com>" ]
 edition = "2021"
 description = "Rust bindings for the raw messages sent with the X protocol. NOT an API."
 license = "MPL-2.0"
