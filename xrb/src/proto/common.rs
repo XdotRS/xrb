@@ -52,99 +52,128 @@ pub type Point = (i16, i16);
 /// A rectangle with (`x`,`y`) coordinates and (`width` x `height`) dimensions.
 #[derive(Serialize, Deserialize)]
 pub struct Rect {
-    pub x: i16,
-    pub y: i16,
-    pub width: u16,
-    pub height: u16,
+	pub x: i16,
+	pub y: i16,
+	pub width: u16,
+	pub height: u16,
 }
 
 // TODO: Name? Might be confused with `Arc` in std.
 #[derive(Serialize, Deserialize)]
 pub struct Arc {
-    pub x: i16,
-    pub y: i16,
-    pub width: u16,
-    pub height: u16,
-    pub start_angle: i16,
-    pub end_angle: i16,
+	pub x: i16,
+	pub y: i16,
+	pub width: u16,
+	pub height: u16,
+	pub start_angle: i16,
+	pub end_angle: i16,
 }
 
 #[derive(Serialize)]
 pub enum Protocol {
-    Internet,
-    DecNet,
-    Chaos,
-    ServerInterpreted = 5,
-    InternetV6,
+	Internet,
+	DecNet,
+	Chaos,
+	ServerInterpreted = 5,
+	InternetV6,
 }
 
-// TODO: Docs.
+/// An X server host address with a [Protocol] family and the address itself.
 pub struct Host {
-    family: Protocol,
-    address: String,
+	/// The protocol used to connect to this [Host].
+	family: Protocol,
+	address: String,
 }
 
 // [`Host`] has a unique length of its address, plus padding, so we have to do this manually. //
 impl Serialize for Host {
-    fn write(self, buf: &mut impl bytes::BufMut) {
-        let length = self.address.len() as u16; // length of address
-        let address_padding = length % 4; // extra padding to reach a multiple of 4 bytes
+	fn write(self, buf: &mut impl bytes::BufMut) {
+		let length = self.address.len() as u16; // length of address
+		let address_padding = length % 4; // extra padding to reach a multiple of 4 bytes
 
-        self.family.write(buf); // family
-        0u8.write(buf); // padding - unused byte, can be anything
-        length.write(buf); // length of address
-        buf.put(self.address.as_bytes()); // the address itself
-        buf.put_bytes(0u8, address_padding.into()); // extra padding for 4-byte multiple
-    }
+		self.family.write(buf); // family
+		0u8.write(buf); // padding - unused byte, can be anything
+		length.write(buf); // length of address
+		buf.put(self.address.as_bytes()); // the address itself
+		buf.put_bytes(0u8, address_padding.into()); // extra padding for 4-byte multiple
+	}
 }
 
 impl Deserialize for Host {
-    fn read(buf: &mut impl bytes::Buf) -> Self {
-        buf.advance(1);
-        let family = Protocol::Internet;
+	fn read(buf: &mut impl bytes::Buf) -> Self {
+		buf.advance(1);
+		let family = Protocol::Internet;
 
-        buf.advance(1); // skip the padding (unused) byte
+		buf.advance(1); // skip the padding (unused) byte
 
-        let length = u16::read(buf); // read length of address
-        let address_padding = length % 4; // extra padding: we need to skip this at the end
+		let length = u16::read(buf); // read length of address
+		let address_padding = length % 4; // extra padding: we need to skip this at the end
 
-        let bytes = buf.copy_to_bytes(length.into()); // read `length` number of bytes for the address
-        let address = String::from_utf8(bytes.to_vec()).unwrap();
+		let bytes = buf.copy_to_bytes(length.into()); // read `length` number of bytes for the address
+		let address = String::from_utf8(bytes.to_vec()).unwrap();
 
-        buf.advance(address_padding.into());
+		buf.advance(address_padding.into());
 
-        Self { family, address }
-    }
+		Self { family, address }
+	}
 }
 
-// TODO: Docs
+/// If the contents of a window should be kept when it is resized and where they should be placed.
+///
+/// When a window is resized, the rendered contents of the window are not necessarily discarded. It
+/// is possible to request that the X server repositions the existing window contents to a
+/// particular anchor point within the window. This anchor point is called the [BitGravity].
 #[derive(Serialize, Deserialize)]
 pub enum BitGravity {
-    Forget,
-    NorthWest,
-    North,
-    NorthEast,
-    West,
-    Center,
-    East,
-    SouthWest,
-    South,
-    SouthEast,
-    Static,
+	/// Discard the contents of the window.
+	Forget,
+	/// Position the existing contents of the window at the top-left of the window when resizing.
+	NorthWest,
+	/// Position the existing contents of the window at the top of the window when resizing.
+	North,
+	/// Position the existing contents of the window at the top-right of the window when resizing.
+	NorthEast,
+	/// Position the existing contents of the window at the left of the window when resizing.
+	West,
+	/// Position the existing contents of the window at the center of the window when resizing.
+	Center,
+	/// Position the existing contents of the window at the right of the window when resizing.
+	East,
+	/// Position the existing contents of the window at the bottom-left of the window when
+	/// resizing.
+	SouthWest,
+	/// Position the existing contents of the window at the bottom of the window when resizing.
+	South,
+	/// Position the existing contents of the window at the bottom-right of the window when
+	/// resizing.
+	SouthEast,
+	/// Retain the existing contents of the window but don't reposition them.
+	Static,
 }
 
-// TODO: Docs
+/// What to do with children of a window when that window is resized.
 #[derive(Serialize, Deserialize)]
 pub enum WinGravity {
-    Unmap,
-    NorthWest,
-    North,
-    NorthEast,
-    West,
-    Center,
-    East,
-    SouthWest,
-    South,
-    SouthEast,
-    Static,
+	/// Unmap children of the window.
+	Unmap,
+	/// Anchor children of the window to the top-left of the window.
+	NorthWest,
+	/// Anchor children of the window to the top of the window.
+	North,
+	/// Anchor children of the window to the top-right of the window.
+	NorthEast,
+	/// Anchor children of the window to the left of the window.
+	West,
+	/// Anchor children of the window to the center of the window.
+	Center,
+	/// Anchor children of the window to the right of the window.
+	East,
+	/// Anchor children of the window to the bottom-left of the window.
+	SouthWest,
+	/// Anchor children of the window to the bottom of the window.
+	South,
+	/// Anchor children of the window to the bottom-right of the window.
+	SouthEast,
+	/// Retain the existing positions of the children of the window.
+	Static,
 }
