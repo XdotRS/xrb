@@ -218,7 +218,7 @@ macro_rules! doc {
 ///             0x0800 => Self::Button4,
 ///             0x1000 => Self::Button5,
 ///             _ => panic!(
-///                 "tried to read KeyButtonMask from Buf but no matching variant was found");
+///                 "tried to read KeyButtonMask from Buf but no matching variant was found"
 ///             ),
 ///         }
 ///     }
