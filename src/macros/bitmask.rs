@@ -4,7 +4,7 @@
 
 /// Creates a bitmask enum that can be serialized, deserialized, and compared.
 ///
-/// Implements [`Bitmask`](crate::util::Bitmask), [`Serialize`](crate::Serialize),
+/// Implements [`Bitmask`](crate::bitmasks::Bitmask), [`Serialize`](crate::Serialize),
 /// [`Deserialize`](crate::Deserialize), [`PartialEq`], [`PartialOrd`], [`Eq`], [`Ord`], [`Clone`],
 /// and [`Copy`].
 ///
@@ -32,7 +32,7 @@
 ///     }
 /// }
 /// ```
-/// An enum of the variants will be generated, and [`Bitmask<u16>`](crate::util::Bitmask<u16>)
+/// An enum of the variants will be generated, and [`Bitmask<u16>`](crate::bitmasks::Bitmask<u16>)
 /// will be implemented for the enum according to the provided values.
 ///
 /// Implementations of [`Serialize`](crate::Serialize), [`Deserialize`](crate::Deserialize),
@@ -68,7 +68,7 @@ macro_rules! bitmask {
 		////////////////////////////////
 		// Bitmask<$T> implementation //
 		////////////////////////////////
-		impl crate::util::Bitmask<$T> for $Mask {
+		impl crate::bitmasks::Bitmask<$T> for $Mask {
 			// Docs for `mask(&self) -> T`
 			crate::doc!(concat!("Gets the bitmask value associated with this `",
 				stringify!($Mask), "`.

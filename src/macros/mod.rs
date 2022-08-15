@@ -3,7 +3,11 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 mod bitmask;
+mod error;
+mod event;
 mod predefine;
+mod reply;
+mod request;
 
 /// Generates a doc comment for the given tokens.
 ///

@@ -2,110 +2,37 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::{Atom, Deserialize, ResId, Serialize};
+use crate::{error, Atom as AtomId, Deserialize, ResId, Serialize};
 
-#[allow(dead_code)]
-pub enum ErrorType {
-	Request,
-	Value(u32),
-	Window(ResId),
-	Pixmap(ResId),
-	Atom(Atom),
-	Cursor(ResId),
-	Font(ResId),
-	Match,
-	Drawable(ResId),
-	Access,
-	Alloc,
-	Colormap(ResId),
-	GContext(ResId),
-	IdChoice(ResId),
-	Name,
-	Length,
-	Implementation,
+pub trait Error<T>
+where
+	Self: Sized + Serialize + Deserialize,
+	T: Sized + Serialize + Deserialize,
+{
+	fn error_code() -> u8;
+	fn sequence_num(&self) -> u16;
+	fn minor_opcode(&self) -> u16;
+	fn major_opcode(&self) -> u8;
+	fn data(&self) -> T;
+	fn new(sequence_num: u16, minor_opcode: u16, major_opcode: u8, data: T) -> Self;
 }
 
-impl ErrorType {
-	fn error_code(&self) -> u8 {
-		match self {
-			Self::Request => 1u8,
-			Self::Value(_) => 2u8,
-			Self::Window(_) => 3u8,
-			Self::Pixmap(_) => 4u8,
-			Self::Atom(_) => 5u8,
-			Self::Cursor(_) => 6u8,
-			Self::Font(_) => 7u8,
-			Self::Match => 8u8,
-			Self::Drawable(_) => 9u8,
-			Self::Access => 10u8,
-			Self::Alloc => 11u8,
-			Self::Colormap(_) => 12u8,
-			Self::GContext(_) => 13u8,
-			Self::IdChoice(_) => 14u8,
-			Self::Name => 15u8,
-			Self::Length => 16u8,
-			Self::Implementation => 17u8,
-		}
-	}
-}
-
-impl Serialize for ErrorType {
-	fn write(self, buf: &mut impl bytes::BufMut) {
-		match self {
-			Self::Value(val) => val.write(buf),
-			Self::Window(id) => id.write(buf),
-			Self::Pixmap(id) => id.write(buf),
-			Self::Atom(atom) => atom.write(buf),
-			Self::Cursor(id) => id.write(buf),
-			Self::Font(id) => id.write(buf),
-			Self::Drawable(id) => id.write(buf),
-			Self::Colormap(id) => id.write(buf),
-			Self::GContext(id) => id.write(buf),
-			Self::IdChoice(id) => id.write(buf),
-			_ => 0u32.write(buf),
-		}
-	}
-}
-
-pub struct Error {
-	pub error_type: ErrorType,
-	pub sequence_number: u16,
-	pub minor_opcode: u16,
-	pub major_opcode: u8,
-}
-
-impl Serialize for Error {
-	fn write(self, buf: &mut impl bytes::BufMut) {
-		0u8.write(buf); // A first byte of 0 denotes an error
-
-		self.error_type.error_code().write(buf);
-		self.sequence_number.write(buf);
-		self.error_type.write(buf);
-		self.minor_opcode.write(buf);
-		self.major_opcode.write(buf);
-
-		buf.put_bytes(0u8, 21); // We have to pad out the rest of the error to 32 bytes in length
-	}
-}
-
-impl Deserialize for Error {
-	fn read(buf: &mut impl bytes::Buf) -> Self {
-		// We don't skip the first byte that denotes this as an error, because that byte would have
-		// been read in order to know to call [Error]'s [read] function anyway.
-
-		let _error_code = u8::read(buf);
-		let sequence_number = u16::read(buf);
-		let _data = u32::read(buf);
-		let minor_opcode = u16::read(buf);
-		let major_opcode = u8::read(buf);
-
-		buf.advance(21);
-
-		Self {
-			error_type: ErrorType::Access, // TODO: Deserialize [ErrorType]
-			sequence_number,
-			minor_opcode,
-			major_opcode,
-		}
-	}
+error! {
+	pub struct Request: Error(1);
+	pub struct Value: Error(2) -> u32;
+	pub struct Window: Error(3) -> ResId;
+	pub struct Pixmap: Error(4) -> ResId;
+	pub struct Atom: Error(5) -> AtomId;
+	pub struct Cursor: Error(6) -> ResId;
+	pub struct Font: Error(7) -> ResId;
+	pub struct Match: Error(8);
+	pub struct Drawable: Error(9) -> ResId;
+	pub struct Access: Error(10);
+	pub struct Alloc: Error(11);
+	pub struct Colormap: Error(12) -> ResId;
+	pub struct GContext: Error(13) -> ResId;
+	pub struct IdChoice: Error(14) -> ResId;
+	pub struct Name: Error(15);
+	pub struct Length: Error(16);
+	pub struct Implementation: Error(17);
 }
