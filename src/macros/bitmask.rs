@@ -65,9 +65,9 @@ macro_rules! bitmask {
 			),+
 		}
 
-		////////////
-		// mask() //
-		////////////
+		////////////////////////////////
+		// Bitmask<$T> implementation //
+		////////////////////////////////
 		impl crate::util::Bitmask<$T> for $Mask {
 			// Docs for `mask(&self) -> T`
 			crate::doc!(concat!("Gets the bitmask value associated with this `",
@@ -130,7 +130,8 @@ let variants = vec![",
 ];
 
 variants.iter().filter(|variant| {
-    // Filter the variants by those which have their bitmask value's bits set in the given bitmask.
+    // Filter the variants by those which have their
+	// bitmask value's bits set in the given bitmask.
     variant.mask() & mask == variant.mask()
 }).map(|variant| *variant).collect()
 ```"
