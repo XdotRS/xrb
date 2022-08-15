@@ -330,3 +330,30 @@ where
 		});
 	}
 }
+
+impl<T> Serialize for Option<T>
+where
+	T: Serialize + Default,
+{
+	fn write(self, buf: &mut impl BufMut) {
+		match self {
+			Self::None => T::default().write(buf),
+			Self::Some(value) => value.write(buf),
+		}
+	}
+}
+
+impl<T> Deserialize for Option<T>
+where
+	T: Deserialize + Default + PartialEq,
+{
+	fn read(buf: &mut impl Buf) -> Self {
+		let value = T::read(buf);
+
+		if value == T::default() {
+			Self::None
+		} else {
+			Self::Some(value)
+		}
+	}
+}
