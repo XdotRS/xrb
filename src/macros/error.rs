@@ -35,7 +35,7 @@ macro_rules! error {
 			data: $T,
 		}
 
-		impl crate::errors::Error<$T> for $Error {
+		impl crate::proto::messages::errors::Error<$T> for $Error {
 			fn error_code() -> u8 {
 				$code
 			}

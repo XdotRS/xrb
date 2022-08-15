@@ -10,8 +10,15 @@ pub trait Serialize {
 }
 
 pub trait Deserialize {
-	/// Construct [`Self`] from a [Buf](bytes::Buf). Must be the inverse of [Serialize::write].
+	/// Construct [`Self`] from a [Buf](bytes::Buf).
 	fn read(buf: &mut impl Buf) -> Self;
+}
+
+pub trait KnownSize {
+	/// The known, static size of a type. Measured in bytes.
+	///
+	/// Must match [`Serialize`] and [`Deserialize`] implementations.
+	fn size() -> usize;
 }
 
 impl Serialize for u8 {
@@ -23,6 +30,12 @@ impl Serialize for u8 {
 impl Deserialize for u8 {
 	fn read(buf: &mut impl Buf) -> Self {
 		buf.get_u8()
+	}
+}
+
+impl KnownSize for u8 {
+	fn size() -> usize {
+		1
 	}
 }
 
@@ -46,6 +59,12 @@ impl Deserialize for u16 {
 	}
 }
 
+impl KnownSize for u16 {
+	fn size() -> usize {
+		2
+	}
+}
+
 impl Serialize for u32 {
 	fn write(self, buf: &mut impl BufMut) {
 		if cfg!(target_endian = "big") {
@@ -63,6 +82,12 @@ impl Deserialize for u32 {
 		} else {
 			buf.get_u32_le()
 		}
+	}
+}
+
+impl KnownSize for u32 {
+	fn size() -> usize {
+		4
 	}
 }
 
@@ -86,6 +111,12 @@ impl Deserialize for u64 {
 	}
 }
 
+impl KnownSize for u64 {
+	fn size() -> usize {
+		8
+	}
+}
+
 impl Serialize for u128 {
 	fn write(self, buf: &mut impl BufMut) {
 		if cfg!(target_endian = "big") {
@@ -106,6 +137,12 @@ impl Deserialize for u128 {
 	}
 }
 
+impl KnownSize for u128 {
+	fn size() -> usize {
+		16
+	}
+}
+
 impl Serialize for i8 {
 	fn write(self, buf: &mut impl BufMut) {
 		buf.put_i8(self);
@@ -115,6 +152,12 @@ impl Serialize for i8 {
 impl Deserialize for i8 {
 	fn read(buf: &mut impl Buf) -> Self {
 		buf.get_i8()
+	}
+}
+
+impl KnownSize for i8 {
+	fn size() -> usize {
+		1
 	}
 }
 
@@ -138,6 +181,12 @@ impl Deserialize for i16 {
 	}
 }
 
+impl KnownSize for i16 {
+	fn size() -> usize {
+		2
+	}
+}
+
 impl Serialize for i32 {
 	fn write(self, buf: &mut impl BufMut) {
 		if cfg!(target_endian = "big") {
@@ -155,6 +204,12 @@ impl Deserialize for i32 {
 		} else {
 			buf.get_i32_le()
 		}
+	}
+}
+
+impl KnownSize for i32 {
+	fn size() -> usize {
+		4
 	}
 }
 
@@ -178,6 +233,12 @@ impl Deserialize for i64 {
 	}
 }
 
+impl KnownSize for i64 {
+	fn size() -> usize {
+		8
+	}
+}
+
 impl Serialize for i128 {
 	fn write(self, buf: &mut impl BufMut) {
 		if cfg!(target_endian = "big") {
@@ -198,6 +259,12 @@ impl Deserialize for i128 {
 	}
 }
 
+impl KnownSize for i128 {
+	fn size() -> usize {
+		16
+	}
+}
+
 impl Serialize for bool {
 	fn write(self, buf: &mut impl BufMut) {
 		if self { 1u8 } else { 0u8 }.write(buf);
@@ -211,6 +278,12 @@ impl Deserialize for bool {
 			1u8 => true,
 			_ => panic!("tried to read bool but value read was not a bool"),
 		}
+	}
+}
+
+impl KnownSize for bool {
+	fn size() -> usize {
+		1
 	}
 }
 
@@ -254,6 +327,16 @@ where
 	}
 }
 
+impl<A, B> KnownSize for (A, B)
+where
+	A: KnownSize,
+	B: KnownSize,
+{
+	fn size() -> usize {
+		A::size() + B::size()
+	}
+}
+
 impl<A, B, C> Serialize for (A, B, C)
 where
 	A: Serialize,
@@ -278,12 +361,29 @@ where
 	}
 }
 
+impl<A, B, C> KnownSize for (A, B, C)
+where
+	A: KnownSize,
+	B: KnownSize,
+	C: KnownSize,
+{
+	fn size() -> usize {
+		A::size() + B::size() + C::size()
+	}
+}
+
 impl Serialize for () {
 	fn write(self, _: &mut impl BufMut) {}
 }
 
 impl Deserialize for () {
 	fn read(_: &mut impl Buf) -> Self {}
+}
+
+impl KnownSize for () {
+	fn size() -> usize {
+		0
+	}
 }
 
 // As this does not serialize the length, we can't know how to deserialize any given &[T].
@@ -316,6 +416,15 @@ where
 		}
 
 		array
+	}
+}
+
+impl<T, const LENGTH: usize> KnownSize for [T; LENGTH]
+where
+	T: KnownSize,
+{
+	fn size() -> usize {
+		T::size() * LENGTH
 	}
 }
 
@@ -355,5 +464,14 @@ where
 		} else {
 			Self::Some(value)
 		}
+	}
+}
+
+impl<T> KnownSize for Option<T>
+where
+	T: KnownSize,
+{
+	fn size() -> usize {
+		T::size()
 	}
 }

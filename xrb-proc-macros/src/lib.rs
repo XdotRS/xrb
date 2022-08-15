@@ -25,12 +25,80 @@
 // This module is based on `syn`'s `heapsize` example:
 // https://github.com/dtolnay/syn/tree/master/examples/heapsize
 
+// TODO: This code is... awful. I mean, if you ignore the repetition it might be okay, but there is
+//       so much repeated code here. This really needs some time spent to improve it properly.
+
 use proc_macro2::{self, TokenStream};
 use quote::{quote, quote_spanned};
 use syn::{
 	parse_macro_input, parse_quote, spanned::Spanned, Data, DeriveInput, Fields, GenericParam,
 	Generics, Index,
 };
+
+#[proc_macro_derive(KnownSize)]
+pub fn derive_known_size(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+	let input = parse_macro_input!(input as DeriveInput);
+
+	let name = input.ident;
+
+	let generics = add_known_size_bounds(input.generics);
+	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+	let size = match input.data {
+		Data::Struct(ref data) => match data.fields {
+			Fields::Named(ref fields) => {
+				let recurse = fields.named.iter().map(|field| {
+					let field_ty = &field.ty;
+
+					quote_spanned! { field.span()=> {
+						#field_ty::size()
+					}}
+				});
+
+				quote! {
+					#(+ #recurse)*
+				}
+			}
+			Fields::Unnamed(ref fields) => {
+				let recurse = fields.unnamed.iter().map(|field| {
+					let field_ty = &field.ty;
+
+					quote_spanned! { field.span()=> {
+						#field_ty::size()
+					}}
+				});
+
+				quote! {
+					#(+ #recurse)*
+				}
+			}
+			Fields::Unit => quote!(),
+		},
+		_ => quote!(),
+	};
+
+	let expanded = quote! {
+		impl #impl_generics crate::serialization::KnownSize for #name #ty_generics #where_clause {
+			fn size() -> usize {
+				0 + #size
+			}
+		}
+	};
+
+	expanded.into()
+}
+
+fn add_known_size_bounds(mut generics: Generics) -> Generics {
+	for param in &mut generics.params {
+		if let GenericParam::Type(ref mut type_param) = *param {
+			type_param
+				.bounds
+				.push(parse_quote!(crate::serialization::KnownSize));
+		}
+	}
+
+	generics
+}
 
 #[proc_macro_derive(Serialize)]
 pub fn derive_serialize(input: proc_macro::TokenStream) -> proc_macro::TokenStream {

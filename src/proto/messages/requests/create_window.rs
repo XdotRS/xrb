@@ -5,53 +5,11 @@
 use bytes::BytesMut;
 
 use crate::{
-	bitmask,
-	bitmasks::{DeviceEvent, Event},
-	BitGravity, Colormap, Cursor, Deserialize, Pixmap, Serialize, VisualId, WinGravity, Window,
+	bitmask, serialization::KnownSize, BitGravity, Colormap, Cursor, Deserialize, Pixmap,
+	Serialize, VisualId, WinGravity, Window,
 };
 
-pub trait Request {
-	/// The major opcode is a unique identifier for this request.
-	///
-	/// Major opcodes 128 through 255 are reserved for extensions. An extension may contain
-	/// multiple requests, and as such will represent multiple requests with the same major opcode.
-	/// An extension may choose to encode an additional _minor opcode_ in the
-	/// [`metadata()`](Request::metadata) byte.
-	fn major_opcode() -> u8;
-
-	/// Metadata encoded in the second byte of the request.
-	///
-	/// This may be the minor opcode for extensions, though it is up to the individual extension
-	/// as to where it wishes to place minor opcodes, if at all. If this metadata byte is unused,
-	/// it is not guaranteed to be zero. The metadata byte may also be used for any purpose
-	/// relevant to the request, as defined by the request itself.
-	fn metadata(&self) -> u8 {
-		0u8
-	}
-
-	/// The length of the request in units of four bytes.
-	///
-	/// Includes the length of the header, which is one unit of 4 bytes that contains the
-	/// [`major_opcode()`](Request::major_opcode), [`metadata()`](Request::metadata) byte, and
-	/// these two [`length()`](Request::length) bytes, as well as any additional data associated
-	/// with the request.
-	///
-	/// The `length()` must be equal to the minimum length required to contain the request. That
-	/// is, if the length of the request is not an exact multiple of 4 bytes, it should be rounded
-	/// up to the nearest 4-byte unit by including however many padding bytes is necessary. Any
-	/// unused padding bytes are not guaranteed to be zero; they may be set to anything.
-	fn length(&self) -> u16;
-}
-
-// TODO: Do a few more requests to see how much they all have in common as far as types go. Should
-//       probably split this module into separate submodules for every request given how much is
-//       associated with just one... Also need to improve on the representation of bitmasks in
-//       these requests, currently they are just the raw numbers. They can't be the bitmask enums
-//       directly because obviously multiple can be set... do they even need to be represented?
-//       Maybe lists of values can be converted to the appropriate bitmask number on the fly. And
-//       maybe some useful macros can be made here, problem is just that these requests are a lot
-//       more complicated than just errors, and change drastically between different types of
-//       request.
+use super::Request;
 
 #[derive(Serialize, Deserialize)]
 pub enum WindowClass {
@@ -105,13 +63,20 @@ bitmask! {
 	}
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Copy)]
 pub enum BackingStore {
 	NotUseful,
 	WhenMapped,
 	Always,
 }
 
+impl KnownSize for BackingStore {
+	fn size() -> usize {
+		1
+	}
+}
+
+#[derive(Clone, Copy)]
 pub enum Inherit<T>
 where
 	T: Serialize + Deserialize,
@@ -151,6 +116,16 @@ where
 	}
 }
 
+impl<T> KnownSize for Inherit<T>
+where
+	T: KnownSize + Serialize + Deserialize,
+{
+	fn size() -> usize {
+		T::size()
+	}
+}
+
+#[derive(Clone, Copy)]
 pub enum OptionalInherit<T>
 where
 	T: Serialize + Deserialize,
@@ -193,6 +168,17 @@ where
 	}
 }
 
+impl<T> KnownSize for OptionalInherit<T>
+where
+	T: KnownSize + Serialize + Deserialize,
+{
+	fn size() -> usize {
+		T::size()
+	}
+}
+
+#[derive(Clone, Copy)]
+#[allow(dead_code)]
 pub enum CreateWindowValue {
 	BackgroundPixmap(OptionalInherit<Pixmap>),
 	BackgroundPixel(u32),
@@ -209,6 +195,28 @@ pub enum CreateWindowValue {
 	DoNotPropagateMask(u32), // bitmask
 	Colormap(Inherit<Colormap>),
 	Cursor(Option<Cursor>),
+}
+
+impl CreateWindowValue {
+	pub fn size(&self) -> usize {
+		match self {
+			Self::BackgroundPixmap(_) => <OptionalInherit<Pixmap>>::size(),
+			Self::BackgroundPixel(_) => u32::size(),
+			Self::BorderPixmap(_) => <Inherit<Pixmap>>::size(),
+			Self::BorderPixel(_) => u32::size(),
+			Self::BitGravity(_) => BitGravity::size(),
+			Self::WinGravity(_) => WinGravity::size(),
+			Self::BackingStore(_) => BackingStore::size(),
+			Self::BackingPlanes(_) => u32::size(),
+			Self::BackingPixel(_) => u32::size(),
+			Self::OverrideRedirect(_) => bool::size(),
+			Self::SaveUnder(_) => bool::size(),
+			Self::EventMask(_) => u32::size(),
+			Self::DoNotPropagateMask(_) => u32::size(),
+			Self::Colormap(_) => <Inherit<Colormap>>::size(),
+			Self::Cursor(_) => <Option<Cursor>>::size(),
+		}
+	}
 }
 
 impl Serialize for CreateWindowValue {
@@ -243,7 +251,7 @@ pub struct CreateWindow<'a> {
 	pub height: u16,
 	pub border_width: u16,
 	pub class: WindowClass,
-	pub visual_id: Visual,
+	pub visual: Visual,
 	pub mask: CreateWindowValueMask,
 	pub values: &'a [CreateWindowValue],
 }
@@ -253,11 +261,40 @@ impl Request for CreateWindow<'_> {
 		1u8
 	}
 
-	fn metadata(&self) -> u8 {
-		self.depth
-	}
-
 	fn length(&self) -> u16 {
 		(8 + self.values.len()).try_into().unwrap()
+	}
+}
+
+impl Serialize for CreateWindow<'_> {
+	fn write(self, buf: &mut impl bytes::BufMut) {
+		// Header //
+		Self::major_opcode().write(buf); // request major opcode
+		self.depth.write(buf); // metadata byte (second byte of header) is `depth`
+		self.length().write(buf);
+
+		// Data //
+		self.window_id.write(buf); // window id
+		self.parent.write(buf); // parent
+		self.x.write(buf); // x
+		self.y.write(buf); // y
+		self.width.write(buf); // width
+		self.height.write(buf); // height
+		self.border_width.write(buf); // border width
+		self.class.write(buf); // class
+		self.visual.write(buf); // visual
+		self.mask.write(buf); // mask of the values present in the value list
+		self.values.write(buf); // value list
+
+		// Padding //
+		// Since the total length needs to match `length()`, and not all values are 4 bytes, we may
+		// need to add unused padding bytes to the end. We calculate the byte length of the value
+		// list, as we know all values are a `KnownSize`, and subtract it from the space allocated
+		// for the value list, which is `self.values.len() * 4`.
+		let bytesize: usize = self.values.iter().map(|value| value.size()).sum();
+		let padding = self.values.len() * 4 - bytesize;
+
+		// We can then just put that many empty bytes at the end.
+		buf.put_bytes(0u8, padding);
 	}
 }

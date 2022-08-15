@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::{Deserialize, Serialize};
+use crate::{Deserialize, KnownSize, Serialize};
 
 /// A unique ID referring to a [Window], [Pixmap], [Cursor], [Font], [GContext], or [Colormap].
 ///
@@ -151,7 +151,7 @@ impl Deserialize for Host {
 /// When a window is resized, the rendered contents of the window are not necessarily discarded. It
 /// is possible to request that the X server repositions the existing window contents to a
 /// particular anchor point within the window. This anchor point is called the [BitGravity].
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Copy)]
 pub enum BitGravity {
 	/// Discard the contents of the window.
 	Forget,
@@ -179,8 +179,14 @@ pub enum BitGravity {
 	Static,
 }
 
+impl KnownSize for BitGravity {
+	fn size() -> usize {
+		1
+	}
+}
+
 /// What to do with children of a window when that window is resized.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Copy)]
 pub enum WinGravity {
 	/// Unmap children of the window.
 	Unmap,
@@ -204,4 +210,10 @@ pub enum WinGravity {
 	SouthEast,
 	/// Retain the existing positions of the children of the window.
 	Static,
+}
+
+impl KnownSize for WinGravity {
+	fn size() -> usize {
+		1
+	}
 }
