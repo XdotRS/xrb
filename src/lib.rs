@@ -64,12 +64,6 @@ pub mod queries {}
 
 pub mod notifications {}
 
-pub mod requests {
-	pub use crate::proto::events::ConnectionInitRequest as ConnectionInit;
-}
+pub mod requests {}
 
-pub mod replies {
-	pub use crate::proto::events::ConnectionInitReply as ConnectionInit;
-}
-
-pub use proto::events::ConnectionInitResult;
+pub mod replies {}

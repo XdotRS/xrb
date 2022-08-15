@@ -4,7 +4,7 @@
 
 use crate::{error, Atom as AtomId, Deserialize, ResId, Serialize};
 
-pub trait Error<T>
+pub trait Error<T = u32>
 where
 	Self: Sized + Serialize + Deserialize,
 	T: Sized + Serialize + Deserialize,

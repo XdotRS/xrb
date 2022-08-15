@@ -2,9 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-pub mod atoms;
-pub mod bitmasks;
-pub mod common;
-pub mod errors;
-pub mod events;
-mod requests;
+pub trait Reply {
+	fn length(&self) -> u32;
+	fn sequence_num(&self) -> u32;
+}
