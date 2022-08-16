@@ -104,8 +104,8 @@ pub enum Protocol {
 /// An X server host address with a [Protocol] family and the address itself.
 pub struct Host {
 	/// The protocol used to connect to this [Host].
-	family: Protocol,
-	address: String,
+	pub family: Protocol,
+	pub address: String,
 }
 
 /// If the contents of a window should be kept when it is resized and where they should be placed.
