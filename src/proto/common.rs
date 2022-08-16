@@ -2,30 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-/// A unique ID referring to a [Window], [Pixmap], [Cursor], [Font], [GContext], or [Colormap].
-///
-/// A [ResId] must be unique in terms of other [ResId]s, but it may have the same value as another
-/// type of ID, such as an [Atom] or [VisualId]. Which type of ID a particular number corresponds
-/// to is assumed from context.
-///
-/// The top three bits of a [ResId] are guaranteed to be zero.
-pub type ResId = u32;
-
-pub type Window = ResId;
-pub type Pixmap = ResId;
-pub type Cursor = ResId;
-pub type Font = ResId;
-pub type GContext = ResId;
-pub type Colormap = ResId;
-pub type Drawable = ResId; // TODO: A [Drawable] is specifically a [Window] or [Pixmap] - trait or?
-pub type Fontable = ResId; // TODO: A [Fontable] is specifically a [Font] or [GContext] - trait or?
-
-/// A unique ID corresponding to a [String] name registered with the X server.
-///
-/// [Atom]s are used to identify properties, types, and selections.
-pub type Atom = u32;
-/// [u32].
-pub type VisualId = u32;
 /// A timestamp expressed in milliseconds, typically the time since the last server reset.
 ///
 /// [Timestamp]s wrap around after about 49.7 days.

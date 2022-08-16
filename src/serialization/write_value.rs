@@ -4,6 +4,8 @@
 
 use bytes::BufMut;
 
+use super::ReadWriteResult;
+
 /// Write a _value_ as a 1-byte, 2-byte, or 4-byte unsigned integer ([`u8`], [`u16`], or [`u32`]).
 ///
 /// A _value_ is considered to be data that refers to one individual 'piece' of information. A
@@ -42,39 +44,45 @@ use bytes::BufMut;
 /// - [`Host`](crate::proto::common::Host)
 pub trait WriteValue {
 	/// Writes [`Self`] to a single byte ([`u8`]).
-	fn write_1b(self) -> u8;
+	fn write_1b(self) -> ReadWriteResult<u8>;
 	/// Writes [`Self`] to two bytes ([`u16`]) using the system's native endianness.
-	fn write_2b(self) -> u16;
+	fn write_2b(self) -> ReadWriteResult<u16>;
 	/// Writes [`Self`] to four bytes ([`u32`]) using the system's native endianness.
-	fn write_4b(self) -> u32;
+	fn write_4b(self) -> ReadWriteResult<u32>;
 
-	fn write_1b_to(self, buf: &mut impl BufMut)
+	fn write_1b_to(self, buf: &mut impl BufMut) -> ReadWriteResult
 	where
 		Self: Sized,
 	{
-		buf.put_u8(self.write_1b());
+		buf.put_u8(self.write_1b()?);
+
+		Ok(())
 	}
 
-	fn write_2b_to(self, buf: &mut impl BufMut)
+	fn write_2b_to(self, buf: &mut impl BufMut) -> ReadWriteResult
 	where
 		Self: Sized,
 	{
 		if cfg!(target_endian = "big") {
-			buf.put_u16(self.write_2b()); // system is big endian
+			buf.put_u16(self.write_2b()?); // system is big endian
 		} else {
-			buf.put_u16_le(self.write_2b()); // system is little endian
+			buf.put_u16_le(self.write_2b()?); // system is little endian
 		}
+
+		Ok(())
 	}
 
-	fn write_4b_to(self, buf: &mut impl BufMut)
+	fn write_4b_to(self, buf: &mut impl BufMut) -> ReadWriteResult
 	where
 		Self: Sized,
 	{
 		if cfg!(target_endian = "big") {
-			buf.put_u32(self.write_4b()); // system is big endian
+			buf.put_u32(self.write_4b()?); // system is big endian
 		} else {
-			buf.put_u32_le(self.write_4b()); // system is little endian
+			buf.put_u32_le(self.write_4b()?); // system is little endian
 		}
+
+		Ok(())
 	}
 }
 
@@ -86,16 +94,16 @@ macro_rules! writer {
 	) => {
 		$(
 			impl WriteValue for $T {
-				fn write_1b(self) -> u8 {
-					self as u8
+				fn write_1b(self) -> ReadWriteResult<u8> {
+					Ok(self as u8)
 				}
 
-				fn write_2b(self) -> u16 {
-					self as u16
+				fn write_2b(self) -> ReadWriteResult<u16> {
+					Ok(self as u16)
 				}
 
-				fn write_4b(self) -> u32 {
-					self as u32
+				fn write_4b(self) -> ReadWriteResult<u32> {
+					Ok(self as u32)
 				}
 			}
 		)+

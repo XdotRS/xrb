@@ -4,7 +4,7 @@
 
 use bytes::Buf;
 
-use super::WriteValue;
+use super::{ReadWriteError, WriteValue};
 
 /// Read a _value_ from a 1-byte, 2-byte, or 4-byte unsigned integer ([`u8`], [`u16`], or [`u32`]).
 ///
@@ -44,41 +44,49 @@ use super::WriteValue;
 /// - [`Host`](crate::proto::common::Host)
 pub trait ReadValue: WriteValue {
 	/// Read [`Self`] from a single byte ([`u8`]).
-	fn read_1b(byte: u8) -> Self;
+	fn read_1b(byte: u8) -> Result<Self, ReadWriteError>
+	where
+		Self: Sized;
+
 	/// Read [`Self`] from two bytes ([`u16`]) using the system's native endianness.
-	fn read_2b(bytes: u16) -> Self;
+	fn read_2b(bytes: u16) -> Result<Self, ReadWriteError>
+	where
+		Self: Sized;
+
 	/// Read [`Self`] from four bytes ([`u32`]) using the system's native endianness.
-	fn read_4b(bytes: u32) -> Self;
+	fn read_4b(bytes: u32) -> Result<Self, ReadWriteError>
+	where
+		Self: Sized;
 
 	/// Read [`Self`] from a single byte in a [`Buf`].
-	fn read_1b_from(buf: &mut impl Buf) -> Self
+	fn read_1b_from(buf: &mut impl Buf) -> Result<Self, ReadWriteError>
 	where
 		Self: Sized,
 	{
-		Self::read_1b(buf.get_u8())
+		Ok(Self::read_1b(buf.get_u8())?)
 	}
 
 	/// Read [`Self`] from two bytes in a [`Buf`] using the system's native endianness.
-	fn read_2b_from(buf: &mut impl Buf) -> Self
+	fn read_2b_from(buf: &mut impl Buf) -> Result<Self, ReadWriteError>
 	where
 		Self: Sized,
 	{
 		if cfg!(target_endian = "big") {
-			Self::read_2b(buf.get_u16()) // system is big endian
+			Ok(Self::read_2b(buf.get_u16())?) // system is big endian
 		} else {
-			Self::read_2b(buf.get_u16_le()) // system is little endian
+			Ok(Self::read_2b(buf.get_u16_le())?) // system is little endian
 		}
 	}
 
 	/// Read [`Self`] from four bytes in a [`Buf`] using the system's native endianness.
-	fn read_4b_from(buf: &mut impl Buf) -> Self
+	fn read_4b_from(buf: &mut impl Buf) -> Result<Self, ReadWriteError>
 	where
 		Self: Sized,
 	{
 		if cfg!(target_endian = "big") {
-			Self::read_4b(buf.get_u32()) // system is big endian
+			Ok(Self::read_4b(buf.get_u32())?) // system is big endian
 		} else {
-			Self::read_4b(buf.get_u32_le()) // system is little endian
+			Ok(Self::read_4b(buf.get_u32_le())?) // system is little endian
 		}
 	}
 }
@@ -92,16 +100,16 @@ macro_rules! reader {
 	) => {
 		$(
 			impl ReadValue for $T {
-				fn read_1b(byte: u8) -> Self {
-					byte as Self
+				fn read_1b(byte: u8) -> Result<Self, ReadWriteError> {
+					Ok(byte as Self)
 				}
 
-				fn read_2b(bytes: u16) -> Self {
-					bytes as Self
+				fn read_2b(bytes: u16) -> Result<Self, ReadWriteError> {
+					Ok(bytes as Self)
 				}
 
-				fn read_4b(bytes: u32) -> Self {
-					bytes as Self
+				fn read_4b(bytes: u32) -> Result<Self, ReadWriteError> {
+					Ok(bytes as Self)
 				}
 			}
 		)+
@@ -115,29 +123,29 @@ reader! {
 }
 
 impl ReadValue for bool {
-	fn read_1b(byte: u8) -> Self {
-		byte != 0
+	fn read_1b(byte: u8) -> Result<Self, ReadWriteError> {
+		Ok(byte != 0)
 	}
 
-	fn read_2b(bytes: u16) -> Self {
-		bytes != 0
+	fn read_2b(bytes: u16) -> Result<Self, ReadWriteError> {
+		Ok(bytes != 0)
 	}
 
-	fn read_4b(bytes: u32) -> Self {
-		bytes != 0
+	fn read_4b(bytes: u32) -> Result<Self, ReadWriteError> {
+		Ok(bytes != 0)
 	}
 }
 
 impl ReadValue for char {
-	fn read_1b(byte: u8) -> Self {
-		byte as char
+	fn read_1b(byte: u8) -> Result<Self, ReadWriteError> {
+		Ok(byte as char)
 	}
 
-	fn read_2b(bytes: u16) -> Self {
-		(bytes as u8) as char // `char` can only be cast from `u8`
+	fn read_2b(bytes: u16) -> Result<Self, ReadWriteError> {
+		Ok((bytes as u8) as char) // `char` can only be cast from `u8`
 	}
 
-	fn read_4b(bytes: u32) -> Self {
-		(bytes as u8) as char // `char` can only be cast from `u8`
+	fn read_4b(bytes: u32) -> Result<Self, ReadWriteError> {
+		Ok((bytes as u8) as char) // `char` can only be cast from `u8`
 	}
 }

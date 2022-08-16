@@ -14,7 +14,12 @@
 //! Once one [InternAtom](crate::replies::InternAtom) reply has been received, however, you can
 //! assume it will remain the same for the duration of the current connection.
 
-use crate::{predefine, Atom};
+use crate::predefine;
+
+/// A unique ID corresponding to a [String] name registered with the X server.
+///
+/// [Atom]s are used to identify properties, types, and selections.
+pub type Atom = u32;
 
 predefine!(
 	#[allow(dead_code)]
