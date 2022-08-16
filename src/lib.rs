@@ -56,8 +56,8 @@ mod serialization;
 pub use proto::bitmasks;
 pub use proto::common::*;
 
-pub use serialization::{Deserialize, KnownSize, Serialize};
-pub use xrb_proc_macros::{Deserialize, KnownSize, Serialize};
+pub use serialization::{Deserialize, Serialize};
+pub use xrb_proc_macros::{Deserialize, Serialize};
 
 pub mod queries {}
 

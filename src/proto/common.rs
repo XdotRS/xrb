@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::{Deserialize, KnownSize, Serialize};
+use crate::{Deserialize, Serialize};
 
 /// A unique ID referring to a [Window], [Pixmap], [Cursor], [Font], [GContext], or [Colormap].
 ///
@@ -179,12 +179,6 @@ pub enum BitGravity {
 	Static,
 }
 
-impl KnownSize for BitGravity {
-	fn size() -> usize {
-		1
-	}
-}
-
 /// What to do with children of a window when that window is resized.
 #[derive(Serialize, Deserialize, Clone, Copy)]
 pub enum WinGravity {
@@ -210,10 +204,4 @@ pub enum WinGravity {
 	SouthEast,
 	/// Retain the existing positions of the children of the window.
 	Static,
-}
-
-impl KnownSize for WinGravity {
-	fn size() -> usize {
-		1
-	}
 }

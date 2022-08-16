@@ -2,12 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use bytes::BytesMut;
-
-use crate::{
-	bitmask, serialization::KnownSize, BitGravity, Colormap, Cursor, Deserialize, Pixmap,
-	Serialize, VisualId, WinGravity, Window,
-};
+use crate::{bitmask, BitGravity, Deserialize, Serialize, VisualId, WinGravity, Window};
 
 use super::Request;
 
@@ -70,176 +65,13 @@ pub enum BackingStore {
 	Always,
 }
 
-impl KnownSize for BackingStore {
-	fn size() -> usize {
-		1
-	}
-}
+pub trait CreateWindowValue {}
 
-#[derive(Clone, Copy)]
-pub enum Inherit<T>
-where
-	T: Serialize + Deserialize,
-{
-	Parent,
-	Own(T),
-}
-
-impl<T> Serialize for Inherit<T>
-where
-	T: Serialize + Deserialize,
-{
-	fn write(self, buf: &mut impl bytes::BufMut) {
-		match self {
-			Self::Parent => 0u32.write(buf),
-			Self::Own(inheritance) => inheritance.write(buf),
-		}
-	}
-}
-
-impl<T> Deserialize for Inherit<T>
-where
-	T: Serialize + Deserialize,
-{
-	fn read(buf: &mut impl bytes::Buf) -> Self {
-		let inheritance = u32::read(buf);
-
-		match inheritance {
-			0u32 => Self::Parent,
-			_ => {
-				let temp = &mut BytesMut::new();
-				inheritance.write(temp);
-
-				Self::Own(T::read(temp))
-			}
-		}
-	}
-}
-
-impl<T> KnownSize for Inherit<T>
-where
-	T: KnownSize + Serialize + Deserialize,
-{
-	fn size() -> usize {
-		T::size()
-	}
-}
-
-#[derive(Clone, Copy)]
-pub enum OptionalInherit<T>
-where
-	T: Serialize + Deserialize,
-{
-	None,
-	Parent,
-	Own(T),
-}
-
-impl<T> Serialize for OptionalInherit<T>
-where
-	T: Serialize + Deserialize,
-{
-	fn write(self, buf: &mut impl bytes::BufMut) {
-		match self {
-			Self::None => 0u32.write(buf),
-			Self::Parent => 1u32.write(buf),
-			Self::Own(inheritance) => inheritance.write(buf),
-		}
-	}
-}
-
-impl<T> Deserialize for OptionalInherit<T>
-where
-	T: Serialize + Deserialize,
-{
-	fn read(buf: &mut impl bytes::Buf) -> Self {
-		let inheritance = u32::read(buf);
-
-		match inheritance {
-			0u32 => Self::None,
-			1u32 => Self::Parent,
-			_ => {
-				let temp = &mut BytesMut::new();
-				inheritance.write(temp);
-
-				Self::Own(T::read(temp))
-			}
-		}
-	}
-}
-
-impl<T> KnownSize for OptionalInherit<T>
-where
-	T: KnownSize + Serialize + Deserialize,
-{
-	fn size() -> usize {
-		T::size()
-	}
-}
-
-#[derive(Clone, Copy)]
-#[allow(dead_code)]
-pub enum CreateWindowValue {
-	BackgroundPixmap(OptionalInherit<Pixmap>),
-	BackgroundPixel(u32),
-	BorderPixmap(Inherit<Pixmap>),
-	BorderPixel(u32),
-	BitGravity(BitGravity),
-	WinGravity(WinGravity),
-	BackingStore(BackingStore),
-	BackingPlanes(u32),
-	BackingPixel(u32),
-	OverrideRedirect(bool),
-	SaveUnder(bool),
-	EventMask(u32),          // bitmask
-	DoNotPropagateMask(u32), // bitmask
-	Colormap(Inherit<Colormap>),
-	Cursor(Option<Cursor>),
-}
-
-impl CreateWindowValue {
-	pub fn size(&self) -> usize {
-		match self {
-			Self::BackgroundPixmap(_) => <OptionalInherit<Pixmap>>::size(),
-			Self::BackgroundPixel(_) => u32::size(),
-			Self::BorderPixmap(_) => <Inherit<Pixmap>>::size(),
-			Self::BorderPixel(_) => u32::size(),
-			Self::BitGravity(_) => BitGravity::size(),
-			Self::WinGravity(_) => WinGravity::size(),
-			Self::BackingStore(_) => BackingStore::size(),
-			Self::BackingPlanes(_) => u32::size(),
-			Self::BackingPixel(_) => u32::size(),
-			Self::OverrideRedirect(_) => bool::size(),
-			Self::SaveUnder(_) => bool::size(),
-			Self::EventMask(_) => u32::size(),
-			Self::DoNotPropagateMask(_) => u32::size(),
-			Self::Colormap(_) => <Inherit<Colormap>>::size(),
-			Self::Cursor(_) => <Option<Cursor>>::size(),
-		}
-	}
-}
-
-impl Serialize for CreateWindowValue {
-	fn write(self, buf: &mut impl bytes::BufMut) {
-		match self {
-			Self::BackgroundPixmap(pixmap) => pixmap.write(buf),
-			Self::BackgroundPixel(pixel) => pixel.write(buf),
-			Self::BorderPixmap(pixmap) => pixmap.write(buf),
-			Self::BorderPixel(pixel) => pixel.write(buf),
-			Self::BitGravity(bit_gravity) => bit_gravity.write(buf),
-			Self::WinGravity(win_gravity) => win_gravity.write(buf),
-			Self::BackingStore(store) => store.write(buf),
-			Self::BackingPlanes(planes) => planes.write(buf),
-			Self::BackingPixel(pixel) => pixel.write(buf),
-			Self::OverrideRedirect(override_redirect) => override_redirect.write(buf),
-			Self::SaveUnder(save_under) => save_under.write(buf),
-			Self::EventMask(event_mask) => event_mask.write(buf),
-			Self::DoNotPropagateMask(device_event) => device_event.write(buf),
-			Self::Colormap(colormap) => colormap.write(buf),
-			Self::Cursor(cursor) => cursor.write(buf),
-		}
-	}
-}
+impl CreateWindowValue for u32 {}
+impl CreateWindowValue for BitGravity {}
+impl CreateWindowValue for WinGravity {}
+impl CreateWindowValue for bool {}
+impl CreateWindowValue for BackingStore {}
 
 pub struct CreateWindow<'a> {
 	pub depth: u8,
@@ -253,7 +85,11 @@ pub struct CreateWindow<'a> {
 	pub class: WindowClass,
 	pub visual: Visual,
 	pub mask: CreateWindowValueMask,
-	pub values: &'a [CreateWindowValue],
+	// TODO: Reference (`&'a dyn CreateWindowValue`) or box (`Box<dyn CreateWindowValue`)? Both
+	//       have their advantages and disadvantages: references give more of a 'direct access',
+	//       but they create a lot of problems with borrowing temporary values. `Box` might be
+	//       the best choice?
+	pub values: &'a [Box<dyn CreateWindowValue>],
 }
 
 impl Request for CreateWindow<'_> {
@@ -284,17 +120,8 @@ impl Serialize for CreateWindow<'_> {
 		self.class.write(buf); // class
 		self.visual.write(buf); // visual
 		self.mask.write(buf); // mask of the values present in the value list
-		self.values.write(buf); // value list
 
-		// Padding //
-		// Since the total length needs to match `length()`, and not all values are 4 bytes, we may
-		// need to add unused padding bytes to the end. We calculate the byte length of the value
-		// list, as we know all values are a `KnownSize`, and subtract it from the space allocated
-		// for the value list, which is `self.values.len() * 4`.
-		let bytesize: usize = self.values.iter().map(|value| value.size()).sum();
-		let padding = self.values.len() * 4 - bytesize;
-
-		// We can then just put that many empty bytes at the end.
-		buf.put_bytes(0u8, padding);
+		// TODO: Serialize heterogeneous `values` list. Should refactor [`crate::serialization`]
+		//       first to create _intermediate representations_ that allow for easy conversions.
 	}
 }
