@@ -49,6 +49,7 @@ pub const PROTOCOL_MAJOR_VERSION: u16 = 11;
 pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 
 mod proto;
+mod serialization;
 
 mod macros;
 
