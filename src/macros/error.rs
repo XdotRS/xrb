@@ -67,41 +67,6 @@ macro_rules! error {
 			}
 		}
 
-		impl crate::Deserialize for $Error {
-			fn read(buf: &mut impl bytes::Buf) -> Self {
-				// buf has been advanced once to know that this is an error
-				// and a second time to know it is _this_ error (from `error_code()`)
-
-				let sequence_num = u16::read(buf);
-				let data = <$T>::read(buf); // we are relying on $T being exactly 4 bytes here!
-				let minor_opcode = u16::read(buf);
-				let major_opcode = u8::read(buf);
-
-				buf.advance(21); // an error is 32 bytes: advance the further 21 bytes needed
-
-				Self {
-					sequence_num,
-					minor_opcode,
-					major_opcode,
-					data,
-				}
-			}
-		}
-
-		impl crate::Serialize for $Error {
-			fn write(self, buf: &mut impl bytes::BufMut) {
-				0u8.write(buf); // first byte of `0` means this is an error
-				$code.write(buf); // second byte gives which error this is by the error code
-
-				self.sequence_num.write(buf);
-				self.data.write(buf); // we are relying on $T being exactly 4 bytes here!
-				self.minor_opcode.write(buf);
-				self.major_opcode.write(buf);
-
-				buf.put_bytes(0u8, 21); // put the remaining 21 bytes of padding to meet 32 bytes length
-			}
-		}
-
 		crate::error!($($t)*);
 	};
 	(

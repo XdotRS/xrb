@@ -4,14 +4,14 @@
 
 use std::ops::{BitAnd, BitOr};
 
-use crate::{bitmask, Deserialize, Serialize};
+use crate::bitmask;
 
 /// A trait implemented by bitmask enums to provide conversions between a variant and its bitmask.
 ///
 /// Use [`bitmask!`](crate::bitmask) to define bitmask enums implementing this trait.
 pub trait Bitmask<T>
 where
-	Self: Sized + Serialize + Deserialize,
+	Self: Sized,
 	T: BitAnd + BitOr,
 {
 	/// Gets the bitmask value associated with this bitmask variant.

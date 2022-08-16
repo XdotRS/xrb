@@ -2,12 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::{error, Atom as AtomId, Deserialize, ResId, Serialize};
+use crate::{error, Atom as AtomId, ResId};
 
 pub trait Error<T = u32>
 where
-	Self: Sized + Serialize + Deserialize,
-	T: Sized + Serialize + Deserialize,
+	Self: Sized,
+	T: Sized,
 {
 	fn error_code() -> u8;
 	fn sequence_num(&self) -> u16;

@@ -51,13 +51,9 @@ pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 mod proto;
 
 mod macros;
-mod serialization;
 
 pub use proto::bitmasks;
 pub use proto::common::*;
-
-pub use serialization::{Deserialize, Serialize};
-pub use xrb_proc_macros::{Deserialize, Serialize};
 
 pub mod queries {}
 

@@ -16,4 +16,3 @@ categories = [ "api-bindings", "gui", "network-programming", "rendering" ]
 
 [dependencies]
 bytes = "1"
-xrb-proc-macros = { path = "xrb-proc-macros" }

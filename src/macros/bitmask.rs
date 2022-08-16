@@ -149,31 +149,6 @@ variants.iter().filter(|variant| {
 			);
 		}
 
-		///////////////////////////////////////////////////////
-		// [`Serialize`] and [`Deserialize`] implementations //
-		///////////////////////////////////////////////////////
-
-		impl crate::Serialize for $Mask {
-			fn write(self, buf: &mut impl bytes::BufMut) {
-				match self {
-					$(Self::$Variant => $value.write(buf),)+ // Self::Variant => value.write(buf),
-				}
-			}
-		}
-
-		impl crate::Deserialize for $Mask {
-			fn read(buf: &mut impl bytes::Buf) -> Self {
-				match <$T>::read(buf) {
-					$($value => Self::$Variant,)+ // value => Self::Variant,
-					_ => panic!(concat!( // panic!("tried to read Mask from Buf but no matching...
-						"tried to read ",
-						stringify!($Mask),
-						" from Buf but no matching variant was found")
-					)
-				}
-			}
-		}
-
 		/////////////////////////////////
 		// Equality: compare the masks //
 		/////////////////////////////////

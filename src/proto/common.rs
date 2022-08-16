@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::{Deserialize, Serialize};
-
 /// A unique ID referring to a [Window], [Pixmap], [Cursor], [Font], [GContext], or [Colormap].
 ///
 /// A [ResId] must be unique in terms of other [ResId]s, but it may have the same value as another
@@ -70,7 +68,6 @@ pub type String16<'a> = &'a [Char2b];
 pub type Point = (i16, i16);
 
 /// A rectangle with `x`,`y` coordinates and `width` by `height` dimensions.
-#[derive(Serialize, Deserialize)]
 pub struct Rect {
 	pub x: i16,
 	pub y: i16,
@@ -82,7 +79,6 @@ pub struct Rect {
 ///
 /// The [Arc] is represented by a slice of a circle at `x`,`y` with the specified `width` and
 /// `height`. The start and end angles are given by `start_angle` and `end_angle`.
-#[derive(Serialize, Deserialize)]
 pub struct Arc {
 	pub x: i16,
 	pub y: i16,
@@ -93,7 +89,6 @@ pub struct Arc {
 }
 
 /// The protocol used to connection to a particular [Host].
-#[derive(Serialize)]
 pub enum Protocol {
 	/// IPv4.
 	Internet,
@@ -113,45 +108,12 @@ pub struct Host {
 	address: String,
 }
 
-// [`Host`] has a unique length of its address, plus padding, so we have to do this manually. //
-impl Serialize for Host {
-	fn write(self, buf: &mut impl bytes::BufMut) {
-		let length = self.address.len() as u16; // length of address
-		let address_padding = length % 4; // extra padding to reach a multiple of 4 bytes
-
-		self.family.write(buf); // family
-		0u8.write(buf); // padding - unused byte, can be anything
-		length.write(buf); // length of address
-		buf.put(self.address.as_bytes()); // the address itself
-		buf.put_bytes(0u8, address_padding.into()); // extra padding for 4-byte multiple
-	}
-}
-
-impl Deserialize for Host {
-	fn read(buf: &mut impl bytes::Buf) -> Self {
-		buf.advance(1);
-		let family = Protocol::Internet;
-
-		buf.advance(1); // skip the padding (unused) byte
-
-		let length = u16::read(buf); // read length of address
-		let address_padding = length % 4; // extra padding: we need to skip this at the end
-
-		let bytes = buf.copy_to_bytes(length.into()); // read `length` number of bytes for the address
-		let address = String::from_utf8(bytes.to_vec()).unwrap();
-
-		buf.advance(address_padding.into());
-
-		Self { family, address }
-	}
-}
-
 /// If the contents of a window should be kept when it is resized and where they should be placed.
 ///
 /// When a window is resized, the rendered contents of the window are not necessarily discarded. It
 /// is possible to request that the X server repositions the existing window contents to a
 /// particular anchor point within the window. This anchor point is called the [BitGravity].
-#[derive(Serialize, Deserialize, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub enum BitGravity {
 	/// Discard the contents of the window.
 	Forget,
@@ -180,7 +142,7 @@ pub enum BitGravity {
 }
 
 /// What to do with children of a window when that window is resized.
-#[derive(Serialize, Deserialize, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub enum WinGravity {
 	/// Unmap children of the window.
 	Unmap,

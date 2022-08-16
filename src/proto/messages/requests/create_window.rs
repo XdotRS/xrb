@@ -2,11 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::{bitmask, BitGravity, Deserialize, Serialize, VisualId, WinGravity, Window};
+use crate::{bitmask, BitGravity, VisualId, WinGravity, Window};
 
 use super::Request;
 
-#[derive(Serialize, Deserialize)]
 pub enum WindowClass {
 	CopyFromParent,
 	InputOutput,
@@ -16,26 +15,6 @@ pub enum WindowClass {
 pub enum Visual {
 	CopyFromParent,
 	Id(VisualId),
-}
-
-impl Serialize for Visual {
-	fn write(self, buf: &mut impl bytes::BufMut) {
-		match self {
-			Self::CopyFromParent => 0u32.write(buf),
-			Self::Id(id) => id.write(buf),
-		}
-	}
-}
-
-impl Deserialize for Visual {
-	fn read(buf: &mut impl bytes::Buf) -> Self {
-		let visual = u32::read(buf);
-
-		match visual {
-			0u32 => Self::CopyFromParent,
-			_ => Self::Id(visual),
-		}
-	}
 }
 
 bitmask! {
@@ -58,7 +37,7 @@ bitmask! {
 	}
 }
 
-#[derive(Serialize, Deserialize, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub enum BackingStore {
 	NotUseful,
 	WhenMapped,
@@ -99,29 +78,5 @@ impl Request for CreateWindow<'_> {
 
 	fn length(&self) -> u16 {
 		(8 + self.values.len()).try_into().unwrap()
-	}
-}
-
-impl Serialize for CreateWindow<'_> {
-	fn write(self, buf: &mut impl bytes::BufMut) {
-		// Header //
-		Self::major_opcode().write(buf); // request major opcode
-		self.depth.write(buf); // metadata byte (second byte of header) is `depth`
-		self.length().write(buf);
-
-		// Data //
-		self.window_id.write(buf); // window id
-		self.parent.write(buf); // parent
-		self.x.write(buf); // x
-		self.y.write(buf); // y
-		self.width.write(buf); // width
-		self.height.write(buf); // height
-		self.border_width.write(buf); // border width
-		self.class.write(buf); // class
-		self.visual.write(buf); // visual
-		self.mask.write(buf); // mask of the values present in the value list
-
-		// TODO: Serialize heterogeneous `values` list. Should refactor [`crate::serialization`]
-		//       first to create _intermediate representations_ that allow for easy conversions.
 	}
 }
