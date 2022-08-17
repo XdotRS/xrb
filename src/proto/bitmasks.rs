@@ -9,6 +9,7 @@ use crate::bitmask;
 /// A trait implemented by bitmask enums to provide conversions between a variant and its bitmask.
 ///
 /// Use [`bitmask!`](crate::bitmask) to define bitmask enums implementing this trait.
+#[deprecated = "individual obejcts are not flexible enough for specifying multiple values"]
 pub trait Bitmask<T>
 where
 	Self: Sized,
