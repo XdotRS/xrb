@@ -33,6 +33,11 @@ impl GenericError for ReadError {}
 /// A generic result; shorthand for `Result<T, Box<dyn GenericError>>`.
 pub type GenResult<T = ()> = Result<T, Box<dyn GenericError>>;
 
+/// A result potentially generating either a [`ReadError`] or a [`WriteError`].
+///
+/// Shorthand for `Result<T, Box<dyn ReadWriteError>>`.
 pub type ReadWriteResult<T = ()> = Result<T, Box<dyn ReadWriteError>>;
+/// A result generating a [`WriteError`]. Shorthand for `Result<T, WriteError>`.
 pub type WriteResult<T = ()> = Result<T, WriteError>;
+/// A result generating a [`ReadError`]. Shorthand for `Result<T, ReadError>`.
 pub type ReadResult<T> = Result<T, ReadError>;
