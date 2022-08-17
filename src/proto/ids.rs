@@ -3,8 +3,8 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use crate::{
-	error_handling::{WriteError, WriteResult},
-	serialization::WriteValue,
+	error_handling::{ReadError, ReadResult, WriteError, WriteResult},
+	serialization::{ReadValue, WriteValue},
 };
 
 /// A unique ID referring to a particular resource.
@@ -146,5 +146,30 @@ impl WriteValue for VisualId {
 
 	fn write_4b(self) -> WriteResult<u32> {
 		Ok(self.id)
+	}
+}
+
+impl ReadValue for VisualId {
+	fn read_1b(_byte: u8) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		// An ID __must__ remain intact, or it loses all meaning.
+		Err(ReadError::UnsupportedLength)
+	}
+
+	fn read_2b(_bytes: u16) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		// An ID __must__ remain intact, or it loses all meaning.
+		Err(ReadError::UnsupportedLength)
+	}
+
+	fn read_4b(bytes: u32) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		Ok(Self { id: bytes })
 	}
 }
