@@ -2,7 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::serialization::{ReadWriteError, ReadWriteResult, WriteValue};
+use crate::{
+	error_handling::{WriteError, WriteResult},
+	serialization::WriteValue,
+};
 
 /// A unique ID referring to a particular resource.
 ///
@@ -57,33 +60,33 @@ macro_rules! res_id {
 		}
 
 		impl crate::serialization::WriteValue for $Id {
-			fn write_1b(self) -> crate::serialization::ReadWriteResult<u8> {
+			fn write_1b(self) -> crate::error_handling::WriteResult<u8> {
 				// An ID __must__ remain intact, or it loses all meaning.
-				Err(crate::serialization::ReadWriteError::NotEnoughSpace)
+				Err(crate::error_handling::WriteError::CapacityTooLow)
 			}
 
-			fn write_2b(self) -> crate::serialization::ReadWriteResult<u16> {
+			fn write_2b(self) -> crate::error_handling::WriteResult<u16> {
 				// An ID __must__ remain intact, or it loses all meaning.
-				Err(crate::serialization::ReadWriteError::NotEnoughSpace)
+				Err(crate::error_handling::WriteError::CapacityTooLow)
 			}
 
-			fn write_4b(self) -> crate::serialization::ReadWriteResult<u32> {
+			fn write_4b(self) -> crate::error_handling::WriteResult<u32> {
 				Ok(self.id as u32)
 			}
 		}
 
 		impl crate::serialization::ReadValue for $Id {
-			fn read_1b(_byte: u8) -> crate::serialization::ReadWriteResult<Self> {
+			fn read_1b(_byte: u8) -> crate::error_handling::ReadResult<Self> {
 				// An ID __must__ remain intact, or it loses all meaning.
-				Err(crate::serialization::ReadWriteError::NotEnoughSpace)
+				Err(crate::error_handling::ReadError::UnsupportedLength)
 			}
 
-			fn read_2b(_bytes: u16) -> crate::serialization::ReadWriteResult<Self> {
+			fn read_2b(_bytes: u16) -> crate::error_handling::ReadResult<Self> {
 				// An ID __must__ remain intact, or it loses all meaning.
-				Err(crate::serialization::ReadWriteError::NotEnoughSpace)
+				Err(crate::error_handling::ReadError::UnsupportedLength)
 			}
 
-			fn read_4b(bytes: u32) -> crate::serialization::ReadWriteResult<Self> {
+			fn read_4b(bytes: u32) -> crate::error_handling::ReadResult<Self> {
 				Ok(Self { id: bytes })
 			}
 		}
@@ -131,17 +134,17 @@ pub struct VisualId {
 }
 
 impl WriteValue for VisualId {
-	fn write_1b(self) -> ReadWriteResult<u8> {
+	fn write_1b(self) -> WriteResult<u8> {
 		// An ID __must__ remain intact, or it loses all meaning.
-		Err(ReadWriteError::NotEnoughSpace)
+		Err(WriteError::CapacityTooLow)
 	}
 
-	fn write_2b(self) -> ReadWriteResult<u16> {
+	fn write_2b(self) -> WriteResult<u16> {
 		// An ID __must__ remain intact, or it loses all meaning.
-		Err(ReadWriteError::NotEnoughSpace)
+		Err(WriteError::CapacityTooLow)
 	}
 
-	fn write_4b(self) -> ReadWriteResult<u32> {
+	fn write_4b(self) -> WriteResult<u32> {
 		Ok(self.id)
 	}
 }

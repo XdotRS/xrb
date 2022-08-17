@@ -51,6 +51,8 @@ pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 mod proto;
 mod serialization;
 
+#[allow(dead_code)]
+mod error_handling;
 mod macros;
 
 pub use proto::bitmasks;

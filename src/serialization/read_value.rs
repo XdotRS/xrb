@@ -4,7 +4,9 @@
 
 use bytes::Buf;
 
-use super::{ReadWriteError, WriteValue};
+use crate::error_handling::ReadResult;
+
+use super::WriteValue;
 
 /// Read a _value_ from a 1-byte, 2-byte, or 4-byte unsigned integer ([`u8`], [`u16`], or [`u32`]).
 ///
@@ -44,22 +46,22 @@ use super::{ReadWriteError, WriteValue};
 /// - [`Host`](crate::proto::common::Host)
 pub trait ReadValue: WriteValue {
 	/// Read [`Self`] from a single byte ([`u8`]).
-	fn read_1b(byte: u8) -> Result<Self, ReadWriteError>
+	fn read_1b(byte: u8) -> ReadResult<Self>
 	where
 		Self: Sized;
 
 	/// Read [`Self`] from two bytes ([`u16`]) using the system's native endianness.
-	fn read_2b(bytes: u16) -> Result<Self, ReadWriteError>
+	fn read_2b(bytes: u16) -> ReadResult<Self>
 	where
 		Self: Sized;
 
 	/// Read [`Self`] from four bytes ([`u32`]) using the system's native endianness.
-	fn read_4b(bytes: u32) -> Result<Self, ReadWriteError>
+	fn read_4b(bytes: u32) -> ReadResult<Self>
 	where
 		Self: Sized;
 
 	/// Read [`Self`] from a single byte in a [`Buf`].
-	fn read_1b_from(buf: &mut impl Buf) -> Result<Self, ReadWriteError>
+	fn read_1b_from(buf: &mut impl Buf) -> ReadResult<Self>
 	where
 		Self: Sized,
 	{
@@ -67,7 +69,7 @@ pub trait ReadValue: WriteValue {
 	}
 
 	/// Read [`Self`] from two bytes in a [`Buf`] using the system's native endianness.
-	fn read_2b_from(buf: &mut impl Buf) -> Result<Self, ReadWriteError>
+	fn read_2b_from(buf: &mut impl Buf) -> ReadResult<Self>
 	where
 		Self: Sized,
 	{
@@ -79,7 +81,7 @@ pub trait ReadValue: WriteValue {
 	}
 
 	/// Read [`Self`] from four bytes in a [`Buf`] using the system's native endianness.
-	fn read_4b_from(buf: &mut impl Buf) -> Result<Self, ReadWriteError>
+	fn read_4b_from(buf: &mut impl Buf) -> ReadResult<Self>
 	where
 		Self: Sized,
 	{
@@ -100,15 +102,15 @@ macro_rules! reader {
 	) => {
 		$(
 			impl ReadValue for $T {
-				fn read_1b(byte: u8) -> Result<Self, ReadWriteError> {
+				fn read_1b(byte: u8) -> ReadResult<Self> {
 					Ok(byte as Self)
 				}
 
-				fn read_2b(bytes: u16) -> Result<Self, ReadWriteError> {
+				fn read_2b(bytes: u16) -> ReadResult<Self> {
 					Ok(bytes as Self)
 				}
 
-				fn read_4b(bytes: u32) -> Result<Self, ReadWriteError> {
+				fn read_4b(bytes: u32) -> ReadResult<Self> {
 					Ok(bytes as Self)
 				}
 			}
@@ -123,29 +125,29 @@ reader! {
 }
 
 impl ReadValue for bool {
-	fn read_1b(byte: u8) -> Result<Self, ReadWriteError> {
+	fn read_1b(byte: u8) -> ReadResult<Self> {
 		Ok(byte != 0)
 	}
 
-	fn read_2b(bytes: u16) -> Result<Self, ReadWriteError> {
+	fn read_2b(bytes: u16) -> ReadResult<Self> {
 		Ok(bytes != 0)
 	}
 
-	fn read_4b(bytes: u32) -> Result<Self, ReadWriteError> {
+	fn read_4b(bytes: u32) -> ReadResult<Self> {
 		Ok(bytes != 0)
 	}
 }
 
 impl ReadValue for char {
-	fn read_1b(byte: u8) -> Result<Self, ReadWriteError> {
+	fn read_1b(byte: u8) -> ReadResult<Self> {
 		Ok(byte as char)
 	}
 
-	fn read_2b(bytes: u16) -> Result<Self, ReadWriteError> {
+	fn read_2b(bytes: u16) -> ReadResult<Self> {
 		Ok((bytes as u8) as char) // `char` can only be cast from `u8`
 	}
 
-	fn read_4b(bytes: u32) -> Result<Self, ReadWriteError> {
+	fn read_4b(bytes: u32) -> ReadResult<Self> {
 		Ok((bytes as u8) as char) // `char` can only be cast from `u8`
 	}
 }
