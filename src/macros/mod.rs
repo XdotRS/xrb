@@ -9,6 +9,9 @@ mod predefine;
 mod reply;
 mod request;
 
+#[allow(dead_code)]
+mod _request_schema;
+
 /// Generates a doc comment for the given tokens.
 ///
 /// # Example
