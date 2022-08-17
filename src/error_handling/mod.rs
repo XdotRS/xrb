@@ -30,20 +30,9 @@ pub enum ReadError {
 impl ReadWriteError for ReadError {}
 impl GenericError for ReadError {}
 
-#[derive(Debug, Eq, PartialEq)]
-pub enum WordError {
-	/// Less than four bytes were provided.
-	NotEnoughBytes,
-	/// More than four bytes were provided.
-	TooManyBytes,
-}
-impl GenericError for WordError {}
-
 /// A generic result; shorthand for `Result<T, Box<dyn GenericError>>`.
 pub type GenResult<T = ()> = Result<T, Box<dyn GenericError>>;
 
 pub type ReadWriteResult<T = ()> = Result<T, Box<dyn ReadWriteError>>;
 pub type WriteResult<T = ()> = Result<T, WriteError>;
 pub type ReadResult<T> = Result<T, ReadError>;
-
-pub type WordResult<T = ()> = Result<T, WordError>;

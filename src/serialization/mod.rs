@@ -10,42 +10,7 @@ use bytes::{Buf, BufMut};
 pub use read_value::ReadValue;
 pub use write_value::WriteValue;
 
-use crate::error_handling::{ReadResult, WordError, WordResult, WriteError, WriteResult};
-
-#[allow(dead_code)]
-pub struct Word {
-	pub data: (u8, u8, u8, u8),
-}
-
-#[allow(dead_code)]
-impl Word {
-	fn new(bytes: &[u8]) -> WordResult<Self> {
-		if bytes.len() < 4 {
-			return Err(WordError::NotEnoughBytes);
-		}
-
-		if bytes.len() > 4 {
-			return Err(WordError::TooManyBytes);
-		}
-
-		Ok(Self {
-			data: (bytes[0], bytes[1], bytes[2], bytes[3]),
-		})
-	}
-
-	fn words(bytes: &[u8]) -> WordResult<Vec<Self>> {
-		let vec: Vec<Self> = bytes
-			.chunks_exact(4)
-			.map(|chunk| {
-				Self::new(chunk).expect(
-					"`.chunks_exact(4)` didn't return a slice of length 4: should be impossible.",
-				)
-			})
-			.collect();
-
-		Ok(vec)
-	}
-}
+use crate::error_handling::{ReadResult, WriteError, WriteResult};
 
 /// Serializes a _data structure_ to bytes. _Values_ should implement [`WriteValue`] instead.
 pub trait Serialize {
@@ -87,7 +52,7 @@ pub trait Deserialize {
 	/// used to determine which data structure's `deserialize` function to call.
 	///
 	/// Should have zero side effects.
-	fn deserialize(header: Word, buf: &mut impl Buf) -> ReadResult<Self>
+	fn deserialize(header: &[u8; 4], buf: &mut impl Buf) -> ReadResult<Self>
 	where
 		Self: Sized;
 
@@ -95,7 +60,7 @@ pub trait Deserialize {
 	///
 	/// Do not implement this function: implement
 	/// [`deserialize(buf)`](Deserialize::deserialize) instead.
-	fn deserialize_bytes(header: Word, bytes: &[u8]) -> ReadResult<Self>
+	fn deserialize_bytes(header: &[u8; 4], bytes: &[u8]) -> ReadResult<Self>
 	where
 		Self: Sized,
 	{
