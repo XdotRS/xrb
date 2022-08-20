@@ -151,3 +151,4 @@ impl ReadValue for char {
 		Ok((bytes as u8) as char) // `char` can only be cast from `u8`
 	}
 }
+

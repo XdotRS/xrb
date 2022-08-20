@@ -117,3 +117,4 @@ writer! {
 }
 
 writer!(bool, char);
+

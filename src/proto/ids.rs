@@ -32,7 +32,7 @@ macro_rules! res_id {
 
 		$($t:tt)* // recurse: other definitions
 	) => {
-		crate::res_id! {
+		$crate::res_id! {
 			$(#[$metadata])* // attributes or doc comments
 			$vis struct $Id; // pub struct Id;
 
@@ -53,45 +53,45 @@ macro_rules! res_id {
 			pub id: u32,
 		}
 
-		impl crate::proto::ids::ResId for $Id { // impl ResId for $Id {
+		impl $crate::proto::ids::ResId for $Id { // impl ResId for $Id {
 			fn id(&self) -> u32 {
 				self.id
 			}
 		}
 
-		impl crate::serialization::WriteValue for $Id {
-			fn write_1b(self) -> crate::error_handling::WriteResult<u8> {
+		impl $crate::serialization::WriteValue for $Id {
+			fn write_1b(self) -> $crate::error_handling::WriteResult<u8> {
 				// An ID __must__ remain intact, or it loses all meaning.
-				Err(crate::error_handling::WriteError::CapacityTooLow)
+				Err($crate::error_handling::WriteError::CapacityTooLow)
 			}
 
-			fn write_2b(self) -> crate::error_handling::WriteResult<u16> {
+			fn write_2b(self) -> $crate::error_handling::WriteResult<u16> {
 				// An ID __must__ remain intact, or it loses all meaning.
-				Err(crate::error_handling::WriteError::CapacityTooLow)
+				Err($crate::error_handling::WriteError::CapacityTooLow)
 			}
 
-			fn write_4b(self) -> crate::error_handling::WriteResult<u32> {
+			fn write_4b(self) -> $crate::error_handling::WriteResult<u32> {
 				Ok(self.id as u32)
 			}
 		}
 
-		impl crate::serialization::ReadValue for $Id {
-			fn read_1b(_byte: u8) -> crate::error_handling::ReadResult<Self> {
+		impl $crate::serialization::ReadValue for $Id {
+			fn read_1b(_byte: u8) -> $crate::error_handling::ReadResult<Self> {
 				// An ID __must__ remain intact, or it loses all meaning.
-				Err(crate::error_handling::ReadError::UnsupportedLength)
+				Err($crate::error_handling::ReadError::UnsupportedLength)
 			}
 
-			fn read_2b(_bytes: u16) -> crate::error_handling::ReadResult<Self> {
+			fn read_2b(_bytes: u16) -> $crate::error_handling::ReadResult<Self> {
 				// An ID __must__ remain intact, or it loses all meaning.
-				Err(crate::error_handling::ReadError::UnsupportedLength)
+				Err($crate::error_handling::ReadError::UnsupportedLength)
 			}
 
-			fn read_4b(bytes: u32) -> crate::error_handling::ReadResult<Self> {
+			fn read_4b(bytes: u32) -> $crate::error_handling::ReadResult<Self> {
 				Ok(Self { id: bytes })
 			}
 		}
 
-		crate::res_id! { // recurse other definitions
+		$crate::res_id! { // recurse other definitions
 			$($t)*
 		}
 	};
