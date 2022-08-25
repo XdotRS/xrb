@@ -21,29 +21,6 @@ use super::WriteValue;
 /// though it might technically have an unnamed field. The point is that [`ReadValue`] should not
 /// be implemented for a data _structure_, such as an object, a list, a message, though it might be
 /// implemented for the individual elements of an object, list, or message.
-///
-/// ## Examples of things considered _values_
-/// - [`u8`]
-/// - [`u16`]
-/// - [`u32`]
-/// - [`usize`]
-/// - [`i8`]
-/// - [`i16`]
-/// - [`i32`]
-/// - [`isize`]
-/// - [`bool`]
-/// - [`char`]
-/// - [`BitGravity`](crate::proto::common::BitGravity)
-/// - [`WinGravity`](crate::proto::common::WinGravity)
-/// - [`Protocol`](crate::proto::common::Protocol)
-/// - [`KeySym`](crate::proto::common::KeySym)
-///
-/// ## Examples of things _not_ considered _values_
-/// - [`&str`](str)
-/// - [`String`]
-/// - [`&[u8]`](std::slice)
-/// - [`Rect`](crate::proto::common::Rect)
-/// - [`Host`](crate::proto::common::Host)
 pub trait ReadValue: WriteValue {
 	/// Read [`Self`] from a single byte ([`u8`]).
 	fn read_1b(byte: u8) -> ReadResult<Self>
@@ -151,4 +128,3 @@ impl ReadValue for char {
 		Ok((bytes as u8) as char) // `char` can only be cast from `u8`
 	}
 }
-

@@ -13,7 +13,7 @@
 /// ```rust
 /// bitmask! {
 ///     /// A mask of keys and buttons.
-/// 	pub enum KeyButtonMask -> u16 {
+/// 	pub enum KeyButtonMask: Bitmask<u16> {
 ///         Shift => 0x0001,
 ///         Lock => 0x0002,
 ///         Control => 0x0004,

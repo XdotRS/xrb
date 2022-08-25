@@ -10,7 +10,7 @@ macro_rules! error {
 
 		$($t:tt)*
 	) => {
-		crate::error! { // TODO: this actually needs to be its own implementation with data: 0u8
+		$crate::error! { // TODO: this actually needs to be its own implementation with data: 0u8
 			$(#[$outer])*
 			$vis struct $Error: Error($code) -> u32;
 
@@ -35,7 +35,7 @@ macro_rules! error {
 			data: $T,
 		}
 
-		impl crate::proto::messages::errors::Error<$T> for $Error {
+		impl $crate::proto::messages::errors::Error<$T> for $Error {
 			fn error_code() -> u8 {
 				$code
 			}
@@ -67,7 +67,7 @@ macro_rules! error {
 			}
 		}
 
-		crate::error!($($t)*);
+		$crate::error!($($t)*);
 	};
 	(
 		$(#[$outer:meta])*
@@ -75,7 +75,7 @@ macro_rules! error {
 
 		$($t:tt)*
 	) => {
-		crate::error! {
+		$crate::error! {
 			$(#[$outer])*
 			$vis struct $Error: Error($code) -> (
 				$T

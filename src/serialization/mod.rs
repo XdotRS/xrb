@@ -52,7 +52,7 @@ pub trait Deserialize {
 	/// used to determine which data structure's `deserialize` function to call.
 	///
 	/// Should have zero side effects.
-	fn deserialize(header: &[u8; 4], buf: &mut impl Buf) -> ReadResult<Self>
+	fn deserialize(buf: &mut impl Buf) -> ReadResult<Self>
 	where
 		Self: Sized;
 
@@ -60,10 +60,10 @@ pub trait Deserialize {
 	///
 	/// Do not implement this function: implement
 	/// [`deserialize(buf)`](Deserialize::deserialize) instead.
-	fn deserialize_bytes(header: &[u8; 4], bytes: &[u8]) -> ReadResult<Self>
+	fn deserialize_bytes(bytes: &[u8]) -> ReadResult<Self>
 	where
 		Self: Sized,
 	{
-		Self::deserialize(header, &mut bytes.clone())
+		Self::deserialize(&mut bytes.clone())
 	}
 }
