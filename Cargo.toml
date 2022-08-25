@@ -16,3 +16,4 @@ categories = [ "api-bindings", "gui", "network-programming", "rendering" ]
 
 [dependencies]
 bytes = "1"
+bitflags = "1.3"
