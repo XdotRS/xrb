@@ -2,164 +2,144 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use std::ops::{BitAnd, BitOr};
+use bitflags::bitflags;
 
-use crate::bitmask;
-
-/// A trait implemented by bitmask enums to provide conversions between a variant and its bitmask.
-///
-/// Use [`bitmask!`](crate::bitmask) to define bitmask enums implementing this trait.
-#[deprecated = "individual obejcts are not flexible enough for specifying multiple values"]
-pub trait Bitmask<T>
-where
-	Self: Sized,
-	T: BitAnd + BitOr,
-{
-	/// Gets the bitmask value associated with this bitmask variant.
-	fn mask(&self) -> T;
-
-	/// Gets the exactly matching bitmask variant for the given bitmask.
-	///
-	/// By 'exactly matching', this means that only the matching mask bit can be set. Use
-	/// [`from_mask(mask: T) -> Vec<Self>`](Bitmask::from_mask) to get a [`Vec`] of all matching
-	/// bitmask variants for the given mask.
-	fn match_mask(mask: T) -> Option<Self>;
-
-	/// Returns a [`Vec`] of all matching bitmask variants for the given bitmask.
-	fn from_mask(mask: T) -> Vec<Self>;
-}
-
-bitmask! {
+bitflags! {
 	/// A bitmask of X core protocol events.
 	///
 	/// Bitmask value `0xfe000000` must be zero.
-	pub enum Event: Bitmask<u32> {
-		KeyPress => 0x00000001,
-		KeyRelease => 0x00000002,
-		ButtonPress => 0x00000004,
-		ButtonRelease => 0x00000008,
-		EnterWindow => 0x00000010,
-		LeaveWindow => 0x00000020,
-		PointerMotion => 0x00000040,
-		PointerMotionHint => 0x00000080,
-		Button1Motion => 0x00000100,
-		Button2Motion => 0x00000200,
-		Button3Motion => 0x00000400,
-		Button4Motion => 0x00000800,
-		Button5Motion => 0x00001000,
-		ButtonMotion => 0x00002000,
-		KeymapState => 0x00004000,
-		Exposure => 0x00008000,
-		VisibilityChange => 0x00010000,
-		StructureNotify => 0x00020000,
-		SubstructureNotify => 0x00040000,
-		SubstructureRedirect => 0x00080000,
-		FocusChange => 0x00100000,
-		PropertyChange => 0x00400000,
-		ColormapChange => 0x00800000,
-		OwnerGrabButton => 0x01000000,
-		// unused but must be zero => 0xfe000000
+	pub struct EventMask: u32 {
+		const KEY_PRESS = 0x00000001;
+		const KEY_RELEASE = 0x00000002;
+		const BUTTON_PRESS = 0x00000004;
+		const BUTTON_RELEASE = 0x00000008;
+		const ENTER_WINDOW = 0x00000010;
+		const LEAVE_WINDOW = 0x00000020;
+		const POINTER_MOTION = 0x00000040;
+		const POINTER_MOTION_HINT = 0x00000080;
+		const BUTTON_1_MOTION = 0x00000100;
+		const BUTTON_2_MOTION = 0x00000200;
+		const BUTTON_3_MOTION = 0x00000400;
+		const BUTTON_4_MOTION = 0x00000800;
+		const BUTTON_5_MOTION = 0x00001000;
+		const BUTTON_MOTION = 0x00002000;
+		const KEYMAP_STATE = 0x00004000;
+		const EXPOSURE = 0x00008000;
+		const VISIBILITY_CHANGE = 0x00010000;
+		const STRUCTURE_NOTIFY = 0x00020000;
+		const SUBSTRUCTURE_NOTIFY = 0x00040000;
+		const SUBSTRUCTURE_REDIRECT = 0x00080000;
+		const FOCUS_CHANGE = 0x00100000;
+		const PROPERTY_CHANGE = 0x00400000;
+		const COLORMAP_CHANGE = 0x00800000;
+		const OWNER_GRAB_BUTTON = 0x01000000;
+		// TODO: Should this be a constant? doc comment? plain comment?
+		// unused but must be zero = 0xfe000000;
 	}
 
 	/// A bitmask of X core protocol events, specifically used in pointer events.
 	///
 	/// Bitmask value `0xffff8003` must be zero.
-	pub enum PointerEvent: Bitmask<u32> {
-		KeyPress => 0x00000001,
-		KeyRelease => 0x00000002,
-		ButtonPress => 0x00000004,
-		ButtonRelease => 0x00000008,
-		EnterWindow => 0x00000010,
-		LeaveWindow => 0x00000020,
-		PointerMotion => 0x00000040,
-		PointerMotionHint => 0x00000080,
-		Button1Motion => 0x00000100,
-		Button2Motion => 0x00000200,
-		Button3Motion => 0x00000400,
-		Button4Motion => 0x00000800,
-		Button5Motion => 0x00001000,
-		ButtonMotion => 0x00002000,
-		KeymapState => 0x00004000,
-		Exposure => 0x00008000,
-		VisibilityChange => 0x00010000,
-		StructureNotify => 0x00020000,
-		SubstructureNotify => 0x00040000,
-		SubstructureRedirect => 0x00080000,
-		FocusChange => 0x00100000,
-		PropertyChange => 0x00400000,
-		ColormapChange => 0x00800000,
-		OwnerGrabButton => 0x01000000,
-		// unused but must be zero => 0xffff8003
+	pub struct PointerEventMask: u32 {
+		const KEY_PRESS = 0x00000001;
+		const KEY_RELEASE = 0x00000002;
+		const BUTTON_PRESS = 0x00000004;
+		const BUTTON_RELEASE = 0x00000008;
+		const ENTER_WINDOW = 0x00000010;
+		const LEAVE_WINDOW = 0x00000020;
+		const POINTER_MOTION = 0x00000040;
+		const POINTER_MOTION_HINT = 0x00000080;
+		const BUTTON_1_MOTION = 0x00000100;
+		const BUTTON_2_MOTION = 0x00000200;
+		const BUTTON_3_MOTION = 0x00000400;
+		const BUTTON_4_MOTION = 0x00000800;
+		const BUTTON_5_MOTION = 0x00001000;
+		const BUTTON_MOTION = 0x00002000;
+		const KEYMAP_STATE = 0x00004000;
+		const EXPOSURE = 0x00008000;
+		const VISIBILITY_CHANGE = 0x00010000;
+		const STRUCTURE_NOTIFY = 0x00020000;
+		const SUBSTRUCTURE_NOTIFY = 0x00040000;
+		const SUBSTRUCTURE_REDIRECT = 0x00080000;
+		const FOCUS_CHANGE = 0x00100000;
+		const PROPERTY_CHANGE = 0x00400000;
+		const COLORMAP_CHANGE = 0x00800000;
+		const OWNER_GRAB_BUTTON = 0x01000000;
+		// TODO: Should this be a constant? doc comment? plain comment?
+		// unused but must be zero = 0xffff8003;
 	}
 
 	/// A bitmask of X core protocol events, specifically used in device events.
 	///
 	/// Bitmask value `0xffffc0b0` must be zero.
-	pub enum DeviceEvent: Bitmask<u32> {
-		KeyPress => 0x00000001,
-		KeyRelease => 0x00000002,
-		ButtonPress => 0x00000004,
-		ButtonRelease => 0x00000008,
-		EnterWindow => 0x00000010,
-		LeaveWindow => 0x00000020,
-		PointerMotion => 0x00000040,
-		PointerMotionHint => 0x00000080,
-		Button1Motion => 0x00000100,
-		Button2Motion => 0x00000200,
-		Button3Motion => 0x00000400,
-		Button4Motion => 0x00000800,
-		Button5Motion => 0x00001000,
-		ButtonMotion => 0x00002000,
-		KeymapState => 0x00004000,
-		Exposure => 0x00008000,
-		VisibilityChange => 0x00010000,
-		StructureNotify => 0x00020000,
-		SubstructureNotify => 0x00040000,
-		SubstructureRedirect => 0x00080000,
-		FocusChange => 0x00100000,
-		PropertyChange => 0x00400000,
-		ColormapChange => 0x00800000,
-		OwnerGrabButton => 0x01000000,
-		// unused but must be zero => 0xffc0b0
+	pub struct DeviceEventMask: u32 {
+		const KEY_PRESS = 0x00000001;
+		const KEY_RELEASE = 0x00000002;
+		const BUTTON_PRESS = 0x00000004;
+		const BUTTON_RELEASE = 0x00000008;
+		const ENTER_WINDOW = 0x00000010;
+		const LEAVE_WINDOW = 0x00000020;
+		const POINTER_MOTION = 0x00000040;
+		const POINTER_MOTION_HINT = 0x00000080;
+		const BUTTON_1_MOTION = 0x00000100;
+		const BUTTON_2_MOTION = 0x00000200;
+		const BUTTON_3_MOTION = 0x00000400;
+		const BUTTON_4_MOTION = 0x00000800;
+		const BUTTON_5_MOTION = 0x00001000;
+		const BUTTON_MOTION = 0x00002000;
+		const KEYMAP_STATE = 0x00004000;
+		const EXPOSURE = 0x00008000;
+		const VISIBILITY_CHANGE = 0x00010000;
+		const STRUCTURE_NOTIFY = 0x00020000;
+		const SUBSTRUCTURE_NOTIFY = 0x00040000;
+		const SUBSTRUCTURE_REDIRECT = 0x00080000;
+		const FOCUS_CHANGE = 0x00100000;
+		const PROPERTY_CHANGE = 0x00400000;
+		const COLORMAP_CHANGE = 0x00800000;
+		const OWNER_GRAB_BUTTON = 0x01000000;
+		// TODO: Should this be a constant? doc comment? plain comment?
+		// unused but must be zero = 0xffffc0b0;
 	}
 
 	/// A bitmask of modifier keys and mouse buttons.
 	///
 	/// Bitmask value `0xe000` must be zero.
-	pub enum KeyButtonMask: Bitmask<u16> {
-		Shift => 0x0001,
-		Lock => 0x0002,
-		Control => 0x0004,
-		Mod1 => 0x0008,
-		Mod2 => 0x0010,
-		Mod3 => 0x0020,
-		Mod4 => 0x0040,
-		Mod5 => 0x0080,
-		Button1 => 0x0100,
-		Button2 => 0x0200,
-		Button3 => 0x0400,
-		Button4 => 0x0800,
-		Button5 => 0x1000,
-		// unused but must be zero => 0xe000
+	pub struct KeyButtonMask: u16 {
+		const SHIFT = 0x0001;
+		const LOCK = 0x0002;
+		const CONTROL = 0x0004;
+		const MOD_1 = 0x0008;
+		const MOD_2 = 0x0010;
+		const MOD_3 = 0x0020;
+		const MOD_4 = 0x0040;
+		const MOD_5 = 0x0080;
+		const BUTTON_1 = 0x0100;
+		const BUTTON_2 = 0x0200;
+		const BUTTON_3 = 0x0400;
+		const BUTTON_4 = 0x0800;
+		const BUTTON_5 = 0x1000;
+		// TODO: Should this be a cosntant? doc comment? plain comment?
+		// unused but must be zero = 0xe000;
 	}
 
 	/// A bitmask of modifier keys and mouse buttons, specifically used in key events.
 	///
 	/// Bitmask value `0xff00` must be zero.
-	pub enum KeyMask: Bitmask<u16> {
-		Shift => 0x0001,
-		Lock => 0x0002,
-		Control => 0x0004,
-		Mod1 => 0x0008,
-		Mod2 => 0x0010,
-		Mod3 => 0x0020,
-		Mod4 => 0x0040,
-		Mod5 => 0x0080,
-		Button1 => 0x0100,
-		Button2 => 0x0200,
-		Button3 => 0x0400,
-		Button4 => 0x0800,
-		Button5 => 0x1000,
-		// unused but must be zero => 0xff00
+	pub struct KeyMask: u16 {
+		const SHIFT = 0x0001;
+		const LOCK = 0x0002;
+		const CONTROL = 0x0004;
+		const MOD_1 = 0x0008;
+		const MOD_2 = 0x0010;
+		const MOD_3 = 0x0020;
+		const MOD_4 = 0x0040;
+		const MOD_5 = 0x0080;
+		const BUTTON_1 = 0x0100;
+		const BUTTON_2 = 0x0200;
+		const BUTTON_3 = 0x0400;
+		const BUTTON_4 = 0x0800;
+		const BUTTON_5 = 0x1000;
+		// TODO: Should this be a cosntant? doc comment? plain comment?
+		// unused but must be zero = 0xff00;
 	}
 }

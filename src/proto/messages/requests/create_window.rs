@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::bitmask;
+use bitflags::bitflags;
 
 use crate::proto::ids::VisualId;
 use crate::proto::ids::Window;
@@ -39,23 +39,22 @@ pub enum CwVisualId {
 // TODO: Implement for possible values
 pub trait CwValue {}
 
-// TODO: Replace with `bitflags` crate
-bitmask! {
-	pub enum CwValueMask: Bitmask<u32> {
-		BackgroundPixmap => 0x00000001,
-		BackgroundPixel => 0x00000002,
-		BorderPixmap => 0x00000004,
-		BorderPixel => 0x00000008,
-		BitGravity => 0x00000010,
-		WinGravity => 0x00000020,
-		BackingStore => 0x00000040,
-		BackingPlanes => 0x00000080,
-		BackingPixel => 0x00000100,
-		OverrideRedirect => 0x00000200,
-		SaveUnder => 0x00000400,
-		EventMask => 0x00000800,
-		DoNotPropagateMask => 0x00001000,
-		Colormap => 0x00002000,
-		Cursor => 0x00004000,
-	}
+bitflags! {
+    pub struct CwValueMask: u32 {
+        const BACKGROUND_PIXMAP = 0x00000001;
+        const BACKGROUND_PIXEL = 0x00000002;
+        const BORDER_PIXMAP = 0x00000004;
+        const BORDER_PIXEL = 0x00000008;
+        const BIT_GRAVITY = 0x00000010;
+        const WIN_GRAVITY = 0x00000020;
+        const BACKING_STORE = 0x00000040;
+        const BACKING_PLANES = 0x00000080;
+        const BACKING_PIXEL = 0x00000100;
+        const OVERRIDE_REDIRECT = 0x00000200;
+        const SAVE_UNDER = 0x00000400;
+        const EVENT_MASK = 0x00000800;
+        const DO_NOT_PROPAGATE_MASK = 0x00001000;
+        const COLORMAP = 0x00002000;
+        const CURSOR = 0x00004000;
+    }
 }
