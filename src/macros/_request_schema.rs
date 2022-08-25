@@ -1,3 +1,12 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+// This is NOT used code in XRB. This is simply an experiment in what a full
+// 'schema' kind of format to generate _all_ of the code for a request might
+// look like. It is inspired by the actual protocol message formats in appendix
+// B of the X Window System protocol spec version 11.
+
 use crate::proto::{atoms::Atom, ids::Window};
 
 macro_rules! schema {
