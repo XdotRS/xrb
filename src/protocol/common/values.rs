@@ -46,6 +46,10 @@ pub type VisualId = u32;
 /// A timestamp expressed in milliseconds, typically since the last server reset.
 pub type Timestamp = u32;
 
+pub type Keysym = u32;
+pub type Keycode = u8;
+pub type Button = u8;
+
 /// A UTF-16-encoded character.
 pub type Char2b = (u8, u8);
 /// A pair of two-dimensional coordinates; x and y.
