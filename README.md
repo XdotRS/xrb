@@ -1,3 +1,5 @@
+X11 protocol formats, structures, serialization, and deserialization.
+
 # X Rust Bindings
 X Rust Bindings is a Rust library for the X Window System protocol version 11.
 It is _not_ a full API: XRB simply provides a mirror of the formats of X11
