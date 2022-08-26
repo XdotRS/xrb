@@ -48,7 +48,11 @@ pub const PROTOCOL_MAJOR_VERSION: u16 = 11;
 /// protocol; seeing as this has not happened since the 80s, it's probably safe to assume it won't.
 pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 
+#[deprecated = "old module layout; in the process of moving to [protocol]"]
 mod proto;
+/// Contains representations of the X11 protocol data types and structures.
+pub mod protocol;
+
 mod serialization;
 
 #[allow(dead_code)]

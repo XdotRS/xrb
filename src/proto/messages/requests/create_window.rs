@@ -40,21 +40,21 @@ pub enum CwVisualId {
 pub trait CwValue {}
 
 bitflags! {
-    pub struct CwValueMask: u32 {
-        const BACKGROUND_PIXMAP = 0x00000001;
-        const BACKGROUND_PIXEL = 0x00000002;
-        const BORDER_PIXMAP = 0x00000004;
-        const BORDER_PIXEL = 0x00000008;
-        const BIT_GRAVITY = 0x00000010;
-        const WIN_GRAVITY = 0x00000020;
-        const BACKING_STORE = 0x00000040;
-        const BACKING_PLANES = 0x00000080;
-        const BACKING_PIXEL = 0x00000100;
-        const OVERRIDE_REDIRECT = 0x00000200;
-        const SAVE_UNDER = 0x00000400;
-        const EVENT_MASK = 0x00000800;
-        const DO_NOT_PROPAGATE_MASK = 0x00001000;
-        const COLORMAP = 0x00002000;
-        const CURSOR = 0x00004000;
-    }
+	pub struct CwValueMask: u32 {
+		const BACKGROUND_PIXMAP = 0x00000001;
+		const BACKGROUND_PIXEL = 0x00000002;
+		const BORDER_PIXMAP = 0x00000004;
+		const BORDER_PIXEL = 0x00000008;
+		const BIT_GRAVITY = 0x00000010;
+		const WIN_GRAVITY = 0x00000020;
+		const BACKING_STORE = 0x00000040;
+		const BACKING_PLANES = 0x00000080;
+		const BACKING_PIXEL = 0x00000100;
+		const OVERRIDE_REDIRECT = 0x00000200;
+		const SAVE_UNDER = 0x00000400;
+		const EVENT_MASK = 0x00000800;
+		const DO_NOT_PROPAGATE_MASK = 0x00001000;
+		const COLORMAP = 0x00002000;
+		const CURSOR = 0x00004000;
+	}
 }
