@@ -5,7 +5,7 @@
 [package]
 name = "xrb"
 version = "0.1.0-dev"
-authors = [ "Antikyth <antikyth at gmail dot com>" ]
+authors = [ "X.RS", "Antikyth <antikyth at gmail dot com>" ]
 edition = "2021"
 description = "X11 protocol formats, structures, serialization and deserialization."
 license = "MPL-2.0"
