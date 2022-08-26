@@ -3,8 +3,11 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 pub mod common;
-pub mod messages;
 
 pub mod atoms;
 pub mod identifiers;
-pub mod keyboard;
+
+pub mod events;
+pub mod requests;
+
+pub mod errors;
