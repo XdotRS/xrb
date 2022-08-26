@@ -8,12 +8,12 @@
 mod read_value;
 mod write_value;
 
-use bytes::{Buf, BufMut};
+use bytes::{Buf, BufMut, BytesMut};
 
 pub use read_value::ReadValue;
 pub use write_value::WriteValue;
 
-use crate::error_handling::{ReadResult, WriteError, WriteResult};
+use crate::error_handling::{ReadError, ReadResult, WriteError, WriteResult};
 
 /// Serializes a _data structure_ to bytes. _Values_ should implement [`WriteValue`] instead.
 pub trait Serialize {
@@ -68,5 +68,38 @@ pub trait Deserialize {
 		Self: Sized,
 	{
 		Self::deserialize(&mut bytes.clone())
+	}
+}
+
+impl Serialize for String {
+	fn serialize(self) -> WriteResult<&'static [u8]> {
+		let mut bytes = BytesMut::new();
+
+		// Write the string length to the byte buffer.
+		self.len().write_1b_to(&mut bytes);
+
+		// Write each [`char`] to the byte buffer.
+		for ch in self.chars() {
+			ch.write_1b_to(&mut bytes)?;
+		}
+
+		Ok(&bytes)
+	}
+}
+
+impl Deserialize for String {
+	fn deserialize(buf: &mut impl Buf) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		// Read the length of the string from the buffer.
+		let length = buf.get_u8() as usize;
+
+		// Copy `length` number of bytes to a vec.
+		let bytes = buf.copy_to_bytes(length).to_vec();
+
+		// Create a string from the bytes vec, replacing any error that occurs
+		// with an [`InvalidData`] error.
+		String::from_utf8(bytes).map_or(Err(ReadError::InvalidData), |text| Ok(text))
 	}
 }
