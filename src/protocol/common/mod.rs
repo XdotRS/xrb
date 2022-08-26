@@ -3,5 +3,5 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 pub mod masks;
-pub mod primitives;
 pub mod structures;
+pub mod values;
