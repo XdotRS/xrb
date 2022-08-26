@@ -20,7 +20,7 @@ pub trait Serialize {
 	/// Serializes the data structure to bytes.
 	///
 	/// Should have zero side effects.
-	fn serialize(self) -> WriteResult<&'static [u8]>;
+	fn serialize(self) -> WriteResult<Vec<u8>>;
 
 	/// Serializes the data structure to bytes in a [`BufMut`].
 	///
@@ -40,7 +40,9 @@ pub trait Serialize {
 			return Err(WriteError::CapacityTooLow);
 		}
 
-		Ok(buf.put(data))
+		buf.put(&*data);
+
+		Ok(())
 	}
 }
 
@@ -72,18 +74,18 @@ pub trait Deserialize {
 }
 
 impl Serialize for String {
-	fn serialize(self) -> WriteResult<&'static [u8]> {
+	fn serialize(self) -> WriteResult<Vec<u8>> {
 		let mut bytes = BytesMut::new();
 
 		// Write the string length to the byte buffer.
-		self.len().write_1b_to(&mut bytes);
+		self.len().write_1b_to(&mut bytes)?;
 
 		// Write each [`char`] to the byte buffer.
 		for ch in self.chars() {
 			ch.write_1b_to(&mut bytes)?;
 		}
 
-		Ok(&bytes)
+		Ok(bytes.to_vec())
 	}
 }
 

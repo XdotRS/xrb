@@ -51,10 +51,8 @@ pub struct Host {
 }
 
 impl Serialize for String16<'_> {
-	fn serialize(self) -> WriteResult<&'static [u8]> {
-		// We use a mutable slice of bytes here because it makes for the most
-		// readable code. We could have also used an iterator with `flat_map`.
-		let bytes: &mut [u8] = &mut [];
+	fn serialize(self) -> WriteResult<Vec<u8>> {
+		let mut bytes = vec![];
 
 		for ch in self {
 			ch.write_2b_to(&mut bytes)?;
@@ -68,16 +66,16 @@ impl Serialize for String16<'_> {
 // length from just the [`String16`] itself.
 
 impl Serialize for Rectangle {
-	fn serialize(self) -> WriteResult<&'static [u8]> {
-		let bytes: &mut [u8] = &mut [];
+	fn serialize(self) -> WriteResult<Vec<u8>> {
+		let mut bytes = BytesMut::new();
 
 		// Write each field as two bytes to `bytes`.
-		self.x.write_2b_to(&mut bytes);
-		self.y.write_2b_to(&mut bytes);
-		self.width.write_2b_to(&mut bytes);
-		self.height.write_2b_to(&mut bytes);
+		self.x.write_2b_to(&mut bytes)?;
+		self.y.write_2b_to(&mut bytes)?;
+		self.width.write_2b_to(&mut bytes)?;
+		self.height.write_2b_to(&mut bytes)?;
 
-		Ok(bytes)
+		Ok(bytes.to_vec())
 	}
 }
 
@@ -97,18 +95,18 @@ impl Deserialize for Rectangle {
 }
 
 impl Serialize for Arc {
-	fn serialize(self) -> WriteResult<&'static [u8]> {
-		let bytes: &mut [u8] = &mut [];
+	fn serialize(self) -> WriteResult<Vec<u8>> {
+		let mut bytes = BytesMut::new();
 
 		// Write each field as two bytes to `bytes`.
-		self.x.write_2b_to(&mut bytes);
-		self.y.write_2b_to(&mut bytes);
-		self.width.write_2b_to(&mut bytes);
-		self.height.write_2b_to(&mut bytes);
-		self.start.write_2b_to(&mut bytes);
-		self.end.write_2b_to(&mut bytes);
+		self.x.write_2b_to(&mut bytes)?;
+		self.y.write_2b_to(&mut bytes)?;
+		self.width.write_2b_to(&mut bytes)?;
+		self.height.write_2b_to(&mut bytes)?;
+		self.start.write_2b_to(&mut bytes)?;
+		self.end.write_2b_to(&mut bytes)?;
 
-		Ok(bytes)
+		Ok(bytes.to_vec())
 	}
 }
 
@@ -130,7 +128,7 @@ impl Deserialize for Arc {
 }
 
 impl Serialize for Host {
-	fn serialize(self) -> WriteResult<&'static [u8]> {
+	fn serialize(self) -> WriteResult<Vec<u8>> {
 		let mut bytes = BytesMut::new();
 
 		self.family.write_1b_to(&mut bytes)?; // protocol family
@@ -151,7 +149,7 @@ impl Serialize for Host {
 		bytes.put(self.address.as_bytes()); // address itself
 		bytes.put_bytes(0, padding); // any extra unused padding
 
-		Ok(&bytes)
+		Ok(bytes.to_vec())
 	}
 }
 
