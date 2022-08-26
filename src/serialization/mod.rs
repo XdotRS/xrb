@@ -2,6 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+//! TODO: Implement [std::io::Read] and [std::io::Write] traits for serialization
+//! and deserialization.
+
 mod read_value;
 mod write_value;
 
