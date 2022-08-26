@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::error_handling::{ReadError, ReadResult, WriteError, WriteResult};
+use crate::errors::{ReadError, ReadResult, WriteError, WriteResult};
 use crate::serialization::{ReadValue, WriteValue};
 
 /// A raw bitmask value that indicates the presence of certain fields.
@@ -113,7 +113,7 @@ impl ReadValue for Char2b {
 		Self: Sized,
 	{
 		// A two-byte character obviously can't be contained within a single byte.
-		Err(ReadError::UnsupportedLength)
+		Err(ReadError::UnsupportedSize)
 	}
 
 	fn read_2b(bytes: u16) -> ReadResult<Self>
@@ -166,7 +166,7 @@ impl ReadValue for Point {
 		Self: Sized,
 	{
 		// A point must be a pair of 16-bit values, i.e. 32 bits total.
-		Err(ReadError::UnsupportedLength)
+		Err(ReadError::UnsupportedSize)
 	}
 
 	fn read_2b(_bytes: u16) -> ReadResult<Self>
@@ -174,7 +174,7 @@ impl ReadValue for Point {
 		Self: Sized,
 	{
 		// A point must be a pair of 16-bit values, i.e. 32 bits total.
-		Err(ReadError::UnsupportedLength)
+		Err(ReadError::UnsupportedSize)
 	}
 
 	fn read_4b(bytes: u32) -> ReadResult<Self>

@@ -4,7 +4,7 @@
 
 use bytes::Buf;
 
-use crate::error_handling::ReadResult;
+use crate::errors::ReadResult;
 
 use super::WriteValue;
 

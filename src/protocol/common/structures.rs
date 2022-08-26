@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::error_handling::*;
+use crate::errors::{ReadError, ReadResult, WriteResult};
 use crate::serialization::{Deserialize, ReadValue, Serialize, WriteValue};
 
 use bytes::{BufMut, BytesMut};

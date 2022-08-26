@@ -13,7 +13,7 @@ use bytes::{Buf, BufMut, BytesMut};
 pub use read_value::ReadValue;
 pub use write_value::WriteValue;
 
-use crate::error_handling::{ReadError, ReadResult, WriteError, WriteResult};
+use crate::errors::{ReadError, ReadResult, WriteError, WriteResult};
 
 /// Serializes a _data structure_ to bytes. _Values_ should implement [`WriteValue`] instead.
 pub trait Serialize {
@@ -28,7 +28,7 @@ pub trait Serialize {
 	/// instead.
 	///
 	/// Should have zero effects.
-	fn serialize_to(self, buf: &mut impl BufMut) -> WriteResult
+	fn serialize_to(self, buf: &mut impl BufMut) -> WriteResult<()>
 	where
 		Self: Sized,
 	{

@@ -4,7 +4,7 @@
 
 use bytes::BufMut;
 
-use crate::error_handling::WriteResult;
+use crate::errors::WriteResult;
 
 /// Write a _value_ as a 1-byte, 2-byte, or 4-byte unsigned integer ([`u8`], [`u16`], or [`u32`]).
 ///
@@ -27,7 +27,7 @@ pub trait WriteValue {
 	/// Writes [`Self`] to four bytes ([`u32`]) using the system's native endianness.
 	fn write_4b(self) -> WriteResult<u32>;
 
-	fn write_1b_to(self, buf: &mut impl BufMut) -> WriteResult
+	fn write_1b_to(self, buf: &mut impl BufMut) -> WriteResult<()>
 	where
 		Self: Sized,
 	{
@@ -36,7 +36,7 @@ pub trait WriteValue {
 		Ok(())
 	}
 
-	fn write_2b_to(self, buf: &mut impl BufMut) -> WriteResult
+	fn write_2b_to(self, buf: &mut impl BufMut) -> WriteResult<()>
 	where
 		Self: Sized,
 	{
@@ -49,7 +49,7 @@ pub trait WriteValue {
 		Ok(())
 	}
 
-	fn write_4b_to(self, buf: &mut impl BufMut) -> WriteResult
+	fn write_4b_to(self, buf: &mut impl BufMut) -> WriteResult<()>
 	where
 		Self: Sized,
 	{
