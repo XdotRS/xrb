@@ -7,6 +7,9 @@ mod wrapper_macro;
 
 use crate::protocol::common::values::{Timestamp, Window};
 
+use crate::errors::{ReadResult, WriteResult};
+use crate::serialization::{ReadValue, WriteValue};
+
 wrappers! {
 	/// Allows fields to inherit their values from their 'parent'.
 	///
@@ -58,5 +61,68 @@ wrappers! {
 	pub enum Focus {
 		Window(Window),
 		PointerRoot = 1,
+	}
+}
+
+// Implement serialization for [`Option`] enum wrappers too. None = 0.
+impl<T> WriteValue for Option<T>
+where
+	T: WriteValue,
+{
+	fn write_1b(self) -> WriteResult<u8> {
+		match self {
+			None => Ok(0),
+			Some(val) => val.write_1b(),
+		}
+	}
+
+	fn write_2b(self) -> WriteResult<u16> {
+		match self {
+			None => Ok(0),
+			Some(val) => val.write_2b(),
+		}
+	}
+
+	fn write_4b(self) -> WriteResult<u32> {
+		match self {
+			None => Ok(0),
+			Some(val) => val.write_4b(),
+		}
+	}
+}
+
+// Implement deserialization for [`Option`] enum wrappers too. 0 = None.
+impl<T> ReadValue for Option<T>
+where
+	T: ReadValue,
+{
+	fn read_1b(byte: u8) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		Ok(match byte {
+			0 => None,
+			_ => Some(T::read_1b(byte)?),
+		})
+	}
+
+	fn read_2b(bytes: u16) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		Ok(match bytes {
+			0 => None,
+			_ => Some(T::read_2b(bytes)?),
+		})
+	}
+
+	fn read_4b(bytes: u32) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		Ok(match bytes {
+			0 => None,
+			_ => Some(T::read_4b(bytes)?),
+		})
 	}
 }
