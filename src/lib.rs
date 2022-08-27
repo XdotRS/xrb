@@ -55,6 +55,10 @@ mod errors;
 mod serialization;
 
 pub mod queries {}
-pub mod notifications {}
-pub mod requests {}
+pub mod events {
+	pub use crate::protocol::events::*;
+}
+pub mod requests {
+	pub use crate::protocol::requests::*;
+}
 pub mod replies {}

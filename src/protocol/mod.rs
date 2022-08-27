@@ -9,7 +9,7 @@ pub mod common;
 pub mod atoms;
 pub mod identifiers;
 
-pub mod events;
-pub mod requests;
+pub(crate) mod events;
+pub(crate) mod requests;
 
 pub mod errors;
