@@ -46,7 +46,7 @@ wrappers! {
 	}
 
 	/// Represents either a [`Specific`](Time::Specific) [`Timestamp`] or the
-	/// [`Current`] time.
+	/// [`Current`](Time::Current) time.
 	pub enum Time {
 		Specific(Timestamp),
 		Current = 0,
