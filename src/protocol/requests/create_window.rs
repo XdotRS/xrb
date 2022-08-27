@@ -57,7 +57,7 @@ pub struct CreateWindow<'a> {
 
 bitflags! {
 	pub struct CwValueMask: u32 {
-	    /// 1. [`CwBackgroundPixmap`]
+		/// 1. [`CwBackgroundPixmap`]
 		const BACKGROUND_PIXMAP = 0x_0000_0001;
 		/// 2. [`CwBackgroundPixel`]
 		const BACKGROUND_PIXEL = 0x_0000_0002;
@@ -91,33 +91,33 @@ bitflags! {
 }
 
 // Type definitions {{{
-/// 1. [`Option`]`<`[`Relative`]`<`[`Pixmap`]`>>`
+/// (1) [`Option`]`<`[`Relative`]`<`[`Pixmap`]`>>`
 pub type CwBackgroundPixmap = Option<Relative<Pixmap>>;
-/// 2. [`u32`]
+/// (2) [`u32`]
 pub type CwBackgroundPixel = u32;
-/// 3. [`Inherit`]`<`[`Pixmap`]`>`
+/// (3) [`Inherit`]`<`[`Pixmap`]`>`
 pub type CwBorderPixmap = Inherit<Pixmap>;
-/// 4. [`u32`]
+/// (4) [`u32`]
 pub type CwBorderPixel = u32;
-/// 5. [`BitGravity`]
+/// (5) [`BitGravity`]
 pub type CwBitGravity = BitGravity;
-/// 6. [`WinGravity`]
+/// (6) [`WinGravity`]
 pub type CwWinGravity = WinGravity;
-/// 7. [`u32`]
+/// (7) [`u32`]
 pub type CwBackingPlanes = u32;
-/// 8. [`u32`]
+/// (8) [`u32`]
 pub type CwBackingPixel = u32;
-/// 9. [`bool`]
+/// (9) [`bool`]
 pub type CwOverrideRedirect = bool;
-/// 10. [`bool`]
+/// (10) [`bool`]
 pub type CwSaveUnder = bool;
-/// 11. [`EventMask`]
+/// (11) [`EventMask`]
 pub type CwEventMask = EventMask;
-/// 12. [`DeviceEventMask`]
+/// (12) [`DeviceEventMask`]
 pub type CwDoNotPropagateMask = DeviceEventMask;
-/// 13. [`Inherit`]`<`[`Colormap`]`>`
+/// (13) [`Inherit`]`<`[`Colormap`]`>`
 pub type CwColormap = Inherit<Colormap>;
-/// 14. [`Option`]`<`[`Cursor`]`>`
+/// (14) [`Option`]`<`[`Cursor`]`>`
 pub type CwCursor = Option<Cursor>;
 // }}}
 
