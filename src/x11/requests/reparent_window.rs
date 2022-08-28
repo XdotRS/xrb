@@ -2,21 +2,21 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::rw::{Serialize, WriteResult, WriteValue};
 use crate::x11::common::values::Window;
 
 use super::Request;
-use super::{WinAttr, WinAttrMask};
+use crate::rw::{Serialize, WriteResult, WriteValue};
 
-pub struct ChangeWindowAttributes {
+pub struct ReparentWindow {
 	pub window: Window,
-	pub value_mask: WinAttrMask,
-	pub values: Vec<WinAttr>,
+	pub parent: Window,
+	pub x: i16,
+	pub y: i16,
 }
 
-impl Request for ChangeWindowAttributes {
+impl Request for ReparentWindow {
 	fn opcode() -> u8 {
-		2
+		7
 	}
 
 	fn minor_opcode() -> Option<u16> {
@@ -24,11 +24,11 @@ impl Request for ChangeWindowAttributes {
 	}
 
 	fn length(&self) -> u16 {
-		self.values.len() as u16 + 3
+		4
 	}
 }
 
-impl Serialize for ChangeWindowAttributes {
+impl Serialize for ReparentWindow {
 	fn serialize(self) -> WriteResult<Vec<u8>> {
 		let mut bytes = vec![];
 
@@ -45,18 +45,12 @@ impl Serialize for ChangeWindowAttributes {
 
 		// `window`
 		self.window.write_4b_to(&mut bytes)?;
-
-		// Value list {{{
-
-		// `value_mask`
-		self.value_mask.bits().write_4b_to(&mut bytes)?;
-
-		// `values`
-		for value in self.values {
-			value.write_4b_to(&mut bytes)?;
-		}
-
-		// }}}
+		// `parent`
+		self.parent.write_4b_to(&mut bytes)?;
+		// `x`
+		self.x.write_2b_to(&mut bytes)?;
+		// `y`
+		self.y.write_2b_to(&mut bytes)?;
 
 		Ok(bytes)
 	}

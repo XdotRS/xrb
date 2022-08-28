@@ -76,10 +76,25 @@ pub mod queries {}
 pub mod events {}
 
 pub mod requests {
+	pub use crate::x11::requests::change_save_set::ChangeSaveSet;
 	pub use crate::x11::requests::change_window_attributes::ChangeWindowAttributes;
+	pub use crate::x11::requests::circulate_window::CirculateWindow;
 	pub use crate::x11::requests::create_window::CreateWindow;
+	pub use crate::x11::requests::destroy_subwindows::DestroySubwindows;
+	pub use crate::x11::requests::destroy_window::DestroyWindow;
+	pub use crate::x11::requests::get_geometry::GetGeometry;
+	pub use crate::x11::requests::get_window_attributes::GetWindowAttributes;
+	pub use crate::x11::requests::map_subwindows::MapSubwindows;
+	pub use crate::x11::requests::map_window::MapWindow;
+	pub use crate::x11::requests::query_tree::QueryTree;
+	pub use crate::x11::requests::reparent_window::ReparentWindow;
+	pub use crate::x11::requests::unmap_subwindows::UnmapSubwindows;
+	pub use crate::x11::requests::unmap_window::UnmapWindow;
+	// pub use crate::x11::requests::configure_window::ConfigureWindow;
 }
 
 pub mod replies {
-	pub use crate::x11::requests::change_window_attributes::ChangeWindowAttributesReply;
+	pub use crate::x11::requests::get_geometry::GetGeometryReply;
+	pub use crate::x11::requests::get_window_attributes::GetWindowAttributesReply;
+	pub use crate::x11::requests::query_tree::QueryTreeReply;
 }

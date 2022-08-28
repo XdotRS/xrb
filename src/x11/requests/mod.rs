@@ -2,8 +2,21 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-pub mod change_window_attributes;
 pub mod create_window;
+pub mod change_window_attributes;
+pub mod get_window_attributes;
+pub mod destroy_window;
+pub mod destroy_subwindows;
+pub mod change_save_set;
+pub mod reparent_window;
+pub mod map_window;
+pub mod map_subwindows;
+pub mod unmap_window;
+pub mod unmap_subwindows;
+// pub mod configure_window;
+pub mod circulate_window;
+pub mod get_geometry;
+pub mod query_tree;
 
 use bitflags::bitflags;
 
