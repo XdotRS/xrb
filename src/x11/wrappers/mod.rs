@@ -5,7 +5,7 @@
 #[macro_use]
 mod wrapper_macro;
 
-use crate::x::common::values::{Timestamp, Window};
+use crate::x11::common::values::{Timestamp, Window};
 
 use crate::rw::{ReadResult, ReadValue, WriteResult, WriteValue};
 

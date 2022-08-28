@@ -9,12 +9,12 @@ use bitflags::bitflags;
 
 use crate::rw::{ReadError, ReadResult, ReadValue, Serialize, WriteResult, WriteValue};
 
-use crate::x::common::masks::{DeviceEventMask, EventMask};
-use crate::x::common::values::{
+use crate::x11::common::masks::{DeviceEventMask, EventMask};
+use crate::x11::common::values::{
 	BitGravity, Colormap, Cursor, Pixmap, VisualId, WinGravity, Window,
 };
 
-use crate::x::wrappers::{Inherit, Relative};
+use crate::x11::wrappers::{Inherit, Relative};
 
 impl Request for CreateWindow {
 	fn opcode() -> u8 {

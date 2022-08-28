@@ -60,23 +60,23 @@ mod rw;
 pub use rw::*;
 
 /// Contains representations of the X11 protocol data types and structures.
-mod x;
+mod x11;
 
-pub use x::requests::create_window::{BackingStore, Class, CwValue, CwValueMask};
-pub use x::requests::Request;
+pub use x11::requests::create_window::{BackingStore, Class, CwValue, CwValueMask};
+pub use x11::requests::Request;
 
-pub use x::atoms::*;
-pub use x::common::masks::*;
-pub use x::common::structures::*;
-pub use x::common::values::*;
-pub use x::identifiers::*;
-pub use x::wrappers::*;
+pub use x11::atoms::*;
+pub use x11::common::masks::*;
+pub use x11::common::structures::*;
+pub use x11::common::values::*;
+pub use x11::identifiers::*;
+pub use x11::wrappers::*;
 
 pub mod queries {}
 pub mod events {}
 
 pub mod requests {
-	pub use crate::x::requests::create_window::CreateWindow;
+	pub use crate::x11::requests::create_window::CreateWindow;
 }
 
 pub mod replies {}

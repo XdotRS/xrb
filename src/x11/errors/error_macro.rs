@@ -22,7 +22,7 @@ macro_rules! errors {
 				major_opcode: u8,
 			}
 
-			impl $crate::x::errors::Xerror for $Name { // impl Xerror for Error {
+			impl $crate::x11::errors::Xerror for $Name { // impl Xerror for Error {
 				fn code(&self) -> u8 { $code } //  fn code(&self) -> u8 { 0 }
 				fn sequence(&self) -> u16 { self.sequence }
 				fn minor_opcode(&self) -> u16 { self.minor_opcode }
