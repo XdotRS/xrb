@@ -6,8 +6,42 @@ pub mod create_window;
 
 use crate::rw::Serialize;
 
+/// A request is a message sent from an X client to the X server.
+///
+/// Since an X client will never receive an actual request message,
+/// deserialization is not implemented for requests for the sake of simplicity.
 pub trait Request<REPLY = ()>: Serialize {
+	/// The major opcode that uniquely identifies this request or extension.
+	///
+	/// X core protocol requests have unique major opcodes, but each extension
+	/// is only assigned one major opcode. Extensions are assigned major opcodes
+	/// from 127 through to 255.
 	fn opcode() -> u8;
+
+	/// The minor opcode that uniquely identifies this request within its
+	/// extension.
+	///
+	/// As each extension is only assigned one major opcode, the minor opcode
+	/// can be used to distinguish different requests contained within an
+	/// extension.
+	///
+	/// [`None`] means that either this request is not from an extension, or the
+	/// extension does not make use of the minor opcode, likely because it only
+	/// has one request.
+	///
+	/// [`Some`] means that there is indeed a minor opcode associated with this
+	/// request. This request is therefore from an extension.
+	fn minor_opcode() -> Option<u16> {
+		None
+	}
+
+	/// The length of this request, including the header, in 4-byte units.
+	///
+	/// Every request contains a header whcih is 4 bytes long. This header is
+	/// included in the length, so the minimum length is 1 unit (4 bytes). The
+	/// length represents the _exact_ length of the request: padding bytes may
+	/// need to be added to the end of the request to ensure its length is
+	/// brought up to a multiple of 4, if it is not already.
 	fn length(&self) -> u16;
 }
 
