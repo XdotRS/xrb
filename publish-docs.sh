@@ -8,7 +8,7 @@ git clone --quiet --branch docs https://github.com/XdotRS/xrb ./xrb-docs
 
 # Regenerate documentation.
 rm -r ./target/doc
-cargo doc --no-deps --document-private-items
+cargo doc --no-deps
 
 # Replace the `doc` folder with the newly generated docs
 rm -r ./xrb-docs/doc
