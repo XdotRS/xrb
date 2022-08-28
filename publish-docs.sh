@@ -17,7 +17,7 @@ cp -r ./target/doc ./xrb-docs/
 # Commit and push the newly generated docs to the docos branch
 cd ./xrb-docs
 git add -A
-git commit --allow-empty -m "regenerated documentation"
+git commit --allow-empty --quiet -m "regenerated documentation"
 git push origin docs
 cd ..
 
