@@ -4,7 +4,7 @@
 cd $(dirname $0)
 
 # Clone the docs branch into ./xrb-docs
-gh repo clone XdotRS/xrb ./xrb-docs -- --branch docs
+git clone --branch docs https://github.com/XdotRS/xrb ./xrb-docs
 
 # Regenerate documentation.
 rm -r ./target/doc
