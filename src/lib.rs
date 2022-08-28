@@ -48,8 +48,6 @@ pub const PROTOCOL_MAJOR_VERSION: u16 = 11;
 /// protocol; seeing as this has not happened since the 80s, it's probably safe to assume it won't.
 pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 
-/// Contains representations of the X11 protocol data types and structures.
-pub mod protocol;
 /// Traits pertaining to the reading and writing of structures.
 ///
 /// Provides the [`ReadValue`](crate::rw::ReadValue) and
@@ -57,13 +55,28 @@ pub mod protocol;
 /// to [`u8`], [`u16`], and [`u32`] quantities, as well as the
 /// [`Serialize`](crate::rw::Serialize) and [`Deserialize`](crate::rw::Deserialize)
 /// traits for serializing and deserializing structures containing values.
-pub mod rw;
+mod rw;
+
+pub use rw::*;
+
+/// Contains representations of the X11 protocol data types and structures.
+mod x;
+
+pub use x::requests::create_window::{BackingStore, Class, CwValue, CwValueMask};
+pub use x::requests::Request;
+
+pub use x::atoms::*;
+pub use x::common::masks::*;
+pub use x::common::structures::*;
+pub use x::common::values::*;
+pub use x::identifiers::*;
+pub use x::wrappers::*;
 
 pub mod queries {}
-pub mod events {
-	pub use crate::protocol::events::*;
-}
+pub mod events {}
+
 pub mod requests {
-	pub use crate::protocol::requests::*;
+	pub use crate::x::requests::create_window::CreateWindow;
 }
+
 pub mod replies {}

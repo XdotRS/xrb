@@ -9,12 +9,12 @@ use crate::rw::{
 };
 use bytes::{Buf, BufMut, BytesMut};
 
-use crate::protocol::common::masks::{DeviceEventMask, EventMask};
-use crate::protocol::common::values::{
+use crate::x::common::masks::{DeviceEventMask, EventMask};
+use crate::x::common::values::{
 	BitGravity, Colormap, Cursor, Pixmap, VisualId, WinGravity, Window,
 };
 
-use crate::protocol::wrappers::{Inherit, Relative};
+use crate::x::wrappers::{Inherit, Relative};
 
 /// The class of a [Window], as defined in the X11 protocol.
 pub enum Class {

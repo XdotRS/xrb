@@ -8,7 +8,7 @@ use crate::rw::{
 
 use bytes::{BufMut, BytesMut};
 
-use crate::protocol::common::values::{Char2b, HostFamily};
+use crate::x::common::values::{Char2b, HostFamily};
 
 /// A UTF-16-encoded string of [two-byte characters](Char2b).
 pub type String16<'a> = &'a [Char2b];
