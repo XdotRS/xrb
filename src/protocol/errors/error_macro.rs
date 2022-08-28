@@ -30,7 +30,7 @@ macro_rules! errors {
 			}
 
 			impl $crate::rw::Serialize for $Name { // impl Serialize for Error {
-				fn serialize(self) -> $crate::errors::WriteResult<Vec<u8>> {
+				fn serialize(self) -> $crate::rw::WriteResult<Vec<u8>> {
 					let mut bytes = bytes::BytesMut::new();
 
 					// Padding
@@ -61,7 +61,7 @@ macro_rules! errors {
 			}
 
 			impl $crate::rw::Deserialize for $Name { // impl Deserialize for Error
-				fn deserialize(buf: &mut impl bytes::Buf) -> $crate::errors::ReadResult<Self> {
+				fn deserialize(buf: &mut impl bytes::Buf) -> $crate::rw::ReadResult<Self> {
 					// Skip error and error code; not used for deserialization
 					// if we already know what to deserialize.
 					buf.advance(2);

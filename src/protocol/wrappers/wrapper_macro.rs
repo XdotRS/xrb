@@ -54,7 +54,7 @@ macro_rules! wrappers {
 				$A: $crate::rw::WriteValue,)?
 			{
 				// fn write_1b(self) -> WriteResult<u8> {
-				fn write_1b(self) -> $crate::errors::WriteResult<u8> {
+				fn write_1b(self) -> $crate::rw::WriteResult<u8> {
 					Ok(match self {
 						// Self::Variant => 0,
 						$(Self::$Variant => $val,)+
@@ -65,7 +65,7 @@ macro_rules! wrappers {
 				}
 
 				// fn write_2b(self) -> WriteResult<u16> {
-				fn write_2b(self) -> $crate::errors::WriteResult<u16> {
+				fn write_2b(self) -> $crate::rw::WriteResult<u16> {
 					Ok(match self {
 						// Self::Variant => 0,
 						$(Self::$Variant => $val,)+
@@ -76,7 +76,7 @@ macro_rules! wrappers {
 				}
 
 				// fn write_4b(self) -> WriteResult<u32> {
-				fn write_4b(self) -> $crate::errors::WriteResult<u32> {
+				fn write_4b(self) -> $crate::rw::WriteResult<u32> {
 					Ok(match self {
 						// Self::Variant => 0,
 						$(Self::$Variant => $val,)+
@@ -99,7 +99,7 @@ macro_rules! wrappers {
 				// where
 				//     Self: Sized,
 				// {
-				fn read_1b(byte: u8) -> $crate::errors::ReadResult<Self>
+				fn read_1b(byte: u8) -> $crate::rw::ReadResult<Self>
 				where
 					Self: Sized,
 				{
@@ -117,7 +117,7 @@ macro_rules! wrappers {
 				// where
 				//     Self: Sized,
 				// {
-				fn read_2b(bytes: u16) -> $crate::errors::ReadResult<Self>
+				fn read_2b(bytes: u16) -> $crate::rw::ReadResult<Self>
 				where
 					Self: Sized,
 				{
@@ -135,7 +135,7 @@ macro_rules! wrappers {
 				// where
 				//     Self: Sized,
 				// {
-				fn read_4b(bytes: u32) -> $crate::errors::ReadResult<Self>
+				fn read_4b(bytes: u32) -> $crate::rw::ReadResult<Self>
 				where
 					Self: Sized,
 				{

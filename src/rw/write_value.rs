@@ -4,7 +4,7 @@
 
 use bytes::BufMut;
 
-use crate::errors::WriteResult;
+use super::WriteResult;
 
 /// Write a _value_ as a 1-byte, 2-byte, or 4-byte unsigned integer ([`u8`], [`u16`], or [`u32`]).
 ///

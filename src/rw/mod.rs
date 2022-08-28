@@ -2,9 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-//! TODO: Implement [std::io::Read] and [std::io::Write] traits for serialization
-//! and deserialization.
-
+mod errors;
 mod read_value;
 mod write_value;
 
@@ -13,7 +11,7 @@ use bytes::{Buf, BufMut, BytesMut};
 pub use read_value::ReadValue;
 pub use write_value::WriteValue;
 
-use crate::errors::{ReadError, ReadResult, WriteError, WriteResult};
+pub use errors::{ReadError, ReadResult, WriteError, WriteResult};
 
 /// Serializes a _data structure_ to bytes. _Values_ should implement [`WriteValue`] instead.
 pub trait Serialize {

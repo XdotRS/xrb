@@ -4,9 +4,7 @@
 
 use bytes::Buf;
 
-use crate::errors::ReadResult;
-
-use super::WriteValue;
+use super::{ReadResult, WriteValue};
 
 /// Read a _value_ from a 1-byte, 2-byte, or 4-byte unsigned integer ([`u8`], [`u16`], or [`u32`]).
 ///

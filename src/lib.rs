@@ -50,9 +50,14 @@ pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 
 /// Contains representations of the X11 protocol data types and structures.
 pub mod protocol;
-
-mod errors;
-mod rw;
+/// Traits pertaining to the reading and writing of structures.
+///
+/// Provides the [`ReadValue`](crate::rw::ReadValue) and
+/// [`WriteValue`](crate::rw::WriteValue) traits for reading and writing values
+/// to [`u8`], [`u16`], and [`u32`] quantities, as well as the
+/// [`Serialize`](crate::rw::Serialize) and [`Deserialize`](crate::rw::Deserialize)
+/// traits for serializing and deserializing structures containing values.
+pub mod rw;
 
 pub mod queries {}
 pub mod events {
