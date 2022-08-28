@@ -52,7 +52,7 @@ pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 pub mod protocol;
 
 mod errors;
-mod serialization;
+mod rw;
 
 pub mod queries {}
 pub mod events {

@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use crate::errors::{ReadError, ReadResult, WriteError, WriteResult};
-use crate::serialization::{ReadValue, WriteValue};
+use crate::rw::{ReadValue, WriteValue};
 
 /// A raw bitmask value that indicates the presence of certain fields.
 pub type Mask = u32;

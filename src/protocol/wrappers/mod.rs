@@ -8,7 +8,7 @@ mod wrapper_macro;
 use crate::protocol::common::values::{Timestamp, Window};
 
 use crate::errors::{ReadResult, WriteResult};
-use crate::serialization::{ReadValue, WriteValue};
+use crate::rw::{ReadValue, WriteValue};
 
 wrappers! {
 	/// Allows fields to inherit their values from their 'parent'.

@@ -29,29 +29,29 @@ macro_rules! errors {
 				fn major_opcode(&self) -> u8 { self.major_opcode }
 			}
 
-			impl $crate::serialization::Serialize for $Name { // impl Serialize for Error {
+			impl $crate::rw::Serialize for $Name { // impl Serialize for Error {
 				fn serialize(self) -> $crate::errors::WriteResult<Vec<u8>> {
 					let mut bytes = bytes::BytesMut::new();
 
 					// Padding
-					<u8 as $crate::serialization::WriteValue>::write_1b_to(0, &mut bytes)?;
+					<u8 as $crate::rw::WriteValue>::write_1b_to(0, &mut bytes)?;
 
 					// Error code. This is literally just `$code.write_1b_to(&mut bytes)?;`.
-					<u8 as $crate::serialization::WriteValue>::write_1b_to($code, &mut bytes)?;
+					<u8 as $crate::rw::WriteValue>::write_1b_to($code, &mut bytes)?;
 					// Sequence. This is literally just `self.sequence.write_2b_to(&mut bytes)?;`.
-					<u16 as $crate::serialization::WriteValue>::write_2b_to(self.sequence, &mut bytes)?;
+					<u16 as $crate::rw::WriteValue>::write_2b_to(self.sequence, &mut bytes)?;
 
 					// TODO: What to do when $bad_data is missing? Still need
 					//       padding... do we need to duplicate all this macro
 					//       logic for the case where no $bad_data is given?
 					//
 					// `self.bad_res_id.write_4b_to(&mut bytes)?;` (optional)
-					$(<u32 as $crate::serialization::WriteValue>::write_4b_to(self.$bad_data, &mut bytes)?;)?
+					$(<u32 as $crate::rw::WriteValue>::write_4b_to(self.$bad_data, &mut bytes)?;)?
 
 					// Minor opcode. `self.minor_opcode.write_2b_to(&mut bytes)?;`
-					<u16 as $crate::serialization::WriteValue>::write_2b_to(self.minor_opcode, &mut bytes)?;
+					<u16 as $crate::rw::WriteValue>::write_2b_to(self.minor_opcode, &mut bytes)?;
 					// Major opcode. `self.major_opcode.write_1b_to(&mut bytes)?;`
-					<u8 as $crate::serialization::WriteValue>::write_1b_to(self.major_opcode, &mut bytes)?;
+					<u8 as $crate::rw::WriteValue>::write_1b_to(self.major_opcode, &mut bytes)?;
 
 					// Trailing 21 unused bytes. `bytes.put_bytes(0, 21);`
 					<bytes::BytesMut as bytes::BufMut>::put_bytes(&mut bytes, 0u8, 21);
@@ -60,25 +60,25 @@ macro_rules! errors {
 				}
 			}
 
-			impl $crate::serialization::Deserialize for $Name { // impl Deserialize for Error
+			impl $crate::rw::Deserialize for $Name { // impl Deserialize for Error
 				fn deserialize(buf: &mut impl bytes::Buf) -> $crate::errors::ReadResult<Self> {
 					// Skip error and error code; not used for deserialization
 					// if we already know what to deserialize.
 					buf.advance(2);
 
 					// Sequence. `let sequence = u16::read_2b_from(buf)?;`
-					let sequence = <u16 as $crate::serialization::ReadValue>::read_2b_from(buf)?;
+					let sequence = <u16 as $crate::rw::ReadValue>::read_2b_from(buf)?;
 
 					// TODO: What to do when $bad_value is missing? Still need
 					//       to advance...
 					//
 					// `let bad_res_id = u32::read_4b_from(buf)?;`
-					$(let $bad_data = <u32 as $crate::serialization::ReadValue>::read_4b_from(buf)?;)?
+					$(let $bad_data = <u32 as $crate::rw::ReadValue>::read_4b_from(buf)?;)?
 
 					// Minor opcode. `let minor_opcode = u16::read_2b_from(buf)?;`
-					let minor_opcode = <u16 as $crate::serialization::ReadValue>::read_2b_from(buf)?;
+					let minor_opcode = <u16 as $crate::rw::ReadValue>::read_2b_from(buf)?;
 					// Major opcode. `let major_opcode = u8::read_1b_from(buf)?;`
-					let major_opcode = <u8 as $crate::serialization::ReadValue>::read_1b_from(buf)?;
+					let major_opcode = <u8 as $crate::rw::ReadValue>::read_1b_from(buf)?;
 
 					// Skip trailing 21 unused bytes.
 					buf.advance(21);

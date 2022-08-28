@@ -4,8 +4,8 @@
 
 /// Creates 'wrapper' enums, a bit like [`Option`]s.
 ///
-/// Includes implementations for [WriteValue](crate::serialization::WriteValue)
-/// and [ReadValue](crate::serialization::ReadValue).
+/// Includes implementations for [WriteValue](crate::rw::WriteValue) and
+/// [ReadValue](crate::rw::ReadValue).
 ///
 /// # Example
 /// ```rust
@@ -49,9 +49,9 @@ macro_rules! wrappers {
 			// where
 			//     T: WriteValue,
 			// {
-			impl<$($A)?> $crate::serialization::WriteValue for $Wrapper$(<$A>
+			impl<$($A)?> $crate::rw::WriteValue for $Wrapper$(<$A>
 			where
-				$A: $crate::serialization::WriteValue,)?
+				$A: $crate::rw::WriteValue,)?
 			{
 				// fn write_1b(self) -> WriteResult<u8> {
 				fn write_1b(self) -> $crate::errors::WriteResult<u8> {
@@ -60,7 +60,7 @@ macro_rules! wrappers {
 						$(Self::$Variant => $val,)+
 						// Self::Value(val) => val.write_1b()?,
 						Self::$Value(val) =>
-							<$B as $crate::serialization::WriteValue>::write_1b(val)?,
+							<$B as $crate::rw::WriteValue>::write_1b(val)?,
 					})
 				}
 
@@ -71,7 +71,7 @@ macro_rules! wrappers {
 						$(Self::$Variant => $val,)+
 						// Self::Value(val) => val.write_2b()?,
 						Self::$Value(val) =>
-							<$B as $crate::serialization::WriteValue>::write_2b(val)?,
+							<$B as $crate::rw::WriteValue>::write_2b(val)?,
 					})
 				}
 
@@ -82,7 +82,7 @@ macro_rules! wrappers {
 						$(Self::$Variant => $val,)+
 						// Self::Value(val) => val.write_4b()?,
 						Self::$Value(val) =>
-							<$B as $crate::serialization::WriteValue>::write_4b(val)?,
+							<$B as $crate::rw::WriteValue>::write_4b(val)?,
 					})
 				}
 			}
@@ -91,9 +91,9 @@ macro_rules! wrappers {
 			// where
 			//     T: ReadValue
 			// {
-			impl<$($A)?> $crate::serialization::ReadValue for $Wrapper$(<$A>
+			impl<$($A)?> $crate::rw::ReadValue for $Wrapper$(<$A>
 			where
-				$A: $crate::serialization::ReadValue,)?
+				$A: $crate::rw::ReadValue,)?
 			{
 				// fn read_1b(byte: u8) -> ReadResult<Self>
 				// where
@@ -108,7 +108,7 @@ macro_rules! wrappers {
 						$($val => Self::$Variant,)+
 						// _ => Self::Value(T::read_1b(byte)?),
 						_ => Self::$Value(
-							<$B as $crate::serialization::ReadValue>::read_1b(byte)?
+							<$B as $crate::rw::ReadValue>::read_1b(byte)?
 						),
 					})
 				}
@@ -126,7 +126,7 @@ macro_rules! wrappers {
 						$($val => Self::$Variant,)+
 						// _ => Self::Value(T::read_2b(bytes)?),
 						_ => Self::$Value(
-							<$B as $crate::serialization::ReadValue>::read_2b(bytes)?
+							<$B as $crate::rw::ReadValue>::read_2b(bytes)?
 						),
 					})
 				}
@@ -144,7 +144,7 @@ macro_rules! wrappers {
 						$($val => Self::$Variant,)+
 						// _ => Self::Value(T::read_4b(bytes)?),
 						_ => Self::$Value(
-							<$B as $crate::serialization::ReadValue>::read_4b(bytes)?
+							<$B as $crate::rw::ReadValue>::read_4b(bytes)?
 						),
 					})
 				}

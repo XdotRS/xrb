@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use crate::errors::{ReadError, ReadResult, WriteResult};
-use crate::serialization::{Deserialize, ReadValue, Serialize, WriteValue};
+use crate::rw::{Deserialize, ReadValue, Serialize, WriteValue};
 
 use bytes::{BufMut, BytesMut};
 
