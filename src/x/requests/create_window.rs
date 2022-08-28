@@ -2,12 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use super::Request;
+use crate::values;
+
 use bitflags::bitflags;
 
-use crate::rw::{
-	Deserialize, ReadError, ReadResult, ReadValue, Serialize, WriteResult, WriteValue,
-};
-use bytes::{Buf, BufMut, BytesMut};
+use crate::rw::{ReadError, ReadResult, ReadValue, Serialize, WriteResult, WriteValue};
 
 use crate::x::common::masks::{DeviceEventMask, EventMask};
 use crate::x::common::values::{
@@ -16,16 +16,18 @@ use crate::x::common::values::{
 
 use crate::x::wrappers::{Inherit, Relative};
 
-/// The class of a [Window], as defined in the X11 protocol.
-pub enum Class {
-	InputOutput,
-	InputOnly,
-}
+impl Request for CreateWindow {
+	fn opcode() -> u8 {
+		// The major opcode that refers to a [`CreateWindow`] request is 1.
+		1
+	}
 
-pub enum BackingStore {
-	NotUseful,
-	WhenMapped,
-	Always,
+	fn length(&self) -> u16 {
+		// Since the length is measured in groups of 4 bytes, the rest of the
+		// request is 32 bytes long, and each value is 4 bytes, the length is
+		// simply the number of values plus 32/4 (len + 8):
+		self.values.len() as u16 + 8
+	}
 }
 
 // The [`CreateWindow`] request itself:
@@ -91,26 +93,42 @@ pub struct CreateWindow {
 	pub values: Vec<CwValue>,
 }
 
-/// Values that can be configured in the [`CreateWindow`] request's `values` array.
-///
-/// Values given in the `values` array MUST be in the order they are given in
-/// this enum, so that they match the order of the [`CwValueMask`].
-pub enum CwValue {
-	BackgroundPixmap(Option<Relative<Pixmap>>),
-	BackgroundPixel(u32),
-	BorderPixmap(Inherit<Pixmap>),
-	BorderPixel(u32),
-	BitGravity(BitGravity),
-	WinGravity(WinGravity),
-	BackingStore(BackingStore),
-	BackingPlanes(u32),
-	BackingPixel(u32),
-	OverrideRedirect(bool),
-	SaveUnder(bool),
-	EventMask(EventMask),
-	DoNotPropagateMask(DeviceEventMask),
-	Colormap(Inherit<Colormap>),
-	Cursor(Option<Cursor>),
+// The `values!` macro will automatically implement a `mask` method for the
+// enum, as well as an implementation for [`WriteValue`].
+values! {
+	/// Values that can be configured in the [`CreateWindow`] request's `values` array.
+	///
+	/// Values given in the `values` array MUST be in the order they are given in
+	/// this enum, so that they match the order of the [`CwValueMask`].
+	pub enum CwValue<CwValueMask> {
+		BackgroundPixmap(Option<Relative<Pixmap>>): BACKGROUND_PIXMAP,
+		BackgroundPixel(u32): BACKGROUND_PIXEL,
+		BorderPixmap(Inherit<Pixmap>): BORDER_PIXMAP,
+		BorderPixel(u32): BORDER_PIXEL,
+		BitGravity(BitGravity): BIT_GRAVITY,
+		WinGravity(WinGravity): WIN_GRAVITY,
+		BackingStore(BackingStore): BACKING_STORE,
+		BackingPlanes(u32): BACKING_PLANES,
+		BackingPixel(u32): BACKING_PIXEL,
+		OverrideRedirect(bool): OVERRIDE_REDIRECT,
+		SaveUnder(bool): SAVE_UNDER,
+		EventMask(EventMask): EVENT_MASK,
+		DoNotPropagateMask(DeviceEventMask): DO_NOT_PROPAGATE_MASK,
+		Colormap(Inherit<Colormap>): COLORMAP,
+		Cursor(Option<Cursor>): CURSOR,
+	}
+}
+
+/// The class of a [Window], as defined in the X11 protocol.
+pub enum Class {
+	InputOutput,
+	InputOnly,
+}
+
+pub enum BackingStore {
+	NotUseful,
+	WhenMapped,
+	Always,
 }
 
 bitflags! {
@@ -182,69 +200,126 @@ impl Serialize for CreateWindow {
 	fn serialize(self) -> WriteResult<Vec<u8>> {
 		let mut bytes = vec![];
 
-		1_u8.write_1b_to(&mut bytes)?;
+		// Header {{{
+
+		// Major opcode
+		Self::opcode().write_1b_to(&mut bytes)?;
+		// `depth`
 		self.depth.write_1b_to(&mut bytes)?;
-		(self.values.len() + 8).write_2b_to(&mut bytes)?;
+		// Length
+		self.length().write_2b_to(&mut bytes)?;
+
+		// }}}
+
+		// `window_id`
 		self.window_id.write_4b_to(&mut bytes)?;
+		// `parent`
 		self.parent.write_4b_to(&mut bytes)?;
+		// `x`
 		self.x.write_2b_to(&mut bytes)?;
+		// `y`
 		self.y.write_2b_to(&mut bytes)?;
+		// `width`
 		self.width.write_2b_to(&mut bytes)?;
+		// `height`
 		self.height.write_2b_to(&mut bytes)?;
+		// `border_width`
 		self.border_width.write_2b_to(&mut bytes)?;
+		// `class`
 		self.class.write_2b_to(&mut bytes)?;
+		// `visual`
 		self.visual.write_4b_to(&mut bytes)?;
+
+		// Value list {{{
+
+		// `value_mask`
 		self.value_mask.bits().write_4b_to(&mut bytes)?;
 
+		// `values`
 		for value in self.values {
-			// value.write_4b_to(&mut bytes);
+			value.write_4b_to(&mut bytes)?;
 		}
+
+		// }}}
 
 		Ok(bytes)
 	}
 }
 
-impl Deserialize for CreateWindow {
-	fn deserialize(buf: &mut impl Buf) -> ReadResult<Self>
-	where
-		Self: Sized,
-	{
-		buf.advance(1); // skip the major opcode
+// We don't need to implement [`Deserialize`] for [`CreateWindow`] because
+// requests will never be received by an XRB client; they are only ever sent.
+//
+// That's good, because I'd get a headache if I were to write the code for
+// interpreting the value mask so that the values vector could be correctly
+// deserialized right now.
 
-		let depth = u8::read_1b_from(buf)?;
-		let length = usize::read_2b_from(buf)?;
-		let window_id = Window::read_4b_from(buf)?;
-		let parent = Window::read_4b_from(buf)?;
-		let x = i16::read_2b_from(buf)?;
-		let y = i16::read_2b_from(buf)?;
-		let width = u16::read_2b_from(buf)?;
-		let height = u16::read_2b_from(buf)?;
-		let border_width = u16::read_2b_from(buf)?;
-		let class = <Inherit<Class>>::read_2b_from(buf)?;
-		let visual = <Inherit<VisualId>>::read_4b_from(buf)?;
+// Serialization/deserialization for `BackingStore` {{{
+impl WriteValue for BackingStore {
+	fn write_1b(self) -> WriteResult<u8> {
+		Ok(match self {
+			Self::NotUseful => 0,
+			Self::WhenMapped => 1,
+			Self::Always => 2,
+		})
+	}
 
-		let value_mask = CwValueMask::from_bits(u32::read_4b_from(buf)?).unwrap();
-		// TODO: need to deserialize the Vec<CwValue> based on the value mask...
-		//       let values = (0..(length - 8)).map(|_| CwValue::read_4b_from(buf)?).collect();
-		let values: Vec<CwValue> = vec![];
+	fn write_2b(self) -> WriteResult<u16> {
+		Ok(match self {
+			Self::NotUseful => 0,
+			Self::WhenMapped => 1,
+			Self::Always => 2,
+		})
+	}
 
-		Ok(Self {
-			depth,
-			window_id,
-			parent,
-			x,
-			y,
-			width,
-			height,
-			border_width,
-			class,
-			visual,
-			value_mask,
-			values,
+	fn write_4b(self) -> WriteResult<u32> {
+		Ok(match self {
+			Self::NotUseful => 0,
+			Self::WhenMapped => 1,
+			Self::Always => 2,
 		})
 	}
 }
 
+impl ReadValue for BackingStore {
+	fn read_1b(byte: u8) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		match byte {
+			0 => Ok(Self::NotUseful),
+			1 => Ok(Self::WhenMapped),
+			2 => Ok(Self::Always),
+			_ => Err(ReadError::InvalidData),
+		}
+	}
+
+	fn read_2b(bytes: u16) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		match bytes {
+			0 => Ok(Self::NotUseful),
+			1 => Ok(Self::WhenMapped),
+			2 => Ok(Self::Always),
+			_ => Err(ReadError::InvalidData),
+		}
+	}
+
+	fn read_4b(bytes: u32) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		match bytes {
+			0 => Ok(Self::NotUseful),
+			1 => Ok(Self::WhenMapped),
+			2 => Ok(Self::Always),
+			_ => Err(ReadError::InvalidData),
+		}
+	}
+}
+// }}}
+
+// Serialization/deserialization for `Class` {{{
 impl WriteValue for Class {
 	fn write_1b(self) -> WriteResult<u8> {
 		Ok(match self {
@@ -302,25 +377,4 @@ impl ReadValue for Class {
 		}
 	}
 }
-
-impl CwValue {
-	pub fn mask(&self) -> CwValueMask {
-		match self {
-			Self::BackgroundPixmap(_) => CwValueMask::BACKGROUND_PIXMAP,
-			Self::BackgroundPixel(_) => CwValueMask::BACKGROUND_PIXEL,
-			Self::BorderPixmap(_) => CwValueMask::BORDER_PIXMAP,
-			Self::BorderPixel(_) => CwValueMask::BORDER_PIXEL,
-			Self::BitGravity(_) => CwValueMask::BIT_GRAVITY,
-			Self::WinGravity(_) => CwValueMask::WIN_GRAVITY,
-			Self::BackingStore(_) => CwValueMask::BACKING_STORE,
-			Self::BackingPlanes(_) => CwValueMask::BACKING_PLANES,
-			Self::BackingPixel(_) => CwValueMask::BACKING_PIXEL,
-			Self::OverrideRedirect(_) => CwValueMask::OVERRIDE_REDIRECT,
-			Self::SaveUnder(_) => CwValueMask::SAVE_UNDER,
-			Self::EventMask(_) => CwValueMask::EVENT_MASK,
-			Self::DoNotPropagateMask(_) => CwValueMask::DO_NOT_PROPAGATE_MASK,
-			Self::Colormap(_) => CwValueMask::COLORMAP,
-			Self::Cursor(_) => CwValueMask::CURSOR,
-		}
-	}
-}
+// }}}
