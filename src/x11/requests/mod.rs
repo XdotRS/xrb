@@ -31,9 +31,7 @@ pub trait Request<REPLY = ()>: Serialize {
 	///
 	/// [`Some`] means that there is indeed a minor opcode associated with this
 	/// request. This request is therefore from an extension.
-	fn minor_opcode() -> Option<u16> {
-		None
-	}
+	fn minor_opcode() -> Option<u16>;
 
 	/// The length of this request, including the header, in 4-byte units.
 	///

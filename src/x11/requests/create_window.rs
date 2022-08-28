@@ -22,6 +22,12 @@ impl Request for CreateWindow {
 		1
 	}
 
+	fn minor_opcode() -> Option<u16> {
+		// This is an X core protocol request: it is not an extension, and so
+		// therefore does not use the `minor_opcode`.
+		None
+	}
+
 	fn length(&self) -> u16 {
 		// Since the length is measured in groups of 4 bytes, the rest of the
 		// request is 32 bytes long, and each value is 4 bytes, the length is
