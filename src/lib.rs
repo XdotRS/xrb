@@ -76,10 +76,10 @@ pub mod queries {}
 pub mod events {}
 
 pub mod requests {
-	pub use crate::x11::requests::change_window_attributes::{
-		ChangeWindowAttributes, ChangeWindowAttributesReply,
-	};
+	pub use crate::x11::requests::change_window_attributes::ChangeWindowAttributes;
 	pub use crate::x11::requests::create_window::CreateWindow;
 }
 
-pub mod replies {}
+pub mod replies {
+	pub use crate::x11::requests::change_window_attributes::ChangeWindowAttributesReply;
+}
