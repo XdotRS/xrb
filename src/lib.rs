@@ -62,8 +62,8 @@ pub use rw::*;
 /// Contains representations of the X11 protocol data types and structures.
 mod x11;
 
-pub use x11::requests::create_window::{BackingStore, Class, CwValue, CwValueMask};
-pub use x11::requests::Request;
+pub use x11::requests::create_window::{BackingStore, Class};
+pub use x11::requests::{Request, WinAttr, WinAttrMask};
 
 pub use x11::atoms::*;
 pub use x11::common::masks::*;
@@ -76,6 +76,9 @@ pub mod queries {}
 pub mod events {}
 
 pub mod requests {
+	pub use crate::x11::requests::change_window_attributes::{
+		ChangeWindowAttributes, ChangeWindowAttributesReply,
+	};
 	pub use crate::x11::requests::create_window::CreateWindow;
 }
 

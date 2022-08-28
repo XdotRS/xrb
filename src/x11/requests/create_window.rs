@@ -2,19 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use super::Request;
-use crate::values;
+use super::{Request, WinAttr, WinAttrMask};
 
-use bitflags::bitflags;
+use crate::x11::common::values::{VisualId, Window};
+use crate::x11::wrappers::Inherit;
 
 use crate::rw::{ReadError, ReadResult, ReadValue, Serialize, WriteResult, WriteValue};
-
-use crate::x11::common::masks::{DeviceEventMask, EventMask};
-use crate::x11::common::values::{
-	BitGravity, Colormap, Cursor, Pixmap, VisualId, WinGravity, Window,
-};
-
-use crate::x11::wrappers::{Inherit, Relative};
 
 impl Request for CreateWindow {
 	fn opcode() -> u8 {
@@ -59,12 +52,13 @@ pub struct CreateWindow {
 	pub class: Inherit<Class>,
 	/// The window's [visual](VisualId).
 	pub visual: Inherit<VisualId>,
-	/// The mask that specifies which [values] are present in the `values` array.
+	/// The mask that specifies which [attributes] are present in the `values`
+	/// vector.
 	///
-	/// [values]:CwValue
-	pub value_mask: CwValueMask,
-	/// [Values](CwValue) must appear in the following order, so that they match
-	/// the [`CwValueMask`]:
+	/// [attributes]:WinAttr
+	pub value_mask: WinAttrMask,
+	/// [Attributes](WinAttr) must appear in the following order, so that they
+	/// match the [`WinAttrMask`]:
 	/// 1. [`BackgroundPixmap`]`(`[`Option`]`<`[`Relative`]`<`[`Pixmap`]`>>)`
 	/// 2. [`BackgroundPixel`]`(`[`u32`]`)`
 	/// 3. [`BorderPixmap`]`(`[`Inherit`]`<`[`Pixmap`]`>)`
@@ -81,48 +75,22 @@ pub struct CreateWindow {
 	/// 14. [`Colormap`]`(`[`Inherit`]`<`[`Colormap`](Colormap)`>)`
 	/// 15. [`Cursor`]`(`[`Option`]`<`[`Cursor`](Cursor)`>)`
 	///
-	/// [`BackgroundPixmap`]:CwValue::BackgroundPixmap
-	/// [`BackgroundPixel`]:CwValue::BackgroundPixel
-	/// [`BorderPixmap`]:CwValue::BorderPixmap
-	/// [`BorderPixel`]:CwValue::BorderPixel
-	/// [`BitGravity`]:CwValue::BitGravity
-	/// [`WinGravity`]:CwValue::WinGravity
-	/// [`BackingStore`]:CwValue::BackingStore
-	/// [`BackingPlanes`]:CwValue::BackingPlanes
-	/// [`BackingPixel`]:CwValue::BackingPixel
-	/// [`OverrideRedirect`]:CwValue::OverrideRedirect
-	/// [`SaveUnder`]:CwValue::SaveUnder
-	/// [`EventMask`]:CwValue::EventMask
-	/// [`DoNotPropagateMask`]:CwValue::DoNotPropagateMask
-	/// [`Colormap`]:CwValue::Colormap
-	/// [`Cursor`]:CwValue::Cursor
-	pub values: Vec<CwValue>,
-}
-
-// The `values!` macro will automatically implement a `mask` method for the
-// enum, as well as an implementation for [`WriteValue`].
-values! {
-	/// Values that can be configured in the [`CreateWindow`] request's `values` array.
-	///
-	/// Values given in the `values` array MUST be in the order they are given in
-	/// this enum, so that they match the order of the [`CwValueMask`].
-	pub enum CwValue<CwValueMask> {
-		BackgroundPixmap(Option<Relative<Pixmap>>): BACKGROUND_PIXMAP,
-		BackgroundPixel(u32): BACKGROUND_PIXEL,
-		BorderPixmap(Inherit<Pixmap>): BORDER_PIXMAP,
-		BorderPixel(u32): BORDER_PIXEL,
-		BitGravity(BitGravity): BIT_GRAVITY,
-		WinGravity(WinGravity): WIN_GRAVITY,
-		BackingStore(BackingStore): BACKING_STORE,
-		BackingPlanes(u32): BACKING_PLANES,
-		BackingPixel(u32): BACKING_PIXEL,
-		OverrideRedirect(bool): OVERRIDE_REDIRECT,
-		SaveUnder(bool): SAVE_UNDER,
-		EventMask(EventMask): EVENT_MASK,
-		DoNotPropagateMask(DeviceEventMask): DO_NOT_PROPAGATE_MASK,
-		Colormap(Inherit<Colormap>): COLORMAP,
-		Cursor(Option<Cursor>): CURSOR,
-	}
+	/// [`BackgroundPixmap`]:WinAttr::BackgroundPixmap
+	/// [`BackgroundPixel`]:WinAttr::BackgroundPixel
+	/// [`BorderPixmap`]:WinAttr::BorderPixmap
+	/// [`BorderPixel`]:WinAttr::BorderPixel
+	/// [`BitGravity`]:WinAttr::BitGravity
+	/// [`WinGravity`]:WinAttr::WinGravity
+	/// [`BackingStore`]:WinAttr::BackingStore
+	/// [`BackingPlanes`]:WinAttr::BackingPlanes
+	/// [`BackingPixel`]:WinAttr::BackingPixel
+	/// [`OverrideRedirect`]:WinAttr::OverrideRedirect
+	/// [`SaveUnder`]:WinAttr::SaveUnder
+	/// [`EventMask`]:WinAttr::EventMask
+	/// [`DoNotPropagateMask`]:WinAttr::DoNotPropagateMask
+	/// [`Colormap`]:WinAttr::Colormap
+	/// [`Cursor`]:WinAttr::Cursor
+	pub values: Vec<WinAttr>,
 }
 
 /// The class of a [Window], as defined in the X11 protocol.
@@ -135,71 +103,6 @@ pub enum BackingStore {
 	NotUseful,
 	WhenMapped,
 	Always,
-}
-
-bitflags! {
-	/// A mask of possible values that can be provided in the [CreateWindow] request `values`
-	/// array.
-	pub struct CwValueMask: u32 {
-		/// The [`BackgroundPixmap`] [CreateWindow] request [value](CwValue).
-		///
-		/// [`BackgroundPixmap`]:CwValue::BackgroundPixmap
-		const BACKGROUND_PIXMAP = 0x_0000_0001;
-		/// The [`BackgroundPixel] [CreateWindow] request [value](CwValue).
-		///
-		/// [`BackgroundPixel`]:CwValue::BackgroundPixel
-		const BACKGROUND_PIXEL = 0x_0000_0002;
-		/// The [`BorderPixmap`] [CreateWindow] request [value](CwValue).
-		const BORDER_PIXMAP = 0x_0000_0004;
-		/// The [`BorderPixel`] [CreateWindow] request [value](CwValue).
-		///
-		/// [`BorderPixel`]:CwValue::BorderPixel
-		const BORDER_PIXEL = 0x_0000_0008;
-		/// The [`BitGravity`] [CreateWindow] request [value](CwValue).
-		///
-		/// [`BitGravity`]:CwValue::BitGravity
-		const BIT_GRAVITY = 0x_0000_0010;
-		/// The [`WinGravity`] [CreateWindow] request [value](CwValue).
-		///
-		/// [`WinGravity`]:CwValue::WinGravity
-		const WIN_GRAVITY = 0x_0000_0020;
-		/// The [`BackingStore`] [CreateWindow] request [value](CwValue).
-		///
-		/// [`BackingStore`]:CwValue::BackingStore
-		const BACKING_STORE = 0x_0000_0040;
-		/// The [`BackingPlanes`] [CreateWindow] request [value](CwValue).
-		///
-		/// [`BackingPlanes`]:CwValue::BackingPlanes
-		const BACKING_PLANES = 0x_0000_0080;
-		/// The [`BackingPixel`] [CreateWindow] request [value](CwValue).
-		///
-		/// [`BackingPixel`]:CwValue::BackingPixel
-		const BACKING_PIXEL = 0x_0000_0100;
-		/// The [`OverrideRedirect`] [CreateWindow] request [value](CwValue).
-		///
-		/// [`OverrideRedirect`]:CwValue::OverrideRedirect
-		const OVERRIDE_REDIRECT = 0x_0000_0200;
-		/// The [`SaveUnder`] [CreateWindow] request [value](CwValue).
-		///
-		/// [`SaveUnder`]:CwValue::SaveUnder
-		const SAVE_UNDER = 0x_0000_0400;
-		/// The [`EventMask`] [CreateWindow] request [value](CwValue).
-		///
-		/// [`EventMask`]:CwValue::EventMask
-		const EVENT_MASK = 0x_0000_0800;
-		/// The [`DoNotPropagateMask`] [CreateWindow] request [value](CwValue).
-		///
-		/// [`DoNotPropagateMask`]:CwValue::DoNotPropagateMask
-		const DO_NOT_PROPAGATE_MASK = 0x_0000_1000;
-		/// The [`Colormap`] [CreateWindow] request [value](CwValue).
-		///
-		/// [`Colormap`]:CwValue::Colormap
-		const COLORMAP = 0x_0000_2000;
-		/// The [`Cursor`] [CreateWindow] request [value](CwValue).
-		///
-		/// [`Cursor`]:CwValue::Cursor
-		const CURSOR = 0x_0000_4000;
-	}
 }
 
 impl Serialize for CreateWindow {
