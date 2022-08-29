@@ -20,6 +20,7 @@
 /// `Destination` will have implementations generated that will read and write
 /// `PointerWindow` as the value `1` and `InputFocus` as the value `2`,
 /// otherwise the wrapped [`u32`] value will be read or written.
+#[macro_export]
 macro_rules! wrappers {
 	(
 		$(

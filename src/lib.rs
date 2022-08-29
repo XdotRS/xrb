@@ -55,9 +55,9 @@ pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 /// to [`u8`], [`u16`], and [`u32`] quantities, as well as the
 /// [`Serialize`](crate::rw::Serialize) and [`Deserialize`](crate::rw::Deserialize)
 /// traits for serializing and deserializing structures containing values.
-mod rw;
+pub mod rw;
 
-pub use rw::*;
+mod macros;
 
 /// Contains representations of the X11 protocol data types and structures.
 mod x11;

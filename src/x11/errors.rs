@@ -2,9 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#[macro_use]
-mod error_macro;
-
+use crate::errors;
 use std::error::Error;
 
 /// An X protocol error that can be returned when sending requests.

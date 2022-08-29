@@ -3,6 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 /// Automatically generates structs for X protocol errors.
+#[macro_export]
 macro_rules! errors {
 	(
 		$(

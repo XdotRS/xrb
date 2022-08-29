@@ -5,7 +5,7 @@
 use crate::x11::common::values::Window;
 
 use super::Request;
-use crate::rw::{Serialize, WriteResult, WriteValue, ReadValue, ReadResult, ReadError};
+use crate::rw::{ReadError, ReadResult, ReadValue, Serialize, WriteResult, WriteValue};
 
 pub struct ChangeSaveSet {
 	pub mode: Mode,
@@ -26,6 +26,7 @@ impl Request for ChangeSaveSet {
 	}
 }
 
+#[derive(Copy, Clone)]
 pub enum Mode {
 	Insert,
 	Delete,
@@ -57,7 +58,8 @@ impl WriteValue for Mode {
 impl ReadValue for Mode {
 	fn read_1b(byte: u8) -> ReadResult<Self>
 	where
-		Self: Sized {
+		Self: Sized,
+	{
 		match byte {
 			0 => Ok(Self::Insert),
 			1 => Ok(Self::Delete),
@@ -67,7 +69,8 @@ impl ReadValue for Mode {
 
 	fn read_2b(bytes: u16) -> ReadResult<Self>
 	where
-		Self: Sized {
+		Self: Sized,
+	{
 		match bytes {
 			0 => Ok(Self::Insert),
 			1 => Ok(Self::Delete),
@@ -77,7 +80,8 @@ impl ReadValue for Mode {
 
 	fn read_4b(bytes: u32) -> ReadResult<Self>
 	where
-		Self: Sized {
+		Self: Sized,
+	{
 		match bytes {
 			0 => Ok(Self::Insert),
 			1 => Ok(Self::Delete),
