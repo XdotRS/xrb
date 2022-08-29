@@ -62,7 +62,7 @@ mod macros;
 /// Contains representations of the X11 protocol data types and structures.
 mod x11;
 
-pub use x11::requests::create_window::{BackingStore, Class};
+pub use x11::requests::{BackingStore, Class};
 pub use x11::requests::{Request, WinAttr, WinAttrMask};
 
 pub use x11::atoms::*;
