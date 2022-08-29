@@ -9,7 +9,7 @@ use bitflags::bitflags;
 use crate::x11::common::masks::{DeviceEventMask, EventMask};
 use crate::x11::common::values::*;
 
-use crate::x11::wrappers::{Inherit, Relative};
+use crate::x11::wrappers::*;
 
 use crate::rw::Serialize;
 

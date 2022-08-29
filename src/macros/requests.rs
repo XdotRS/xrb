@@ -203,6 +203,9 @@ macro_rules! requests {
 				Ok(bytes)
 			}
 		}
+
+		// Repeat for any other requests given.
+		$crate::requests!($($t)*);
 	};
 	(
 		// pub struct Request<Reply>(1);
@@ -255,6 +258,9 @@ macro_rules! requests {
 				Ok(bytes)
 			}
 		}
+
+		// Repeat for any other requests given.
+		$crate::requests!($($t)*);
 	};
 	(
 		// pub struct Request<Reply>(1,3)[2] {
@@ -435,8 +441,8 @@ macro_rules! requests {
 
 				// Data byte
 				// self.$data.write_1b_to(&mut bytes)?;
-				<u8 as $crate::rw::WriteValue>::write_1b_to(
-					self.$data
+				<$data_ty as $crate::rw::WriteValue>::write_1b_to(
+					self.$data,
 					&mut bytes
 				)?;
 
