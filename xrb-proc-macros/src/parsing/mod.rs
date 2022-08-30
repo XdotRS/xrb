@@ -9,3 +9,4 @@ mod replies;
 mod requests;
 mod reply_title;
 mod request_title;
+mod opcodes;
