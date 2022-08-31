@@ -21,29 +21,29 @@ use super::fields::{Field, NormalField};
 /// # Examples
 /// _All_ of the following are equivalent:
 /// ```rust
-/// #4 pub struct DeleteWindow<2> window: Window[4];
-/// #4 pub struct DeleteWindow<2>(?) window: Window[4];
-/// #4 pub struct DeleteWindow<2>(?[1]) window: Window[4];
-/// #4 pub struct DeleteWindow<2> -> () window: Window[4];
-/// #4 pub struct DeleteWindow<2>(?[1]) -> () window: Window[4];
+/// #4: pub struct DeleteWindow<2> window: Window[4];
+/// #4: pub struct DeleteWindow<2>(?) window: Window[4];
+/// #4: pub struct DeleteWindow<2>(?[1]) window: Window[4];
+/// #4: pub struct DeleteWindow<2> -> () window: Window[4];
+/// #4: pub struct DeleteWindow<2>(?[1]) -> () window: Window[4];
 ///
-/// #4 pub struct DeleteWindow<2> {
+/// #4: pub struct DeleteWindow<2> {
 ///	    window: Window[4],
 /// }
 ///
-/// #4 pub struct DeleteWindow<2>(?) {
+/// #4: pub struct DeleteWindow<2>(?) {
 ///     window: Window[4],
 /// }
 ///
-/// #4 pub struct DeleteWindow<2>(?[1]) {
+/// #4: pub struct DeleteWindow<2>(?[1]) {
 ///     window: Window[4],
 /// }
 ///
-/// #4 pub struct DeleteWindow<2> -> () {
+/// #4: pub struct DeleteWindow<2> -> () {
 ///     window: Window[4],
 /// }
 ///
-/// #4 pub struct DeleteWindow<2>(?[1]) -> () {
+/// #4: pub struct DeleteWindow<2>(?[1]) -> () {
 ///     window: Window[4],
 /// }
 /// ```
@@ -214,6 +214,11 @@ impl Parse for Request {
 
 /// Parses a request that does not have a minor opcode.
 fn parse_normal(major_opcode: u8, input: ParseStream) -> Result<Request> {
+	// Since we now know that there will be no minor opcode, we can ensure that
+	// there is a `:` following the opcodes, which we know to simply be the one
+	// major opcode.
+	input.parse::<Token![:]>()?;
+
 	// Parse the title (visibility, name, length).
 	let title: RequestTitle = input.parse()?;
 	// Attempt to parse a databyte definition.
@@ -245,6 +250,9 @@ fn parse_normal(major_opcode: u8, input: ParseStream) -> Result<Request> {
 fn parse_minor(major_opcode: u8, input: ParseStream) -> Result<Request> {
 	// Parse the minor opcode as an 8-bit integer.
 	let minor_opcode: u8 = input.parse::<Opcode>()?.opcode;
+	// Ensure there is a `:` following all the opcodes.
+	input.parse::<Token![:]>()?;
+
 	// Parse the title (visibility, name, length).
 	let title: RequestTitle = input.parse()?;
 	let reply_declaration: Option<ReplyDeclaration> = input.parse().ok();
