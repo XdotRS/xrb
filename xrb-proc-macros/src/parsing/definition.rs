@@ -7,6 +7,9 @@ use syn::punctuated::Punctuated;
 use syn::token;
 use syn::{braced, Result, Token};
 
+use proc_macro2::{Delimiter, Group, TokenStream as TokenStream2};
+use quote::{ToTokens, TokenStreamExt};
+
 use crate::parsing::fields::Field;
 
 /// The definition of a request or body with zero or more fields.
@@ -67,6 +70,17 @@ impl From<Body> for Definition {
 	}
 }
 
+impl ToTokens for Definition {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		// Write `self` as tokens by calling the appropriate definition type's
+		// `to_tokens` methods (see their definitions further on in this file).
+		match self {
+			Self::Full(body) => body.to_tokens(tokens),
+			Self::Short(shorthand) => shorthand.to_tokens(tokens),
+		}
+	}
+}
+
 /// A full 'body' definition of a request or reply.
 ///
 /// Similar to that of a struct, this is a comma-delimited group of fields, with
@@ -89,6 +103,27 @@ pub struct Body {
 	pub fields: Punctuated<Field, Token![,]>,
 }
 
+impl ToTokens for Body {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		// Appends a [`Group`] with the [`Brace`] [`Delimiter`] and the content
+		// bring `self.fields`.
+		//
+		// `self.fields` is a `,`-punctuated list of fields; that means that it
+		// will be written as each field separated by commas, like so:
+		// ```rust
+		// name1: Type1, name2: Type2, name3: Type3
+		// ```
+		//
+		// The [`Delimiter::Brace`] refers to curly brackets/braces (`{` and
+		// `}`), and for the [`Group`], means that it wraps the fields with
+		// curly brackets. That means that this will turn out to be:
+		// ```rust
+		// { name1: Type1, name2: Type2, name3: Type3 }
+		// ```
+		tokens.append(Group::new(Delimiter::Brace, self.fields.to_token_stream()));
+	}
+}
+
 /// A shorthand definition of a request or reply with an optional single field.
 ///
 /// # Examples
@@ -101,6 +136,18 @@ pub struct Body {
 #[derive(Clone)]
 pub struct Shorthand {
 	pub field: Option<Field>,
+}
+
+impl ToTokens for Shorthand {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		// Appends a [`Group`] with the [`Brace`] [`Delimiter`] and the content
+		// of `self.field`. That means that it wraps the token representation
+		// of the field with curly brackets, a.k.a. braces:
+		// ```rust
+		// { field }
+		// ```
+		tokens.append(Group::new(Delimiter::Brace, self.field.to_token_stream()));
+	}
 }
 
 // Parsing {{{
