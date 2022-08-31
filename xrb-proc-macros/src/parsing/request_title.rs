@@ -3,7 +3,10 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use syn::parse::{Parse, ParseStream};
-use syn::{Ident, LitInt, Token, Result, Visibility};
+use syn::{Ident, LitInt, Result, Token, Visibility};
+
+use proc_macro2::{Span, TokenStream as TokenStream2};
+use quote::{ToTokens, TokenStreamExt};
 
 /// The 'title' of a request, including its visibility, name, and length.
 ///
@@ -34,11 +37,25 @@ pub struct RequestTitle {
 impl RequestTitle {
 	#[allow(dead_code)]
 	pub fn new(vis: Option<Visibility>, name: Ident, length: u16) -> Self {
-		Self {
-			vis,
-			name,
-			length,
-		}
+		Self { vis, name, length }
+	}
+}
+
+impl ToTokens for RequestTitle {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		// Write the visibility, if any.
+		self.vis.to_tokens(tokens);
+		// Write the `struct` keyword (which is 'just' a special identifier).
+		tokens.append(Ident::new("struct", Span::call_site()));
+		// Write the name of the request.
+		self.name.to_tokens(tokens);
+
+		// This writes the request title in the format `#vis struct #Name`,
+		// where `#vis` is the visibility and `#Name` is the name; for example:
+		//
+		// ```rust
+		// pub struct MyRequest
+		// ```
 	}
 }
 
@@ -83,6 +100,12 @@ impl RequestLength {
 	}
 }
 
+impl ToTokens for RequestLength {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		self.length.to_tokens(tokens);
+	}
+}
+
 // Parsing {{{
 
 impl Parse for RequestTitle {
@@ -97,11 +120,7 @@ impl Parse for RequestTitle {
 		// Parse the requests's length, but default to `1` if it was missing.
 		let length = input.parse::<RequestLength>().map_or(1, |len| len.length);
 
-		Ok(Self {
-			vis,
-			name,
-			length,
-		})
+		Ok(Self { vis, name, length })
 	}
 }
 
@@ -118,7 +137,8 @@ impl Parse for RequestLength {
 		// that if we have gotten to this point, reading `<` hasn't already
 		// returned an error: we shouldn't simply ignore the length and use a
 		// default, because the macro invocation itself has a mistake.
-		input.parse::<Token![>]>()
+		input
+			.parse::<Token![>]>()
 			.expect("found opening `<` in request length, so a closing `>` was also expected");
 
 		Ok(Self { length })

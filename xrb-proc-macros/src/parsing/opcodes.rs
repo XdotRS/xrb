@@ -2,8 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use syn::{Token, Result, LitInt};
 use syn::parse::{Parse, ParseStream};
+use syn::{LitInt, Result, Token};
+
+use proc_macro2::TokenStream as TokenStream2;
+use quote::ToTokens;
 
 /// An opcode that can appear in `request!` macros.
 ///
@@ -25,6 +28,12 @@ impl Opcode {
 	/// Construct a new [`Opcode`] from the given [`u8`] integer.
 	pub fn new(opcode: u8) -> Self {
 		Self { opcode }
+	}
+}
+
+impl ToTokens for Opcode {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		self.opcode.to_tokens(tokens);
 	}
 }
 
