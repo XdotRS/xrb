@@ -5,6 +5,10 @@
 use syn::parse::{Parse, ParseStream};
 use syn::{bracketed, Ident, LitInt, Result, Token, Type};
 
+use proc_macro2::{Punct, Spacing, TokenStream as TokenStream2};
+
+use quote::{ToTokens, TokenStreamExt};
+
 /// A field that can appear in `request!` and `reply!` macros.
 ///
 /// This field can either be unused data, meaning it will be skipped over and
@@ -81,6 +85,16 @@ impl From<NormalField> for Field {
 	}
 }
 
+impl ToTokens for Field {
+	/// Writes the field as tokens _if_ it is a [`NormalField`]. [`UnusedField`]s aren't written.
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		match self {
+			Self::Normal(field) => field.to_tokens(tokens),
+			Self::Unused(_) => (),
+		}
+	}
+}
+
 /// An unused field representing empty bytes.
 ///
 /// The bytes of unused fields are skipped over and filled with empty data.
@@ -148,6 +162,21 @@ impl NormalField {
 	}
 }
 
+impl ToTokens for NormalField {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		// Write the name.
+		self.name.to_tokens(tokens);
+		// Write a single semicolon.
+		tokens.append(Punct::new(':', Spacing::Alone));
+		// Write the type.
+		self.ty.to_tokens(tokens);
+
+		// Together, these are in the format `name: Type`, just like, well,
+		// normal fields in Rust. The length is not written here - that is to
+		// be intentionally written elsewhere.
+	}
+}
+
 /// The length of a field in bytes.
 ///
 /// # Examples
@@ -173,6 +202,12 @@ impl FieldLength {
 	/// Construct a new [`FieldLength`] node with the given length.
 	fn with_length(length: u8) -> Self {
 		Self { length }
+	}
+}
+
+impl ToTokens for FieldLength {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		self.length.to_tokens(tokens);
 	}
 }
 
