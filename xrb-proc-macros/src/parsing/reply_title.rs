@@ -3,7 +3,10 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use syn::parse::{Parse, ParseStream};
-use syn::{Visibility, Ident, LitInt, Token, Result};
+use syn::{Ident, LitInt, Result, Token, Visibility};
+
+use proc_macro2::{Span, TokenStream as TokenStream2};
+use quote::{ToTokens, TokenStreamExt};
 
 /// The 'title' of a reply, including its visibility, name, and length.
 ///
@@ -35,11 +38,20 @@ impl ReplyTitle {
 	#[allow(dead_code)]
 	/// Construct a new [`ReplyTitle`] with the given [`Visibility`], name, and length.
 	pub fn new(vis: Option<Visibility>, name: Ident, length: u32) -> Self {
-		Self {
-			vis,
-			name,
-			length,
-		}
+		Self { vis, name, length }
+	}
+}
+
+impl ToTokens for ReplyTitle {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		// Write the visibility, if any.
+		self.vis.to_tokens(tokens);
+		// Write the `struct` keyword, which is 'just' a special identifier.
+		tokens.append(Ident::new("struct", Span::call_site()));
+		// Write the name.
+		self.name.to_tokens(tokens);
+
+		// This will result in a format like `pub struct MyReply`.
 	}
 }
 
@@ -84,6 +96,12 @@ impl ReplyLength {
 	}
 }
 
+impl ToTokens for ReplyLength {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		self.length.to_tokens(tokens);
+	}
+}
+
 // Parsing {{{
 
 impl Parse for ReplyTitle {
@@ -98,11 +116,7 @@ impl Parse for ReplyTitle {
 		// Parse the reply's length, but default to `0` if it was missing.
 		let length = input.parse::<ReplyLength>().map_or(0, |len| len.length);
 
-		Ok(Self {
-			vis,
-			name,
-			length,
-		})
+		Ok(Self { vis, name, length })
 	}
 }
 
@@ -119,7 +133,8 @@ impl Parse for ReplyLength {
 		// that if we have gotten to this point, reading `<` hasn't already
 		// returned an error: we shouldn't simply ignore the length and use a
 		// default, because the macro invocation itself has a mistake.
-		input.parse::<Token![>]>()
+		input
+			.parse::<Token![>]>()
 			.expect("found opening `<` in reply length, so a closing `>` was also expected");
 
 		Ok(Self { length })
