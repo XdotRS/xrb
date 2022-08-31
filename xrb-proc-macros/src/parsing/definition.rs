@@ -5,12 +5,13 @@
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 use syn::token;
-use syn::{braced, Result, Token};
+use syn::{braced, Result, Token, Type};
 
 use proc_macro2::{Delimiter, Group, TokenStream as TokenStream2};
 use quote::{ToTokens, TokenStreamExt};
 
 use crate::parsing::fields::Field;
+use crate::parsing::declare_reply::ReplyDeclaration;
 
 /// The definition of a request or body with zero or more fields.
 ///
@@ -113,6 +114,7 @@ impl ToTokens for Definition {
 /// ```
 #[derive(Clone)]
 pub struct Body {
+	pub reply_ty: Option<Type>,
 	pub fields: Punctuated<Field, Token![,]>,
 }
 
@@ -178,11 +180,17 @@ impl Parse for Definition {
 
 impl Parse for Body {
 	fn parse(input: ParseStream) -> Result<Self> {
+		// Parse the reply declaration, if any.
+		let reply_ty = input.parse::<ReplyDeclaration>().ok().map(
+			|declaration| declaration.reply_ty
+		);
+
 		// Parse curly brackets/braces, but don't save the tokens.
 		let content;
 		braced!(content in input);
 
 		Ok(Self {
+			reply_ty,
 			fields: content.parse_terminated(Field::parse)?,
 		})
 	}

@@ -255,13 +255,20 @@ fn parse_minor(major_opcode: u8, input: ParseStream) -> Result<Request> {
 
 	// Parse the title (visibility, name, length).
 	let title: RequestTitle = input.parse()?;
-	let reply_declaration: Option<ReplyDeclaration> = input.parse().ok();
 	// Parse the definition or zero or more fields.
 	let definition: Definition = input.parse()?;
 
+	// If this is a full definition, get the type of reply (if any). The reply
+	// declaration isn't allowed for shorthand definitions because the lack of
+	// separation between the type and the name of a shorthand field (if
+	// present) may cause confusion.
+	let reply_ty = match definition.clone() {
+		Definition::Full(def) => def.reply_ty,
+		Definition::Short(_) => None,
+	};
+
 	// Convert the minor opcode to a [`Metabyte`].
 	let meta_byte = Metabyte::with_minor_opcode(minor_opcode);
-	let reply_ty = reply_declaration.map(|rep| rep.reply_ty);
 
 	Ok(Request {
 		major_opcode,
