@@ -51,20 +51,20 @@ impl Field {
 	}
 
 	#[allow(dead_code)]
-	/// Whether this is an unused field.
-	pub fn unused(&self) -> bool {
+	/// An [`Option`] that wraps the [`UnusedField`] if `self` is `Unused`.
+	pub fn unused(&self) -> Option<UnusedField> {
 		match self {
-			Self::Unused(_) => true,
-			_ => false,
+			Self::Unused(field) => Some(*field),
+			_ => None,
 		}
 	}
 
 	#[allow(dead_code)]
-	/// Whether this is a normal field with a name and type.
-	pub fn normal(&self) -> bool {
+	/// An [`Option`] that wraps the [`NormalField`] if `self` is `Normal`.
+	pub fn normal(&self) -> Option<NormalField> {
 		match self {
-			Self::Normal(_) => true,
-			_ => false,
+			Self::Normal(field) => Some(field.clone()),
+			_ => None,
 		}
 	}
 }
@@ -108,7 +108,7 @@ pub struct UnusedField {
 impl UnusedField {
 	#[allow(dead_code)]
 	/// Construct a new [`UnusedField`] with the default length of `1`.
-	fn new() -> Self {
+	pub fn new() -> Self {
 		Self { length: 1 }
 	}
 

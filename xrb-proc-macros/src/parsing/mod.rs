@@ -2,17 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-mod opcodes;
+pub mod opcodes;
 
-mod definition;
-mod fields;
-mod metabyte;
+pub mod databyte;
+pub mod definition;
+pub mod fields;
 
-mod replies;
-mod requests;
+pub mod reply;
+pub mod request;
 
-mod reply_title;
-mod request_title;
+pub mod reply_title;
+pub mod request_title;
 
-mod declare_assoc_req;
-mod declare_reply;
+pub mod declare_assoc_req;
+pub mod declare_reply;

@@ -4,9 +4,68 @@
 
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
-use syn::{braced, Token, Result};
+use syn::token;
+use syn::{braced, Result, Token};
 
 use crate::parsing::fields::Field;
+
+/// The definition of a request or body with zero or more fields.
+///
+/// # Examples
+/// ```rust
+/// ;                     // shorthand: no fields
+/// window: Window[4];    // shorthand: one field
+///
+/// {}                    // full: no fields
+/// { window: Window[4] } // full: one field
+///
+/// // full: many fields
+/// {
+///     window: Window[4],
+///     cursor: Option<Cursor>[4],
+///     x: i16[2],
+///     y: i16[2],
+///     width: u16[2],
+///     height: u16[2],
+/// }
+/// ```
+#[derive(Clone)]
+pub enum Definition {
+	Short(Shorthand),
+	Full(Body),
+}
+
+impl Definition {
+	#[allow(dead_code)]
+	/// The wrapped [`Shorthand`] definition, if one is indeed wrapped.
+	pub fn short(&self) -> Option<Shorthand> {
+		match self {
+			Self::Short(short) => Some(short.clone()),
+			_ => None,
+		}
+	}
+
+	#[allow(dead_code)]
+	/// The wrapped [`Body`] definition, if one is indeed wrapped.
+	pub fn full(&self) -> Option<Body> {
+		match self {
+			Self::Full(body) => Some(body.clone()),
+			_ => None,
+		}
+	}
+}
+
+impl From<Shorthand> for Definition {
+	fn from(short: Shorthand) -> Self {
+		Self::Short(short)
+	}
+}
+
+impl From<Body> for Definition {
+	fn from(full: Body) -> Self {
+		Self::Full(full)
+	}
+}
 
 /// A full 'body' definition of a request or reply.
 ///
@@ -45,6 +104,17 @@ pub struct Shorthand {
 }
 
 // Parsing {{{
+
+impl Parse for Definition {
+	fn parse(input: ParseStream) -> Result<Self> {
+		Ok(match input.lookahead1().peek(token::Brace) {
+			// If the next token is `{`, parse as `Body`...
+			true => input.parse::<Body>()?.into(),
+			// Otherwise, parse as `Shorthand`...
+			false => input.parse::<Shorthand>()?.into(),
+		})
+	}
+}
 
 impl Parse for Body {
 	fn parse(input: ParseStream) -> Result<Self> {

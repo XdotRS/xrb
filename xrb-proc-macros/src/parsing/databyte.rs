@@ -5,7 +5,7 @@
 use syn::{Result, parenthesized};
 use syn::parse::{Parse, ParseStream};
 
-use crate::parsing::fields::Field;
+use crate::parsing::fields::{Field, UnusedField};
 
 /// The data byte that is contained within the header of requests that do not
 /// have a minor opcode.
@@ -21,13 +21,13 @@ use crate::parsing::fields::Field;
 /// (window: Window[4]) // error: must be one byte
 /// ```
 #[derive(Clone)]
-pub struct Metabyte {
+pub struct Databyte {
 	pub field: Field,
 }
 
-impl Metabyte {
+impl Databyte {
 	#[allow(dead_code)]
-	/// Construct a new [`Metabyte`] from the given field.
+	/// Construct a new [`Databyte`] from the given field.
 	///
 	/// Warning: this does not check whether the given field is exactly one byte
 	/// in length. That is your responsibility when calling this constructor.
@@ -36,9 +36,18 @@ impl Metabyte {
 	}
 }
 
+// Default [`Databyte`] is an unused field with a length of one.
+impl Default for Databyte {
+	fn default() -> Self {
+		Self {
+			field: UnusedField::default().into(),
+		}
+	}
+}
+
 // Parsing {{{
 
-impl Parse for Metabyte {
+impl Parse for Databyte {
 	fn parse(input: ParseStream) -> Result<Self> {
 		// Parse parentheses, but don't save them directly.
 		let content;
@@ -47,7 +56,7 @@ impl Parse for Metabyte {
 		// Parse a single field.
 		let field: Field = content.parse()?;
 
-		// Panic if the length is not `1`, because the 'meta-byte' in the
+		// Panic if the length is not `1`, because the data byte in the
 		// request header is only a single byte.
 		if field.length() != 1 {
 			panic!("expected a length of 1 byte for the request header data byte");

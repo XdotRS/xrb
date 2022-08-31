@@ -12,7 +12,7 @@ use syn::{Result, Token, Type};
 /// for GetWindowAttributes
 /// ```
 #[derive(Clone)]
-pub struct ReplyDeclaration {
+pub struct RequestDeclaration {
 	pub request_ty: Type,
 }
 
@@ -34,7 +34,7 @@ impl Parse for RequestDeclaration {
 
 		Ok(Self {
 			// Parse the request's type.
-			reply_ty: input.parse()?,
+			request_ty: input.parse()?,
 		})
 	}
 }
