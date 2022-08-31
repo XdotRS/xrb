@@ -2,8 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use syn::{Result, parenthesized};
 use syn::parse::{Parse, ParseStream};
+use syn::{parenthesized, Result};
+
+use proc_macro2::TokenStream as TokenStream2;
+use quote::ToTokens;
 
 use crate::parsing::fields::{Field, UnusedField};
 
@@ -33,6 +36,12 @@ impl Databyte {
 	/// in length. That is your responsibility when calling this constructor.
 	pub fn new(field: Field) -> Self {
 		Self { field }
+	}
+}
+
+impl ToTokens for Databyte {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		self.field.to_tokens(tokens);
 	}
 }
 
