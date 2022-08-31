@@ -14,9 +14,9 @@ use quote::ToTokens;
 ///
 /// # Examples
 /// ```rust
-/// 4!  // opcode: 4
-/// 57! // opcode: 57
-/// 13! // opcode: 13
+/// #4  // opcode: 4
+/// #57 // opcode: 57
+/// #13 // opcode: 13
 /// ```
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Opcode {
@@ -41,13 +41,13 @@ impl ToTokens for Opcode {
 
 impl Parse for Opcode {
 	fn parse(input: ParseStream) -> Result<Self> {
+		// Parse the `#` token, but don't save it. The point of this is that it
+		// returns an error if it wasn't present.
+		input.parse::<Token![#]>()?;
+
 		// Parse the opcode as an integer literal.
 		let value: LitInt = input.parse()?;
 		let opcode: u8 = value.base10_parse()?;
-
-		// Parse the `!` token, but don't save it. The point of this is that it
-		// returns an error if it wasn't present.
-		input.parse::<Token![!]>()?;
 
 		Ok(Self { opcode })
 	}
