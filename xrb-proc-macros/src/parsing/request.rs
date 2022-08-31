@@ -5,11 +5,15 @@
 use syn::parse::{Parse, ParseStream};
 use syn::{Ident, LitInt, Result, Type, Visibility};
 
+use proc_macro2::{Span, TokenStream as TokenStream2};
+use quote::{ToTokens, TokenStreamExt, quote};
+
 use super::databyte::Databyte;
 use super::declare_reply::ReplyDeclaration;
 use super::definition::Definition;
 use super::opcodes::Opcode;
 use super::request_title::RequestTitle;
+use super::fields::Field;
 
 /// A fully parsed request, for use in a `requests!` macro.
 ///
@@ -69,6 +73,29 @@ pub struct Request {
 	pub definition: Definition,
 }
 
+impl ToTokens for Request {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		// Visibility, if any.
+		self.vis.to_tokens(tokens);
+		// `struct` keyword ('just' a special identifier).
+		tokens.append(Ident::new("struct", Span::call_site()));
+		// Request name.
+		self.name.to_tokens(tokens);
+		// The request's fields.
+		self.definition.to_tokens(tokens);
+
+		// This will simply generate a struct for the request. Serialization
+		// work is done in the macro.
+		//
+		// # Example
+		// ```rust
+		// pub struct DeleteWindow {
+		//     window: Window,
+		// }
+		// ```
+	}
+}
+
 /// Represents the second byte of the request header.
 ///
 /// Either a minor opcode, a 1-byte field, or an unused byte.
@@ -106,6 +133,36 @@ impl Metabyte {
 impl From<Databyte> for Metabyte {
 	fn from(databyte: Databyte) -> Self {
 		Self::Normal(databyte)
+	}
+}
+
+impl ToTokens for Metabyte {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		// This will write the metabyte as tokens for it to be used when
+		// implementing a serialize method. That means:
+		// - If this is a minor opcode, write that minor opcode.
+		// - If this is an unused field, write an empty byte.
+		// - If this is a normal field, write `self.#name` (where `#name` is the
+		//   name of the field). This assumes that `self` is a request `struct`
+		//   with the given field.
+
+		match self {
+			// write `minor_opcode` as tokens
+			Self::Minor { minor_opcode } => minor_opcode.to_tokens(tokens),
+			// if it is a field...
+			Self::Normal(data) => match &data.field {
+				// unused -> write blank data as tokens
+				Field::Unused(_) => 0u8.to_tokens(tokens),
+				// if normal field (name, type, length)...
+				Field::Normal(field) => {
+					// bind the field's name to `name`
+					let name = &field.name;
+
+					// write `self::#name` as tokens
+					quote!(self::#name).to_tokens(tokens);
+				}
+			}
+		}
 	}
 }
 
