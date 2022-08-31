@@ -56,6 +56,19 @@ impl Definition {
 			_ => None,
 		}
 	}
+
+	/// Returns a vector of fields contained within the definition.
+	///
+	/// A shorthand definition will be mapped to a vector of 0 or 1 fields.
+	pub fn fields(&self) -> Vec<&Field> {
+		match self {
+			// Collect a full definition's fields as a vector of fields.
+			Self::Full(def) => def.fields.iter().collect::<Vec<&Field>>(),
+			// Map a shorthand definition's optional field to a vector of 0 or
+			// 1 fields.
+			Self::Short(def) => def.field.as_ref().map_or(vec![], |f| vec![&f]),
+		}
+	}
 }
 
 impl From<Shorthand> for Definition {

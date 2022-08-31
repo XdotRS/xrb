@@ -3,9 +3,10 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use syn::parse::{Parse, ParseStream};
-use syn::{Ident, LitInt, Result, Type, Visibility};
+use syn::{Ident, LitInt, Result, Type, Visibility, Token};
+use syn::punctuated::Punctuated;
 
-use proc_macro2::{Span, TokenStream as TokenStream2};
+use proc_macro2::{Span, TokenStream as TokenStream2, Group, Delimiter};
 use quote::{ToTokens, TokenStreamExt, quote};
 
 use super::databyte::Databyte;
@@ -13,45 +14,45 @@ use super::declare_reply::ReplyDeclaration;
 use super::definition::Definition;
 use super::opcodes::Opcode;
 use super::request_title::RequestTitle;
-use super::fields::Field;
+use super::fields::{Field, NormalField};
 
 /// A fully parsed request, for use in a `requests!` macro.
 ///
 /// # Examples
 /// _All_ of the following are equivalent:
 /// ```rust
-/// 4! pub struct DeleteWindow<2> window: Window[4];
-/// 4! pub struct DeleteWindow<2>(?) window: Window[4];
-/// 4! pub struct DeleteWindow<2>(?[1]) window: Window[4];
-/// 4! pub struct DeleteWindow<2> -> () window: Window[4];
-/// 4! pub struct DeleteWindow<2>(?[1]) -> () window: Window[4];
+/// #4 pub struct DeleteWindow<2> window: Window[4];
+/// #4 pub struct DeleteWindow<2>(?) window: Window[4];
+/// #4 pub struct DeleteWindow<2>(?[1]) window: Window[4];
+/// #4 pub struct DeleteWindow<2> -> () window: Window[4];
+/// #4 pub struct DeleteWindow<2>(?[1]) -> () window: Window[4];
 ///
-/// 4! pub struct DeleteWindow<2> {
+/// #4 pub struct DeleteWindow<2> {
 ///	    window: Window[4],
 /// }
 ///
-/// 4! pub struct DeleteWindow<2>(?) {
+/// #4 pub struct DeleteWindow<2>(?) {
 ///     window: Window[4],
 /// }
 ///
-/// 4! pub struct DeleteWindow<2>(?[1]) {
+/// #4 pub struct DeleteWindow<2>(?[1]) {
 ///     window: Window[4],
 /// }
 ///
-/// 4! pub struct DeleteWindow<2> -> () {
+/// #4 pub struct DeleteWindow<2> -> () {
 ///     window: Window[4],
 /// }
 ///
-/// 4! pub struct DeleteWindow<2>(?[1]) -> () {
+/// #4 pub struct DeleteWindow<2>(?[1]) -> () {
 ///     window: Window[4],
 /// }
 /// ```
 /// In the above example, this struct looks like so:
-/// ```rust
+/// ```
 /// major_opcode: 4,
 /// meta_byte: Databyte { field: ?[1] }, // ? = unused/empty
-/// vis: Some(`pub`),
-/// name: `DeleteWindow`,
+/// vis: Some(Token![pub]),
+/// name: Ident("DeleteWindow",
 /// length: 2,
 /// // 1 field `window` with a type of `Window` and a byte-length of `4`
 /// ```
@@ -81,8 +82,40 @@ impl ToTokens for Request {
 		tokens.append(Ident::new("struct", Span::call_site()));
 		// Request name.
 		self.name.to_tokens(tokens);
-		// The request's fields.
-		self.definition.to_tokens(tokens);
+
+		// Create an empty 'punctuated list' of fields, where each field is
+		// separated by a comma.
+		let mut fields: Punctuated<NormalField, Token![,]> = Punctuated::new();
+
+		// Get an [`Option`] wrapping the existance of a _data byte_ in the
+		// metabyte - that is, whether a field was given that uses the second
+		// byte in the request's header.
+		let databyte = self.meta_byte.databyte();
+		// Map the [`Option`] of the existance of a data byte to the existance
+		// of a _normal field_ (i.e., a field that we can declare in a struct
+		// definition, with a name and a type) within the data byte.
+		//
+		// We have to flatten this, as we simply want an `Option<NormalField>`,
+		// but we would otherwise have an `Option<Option<NormalField>>`.
+		let databyte_field = databyte.map(|d| d.field.normal()).flatten();
+
+		// If there is indeed a normal field in the metabyte, we can push that
+		// to the list of fields - that means that we will declare it as the
+		// first field in the struct.
+		databyte_field.map(|field| fields.push(field));
+
+		// Loop over any further fields in the definition. These ones aren't
+		// special; no unique serialization needs to be taken into account for
+		// them, so this is easier.
+		for field in self.definition.fields() {
+			// If the field is a normal field, push it to the list of fields.
+			field.normal().map(|field| fields.push(field));
+		}
+
+		// Group all the field definitions together and surround them with
+		// 'braces', a.k.a. curly brackets. This pretty much just adds `{` at
+		// the beginning and `}` at the end.
+		Group::new(Delimiter::Brace, fields.to_token_stream()).to_tokens(tokens);
 
 		// This will simply generate a struct for the request. Serialization
 		// work is done in the macro.
@@ -158,8 +191,8 @@ impl ToTokens for Metabyte {
 					// bind the field's name to `name`
 					let name = &field.name;
 
-					// write `self::#name` as tokens
-					quote!(self::#name).to_tokens(tokens);
+					// write `self.#name` as tokens
+					quote!(self.#name).to_tokens(tokens);
 				}
 			}
 		}
