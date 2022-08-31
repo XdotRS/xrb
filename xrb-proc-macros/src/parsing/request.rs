@@ -10,7 +10,6 @@ use proc_macro2::{Span, TokenStream as TokenStream2, Group, Delimiter};
 use quote::{ToTokens, TokenStreamExt, quote};
 
 use super::databyte::Databyte;
-use super::declare_reply::ReplyDeclaration;
 use super::definition::Definition;
 use super::opcodes::Opcode;
 use super::request_title::RequestTitle;
@@ -24,8 +23,8 @@ use super::fields::{Field, NormalField};
 /// #4: pub struct DeleteWindow<2> window: Window[4];
 /// #4: pub struct DeleteWindow<2>(?) window: Window[4];
 /// #4: pub struct DeleteWindow<2>(?[1]) window: Window[4];
-/// #4: pub struct DeleteWindow<2> -> () window: Window[4];
-/// #4: pub struct DeleteWindow<2>(?[1]) -> () window: Window[4];
+/// #4: pub struct DeleteWindow<2> window: Window[4] -> ();
+/// #4: pub struct DeleteWindow<2>(?[1]) window: Window[4] -> ();
 ///
 /// #4: pub struct DeleteWindow<2> {
 ///	    window: Window[4],
@@ -223,16 +222,12 @@ fn parse_normal(major_opcode: u8, input: ParseStream) -> Result<Request> {
 	let title: RequestTitle = input.parse()?;
 	// Attempt to parse a databyte definition.
 	let databyte: Result<Databyte> = input.parse();
-	// Attempt to parse a reply type declaration.
-	let reply_declaration: Option<ReplyDeclaration> = input.parse().ok();
 	// Parse the definition of zero or more fields.
 	let definition: Definition = input.parse()?;
 
 	// Convert either a read databyte or the default of a 1-byte unused field
 	// to a [`Metabyte`].
 	let meta_byte: Metabyte = databyte.unwrap_or_default().into();
-	// Get the type from the reply declaration.
-	let reply_ty = reply_declaration.map(|rep| rep.reply_ty);
 
 	Ok(Request {
 		major_opcode,
@@ -240,7 +235,7 @@ fn parse_normal(major_opcode: u8, input: ParseStream) -> Result<Request> {
 		vis: title.vis,
 		name: title.name,
 		length: title.length,
-		reply_ty,
+		reply_ty: definition.reply_type(),
 		definition,
 	})
 }
@@ -258,15 +253,6 @@ fn parse_minor(major_opcode: u8, input: ParseStream) -> Result<Request> {
 	// Parse the definition or zero or more fields.
 	let definition: Definition = input.parse()?;
 
-	// If this is a full definition, get the type of reply (if any). The reply
-	// declaration isn't allowed for shorthand definitions because the lack of
-	// separation between the type and the name of a shorthand field (if
-	// present) may cause confusion.
-	let reply_ty = match definition.clone() {
-		Definition::Full(def) => def.reply_ty,
-		Definition::Short(_) => None,
-	};
-
 	// Convert the minor opcode to a [`Metabyte`].
 	let meta_byte = Metabyte::with_minor_opcode(minor_opcode);
 
@@ -276,7 +262,7 @@ fn parse_minor(major_opcode: u8, input: ParseStream) -> Result<Request> {
 		vis: title.vis,
 		name: title.name,
 		length: title.length,
-		reply_ty,
+		reply_ty: definition.reply_type(),
 		definition,
 	})
 }

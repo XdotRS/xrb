@@ -3,8 +3,8 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use syn::parse::{Parse, ParseStream};
-use syn::punctuated::Punctuated;
 use syn::token;
+use syn::punctuated::Punctuated;
 use syn::{braced, Result, Token, Type};
 
 use proc_macro2::{Delimiter, Group, TokenStream as TokenStream2};
@@ -68,6 +68,15 @@ impl Definition {
 			// Map a shorthand definition's optional field to a vector of 0 or
 			// 1 fields.
 			Self::Short(def) => def.field.as_ref().map_or(vec![], |f| vec![&f]),
+		}
+	}
+
+	/// Gets the reply type given in the reply declaration in this definition,
+	/// if any.
+	pub fn reply_type(&self) -> Option<Type> {
+		match self.clone() {
+			Self::Full(def) => def.reply_ty,
+			Self::Short(def) => def.reply_ty,
 		}
 	}
 }
@@ -151,6 +160,7 @@ impl ToTokens for Body {
 #[derive(Clone)]
 pub struct Shorthand {
 	pub field: Option<Field>,
+	pub reply_ty: Option<Type>,
 }
 
 impl ToTokens for Shorthand {
@@ -169,10 +179,11 @@ impl ToTokens for Shorthand {
 
 impl Parse for Definition {
 	fn parse(input: ParseStream) -> Result<Self> {
-		Ok(match input.lookahead1().peek(token::Brace) {
-			// If the next token is `{`, parse as `Body`...
+		let look = input.lookahead1();
+
+		Ok(match look.peek(token::Brace) ||
+		   (look.peek(Token![->]) && input.fork().parse::<Shorthand>().is_err()) {
 			true => input.parse::<Body>()?.into(),
-			// Otherwise, parse as `Shorthand`...
 			false => input.parse::<Shorthand>()?.into(),
 		})
 	}
@@ -200,10 +211,15 @@ impl Parse for Shorthand {
 	fn parse(input: ParseStream) -> Result<Self> {
 		// Parse a single field, if present.
 		let field: Option<Field> = input.parse().ok();
+		// Parse the reply declaration, if any.
+		let reply_ty = input.parse::<ReplyDeclaration>().ok().map(
+			|declaration| declaration.reply_ty
+		);
+
 		// Parse a `;` token, but don't save it.
 		input.parse::<Token![;]>()?;
 
-		Ok(Self { field })
+		Ok(Self { field, reply_ty })
 	}
 }
 
