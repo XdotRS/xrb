@@ -5,6 +5,9 @@
 use syn::parse::{Parse, ParseStream};
 use syn::{Result, Token, Type};
 
+use proc_macro2::{Punct, Spacing, TokenStream as TokenStream2};
+use quote::{ToTokens, TokenStreamExt};
+
 /// A request's declaration of the type of its associated reply.
 ///
 /// # Examples
@@ -22,6 +25,20 @@ impl ReplyDeclaration {
 	/// reply.
 	pub fn new(reply_ty: Type) -> Self {
 		Self { reply_ty }
+	}
+}
+
+impl ToTokens for ReplyDeclaration {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		// Write `<`: `Alone` means that it isn't _combined_ with the next token,
+		// e.g. `<=`.
+		tokens.append(Punct::new('<', Spacing::Alone));
+		// Write the reply type.
+		self.reply_ty.to_tokens(tokens);
+		// Write `>`.
+		tokens.append(Punct::new('>', Spacing::Alone));
+
+		// This will end up looking like `<ReplyType>`.
 	}
 }
 
