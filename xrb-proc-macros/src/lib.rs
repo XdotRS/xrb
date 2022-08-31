@@ -104,6 +104,18 @@ pub fn request(input: TokenStream) -> TokenStream {
 			.minor_opcode()
 			.map_or(quote!(None), |opcode| quote!(Some(#opcode)));
 
+		// The type of the metabyte.
+		let metabyte_ty = metabyte
+			.databyte()
+			// If it is a custom data field, map to its type.
+			.map(|databyte| {
+				databyte.field.normal().map(|field| field.ty)
+			})
+			.flatten()
+			// If the data field type is some, quote it, otherwise map to `u8`
+			// (as `u8` is the type of both the minor opcode and an empty byte).
+			.map_or(quote!(u8), |ty| quote!(#ty));
+
 		quote! {
 			#struct_definition
 
@@ -131,7 +143,7 @@ pub fn request(input: TokenStream) -> TokenStream {
 					<u8 as crate::rw::WriteValue>::write_1b_to(#major, &mut bytes)?;
 					// Write the metabyte, whether that be a data field, minor opcode,
 					// or blank, as one byte.
-					<u8 as crate::rw::WriteValue>::write_1b_to(#metabyte, &mut bytes)?;
+					<#metabyte_ty as crate::rw::WriteValue>::write_1b_to(#metabyte, &mut bytes)?;
 					// Write the request length as two bytes.
 					<u16 as crate::rw::WriteValue>::write_2b_to(#length, &mut bytes)?;
 
