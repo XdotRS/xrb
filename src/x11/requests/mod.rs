@@ -18,6 +18,8 @@ use crate::rw::Serialize;
 use crate::requests;
 use crate::values;
 
+use xrb_proc_macros::request;
+
 /// A request is a message sent from an X client to the X server.
 ///
 /// Since an X client will never receive an actual request message,
@@ -53,6 +55,12 @@ pub trait Request<REPLY = ()>: Serialize {
 	/// need to be added to the end of the request to ensure its length is
 	/// brought up to a multiple of 4, if it is not already.
 	fn length(&self) -> u16;
+}
+
+request! {
+	4! pub struct DesroyWindow {
+		window: Window[4],
+	}
 }
 
 requests! {

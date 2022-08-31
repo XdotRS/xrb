@@ -72,15 +72,15 @@ pub fn request(input: TokenStream) -> TokenStream {
 						match len {
 							1 => {
 								// self.#name.write_1b_to(&mut bytes)?;
-								quote!(<#ty as xrb::rw::WriteValue>::write_1b_to(self.#name, &mut bytes)?;)
+								quote!(<#ty as crate::rw::WriteValue>::write_1b_to(self.#name, &mut bytes)?;)
 							}
 							2 => {
 								// self.#name.write_2b_to(&mut bytes)?;
-								quote!(<#ty as xrb::rw::WriteValue>::write_2b_to(self.#name, &mut bytes)?;)
+								quote!(<#ty as crate::rw::WriteValue>::write_2b_to(self.#name, &mut bytes)?;)
 							}
 							4 => {
 								// self.#name.write_4b_to(&mut bytes)?;
-								quote!(<#ty as xrb::rw::WriteValue>::write_4b_to(self.#name, &mut bytes)?;)
+								quote!(<#ty as crate::rw::WriteValue>::write_4b_to(self.#name, &mut bytes)?;)
 							}
 							_ => panic!("expected a byte length of 1, 2, or 4"),
 						}
@@ -109,12 +109,12 @@ pub fn request(input: TokenStream) -> TokenStream {
 	let expanded = quote! {
 		#struct_definition
 
-		impl xrb::Request<#reply> for #name {
+		impl crate::Request<#reply> for #name {
 			fn opcode() -> u8 {
 				#major
 			}
 
-			fn minor_opcode() -> u8 {
+			fn minor_opcode() -> Option<u8> {
 				#minor
 			}
 
@@ -123,19 +123,19 @@ pub fn request(input: TokenStream) -> TokenStream {
 			}
 		}
 
-		impl xrb::rw::Serialize for #name {
-			fn serialize(self) -> xrb::rw::WriteResult<Vec<u8>> {
+		impl crate::rw::Serialize for #name {
+			fn serialize(self) -> crate::rw::WriteResult<Vec<u8>> {
 				let mut bytes = vec![];
 
 				// Header {{{
 
 				// Write the major opcode as one byte.
-				<u8 as xrb::rw::WriteValue>::write_1b_to(#major, &mut bytes)?;
+				<u8 as crate::rw::WriteValue>::write_1b_to(#major, &mut bytes)?;
 				// Write the metabyte, whether that be a data field, minor opcode,
 				// or blank, as one byte.
-				<u8 as xrb::rw::WriteValue>::write_1b_to(#metabyte, &mut bytes)?;
+				<u8 as crate::rw::WriteValue>::write_1b_to(#metabyte, &mut bytes)?;
 				// Write the request length as two bytes.
-				<u16 as xrb::rw::WriteValue>::write_2b_to(#length, &mut bytes)?;
+				<u16 as crate::rw::WriteValue>::write_2b_to(#length, &mut bytes)?;
 
 				// }}}
 
