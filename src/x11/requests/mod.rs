@@ -60,12 +60,24 @@ requests! {
 	// #2: ChangeWindowAttributes - waiting on algebraic length expressions
 
 	/// Gets the window attributes associated with the `target` [`Window`].
-	3: pub struct GetWindowAttributes<2> -> GetWindowAttributesReply {
-		target: Window[4],
-	}
+	3: pub struct GetWindowAttributes<2> target: Window[4] -> GetWindowAttributesReply;
 
 	/// Destroys the `target` [`Window`].
+	///
+	/// If the `target` window is mapped, an [`UnmapWindow`] request is performed
+	/// automatically. The window and all its childlren are then destroyed, and
+	/// a `DestroyNotify` event is generated for each window.
+	///
+	/// All of a window's child windows are destroyed before the window itself
+	/// is destroyed. That means that the window's furthest descendants are
+	/// destroyed first, and the `target` window itself is destroyed last.
+	///
+	/// This request has no effect on root windows.
 	4: pub struct DestroyWindow<2> target: Window[4];
+	/// Performs a [`DestroyWindow`] request on all children of the target window.
+	///
+	/// These [`DestroyWindow`] requests are performed in bottom-to-top stacking
+	/// order. The `target` window itself is not destroyed.
 	5: pub struct DestroySubwindows<2> target: Window[4];
 
 	// Just need the `Mode` enum for this one:
@@ -73,6 +85,23 @@ requests! {
 
 	/// Switches a child window's parent window to another one. Often used for
 	/// window decorations.
+	///
+	/// If the `target` window is mapped, an [`UnmapWindow`] request is
+	/// performed automatically first. The window is then removed from its
+	/// current position in the hierarchy and inserted as a child of the
+	/// specified parent. A `ReparentNotify` event is then generated. Finally,
+	/// if the window was originally mapped, a [`MapWindow`] request is
+	/// performed automatically.
+	///
+	/// The window will be placed on top of its new sibling windows, if any,
+	/// when it comes to stacking order.
+	///
+	/// # Errors
+	/// A [`Match`] error is generated if:
+	/// - the new parent is not on the same screen as the old parent; or
+	/// - the new parent is `InputOnly` and the `target` window is not; or
+	/// - the `target` window window has a `ParentRelative` background and the
+	///   new parent is not the same width as the `target` window.
 	7: pub struct ReparentWindow<4> {
 		/// The target window.
 		target: Window[4],
@@ -89,11 +118,22 @@ requests! {
 	/// You can think of this as showing the target window, but it does not
 	/// necessarily guarantee that it will be visible, if the window manager
 	/// chooses to honor this request at all.
+	///
+	/// If the `override_redirect` window attribute of the `target` window is
+	/// `false` and another client as selected `SubstructureRedirect` on its
+	/// parent, then a `MapRequest` event is generated, but the window remains
+	/// unmapped. Otherwise, the window is mapped and a `MapNotify` event is
+	/// generated. This means that a window manager can choose whether to honor
+	/// a `MapWindow` request, if one is running.
+	///
+	/// If the window is already mapped, this request has no effect.
 	8: pub struct MapWindow<2> target: Window[4];
 	9: pub struct MapSubwindows<2> target: Window[4];
 	/// Unmaps the `target` [`Window`].
 	///
-	/// You can think of this as hiding the target window.
+	/// You can think of this as hiding the `target` window.
+	///
+	/// If the `target` window is already unmapped, this request has no effect.
 	10: pub struct UnmapWindow<2> target: Window[4];
 	11: pub struct UnmapSubwindows<2> window: Window[4];
 
