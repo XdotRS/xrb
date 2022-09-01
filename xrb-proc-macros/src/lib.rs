@@ -18,7 +18,7 @@ use parsing::request::{Metabyte, Requests};
 /// Let's use the example of a `GetProperty` request:
 /// ```rust
 /// requests! {
-///     #20: pub struct GetProperty<6>(delete: bool) -> GetPropertyReply {
+///     20: pub struct GetProperty<6>(delete: bool) -> GetPropertyReply {
 ///         window: Window[4],
 ///         property: Atom[4],
 ///         property_type: Specificity<Atom>[4],
@@ -32,9 +32,9 @@ use parsing::request::{Metabyte, Requests};
 /// To start with, the `GetProperty` request has major opcode `20` and it
 /// generates a reply of type `GetPropertyReply`. You can see that in the
 /// `requests!` syntax a major opcode is given at the start of each request
-/// definition, in this case being `#20:`. Every request definition must include
+/// definition, in this case being `20:`. Every request definition must include
 /// the major opcode in such a way. For requests that define a minor opcode, the
-/// minor opcode can also be specified before the colon: `#20 #13:` means major
+/// minor opcode can also be specified with a comma: `20, 13:` means major
 /// opcode `20`, minor opcode `13`. You can also see that the reply return type
 /// is given by `-> ReplyType`, in this case being `-> GetPropertyReply`.
 ///
@@ -104,7 +104,7 @@ use parsing::request::{Metabyte, Requests};
 /// take a look at a simpler one and see how we can write it in a simpler way.
 /// ```rust
 /// requests! {
-///     #8: pub struct MapWindow<2> { window: Window[4] }
+///     8: pub struct MapWindow<2> { window: Window[4] }
 /// }
 /// ```
 /// The `MapWindow` request is pretty simple compared to a `GetProperty` request.
@@ -116,7 +116,7 @@ use parsing::request::{Metabyte, Requests};
 /// shorter still:
 /// ```rust
 /// requests! {
-///     #8: pub struct MapWindow<2> window: Window[4];
+///     8: pub struct MapWindow<2> window: Window[4];
 /// }
 /// ```
 /// In this shorthand definition, we have omitted the curly brackets (`{` and
@@ -127,7 +127,7 @@ use parsing::request::{Metabyte, Requests};
 /// `GrabServer` request, which can simply be defined like so:
 /// ```rust
 /// requests! {
-///     #36: pub struct GrabServer;
+///     36: pub struct GrabServer;
 /// }
 /// ```
 ///
@@ -140,7 +140,7 @@ use parsing::request::{Metabyte, Requests};
 /// that the full definition of the `GrabServer` request is actually:
 /// ```rust
 /// requests! {
-///     #36: pub struct GrabServer<1>(?[1]) -> () {}
+///     36: pub struct GrabServer<1>(?[1]) -> () {}
 /// }
 /// ```
 /// But we allow these omissions for convenience and readability.

@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use syn::parse::{Parse, ParseStream};
-use syn::{bracketed, Ident, LitInt, Result, Token, Type};
+use syn::{bracketed, Ident, LitInt, Result, Token, Type, Attribute};
 
 use proc_macro2::{Punct, Spacing, TokenStream as TokenStream2};
 
@@ -207,6 +207,7 @@ impl UnusedField {
 /// ```
 #[derive(Clone)]
 pub struct NormalField {
+	pub attributes: Vec<Attribute>,
 	pub name: Ident,
 	pub ty: Type,
 	pub length: u8,
@@ -214,14 +215,20 @@ pub struct NormalField {
 
 impl NormalField {
 	#[allow(dead_code)]
-	/// Construct a new [`NormalField`] with the given name, type, and length.
-	pub fn new(name: Ident, ty: Type, length: u8) -> Self {
-		Self { name, ty, length }
+	/// Construct a new [`NormalField`] with the given attributes, name,
+	/// type, and length.
+	pub fn new(attributes: Vec<Attribute>, name: Ident, ty: Type, length: u8) -> Self {
+		Self { attributes, name, ty, length }
 	}
 }
 
 impl ToTokens for NormalField {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		// Write the attributes, including doc comments.
+		for attribute in &self.attributes {
+			attribute.to_tokens(tokens);
+		}
+
 		// Write the name.
 		self.name.to_tokens(tokens);
 		// Write a single semicolon.
@@ -299,6 +306,8 @@ impl Parse for UnusedField {
 
 impl Parse for NormalField {
 	fn parse(input: ParseStream) -> Result<Self> {
+		// Parse attributes, including doc comments.
+		let attributes = input.call(Attribute::parse_outer)?;
 		// Parse the field name as an identifier.
 		let name: Ident = input.parse()?;
 		// Parse a `:` token, but don't save it.
@@ -320,6 +329,7 @@ impl Parse for NormalField {
 		}
 
 		Ok(Self {
+			attributes,
 			name,
 			ty,
 			length: value,

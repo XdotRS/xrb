@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use syn::parse::{Parse, ParseStream};
-use syn::{Ident, LitInt, Result, Type, Visibility, Token};
+use syn::{Ident, LitInt, Result, Type, Visibility, Token, Attribute};
 use syn::punctuated::Punctuated;
 
 use proc_macro2::{Span, TokenStream as TokenStream2, Group, Delimiter};
@@ -11,7 +11,6 @@ use quote::{ToTokens, TokenStreamExt, quote};
 
 use super::databyte::Databyte;
 use super::definition::Definition;
-use super::opcodes::Opcode;
 use super::request_title::RequestTitle;
 use super::fields::{Field, NormalField};
 
@@ -35,29 +34,29 @@ impl ToTokens for Requests {
 /// # Examples
 /// _All_ of the following are equivalent:
 /// ```rust
-/// #4: pub struct DeleteWindow<2> window: Window[4];
-/// #4: pub struct DeleteWindow<2>(?) window: Window[4];
-/// #4: pub struct DeleteWindow<2>(?[1]) window: Window[4];
-/// #4: pub struct DeleteWindow<2> window: Window[4] -> ();
-/// #4: pub struct DeleteWindow<2>(?[1]) window: Window[4] -> ();
+/// 4: pub struct DeleteWindow<2> window: Window[4];
+/// 4: pub struct DeleteWindow<2>(?) window: Window[4];
+/// 4: pub struct DeleteWindow<2>(?[1]) window: Window[4];
+/// 4: pub struct DeleteWindow<2> window: Window[4] -> ();
+/// 4: pub struct DeleteWindow<2>(?[1]) window: Window[4] -> ();
 ///
-/// #4: pub struct DeleteWindow<2> {
+/// 4: pub struct DeleteWindow<2> {
 ///	    window: Window[4],
 /// }
 ///
-/// #4: pub struct DeleteWindow<2>(?) {
+/// 4: pub struct DeleteWindow<2>(?) {
 ///     window: Window[4],
 /// }
 ///
-/// #4: pub struct DeleteWindow<2>(?[1]) {
+/// 4: pub struct DeleteWindow<2>(?[1]) {
 ///     window: Window[4],
 /// }
 ///
-/// #4: pub struct DeleteWindow<2> -> () {
+/// 4: pub struct DeleteWindow<2> -> () {
 ///     window: Window[4],
 /// }
 ///
-/// #4: pub struct DeleteWindow<2>(?[1]) -> () {
+/// 4: pub struct DeleteWindow<2>(?[1]) -> () {
 ///     window: Window[4],
 /// }
 /// ```
@@ -72,6 +71,8 @@ impl ToTokens for Requests {
 /// ```
 #[derive(Clone)]
 pub struct Request {
+	/// The request struct's attributes, including doc comments.
+	pub attributes: Vec<Attribute>,
 	/// The request's major opcode.
 	pub major_opcode: u8,
 	/// The second byte of the request: either the minor opcode or a [`Databyte`].
@@ -90,6 +91,11 @@ pub struct Request {
 
 impl ToTokens for Request {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		// Attributes, including doc comments.
+		for attribute in self.attributes.iter() {
+			attribute.to_tokens(tokens);
+		}
+
 		// Visibility, if any.
 		self.vis.to_tokens(tokens);
 		// `struct` keyword ('just' a special identifier).
@@ -234,18 +240,21 @@ impl Parse for Requests {
 
 impl Parse for Request {
 	fn parse(input: ParseStream) -> Result<Self> {
-		let major_opcode: u8 = input.parse::<Opcode>()?.opcode;
+		// Parse attributes.
+		let attrs = input.call(Attribute::parse_outer)?;
+		// Parse the major opcode.
+		let major_opcode: u8 = input.parse::<LitInt>()?.base10_parse()?;
 
 		match input.lookahead1().peek(LitInt) {
-			true => Self::parse_minor(major_opcode, input),
-			false => Self::parse_normal(major_opcode, input),
+			true => Self::parse_minor(attrs, major_opcode, input),
+			false => Self::parse_normal(attrs, major_opcode, input),
 		}
 	}
 }
 
 impl Request {
 	/// Parses a request that does not have a minor opcode.
-	fn parse_normal(major_opcode: u8, input: ParseStream) -> Result<Request> {
+	fn parse_normal(attributes: Vec<Attribute>, major_opcode: u8, input: ParseStream) -> Result<Request> {
 		// Since we now know that there will be no minor opcode, we can ensure that
 		// there is a `:` following the opcodes, which we know to simply be the one
 		// major opcode.
@@ -263,6 +272,7 @@ impl Request {
 		let meta_byte: Metabyte = databyte.unwrap_or_default().into();
 
 		Ok(Request {
+			attributes,
 			major_opcode,
 			meta_byte,
 			vis: title.vis,
@@ -275,9 +285,11 @@ impl Request {
 
 	/// Parses a request that has a minor opcode instead of a request header data
 	/// byte field.
-	fn parse_minor(major_opcode: u8, input: ParseStream) -> Result<Request> {
+	fn parse_minor(attributes: Vec<Attribute>, major_opcode: u8, input: ParseStream) -> Result<Request> {
+		// Ensure there is a `,` preceding the minor opcode.
+		input.parse::<Token![,]>()?;
 		// Parse the minor opcode as an 8-bit integer.
-		let minor_opcode: u8 = input.parse::<Opcode>()?.opcode;
+		let minor_opcode: u8 = input.parse::<LitInt>()?.base10_parse()?;
 		// Ensure there is a `:` following all the opcodes.
 		input.parse::<Token![:]>()?;
 
@@ -290,6 +302,7 @@ impl Request {
 		let meta_byte = Metabyte::with_minor_opcode(minor_opcode);
 
 		Ok(Request {
+			attributes,
 			major_opcode,
 			meta_byte,
 			vis: title.vis,
