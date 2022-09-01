@@ -16,7 +16,7 @@ use crate::rw::Serialize;
 
 use crate::values;
 
-use xrb_proc_macros::request as requests;
+use xrb_proc_macros::requests;
 
 /// A request is a message sent from an X client to the X server.
 ///

@@ -14,6 +14,7 @@ use parsing::request::{Metabyte, Requests};
 
 /// Generates X11 protocol request definitions based on a custom syntax.
 ///
+/// # Overview
 /// Let's use the example of a `GetProperty` request:
 /// ```rust
 /// requests! {
@@ -49,8 +50,8 @@ use parsing::request::{Metabyte, Requests};
 /// request header data byte, which doesn't contribute towards the length of the
 /// request). After that, this request does indeed define a field that occupies
 /// the request header data byte: this field is unique in that:
-/// A. It doesn't contribute towards the total length of the request.
-/// B. It must be exactly one byte in length.
+/// 1. It doesn't contribute towards the total length of the request.
+/// 2. It must be exactly one byte in length.
 ///
 /// This request header data byte field will be defined in the generated struct
 /// definition of this request, just like fields in `struct`s normally are. Its
@@ -70,6 +71,35 @@ use parsing::request::{Metabyte, Requests};
 /// fields will be converted to ordinary struct fields in Rust when the struct
 /// definition for this request is generated.
 ///
+/// We won't go into detail on the serialization of these requests, but it may
+/// be helpful to see the struct and `Request` trait implementation generated
+/// by this example:
+/// ```rust
+/// pub struct GetProperty {
+///     pub delete: bool,
+///     pub window: Window,
+///     pub property: Atom,
+///     pub property_type: Specificity<Atom>,
+///     pub long_offset: u32,
+///     pub long_length: u32,
+/// }
+///
+/// impl Request<GetPropertyReply> for GetProperty {
+///     fn opcode() -> u8 {
+///         20
+///     }
+///
+///     fn minor_opcode() -> Option<u8> {
+///         None
+///     }
+///
+///     fn length(&self) -> u16 {
+///         6
+///     }
+/// }
+/// ```
+///
+/// # Shorthand
 /// Now that we've had a look at a particularly complex request definition, let's
 /// take a look at a simpler one and see how we can write it in a simpler way.
 /// ```rust
@@ -101,6 +131,7 @@ use parsing::request::{Metabyte, Requests};
 /// }
 /// ```
 ///
+/// # Unused bytes
 /// There is actually one final bit of the `requests!` syntax we haven't talked
 /// about yet. Remember that the request header data byte field can be omitted,
 /// leaving it to default to a single unused byte? Well, we can explicitly define
