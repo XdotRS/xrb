@@ -7,7 +7,7 @@ use syn::{bracketed, Ident, LitInt, Result, Token, Type};
 
 use proc_macro2::{Punct, Spacing, TokenStream as TokenStream2};
 
-use quote::{ToTokens, TokenStreamExt};
+use quote::{ToTokens, TokenStreamExt, quote};
 
 /// A field that can appear in `request!` and `reply!` macros.
 ///
@@ -91,6 +91,64 @@ impl ToTokens for Field {
 		match self {
 			Self::Normal(field) => field.to_tokens(tokens),
 			Self::Unused(_) => (),
+		}
+	}
+}
+
+impl Field {
+	/// Returns a [`TokenStream`] with the appropriate serialization for this
+	/// particular field.
+	pub fn serialize_tokens(&self) -> TokenStream2 {
+		match self {
+			Self::Unused(unused) => {
+				let length = unused.length;
+
+				// Alias the turbofish so the code is a little cleaner...
+				let turbofish = quote!(<u8 as crate::rw::WriteValue>);
+
+				match length {
+					// If the length is 2 bytes, use `write_2b_to`.
+					2 => quote! {
+						#turbofish::write_2b_to(0, &mut bytes)?;
+					},
+					// If the length is 4 bytes, use `write_4b_to`.
+					4 => quote! {
+						#turbofish::write_4b_to(0, &mut bytes)?;
+					},
+					// Otherwise, if the length is 1, 3, or 5+ bytes, use
+					// `write_1b_to` `length` many times.
+					_ => {
+						let bytes = (0..length).map(|_| {
+							quote! {
+								#turbofish::write_1b_to(0, &mut bytes)?;
+							}
+						});
+
+						quote!(#(#bytes)*)
+					}
+				}
+			}
+			Self::Normal(field) => {
+				// Bind `name` and `ty` to `field.name` and `field.ty`.
+				let (name, ty) = (&field.name, &field.ty);
+				// Alias the turbofish so the code is a little cleaner...
+				let turbofish = quote!(<#ty as crate::rw::WriteValue>);
+
+				// Choose the appropriate `WriteValue` method based on the
+				// length.
+				let function = match field.length {
+					// 1 byte
+					1 => quote!(write_1b_to),
+					// 2 bytes
+					2 => quote!(write_2b_to),
+					// 4 bytes
+					4 => quote!(write_4b_to),
+					// Panic if the field was another length. It shouldn't be.
+					_ => panic!("expected a normal field byte of 1, 2, or 4"),
+				};
+
+				quote!(#turbofish::#function(self.#name, &mut bytes)?;)
+			}
 		}
 	}
 }
