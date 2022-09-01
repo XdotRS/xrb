@@ -144,6 +144,17 @@ use parsing::request::{Metabyte, Requests};
 /// }
 /// ```
 /// But we allow these omissions for convenience and readability.
+///
+/// Here is an actual example of unused bytes in an X Rust Bindings request:
+/// ```rust
+/// requests! {
+///     101: pub struct GetKeyboardMapping<2> -> GetKeyboardMappingReply {
+///         first_keycode: Keycode[1],
+///         count: u8[1],
+///         ?[2], // 2 unused bytes
+///     }
+/// }
+/// ```
 #[proc_macro]
 pub fn requests(input: TokenStream) -> TokenStream {
 	let requests = parse_macro_input!(input as Requests).requests;
