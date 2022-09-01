@@ -59,75 +59,103 @@ requests! {
 	// #1: CreateWindow - waiting on algebraic length expressions
 	// #2: ChangeWindowAttributes - waiting on algebraic length expressions
 
-	#3: pub struct GetWindowAttributes<2> -> GetWindowAttributesReply {
-		window: Window[4],
+	/// Gets the window attributes associated with the `target` [`Window`].
+	3: pub struct GetWindowAttributes<2> -> GetWindowAttributesReply {
+		target: Window[4],
 	}
 
-	#4: pub struct DestroyWindow<2> {
-		window: Window[4],
-	}
-
-	#5: pub struct DestroySubwindows<2> window: Window[4];
+	/// Destroys the `target` [`Window`].
+	4: pub struct DestroyWindow<2> target: Window[4];
+	5: pub struct DestroySubwindows<2> target: Window[4];
 
 	// Just need the `Mode` enum for this one:
-	// #6 pub struct ChangeSaveSet<2>(mode: Mode) window: Window[4];
+	// 6: pub struct ChangeSaveSet<2>(mode: Mode) window: Window[4];
 
-	#7: pub struct ReparentWindow<4> {
-		window: Window[4],
+	/// Switches a child window's parent window to another one. Often used for
+	/// window decorations.
+	7: pub struct ReparentWindow<4> {
+		/// The target window.
+		target: Window[4],
+		/// The new parent window for the target window.
 		parent: Window[4],
+		/// The new x-coordinate of the child window relative to its new parent.
 		x: i16[2],
+		/// The new y-coordinate of the child window relative to its new parent.
 		y: i16[2],
 	}
 
-	#8: pub struct MapWindow<2> window: Window[4];
-	#9: pub struct MapSubwindows<2> window: Window[4];
-	#10: pub struct UnmapWindow<2> window: Window[4];
-	#11: pub struct UnmapSubwindows<2> window: Window[4];
+	/// Maps the `target` [`Window`].
+	///
+	/// You can think of this as showing the target window, but it does not
+	/// necessarily guarantee that it will be visible, if the window manager
+	/// chooses to honor this request at all.
+	8: pub struct MapWindow<2> target: Window[4];
+	9: pub struct MapSubwindows<2> target: Window[4];
+	/// Unmaps the `target` [`Window`].
+	///
+	/// You can think of this as hiding the target window.
+	10: pub struct UnmapWindow<2> target: Window[4];
+	11: pub struct UnmapSubwindows<2> window: Window[4];
 
-	// #12: ConfigureWindow - waiting on algebraic length expressions
+	// 12: ConfigureWindow - waiting on algebraic length expressions
 
 	// Just need the `Direction` enum for this one:
-	// #13: pub struct CirculateWindow<2>(direction: Direction) window: Window[4];
+	// 13: pub struct CirculateWindow<2>(direction: Direction) window: Window[4];
 
-	#14: pub struct GetGeometry<2> drawable: Drawable[4] -> GetGeometryReply;
-	#15: pub struct QueryTree<2> window: Window[4] -> QueryTreeReply;
+	/// Gets the geometry of the `target` [`Drawable`], such as its dimensions and
+	/// coordinates.
+	14: pub struct GetGeometry<2> target: Drawable[4] -> GetGeometryReply;
+	/// Queries the 'window tree' of the `target` [`Window`], meaning its parent
+	/// and children.
+	15: pub struct QueryTree<2> target: Window[4] -> QueryTreeReply;
 
-	// #16: InternAtom - waiting on algebraic length expressions
+	// 16: InternAtom - waiting on algebraic length expressions
 
-	#17: pub struct GetAtomName<2> atom: Atom[4] -> GetAtomNameReply;
+	/// Gets the name of the given [`Atom`] ID.
+	///
+	/// For example, the name might be `WM_PROTOCOLS` or `_NET_WM_NAME`.
+	17: pub struct GetAtomName<2> atom: Atom[4] -> GetAtomNameReply;
 
-	// #18: ChangeProperty - waiting on algebraic length expressions
+	// 18: ChangeProperty - waiting on algebraic length expressions
 
-	#19: pub struct DeleteProperty<3> {
-		window: Window[4],
-		atom: Atom[4],
+	/// Deletes the property specified by the given [`Atom`] on the `target_window`.
+	19: pub struct DeleteProperty<3> {
+		target_window: Window[4],
+		property: Atom[4],
 	}
 
-	#20: pub struct GetProperty<6>(delete: bool) -> GetPropertyReply {
-		window: Window[4],
+	/// Gets the property specified by the given [`Atom`] on the `target_window`.
+	20: pub struct GetProperty<6>(delete: bool) -> GetPropertyReply {
+		target_window: Window[4],
 		property: Atom[4],
 		property_type: Specificity<Atom>[4],
 		long_offset: u32[4],
 		long_length: u32[4],
 	}
 
-	#21: pub struct ListProperties<2> window: Window[4] -> ListPropertiesReply;
+	/// Lists the properties associated with the `target` [`Window`].
+	21: pub struct ListProperties<2> target: Window[4] -> ListPropertiesReply;
 
-	#22: pub struct SetSelectionOwner<4> {
+	/// Sets the `owner` [`Window`] of the specified `selection`.
+	22: pub struct SetSelectionOwner<4> {
 		owner: Option<Window>[4],
 		selection: Atom[4],
+		/// The time this request was sent.
 		time: Time[4],
 	}
 
-	#23: pub struct GetSelectionOwner<2> -> GetSelectionOwnerReply {
+	/// Gets the owner of the specified `selection`.
+	23: pub struct GetSelectionOwner<2> -> GetSelectionOwnerReply {
 		selection: Atom[4],
 	}
 
-	#24: pub struct ConvertSelection<6> {
+	24: pub struct ConvertSelection<6> {
+		/// The [`Window`] requesting this conversion.
 		requestor: Window[4],
 		selection: Atom[4],
 		target: Atom[4],
 		property: Option<Atom>[4],
+		/// The time this request was sent.
 		time: Time[4],
 	}
 
@@ -135,7 +163,7 @@ requests! {
 	// considering how many are. In that case, we'll want some kinda syntax to
 	// show fields referring to _structures_, like so:
 	// ```
-	// #25: pub struct SendEvent(propagate: bool)<11> {
+	// 25: pub struct SendEvent(propagate: bool)<11> {
 	//     destination: Destination<Window>[4],
 	//     event_mask: EventMask[4],
 	//     event: Box<dyn Event>{32},
@@ -145,7 +173,7 @@ requests! {
 	// This syntax is fully supported, just need some other types for these
 	// fields.
 	//
-	// #26: pub struct GrabPointer<6>(owner_events: bool) -> GrabPointerReply {
+	// 26: pub struct GrabPointer<6>(owner_events: bool) -> GrabPointerReply {
 	// 	grab_window: Window[4],
 	// 	event_mask: PointerEventMask[2],
 	// 	pointer_mode: GrabMode[1],
@@ -155,12 +183,16 @@ requests! {
 	// 	time: Time[4],
 	// }
 
-	#27: pub struct UngrabPointer<2> time: Time[4];
+	/// Ceases a pointer grab.
+	27: pub struct UngrabPointer<2> {
+		/// The time this request was sent.
+		time: Time[4],
+	}
 
 	// This syntax is fully supported, just need some other types for these
 	// fields.
 	//
-	// #28: pub struct GrabButton<6>(owner_events: bool) {
+	// 28: pub struct GrabButton<6>(owner_events: bool) {
 	// 	grab_window: Windo[4],
 	// 	event_mask: PointerEventMask[2],
 	// 	pointer_mode: GrabMode[1],
@@ -172,29 +204,33 @@ requests! {
 	// 	key_mask: KeyMask[2],
 	// }
 
-	// #29: pub struct UngrabButton<3>(button: Specificity<Button>) {
+	// 29: pub struct UngrabButton<3>(button: Specificity<Button>) {
 	// 	grab_window: Window[4],
 	// 	modifiers: Window[2],
 	// 	?[2], // this syntax seems to be broken.
 	// }
 
-	// #30: pub struct ChangeActivePointerGrab<4> {
+	// 30: pub struct ChangeActivePointerGrab<4> {
 	// 	cursor: Option<Cursor>[4],
 	// 	time: Time[4],
 	// 	event_mask: PointerEventMask[2],
 	// 	?[2], // this syntax seems to be broken.
 	// }
 
-	// #31: pub struct GrabKeyboard<4>(owner_events: bool) -> GrabKeyboardReply {
+	// 31: pub struct GrabKeyboard<4>(owner_events: bool) -> GrabKeyboardReply {
 	// 	grab_window: Window[4],
 	// 	pointer_mode: GrabMode[1],
 	// 	keyboard_mode: GrabMode[1],
 	// 	?[2], // this syntax seems to be broken.
 	// }
 
-	#32: pub struct UngrabKeyboard<2> time: Time[4];
+	/// Ceases a keyboard grab.
+	32: pub struct UngrabKeyboard<2> {
+		/// The time this request was sent.
+		time: Time[4],
+	}
 
-	// #33: pub struct GrabKey<4>(owner_events: bool) {
+	// 33: pub struct GrabKey<4>(owner_events: bool) {
 	//     grab_window: Window[4],
 	//     modifiers: KeyMask[2],
 	//     key: Specificity<Keycode>[1],
@@ -203,33 +239,56 @@ requests! {
 	//     ?[3],
 	// }
 
-	// #34: pub struct UngrabKey<3>(key: Specificity<Keycode>) {
+	// 34: pub struct UngrabKey<3>(key: Specificity<Keycode>) {
 	// 	grab_window: Window[4],
 	// 	modifiers: KeyMask[2],
 	// 	?[2],
 	// }
 
-	// #35: pub struct AllowEvents<2>(mode: AllowEventsMode) time: Time[4];
+	// 35: pub struct AllowEvents<2>(mode: AllowEventsMode) time: Time[4];
 
-	#36: pub struct GrabServer;
-	#37: pub struct UngrabServer;
+	/// Grabs the server, preventing the server from processing until the grab
+	/// ceases.
+	///
+	/// See also: [UngrabServer]
+	36: pub struct GrabServer;
+	/// Ceases a server grab.
+	///
+	/// See also: [GrabServer]
+	37: pub struct UngrabServer;
 
-	#38: pub struct QueryPointer<2> window: Window[4] -> QueryPointerReply;
+	38: pub struct QueryPointer<2> target_window: Window[4] -> QueryPointerReply;
 
-	#39: pub struct GetMotionEvents<4> -> GetMotionEventsReply {
-		window: Window[4],
+	/// Gets pointer motion events generated on the `target_window` between the
+	/// `start` and `end` time.
+	39: pub struct GetMotionEvents<4> -> GetMotionEventsReply {
+		target_window: Window[4],
 		start: Time[4],
 		stop: Time[4],
 	}
 
-	#40: pub struct TranslateCoordinates<4> -> TranslateCoordinatesReply {
+	/// Translate coordinates from one window's coordinate space to another.
+	///
+	/// Coordinates within a window are relative to itself, including the
+	/// coordinates of child windows. That means that a window's coordinates
+	/// are relative to its parent. This request translates coordinates in the
+	/// relative coordinate space of a source window to the relative coordinate
+	/// space of the destination window. This will often be used to translate a
+	/// window's coordinates to coordinates relative to the root window.
+	40: pub struct TranslateCoordinates<4> -> TranslateCoordinatesReply {
+		/// The source window, particularly its coordinate space.
 		source_window: Window[4],
+		/// The destination window, particularly its coordinate space.
 		destination_window: Window[4],
+		/// The x-coordinate in the source window's coordinate space that is to
+		/// be translated.
 		source_x: i16[2],
+		/// The y-coordinate in the source window's coordinate space that is to
+		/// be translated.
 		source_y: i16[2],
 	}
 
-	#41: pub struct WarpPointer<6> {
+	41: pub struct WarpPointer<6> {
 		source_window: Option<Window>[4],
 		destination_window: Option<Window>[4],
 		source_x: i16[2],
@@ -240,20 +299,52 @@ requests! {
 		destination_y: i16[2],
 	}
 
-	// #42: pub struct SetInputFocus<3>(revert_to: RevertTo) {
+	// 42: pub struct SetInputFocus<3>(revert_to: RevertTo) {
 	//     focus: Option<Focus<Window>>[4],
 	//     time: Time[4],
 	// }
 
-	#43: pub struct GetInputFocus -> GetInputFocusReply;
-	#44: pub struct QueryKeymap -> QueryKeymapReply;
+	/// Query the current input focus.
+	43: pub struct GetInputFocus -> GetInputFocusReply;
+	/// Query the current keymap (the mapping of [`Keycode`]s to [`Keysym`]s).
+	44: pub struct QueryKeymap -> QueryKeymapReply;
 
-	// #45: OpenFont - waiting on algebraic length expressions
+	// 45: OpenFont - waiting on algebraic length expressions
 
-	#46: pub struct CloseFont<2> font: Font[4];
-	#47: pub struct QueryFont<2> font: Fontable[4] -> QueryFontReply;
+	46: pub struct CloseFont<2> font: Font[4];
+	47: pub struct QueryFont<2> font: Fontable[4] -> QueryFontReply;
 
-	// #48: QueryTextExtents - waiting on algebraic length expressions
+	// 48: QueryTextExtents - waiting on algebraic length expressions
+	// 49: ListFonts - waiting on algebraic length expressions
+	// 50: ListFontsWithInfo - waiting on algebraic length expressions
+	// 51: SetFontPath - waiting on algebraic length expressions
+
+	52: pub struct GetFontPath -> GetFontPathReply;
+
+	/// Creates a new [`Pixmap`] with the given `pixmap_id`, `width`, and `height` from the given
+	/// `drawable`.
+	53: pub struct CreatePixmap<4>(depth: u8) {
+		pixmap_id: Pixmap[4],
+		drawable: Drawable[4],
+		width: u16[2],
+		height: u16[2],
+	}
+
+	54: pub struct FreePixmap<2> pixmap: Pixmap[4];
+
+	// 55: CreateGcontext - waiting on algebraic length expressions
+	// 56: ChangeGcontext - waiting on algebraic length expressions
+
+	// 57: pub struct CopyGcontext<4> {
+	// 	source_gcontext: Gcontext[4],
+	// 	destination_gcontext: Gcontext[4],
+	// 	value_mask: GcontextValueMask[4],
+	// }
+
+	// 58: SetDashes - waiting on algebraic length expressions
+	// 59: SetClipRectangles - waiting on algebraic length expressions
+
+	60: pub struct FreeGcontext<2> gcontext: Gcontext[4];
 }
 
 struct GetWindowAttributesReply;
@@ -269,6 +360,7 @@ struct TranslateCoordinatesReply;
 struct GetInputFocusReply;
 struct QueryKeymapReply;
 struct QueryFontReply;
+struct GetFontPathReply;
 
 values! {
 	/// Window attributes that can be configured in various requests.
