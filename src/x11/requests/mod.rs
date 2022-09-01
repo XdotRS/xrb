@@ -8,7 +8,7 @@ pub use create_window::*;
 
 use bitflags::bitflags;
 
-use crate::x11::common::masks::{DeviceEventMask, EventMask};
+use crate::x11::common::masks::*;
 use crate::x11::common::values::*;
 use crate::x11::wrappers::*;
 
@@ -204,24 +204,24 @@ requests! {
 	// 	key_mask: KeyMask[2],
 	// }
 
-	// 29: pub struct UngrabButton<3>(button: Specificity<Button>) {
-	// 	grab_window: Window[4],
-	// 	modifiers: Window[2],
-	// 	?[2], // this syntax seems to be broken.
-	// }
+	29: pub struct UngrabButton<3>(button: Specificity<Button>) {
+		grab_window: Window[4],
+		modifiers: Window[2],
+		?[2], // 2 unused bytes
+	}
 
-	// 30: pub struct ChangeActivePointerGrab<4> {
-	// 	cursor: Option<Cursor>[4],
-	// 	time: Time[4],
-	// 	event_mask: PointerEventMask[2],
-	// 	?[2], // this syntax seems to be broken.
-	// }
+	30: pub struct ChangeActivePointerGrab<4> {
+		cursor: Option<Cursor>[4],
+		time: Time[4],
+		event_mask: PointerEventMask[2],
+		?[2], // 2 unused bytes
+	}
 
 	// 31: pub struct GrabKeyboard<4>(owner_events: bool) -> GrabKeyboardReply {
 	// 	grab_window: Window[4],
 	// 	pointer_mode: GrabMode[1],
 	// 	keyboard_mode: GrabMode[1],
-	// 	?[2], // this syntax seems to be broken.
+	// 	?[2],
 	// }
 
 	/// Ceases a keyboard grab.
@@ -239,11 +239,11 @@ requests! {
 	//     ?[3],
 	// }
 
-	// 34: pub struct UngrabKey<3>(key: Specificity<Keycode>) {
-	// 	grab_window: Window[4],
-	// 	modifiers: KeyMask[2],
-	// 	?[2],
-	// }
+	34: pub struct UngrabKey<3>(key: Specificity<Keycode>) {
+		grab_window: Window[4],
+		modifiers: KeyMask[2],
+		?[2], // 2 unused bytes
+	}
 
 	// 35: pub struct AllowEvents<2>(mode: AllowEventsMode) time: Time[4];
 
@@ -345,8 +345,177 @@ requests! {
 	// 59: SetClipRectangles - waiting on algebraic length expressions
 
 	60: pub struct FreeGcontext<2> gcontext: Gcontext[4];
+
+	61: pub struct ClearArea<4>(exposures: bool) {
+		window: Window[4],
+		x: i16[2],
+		y: i16[2],
+		width: u16[2],
+		height: u16[2],
+	}
+
+	62: pub struct CopyArea<7> {
+		source: Drawable[4],
+		destination: Drawable[4],
+		gcontext: Gcontext[4],
+		source_x: i16[2],
+		source_y: i16[2],
+		destination_x: i16[2],
+		destination_y: i16[2],
+		width: u16[2],
+		height: u16[2],
+	}
+
+	63: pub struct CopyPlane<8> {
+		source: Drawable[4],
+		destination: Drawable[4],
+		gcontext: Gcontext[4],
+		source_x: i16[2],
+		source_y: i16[2],
+		destination_x: i16[2],
+		destination_y: i16[2],
+		width: u16[2],
+		height: u16[2],
+		bit_plane: u32[4],
+	}
+
+	// 64: PolyPoint - waiting on algebraic length expressions
+	// 65: PolyLine - waiting on algebraic length expressions
+	// 66: PolySegment - waiting on algebraic length expressions
+	// 67: PolyRectangle - waiting on algebraic length expressions
+	// 68: PolyArc - waiting on algebraic length expressions
+	// 69: FillPoly - waiting on algebraic length expressions
+	// 70: PolyFillRectangle - waiting on algebraic length expressions
+	// 71: PolyFillArc - waiting on algebraic length expressions
+	// 72: PutImage - waiting on algebraic length expressions
+
+	// 73: pub struct GetImage<5>(format: ImageFormat) -> GetImageReply {
+	//     drawable: Drawable[4],
+	//     x: i16[2],
+	//     y: i16[2],
+	//     width: u16[2],
+	//     height: u16[2],
+	//     plane_mask: u32[4],
+	// }
+
+	// 74: PolyText8 - waiting on algebraic length expressions
+	// 75: PolyText16 - waiting on algebraic length expressions
+	// 76: ImageText8 - waiting on algebraic length expressions
+	// 77: ImageText16 - waiting on algebraic length expressions
+
+	// 78: pub struct CreateColormap<4>(alloc: Allocation) {
+	// 	colormap_id: Colormap[4],
+	// 	owindow: Window[4],
+	// 	visual: VisualId[4],
+	// }
+
+	79: pub struct FreeColormap<2> target: Colormap[4];
+
+	80: pub struct CopyColormapAndFree<3> {
+		colormap_id: Colormap[4],
+		source_colormap: Colormap[4],
+	}
+
+	81: pub struct InstallColormap<2> colormap: Colormap[4];
+	82: pub struct UninstallColormap<2> colormap: Colormap[4];
+	83: pub struct ListInstalledColormaps<2> target_window: Window[4] -> ListInstalledColormapsReply;
+
+	// 84: AllocColor - waiting on structure field syntax
+	// 85: AllocNamedColor - waiting on algebraic length expressions
+
+	86: pub struct AllocColorCells<3>(contiguous: bool) -> AllocColorCellsReply {
+		target_colormap: Colormap[4],
+		colors: u16[2],
+		planes: u16[2],
+	}
+
+	// 87: AllocColorPlanes - waiting on structure field syntax
+	// 88: FreeColors - waiting on algebraic length expressions
+	// 89: StoreColors - waiting on algebraic length expressions
+	// 90: StoroeNamedColor - waiting on algebraic length expressions
+	// 91: QueryColors - waiting on algebraic length expressions
+	// 92: LookupColor - waiting on algebraic length expressions
+	// 93: CreateCursor - waiting on algebraic length expressions
+	// 94: CreateGlyphCursor - waiting on structure field syntax
+
+	95: pub struct FreeCursor<2> target: Cursor[4];
+
+	// 96: RecolorCursor - waiting on structure field syntax
+
+	// 97: pub struct QueryBestSize<3>(class: BestSizeClass) -> QueryBestSizeReply {
+	//     drawable: Drawable[4],
+	//     width: u16[2],
+	//     height: u16[2],
+	// }
+
+	// 98: QueryExtension - waiting on algebraic length expressions
+
+	/// Lists the current extensions.
+	99: pub struct ListExtensions -> ListExtensionsReply;
+
+	// 100: ChangeKeyboardMapping - waiting on algebraic length expressions
+
+	101: pub struct GetKeyboardMapping<2> -> GetKeyboardMappingReply {
+		first_keycode: Keycode[1],
+		count: u8[1],
+		?[2], // 2 unused bytes
+	}
+
+	// 102: ChangeKeyboardControl - waiting on algebraic length expressions
+
+	103: pub struct GetKeyboardControl -> GetKeyboardControlReply;
+	104: pub struct Bell(percent: u8);
+
+	105: pub struct ChangePointerControl<3> {
+		acceleration_numerator: i16[2],
+		acceleration_denominator: i16[2],
+		threshold: i16[2],
+		accelerate: bool,
+		enforce_threshold: bool,
+	}
+
+	106: pub struct GetPointerControl -> GetPointerControlReply;
+
+	// 107: pub struct SetScreenSaver<3> {
+	//     timeout: i16[2],
+	//     interval: i16[2],
+	//     prefer_blanking: Default<bool>,
+	//     allow_exposure: Default<bool>,
+	//     ?[2], // unused bytes
+	// }
+
+	108: pub struct GetScreenSaver -> GetScreenSaverReply;
+
+	// 109: ChangeHosts - waiting on algebraic length expressions
+
+	110: pub struct ListHosts -> ListHostsReply;
+	111: pub struct SetAccessControl(enabled: bool);
+
+	// 112: pub struct SetCloseDownMode(mode: CloseDownMode);
+
+	// 113: pub struct KillClient<2> resource: AllTemporary<u32>;
+
+	// 114: RotateProperties - waiting on algebraic length expressions
+
+	// 115: pub struct ForceScreenSaver(mode: enum ForceScreenSaverMode {
+	//     Reset = 0,
+	//     Activate = 1,
+	// });
+
+	// 116: SetPointerMapping - waiting on algebraic length expressions
+
+	117: pub struct GetPointerMapping -> GetPointerMappingReply;
+
+	// 118: SetModifierMapping - waiting on algebraic length expressions
+
+	119: pub struct GetModifierMapping -> GetModifierMappingReply;
+
+	// 127: NoOperation - waiting on algebraic length expressions
 }
 
+// These are temporary until the reply macro syntax is complete and these can
+// actually be defined. Most of these also need the algebraic length expressions
+// and structure field syntax too.
 struct GetWindowAttributesReply;
 struct GetGeometryReply;
 struct QueryTreeReply;
@@ -361,6 +530,16 @@ struct GetInputFocusReply;
 struct QueryKeymapReply;
 struct QueryFontReply;
 struct GetFontPathReply;
+struct ListInstalledColormapsReply;
+struct AllocColorCellsReply;
+struct ListExtensionsReply;
+struct GetKeyboardMappingReply;
+struct GetKeyboardControlReply;
+struct GetPointerControlReply;
+struct GetScreenSaverReply;
+struct ListHostsReply;
+struct GetPointerMappingReply;
+struct GetModifierMappingReply;
 
 values! {
 	/// Window attributes that can be configured in various requests.
