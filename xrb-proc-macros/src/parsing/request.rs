@@ -15,6 +15,21 @@ use super::opcodes::Opcode;
 use super::request_title::RequestTitle;
 use super::fields::{Field, NormalField};
 
+/// A wrapper around [`Vec`]`<`[`Request`]`>` that allows multiple request definitions
+/// to be parsed at once.
+#[derive(Clone)]
+pub struct Requests {
+	pub requests: Vec<Request>,
+}
+
+impl ToTokens for Requests {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		for request in &self.requests {
+			request.to_tokens(tokens);
+		}
+	}
+}
+
 /// A fully parsed request, for use in a `requests!` macro.
 ///
 /// # Examples
@@ -145,9 +160,9 @@ impl Metabyte {
 
 	#[allow(dead_code)]
 	/// Gets the wrapped [`Databyte`] if this is [`Metabyte::Normal`], else [`None`].
-	pub fn databyte(&self) -> Option<Databyte> {
+	pub fn databyte(&self) -> Option<&Databyte> {
 		match self {
-			Self::Normal(databyte) => Some(databyte.clone()),
+			Self::Normal(databyte) => Some(&databyte),
 			_ => None,
 		}
 	}
@@ -200,71 +215,90 @@ impl ToTokens for Metabyte {
 
 // Parsing {{{
 
+impl Parse for Requests {
+	fn parse(input: ParseStream) -> Result<Self> {
+		let mut requests: Vec<Request> = vec![];
+
+		// As long as there are remaining tokens in the input stream, parse as
+		// many requests as possible to the `requests` vector.
+		//
+		// None of these should return any errors, and if any do, we want to
+		// stop parsing any others: every request should be formatted correctly.
+		while !input.is_empty() {
+			requests.push(input.parse()?);
+		}
+
+		Ok(Self { requests })
+	}
+}
+
 impl Parse for Request {
 	fn parse(input: ParseStream) -> Result<Self> {
 		let major_opcode: u8 = input.parse::<Opcode>()?.opcode;
 
 		match input.lookahead1().peek(LitInt) {
-			false => parse_normal(major_opcode, input),
-			true => parse_minor(major_opcode, input),
+			true => Self::parse_minor(major_opcode, input),
+			false => Self::parse_normal(major_opcode, input),
 		}
 	}
 }
 
-/// Parses a request that does not have a minor opcode.
-fn parse_normal(major_opcode: u8, input: ParseStream) -> Result<Request> {
-	// Since we now know that there will be no minor opcode, we can ensure that
-	// there is a `:` following the opcodes, which we know to simply be the one
-	// major opcode.
-	input.parse::<Token![:]>()?;
+impl Request {
+	/// Parses a request that does not have a minor opcode.
+	fn parse_normal(major_opcode: u8, input: ParseStream) -> Result<Request> {
+		// Since we now know that there will be no minor opcode, we can ensure that
+		// there is a `:` following the opcodes, which we know to simply be the one
+		// major opcode.
+		input.parse::<Token![:]>()?;
 
-	// Parse the title (visibility, name, length).
-	let title: RequestTitle = input.parse()?;
-	// Attempt to parse a databyte definition.
-	let databyte: Result<Databyte> = input.parse();
-	// Parse the definition of zero or more fields.
-	let definition: Definition = input.parse()?;
+		// Parse the title (visibility, name, length).
+		let title: RequestTitle = input.parse()?;
+		// Attempt to parse a databyte definition.
+		let databyte: Result<Databyte> = input.parse();
+		// Parse the definition of zero or more fields.
+		let definition: Definition = input.parse()?;
 
-	// Convert either a read databyte or the default of a 1-byte unused field
-	// to a [`Metabyte`].
-	let meta_byte: Metabyte = databyte.unwrap_or_default().into();
+		// Convert either a read databyte or the default of a 1-byte unused field
+		// to a [`Metabyte`].
+		let meta_byte: Metabyte = databyte.unwrap_or_default().into();
 
-	Ok(Request {
-		major_opcode,
-		meta_byte,
-		vis: title.vis,
-		name: title.name,
-		length: title.length,
-		reply_ty: definition.reply_type(),
-		definition,
-	})
-}
+		Ok(Request {
+			major_opcode,
+			meta_byte,
+			vis: title.vis,
+			name: title.name,
+			length: title.length,
+			reply_ty: definition.reply_type(),
+			definition,
+		})
+	}
 
-/// Parses a request that has a minor opcode instead of a request header data
-/// byte field.
-fn parse_minor(major_opcode: u8, input: ParseStream) -> Result<Request> {
-	// Parse the minor opcode as an 8-bit integer.
-	let minor_opcode: u8 = input.parse::<Opcode>()?.opcode;
-	// Ensure there is a `:` following all the opcodes.
-	input.parse::<Token![:]>()?;
+	/// Parses a request that has a minor opcode instead of a request header data
+	/// byte field.
+	fn parse_minor(major_opcode: u8, input: ParseStream) -> Result<Request> {
+		// Parse the minor opcode as an 8-bit integer.
+		let minor_opcode: u8 = input.parse::<Opcode>()?.opcode;
+		// Ensure there is a `:` following all the opcodes.
+		input.parse::<Token![:]>()?;
 
-	// Parse the title (visibility, name, length).
-	let title: RequestTitle = input.parse()?;
-	// Parse the definition or zero or more fields.
-	let definition: Definition = input.parse()?;
+		// Parse the title (visibility, name, length).
+		let title: RequestTitle = input.parse()?;
+		// Parse the definition or zero or more fields.
+		let definition: Definition = input.parse()?;
 
-	// Convert the minor opcode to a [`Metabyte`].
-	let meta_byte = Metabyte::with_minor_opcode(minor_opcode);
+		// Convert the minor opcode to a [`Metabyte`].
+		let meta_byte = Metabyte::with_minor_opcode(minor_opcode);
 
-	Ok(Request {
-		major_opcode,
-		meta_byte,
-		vis: title.vis,
-		name: title.name,
-		length: title.length,
-		reply_ty: definition.reply_type(),
-		definition,
-	})
+		Ok(Request {
+			major_opcode,
+			meta_byte,
+			vis: title.vis,
+			name: title.name,
+			length: title.length,
+			reply_ty: definition.reply_type(),
+			definition,
+		})
+	}
 }
 
 // }}}

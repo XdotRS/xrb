@@ -5,116 +5,153 @@
 mod parsing;
 
 use quote::{quote, ToTokens};
-use syn::{parse_macro_input, Result};
-use syn::parse::{Parse, ParseStream};
+use syn::parse_macro_input;
 
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 
-use parsing::request::Request;
-use parsing::fields::Field;
+use parsing::request::{Metabyte, Requests};
 
-// This thing might work. It needs to be rewritten to be less terrible. I was
-// close to finishing this and really wanted to see it work. I'm super tired.
-// Please forgive me for what you are about to read. Or better yet, turn back
-// now. You have been warned.
-
-struct Requests {
-	requests: Vec<Request>,
-}
-
-impl Parse for Requests {
-	fn parse(input: ParseStream) -> Result<Self> {
-		let mut requests: Vec<Request> = vec![];
-
-		while !input.is_empty() {
-			requests.push(input.parse::<Request>()?);
-		}
-
-		Ok(Self { requests })
-	}
-}
-
+/// Generates X11 protocol request definitions based on a custom syntax.
+///
+/// Let's use the example of a `GetProperty` request:
+/// ```rust
+/// requests! {
+///     #20: pub struct GetProperty<6>(delete: bool) -> GetPropertyReply {
+///         window: Window[4],
+///         property: Atom[4],
+///         property_type: Specificity<Atom>[4],
+///         long_offset: u32[4],
+///         long_length: u32[4],
+///     }
+/// }
+/// ```
+/// There's a lot of information there, so let's break it down.
+///
+/// To start with, the `GetProperty` request has major opcode `20` and it
+/// generates a reply of type `GetPropertyReply`. You can see that in the
+/// `requests!` syntax a major opcode is given at the start of each request
+/// definition, in this case being `#20:`. Every request definition must include
+/// the major opcode in such a way. For requests that define a minor opcode, the
+/// minor opcode can also be specified before the colon: `#20 #13:` means major
+/// opcode `20`, minor opcode `13`. You can also see that the reply return type
+/// is given by `-> ReplyType`, in this case being `-> GetPropertyReply`.
+///
+/// Some of this definition should also be quite familiar: the visibility of the
+/// request's generated struct is given with `pub` and is followed by `struct`,
+/// just like any other struct definition in Rust. There is a notable difference
+/// following the name of the request here, though: both the request length and
+/// a field to be contained in the data byte of the request header have been
+/// given. The length of the request is given in units of 4 bytes, included in
+/// arrow brackets (`<` and `>`) immediately following the name. This length
+/// declaration is optional: if omitted, it will default to `1`, which is the
+/// length of the request if _no_ fields are given (other than the field in the
+/// request header data byte, which doesn't contribute towards the length of the
+/// request). After that, this request does indeed define a field that occupies
+/// the request header data byte: this field is unique in that:
+/// A. It doesn't contribute towards the total length of the request.
+/// B. It must be exactly one byte in length.
+///
+/// This request header data byte field will be defined in the generated struct
+/// definition of this request, just like fields in `struct`s normally are. Its
+/// declaration is also optional: if omitted, it will default to being an unused
+/// byte; that means that no field will be associated with the request header
+/// data byte and it will simply be written as `0` when serialized. Note that
+/// defining a field for the request header data byte is _not_ an option when a
+/// minor opcode is also defined: the minor opcode is written to that data byte
+/// as well.
+///
+/// Following all this information, the body of the request is actually defined
+/// within `{` and `}`. This is very similar to the definition of fields in
+/// structs that you may be used to in Rust, but with one key difference: the
+/// length in bytes of each field is specified within square brackets (`[` and
+/// `]`). This is so that X Rust Bindings knows how to write this field as
+/// bytes; whether it should write the field as `1`, `2`, or `4` bytes. These
+/// fields will be converted to ordinary struct fields in Rust when the struct
+/// definition for this request is generated.
+///
+/// Now that we've had a look at a particularly complex request definition, let's
+/// take a look at a simpler one and see how we can write it in a simpler way.
+/// ```rust
+/// requests! {
+///     #8: pub struct MapWindow<2> { window: Window[4] }
+/// }
+/// ```
+/// The `MapWindow` request is pretty simple compared to a `GetProperty` request.
+/// It does not define any data field, so there is nothing after the request
+/// length, nor does it have any reply, so the reply type can be omitted too.
+/// The `MapWindow` request also only has a single field: a 4-byte field named
+/// `window` with the type `Window`. This is actually a pretty common layout of
+/// request in the X11 protocol, so this can actually be written slightly
+/// shorter still:
+/// ```rust
+/// requests! {
+///     #8: pub struct MapWindow<2> window: Window[4];
+/// }
+/// ```
+/// In this shorthand definition, we have omitted the curly brackets (`{` and
+/// `}`) in exchange for only being able to define a maximum of one field (aside
+/// from the request header data byte field, as that is an exception). It is
+/// also possible to define a request with no additional fields whatsoever, in
+/// which case even the request length can be omitted. An example of this is the
+/// `GrabServer` request, which can simply be defined like so:
+/// ```rust
+/// requests! {
+///     #36: pub struct GrabServer;
+/// }
+/// ```
+///
+/// There is actually one final bit of the `requests!` syntax we haven't talked
+/// about yet. Remember that the request header data byte field can be omitted,
+/// leaving it to default to a single unused byte? Well, we can explicitly define
+/// this using a special syntax for unused bytes: `?[1]` (or even `?` if you
+/// omit the length, which will default to a single unused byte). That means
+/// that the full definition of the `GrabServer` request is actually:
+/// ```rust
+/// requests! {
+///     #36: pub struct GrabServer<1>(?[1]) -> () {}
+/// }
+/// ```
+/// But we allow these omissions for convenience and readability.
 #[proc_macro]
-/// Generate requests. I'm too tired to write proper documentation right now.
-/// I will rewrite this documentation soon.
-pub fn request(input: TokenStream) -> TokenStream {
-	// Parse the input as a vector of requests.
+pub fn requests(input: TokenStream) -> TokenStream {
 	let requests = parse_macro_input!(input as Requests).requests;
 
-	// Map each request to itself expanded to a tokenstream.
-	let expanded = requests.iter().map(|req| {
-		// Clone the request so we don't have to deal with borrow checker...
-		// please forgive me, I'm really tired and just want to see this work.
-		let req = req.clone();
-		let struct_definition = req.to_token_stream();
+	// Expand each request as tokens.
+	let expanded_requests = requests.iter().map(|request| {
+		let struct_definition = request.to_token_stream();
 
-		let name = req.name;
-		let reply = req.reply_ty;
-		let length = req.length;
+		let (name, reply, length) = (&request.name, &request.reply_ty, request.length);
 
-		let metabyte = req.meta_byte;
+		let metabyte = &request.meta_byte;
+		// The appropriate serialization code for the metabyte: either writes
+		// the minor opcode or the databyte field, depending on the metabyte.
+		let serialize_metabyte = match metabyte {
+			Metabyte::Normal(databyte) => databyte.field.serialize_tokens(),
+			Metabyte::Minor { minor_opcode } => quote! {
+				<u8 as crate::rw::WriteValue>::write_1b_to(
+					#minor_opcode,
+					&mut bytes
+				)?;
+			},
+		};
 
-		// NOTE: This is kinda a mess. I don't really have time to do something
-		//       about that. It works. If you are reading this, please do feel free
-		//       to extract this into proper logic: all this is trying to is
-		//       implement the following logic:
-		//
-		//       If the definition type is shorthand, write the field by checking
-		//       whether it is an unused field or a normal field. If it is unused,
-		//       simply write its byte length in empty bytes. Otherwise, write the
-		//       field with the corresponding [`WriteValue`] function to its byte
-		//       length.
-		//
-		//       If the definition is in full, iterate over the fields, and do the
-		//       same writing as for the shorthand version, just for each and every
-		//       field.
-		//
-		//       [xrb::rw::WriteValue] has methods to write as 1, 2, or 4 byte
-		//       lengths. That means normal fields must be exactly 1, 2, or 4 bytes.
-		//       Unused fields, however, don't have to use [xrb::rw::WriteValue]
-		//       because their data doesn't matter - whatever their length is, that
-		//       many empty bytes (`0u8` for simplicity, but they can be any value)
-		//       shall be written.
-		//
-		//       Feel free to scrap any of this macro, as long as the same
-		//       functionality is achieved. Submit this as a PR if you wish.
-		let fields = req
-			.definition
-			.full()
-			.map(|def| {
-				def.fields
-					.iter()
-					.map(|field| expand(field))
-					// Collect the iterator into a `Vec` of token streams that can
-					// be written.
-					.collect::<Vec<TokenStream2>>()
-			})
-			.map_or_else(|| {
-				let short = req.definition
-					.short()
-					.map(|def| def.field.map(|field| expand(&field)))
-					.flatten();
-
-				quote!(#short)
-			}, |tokens| quote!(#(#tokens)*));
-
-		let major = req.major_opcode;
+		let major = request.major_opcode;
 		let minor = metabyte
 			.minor_opcode()
 			.map_or(quote!(None), |opcode| quote!(Some(#opcode)));
 
-		// The type of the metabyte.
-		let metabyte_ty = metabyte
-			.databyte()
-			// If it is a custom data field, map to its type.
-			.map(|databyte| {
-				databyte.field.normal().map(|field| field.ty)
-			})
-			.flatten()
-			// If the data field type is some, quote it, otherwise map to `u8`
-			// (as `u8` is the type of both the minor opcode and an empty byte).
-			.map_or(quote!(u8), |ty| quote!(#ty));
+		// Map the request's fields to their serialization code.
+		//
+		// For example:
+		// `?[1]` -> `0u8.write_1b_to(&mut bytes)?;`
+		// `window: Window[4]` -> `self.window.write_4b_to(&mut bytes)?;`
+		let serialize_field = request
+			.definition
+			.fields()
+			.iter()
+			.map(|field| field.serialize_tokens())
+			.collect::<Vec<TokenStream2>>();
 
 		quote! {
 			#struct_definition
@@ -141,15 +178,14 @@ pub fn request(input: TokenStream) -> TokenStream {
 
 					// Write the major opcode as one byte.
 					<u8 as crate::rw::WriteValue>::write_1b_to(#major, &mut bytes)?;
-					// Write the metabyte, whether that be a data field, minor opcode,
-					// or blank, as one byte.
-					<#metabyte_ty as crate::rw::WriteValue>::write_1b_to(#metabyte, &mut bytes)?;
+					// Serialize the metabyte.
+					#serialize_metabyte
 					// Write the request length as two bytes.
 					<u16 as crate::rw::WriteValue>::write_2b_to(#length, &mut bytes)?;
 
 					// }}}
 
-					#fields
+					#(#serialize_field)*
 
 					Ok(bytes)
 				}
@@ -157,42 +193,6 @@ pub fn request(input: TokenStream) -> TokenStream {
 		}
 	});
 
-	// Merge all of the generated request definitions and return one final token stream.
-	quote!(#(#expanded)*).into()
-}
-
-fn expand(field: &Field) -> TokenStream2 {
-	let unused = field.unused().map(|u| {
-		let len = u.length;
-
-		// bytes.put_bytes(0u8, #len);
-		quote!(<bytes::Bytes as bytes::BufMut>::put_bytes(&mut bytes, 0u8, #len))
-	});
-
-	let norm = field.normal().map(|n| {
-		let name = n.name;
-		let ty = n.ty;
-		let len = n.length;
-
-		match len {
-			1 => {
-				// self.#name.write_1b_to(&mut bytes)?;
-				quote!(<#ty as crate::rw::WriteValue>::write_1b_to(self.#name, &mut bytes)?;)
-			}
-			2 => {
-				// self.#name.write_2b_to(&mut bytes)?;
-				quote!(<#ty as crate::rw::WriteValue>::write_2b_to(self.#name, &mut bytes)?;)
-			}
-			4 => {
-				// self.#name.write_4b_to(&mut bytes)?;
-				quote!(<#ty as crate::rw::WriteValue>::write_4b_to(self.#name, &mut bytes)?;)
-			}
-			_ => panic!("expected a byte length of 1, 2, or 4"),
-		}
-	});
-
-	// This is guaranteed to be `Some` because `field` can only
-	// be either an unused field or a norm field. _One_ of those
-	// two variables _must_ be `Some`.
-	unused.or(norm).unwrap()
+	// Combine all of the requests into one [`TokenStream`] output.
+	quote!(#(#expanded_requests)*).into()
 }
