@@ -55,98 +55,6 @@ pub trait Request<REPLY = ()>: Serialize {
 	fn length(&self) -> u16;
 }
 
-values! {
-	/// Window attributes that can be configured in various requests.
-	///
-	/// Attributes given in `values` vectors MUST be in the order given in this
-	/// enum, so that they match the order of the [`WinAttrMask`].
-	pub enum WinAttr<WinAttrMask> {
-		BackgroundPixmap(Option<Relative<Pixmap>>): BACKGROUND_PIXMAP,
-		BackgroundPixel(u32): BACKGROUND_PIXEL,
-		BorderPixmap(Inherit<Pixmap>): BORDER_PIXMAP,
-		BorderPixel(u32): BORDER_PIXEL,
-		BitGravity(BitGravity): BIT_GRAVITY,
-		WinGravity(WinGravity): WIN_GRAVITY,
-		BackingStore(BackingStore): BACKING_STORE,
-		BackingPlanes(u32): BACKING_PLANES,
-		BackingPixel(u32): BACKING_PIXEL,
-		OverrideRedirect(bool): OVERRIDE_REDIRECT,
-		SaveUnder(bool): SAVE_UNDER,
-		EventMask(EventMask): EVENT_MASK,
-		DoNotPropagateMask(DeviceEventMask): DO_NOT_PROPAGATE_MASK,
-		Colormap(Inherit<Colormap>): COLORMAP,
-		Cursor(Option<Cursor>): CURSOR,
-	}
-}
-
-bitflags! {
-	/// A mask of [window attributes] that can be used in various requests.
-	///
-	/// [window attributes]:WinAttr
-	pub struct WinAttrMask: u32 {
-		/// The [`BackgroundPixmap`] [attribute](WinAttr).
-		///
-		/// [`BackgroundPixmap`]:WinAttr::BackgroundPixmap
-		const BACKGROUND_PIXMAP = 0x_0000_0001;
-		/// The [`BackgroundPixel] [CreateWindow] request [value](WinAttr).
-		///
-		/// [`BackgroundPixel`]:WinAttr::BackgroundPixel
-		const BACKGROUND_PIXEL = 0x_0000_0002;
-		/// The [`BorderPixmap`] [attribute](WinAttr).
-		///
-		/// [`BorderPixmap`]:WinAttr:BorderPixmap
-		const BORDER_PIXMAP = 0x_0000_0004;
-		/// The [`BorderPixel`] [attribute](WinAttr).
-		///
-		/// [`BorderPixel`]:WinAttr::BorderPixel
-		const BORDER_PIXEL = 0x_0000_0008;
-		/// The [`BitGravity`] [attribute](WinAttr).
-		///
-		/// [`BitGravity`]:WinAttr::BitGravity
-		const BIT_GRAVITY = 0x_0000_0010;
-		/// The [`WinGravity`] [attribute](WinAttr).
-		///
-		/// [`WinGravity`]:WinAttr::WinGravity
-		const WIN_GRAVITY = 0x_0000_0020;
-		/// The [`BackingStore`] [attribute](WinAttr).
-		///
-		/// [`BackingStore`]:WinAttr::BackingStore
-		const BACKING_STORE = 0x_0000_0040;
-		/// The [`BackingPlanes`] [attribute](WinAttr).
-		///
-		/// [`BackingPlanes`]:WinAttr::BackingPlanes
-		const BACKING_PLANES = 0x_0000_0080;
-		/// The [`BackingPixel`] [attribute](WinAttr).
-		///
-		/// [`BackingPixel`]:WinAttr::BackingPixel
-		const BACKING_PIXEL = 0x_0000_0100;
-		/// The [`OverrideRedirect`] [attribute](WinAttr).
-		///
-		/// [`OverrideRedirect`]:WinAttr::OverrideRedirect
-		const OVERRIDE_REDIRECT = 0x_0000_0200;
-		/// The [`SaveUnder`] [attribute](WinAttr).
-		///
-		/// [`SaveUnder`]:WinAttr::SaveUnder
-		const SAVE_UNDER = 0x_0000_0400;
-		/// The [`EventMask`] [attribute](WinAttr).
-		///
-		/// [`EventMask`]:WinAttr::EventMask
-		const EVENT_MASK = 0x_0000_0800;
-		/// The [`DoNotPropagateMask`] [attribute](WinAttr).
-		///
-		/// [`DoNotPropagateMask`]:WinAttr::DoNotPropagateMask
-		const DO_NOT_PROPAGATE_MASK = 0x_0000_1000;
-		/// The [`Colormap`] [attribute](WinAttr).
-		///
-		/// [`Colormap`]:WinAttr::Colormap
-		const COLORMAP = 0x_0000_2000;
-		/// The [`Cursor`] [attribute](WinAttr).
-		///
-		/// [`Cursor`]:WinAttr::Cursor
-		const CURSOR = 0x_0000_4000;
-	}
-}
-
 requests! {
 	pub struct CreateWindow(1) {
 		pub $depth: u8,
@@ -970,4 +878,152 @@ requests! {
 		pub first_error: u8,
 		()[20],
 	}
+
+	pub struct ListExtensions(99) -> ListExtensionsReply;
+
+	pub struct ListExtensionsReply for ListExtensions {
+		$#names[u8], // number of STRs in names??
+		()[24],
+		pub names: [Str], // STRs??
+		()[padding(names)],
+	}
+
+	// The `ChangeKeyboardMapping` and `GetKeyboardMapping` requests, as well as
+	// the `GetKeyboardMappingReply`, used a special format for the size of
+	// their lists of keysyms, and so have to be done manually. They can be
+	// found in the `mod keyboard_mapping;` module.
+
+	// The `ChangeKeyboardControl` request uses a special format for its values
+	// list, so it has to be done manually. It can be found in the
+	// `mod change_keyboard_control;` module.
+
+	pub struct GetKeyboardControl(103) -> GetKeyboardControlReply;
+
+	pub struct GetKeyboardControlReply for GetKeyboardControl {
+		pub $global_auto_repeat: bool,
+		pub led_mask: u32,
+		pub key_click_percent: u8,
+		pub bell_percent: u8,
+		pub bell_pitch: u16,
+		pub bell_duration: u16,
+		()[2],
+		pub auto_repeats: [u8; 32],
+	}
+
+	pub struct Bell(104): pub $percent: i8;
+
+	pub struct ChangePointerControl(105) {
+		pub acceleration_numerator: i16,
+		pub acceleration_denominator: i16,
+		pub threshold: i16,
+		pub accelerate: bool,
+		pub enable_threshold: bool,
+	}
+
+	pub struct GetPointerControl(106) -> GetPointerControlReply;
+
+	pub struct GetPointerControlReply for GetPointerControl {
+		pub acceleration_numerator: i16,
+		pub acceleration_denominator: u16,
+		pub threshold: u16,
+		()[18],
+	}
+
+	pub struct SetScreenSaver(107) {
+		pub timeout: i16,
+		pub interval: i16,
+		pub prefer_blanking: Defaulty<bool>,
+		pub allow_exposures: Defaulty<bool>,
+		()[2],
+	}
+
+	pub struct GetScreenSaver(108) -> GetScreenSaverReply;
+
+	pub struct GetScreenSaverReply for GetScreenSaver {
+		pub timeout: i16,
+		pub interval: i16,
+		pub prefer_blanking: bool,
+		pub allow_exposures: bool,
+		()[18],
+	}
+
+	pub struct ChangeHosts(109) {
+		pub $mode: enum ChangeHostsMode {
+			Insert = 0,
+			Delete = 1,
+		},
+		pub family: enum HostFamily {
+			Internet = 0,
+			Decnet = 1,
+			Chaos = 2,
+		},
+		()[1],
+		#address,
+		pub address: [u8],
+		()[padding(address)],
+	}
+
+	pub struct ListHosts(110) -> ListHostsReply;
+
+	pub struct ListHostsReply for ListHosts {
+		pub $enabled: bool,
+		#hosts,
+		()[22],
+		pub hosts: [Host],
+	}
+
+	pub struct SetAccessControl(111): pub $enabled: bool;
+
+	pub struct SetCloseDownMode(112): pub $mode: enum CloseDownMode {
+		Destroy = 0,
+		RetainPermanent = 1,
+		RetainTemporary = 2,
+	};
+
+	pub struct KillClient(113): pub resource: AllTemp<u32>;
+
+	pub struct RotateProperties(114) {
+		pub target: Window,
+		#properties,
+		pub delta: i16,
+		pub properties: [Atom],
+	}
+
+	pub struct ForceScreenSaver(115): pub $mode: enum ForceScreenSaverMode {
+		Reset = 0,
+		Activate = 1,
+	};
+
+	pub struct SetPointerMapping(116) -> SetPointerMappingReply {
+		$#map,
+		pub map: [u8],
+		()[padding(map)],
+	}
+
+	pub struct SetPointerMappingReply for SetPointerMapping {
+		pub $status: enum SetPointerMappingStatus {
+			Success = 0,
+			Busy = 1,
+		},
+		()[24],
+	}
+
+	pub struct GetPointerMapping(117) -> GetPointerMappingReply;
+
+	pub struct GetPointerMappingReply for GetPointerMapping {
+		$#map,
+		()[24],
+		pub map: [u8],
+		()[padding(map)],
+	}
+
+	// `SetModifierMapping` and `GetModifierMappingReply` both use a special
+	// format for the list of keycodes, so the `SetModifierMapping` request,
+	// the `GetModifierMapping` request, the `SetModifierMappingReply`, and the
+	// `GetModifierMappingReply` messages are contained in the
+	// `mod modifier_mappings;` module.
+
+	// The `NoOperation` request uses a unique variable unused bytes length
+	// format, so it has to be done manually. It is therefore found in the
+	// `mod no_operation;` module.
 }
