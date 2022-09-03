@@ -3,11 +3,12 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use syn::parse::{Parse, ParseStream};
-use syn::{Attribute, Ident, Result, Token, Visibility};
+use syn::{Attribute, Ident, Result, Token, Visibility, parenthesized, token, Type, LitInt};
 
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{ToTokens, TokenStreamExt};
 
+/// A request or a reply generated from a request.
 #[derive(Clone)]
 pub struct Message {
 	/// Attributes that will be associated with this message's `struct`.
@@ -52,9 +53,18 @@ impl ToTokens for Message {
 	}
 }
 
+/// Specific metadata about the message, depending on whether it is a request or
+/// a reply.
 #[derive(Clone)]
 pub enum Metadata {
+	/// Information specific to a request.
+	///
+	/// Requries a major opcode, and optionally allows a minor opcode and reply
+	/// type declaration.
 	Request(RequestMetadata),
+	/// Information specific to a reply.
+	///
+	/// Requries a request type declaration.
 	Reply(ReplyMetadata),
 }
 
@@ -65,10 +75,23 @@ impl Content {
 	pub fn fields_to_tokens(&self, _tokens: &mut TokenStream2) {}
 }
 
+/// Information specifically associated with requests, not replies.
 #[derive(Clone)]
-pub struct RequestMetadata;
+pub struct RequestMetadata {
+	/// The major opcode of this request.
+	pub major_opcode: u8,
+	/// The minor opcode of this request, if any. Only used in extensions.
+	pub minor_opcode: Option<u8>,
+	/// The type of reply that is returned by this request, if any.
+	pub reply: Option<Type>,
+}
+
+/// Information specifically associated with replies, not requests.
 #[derive(Clone)]
-pub struct ReplyMetadata;
+pub struct ReplyMetadata {
+	/// The request which this reply is returned for.
+	pub request: Type,
+}
 
 impl Parse for Message {
 	fn parse(input: ParseStream) -> Result<Self> {
@@ -93,8 +116,58 @@ impl Parse for Message {
 }
 
 impl Parse for Metadata {
-	fn parse(_input: ParseStream) -> Result<Self> {
-		Ok(Self::Request(RequestMetadata))
+	fn parse(input: ParseStream) -> Result<Self> {
+		let look = input.lookahead1();
+
+		if look.peek(token::Paren) {
+			// If `(` is next, map this as a request.
+			input.parse().map(Metadata::Request)
+		} else if look.peek(Token![for]) {
+			// If `for` is next, map this as a reply.
+			input.parse().map(Metadata::Reply)
+		} else {
+			// Construct an error along the lines of 'expected `(` or `for`'.
+			Err(look.error())
+		}
+	}
+}
+
+impl Parse for RequestMetadata {
+	fn parse(input: ParseStream) -> Result<Self> {
+		// Parnetheses (`(` and `)`) for the opcodes.
+		let content;
+		parenthesized!(content in input);
+
+		Ok(Self {
+			// Major opcode (required)
+			major_opcode: content.parse::<LitInt>()?.base10_parse()?,
+			// Minor opcode (optional, requires a comma token preceding it if so)
+			minor_opcode: content.parse::<Token![,]>()
+				.ok()
+				.and(content.parse::<LitInt>()
+					 .ok()
+					 .map(|lit| lit.base10_parse().ok())
+					 .flatten()
+				),
+			// Reply type (if `->` is not given, it is `None`, but if `->` is
+			// given then panic if the type is not also given).
+			reply: input.parse::<Token![->]>()
+				.ok()
+				.map(|_| input.parse::<Type>().unwrap()),
+		})
+	}
+}
+
+impl Parse for ReplyMetadata {
+	fn parse(input: ParseStream) -> Result<Self> {
+		// Require the `for` token for the request type declaration
+		// in replies.
+		input.parse::<Token![for]>()?;
+
+		Ok(Self {
+			// Require the request type.
+			request: input.parse()?,
+		})
 	}
 }
 
