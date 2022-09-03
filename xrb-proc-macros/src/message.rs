@@ -37,7 +37,7 @@ impl ToTokens for Message {
 	// `content` are written.
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		// Attributes
-		for attribute in self.attributes {
+		for attribute in &self.attributes {
 			attribute.to_tokens(tokens);
 		}
 
@@ -59,16 +59,16 @@ pub enum Metadata {
 }
 
 #[derive(Clone)]
-struct Content;
+pub struct Content;
 
 impl Content {
-	pub fn fields_to_tokens(&self, tokens: &mut TokenStream2) {}
+	pub fn fields_to_tokens(&self, _tokens: &mut TokenStream2) {}
 }
 
 #[derive(Clone)]
-struct RequestMetadata;
+pub struct RequestMetadata;
 #[derive(Clone)]
-struct ReplyMetadata;
+pub struct ReplyMetadata;
 
 impl Parse for Message {
 	fn parse(input: ParseStream) -> Result<Self> {
@@ -93,13 +93,13 @@ impl Parse for Message {
 }
 
 impl Parse for Metadata {
-	fn parse(input: ParseStream) -> Result<Self> {
+	fn parse(_input: ParseStream) -> Result<Self> {
 		Ok(Self::Request(RequestMetadata))
 	}
 }
 
 impl Parse for Content {
-	fn parse(input: ParseStream) -> Result<Self> {
+	fn parse(_input: ParseStream) -> Result<Self> {
 		Ok(Self)
 	}
 }
