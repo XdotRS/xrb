@@ -55,532 +55,6 @@ pub trait Request<REPLY = ()>: Serialize {
 	fn length(&self) -> u16;
 }
 
-requests! {
-	// #1: CreateWindow - waiting on algebraic length expressions
-	// #2: ChangeWindowAttributes - waiting on algebraic length expressions
-
-	/// Gets the window attributes associated with the `target` [`Window`].
-	3: pub struct GetWindowAttributes<2> target: Window[4] -> GetWindowAttributesReply;
-
-	/// Destroys the `target` [`Window`].
-	///
-	/// If the `target` window is mapped, an [`UnmapWindow`] request is performed
-	/// automatically. The window and all its childlren are then destroyed, and
-	/// a `DestroyNotify` event is generated for each window.
-	///
-	/// All of a window's child windows are destroyed before the window itself
-	/// is destroyed. That means that the window's furthest descendants are
-	/// destroyed first, and the `target` window itself is destroyed last.
-	///
-	/// This request has no effect on root windows.
-	4: pub struct DestroyWindow<2> target: Window[4];
-	/// Performs a [`DestroyWindow`] request on all children of the target window.
-	///
-	/// These [`DestroyWindow`] requests are performed in bottom-to-top stacking
-	/// order. The `target` window itself is not destroyed.
-	5: pub struct DestroySubwindows<2> target: Window[4];
-
-	// Just need the `Mode` enum for this one:
-	// 6: pub struct ChangeSaveSet<2>(mode: Mode) window: Window[4];
-
-	/// Switches a child window's parent window to another one. Often used for
-	/// window decorations.
-	///
-	/// If the `target` window is mapped, an [`UnmapWindow`] request is
-	/// performed automatically first. The window is then removed from its
-	/// current position in the hierarchy and inserted as a child of the
-	/// specified parent. A `ReparentNotify` event is then generated. Finally,
-	/// if the window was originally mapped, a [`MapWindow`] request is
-	/// performed automatically.
-	///
-	/// The window will be placed on top of its new sibling windows, if any,
-	/// when it comes to stacking order.
-	///
-	/// # Errors
-	/// A [`Match`] error is generated if:
-	/// - the new parent is not on the same screen as the old parent; or
-	/// - the new parent is `InputOnly` and the `target` window is not; or
-	/// - the `target` window window has a `ParentRelative` background and the
-	///   new parent is not the same width as the `target` window.
-	7: pub struct ReparentWindow<4> {
-		/// The target window.
-		target: Window[4],
-		/// The new parent window for the target window.
-		parent: Window[4],
-		/// The new x-coordinate of the child window relative to its new parent.
-		x: i16[2],
-		/// The new y-coordinate of the child window relative to its new parent.
-		y: i16[2],
-	}
-
-	/// Maps the `target` [`Window`].
-	///
-	/// You can think of this as showing the target window, but it does not
-	/// necessarily guarantee that it will be visible, if the window manager
-	/// chooses to honor this request at all.
-	///
-	/// If the `override_redirect` window attribute of the `target` window is
-	/// `false` and another client as selected `SubstructureRedirect` on its
-	/// parent, then a `MapRequest` event is generated, but the window remains
-	/// unmapped. Otherwise, the window is mapped and a `MapNotify` event is
-	/// generated. This means that a window manager can choose whether to honor
-	/// a `MapWindow` request, if one is running.
-	///
-	/// If the window is already mapped, this request has no effect.
-	8: pub struct MapWindow<2> target: Window[4];
-	9: pub struct MapSubwindows<2> target: Window[4];
-	/// Unmaps the `target` [`Window`].
-	///
-	/// You can think of this as hiding the `target` window.
-	///
-	/// If the `target` window is already unmapped, this request has no effect.
-	10: pub struct UnmapWindow<2> target: Window[4];
-	11: pub struct UnmapSubwindows<2> window: Window[4];
-
-	// 12: ConfigureWindow - waiting on algebraic length expressions
-
-	// Just need the `Direction` enum for this one:
-	// 13: pub struct CirculateWindow<2>(direction: Direction) window: Window[4];
-
-	/// Gets the geometry of the `target` [`Drawable`], such as its dimensions and
-	/// coordinates.
-	14: pub struct GetGeometry<2> target: Drawable[4] -> GetGeometryReply;
-	/// Queries the 'window tree' of the `target` [`Window`], meaning its parent
-	/// and children.
-	15: pub struct QueryTree<2> target: Window[4] -> QueryTreeReply;
-
-	// 16: InternAtom - waiting on algebraic length expressions
-
-	/// Gets the name of the given [`Atom`] ID.
-	///
-	/// For example, the name might be `WM_PROTOCOLS` or `_NET_WM_NAME`.
-	17: pub struct GetAtomName<2> atom: Atom[4] -> GetAtomNameReply;
-
-	// 18: ChangeProperty - waiting on algebraic length expressions
-
-	/// Deletes the property specified by the given [`Atom`] on the `target_window`.
-	19: pub struct DeleteProperty<3> {
-		target_window: Window[4],
-		property: Atom[4],
-	}
-
-	/// Gets the property specified by the given [`Atom`] on the `target_window`.
-	20: pub struct GetProperty<6>(delete: bool) -> GetPropertyReply {
-		target_window: Window[4],
-		property: Atom[4],
-		property_type: Specificity<Atom>[4],
-		long_offset: u32[4],
-		long_length: u32[4],
-	}
-
-	/// Lists the properties associated with the `target` [`Window`].
-	21: pub struct ListProperties<2> target: Window[4] -> ListPropertiesReply;
-
-	/// Sets the `owner` [`Window`] of the specified `selection`.
-	22: pub struct SetSelectionOwner<4> {
-		owner: Option<Window>[4],
-		selection: Atom[4],
-		/// The time this request was sent.
-		time: Time[4],
-	}
-
-	/// Gets the owner of the specified `selection`.
-	23: pub struct GetSelectionOwner<2> -> GetSelectionOwnerReply {
-		selection: Atom[4],
-	}
-
-	24: pub struct ConvertSelection<6> {
-		/// The [`Window`] requesting this conversion.
-		requestor: Window[4],
-		selection: Atom[4],
-		target: Atom[4],
-		property: Option<Atom>[4],
-		/// The time this request was sent.
-		time: Time[4],
-	}
-
-	// I'm assuming it's best for all requests to be supported by this macro,
-	// considering how many are. In that case, we'll want some kinda syntax to
-	// show fields referring to _structures_, like so:
-	// ```
-	// 25: pub struct SendEvent(propagate: bool)<11> {
-	//     destination: Destination<Window>[4],
-	//     event_mask: EventMask[4],
-	//     event: Box<dyn Event>{32},
-	// }
-	// ```
-
-	// This syntax is fully supported, just need some other types for these
-	// fields.
-	//
-	// 26: pub struct GrabPointer<6>(owner_events: bool) -> GrabPointerReply {
-	// 	grab_window: Window[4],
-	// 	event_mask: PointerEventMask[2],
-	// 	pointer_mode: GrabMode[1],
-	// 	keyboard_mode: GrabMode[1],
-	// 	confine_to: Option<Window>[4],
-	// 	cursor: Option<Cursor>[4],
-	// 	time: Time[4],
-	// }
-
-	/// Ceases a pointer grab.
-	27: pub struct UngrabPointer<2> {
-		/// The time this request was sent.
-		time: Time[4],
-	}
-
-	// This syntax is fully supported, just need some other types for these
-	// fields.
-	//
-	// 28: pub struct GrabButton<6>(owner_events: bool) {
-	// 	grab_window: Windo[4],
-	// 	event_mask: PointerEventMask[2],
-	// 	pointer_mode: GrabMode[1],
-	// 	keyboard_mode: GrabMode[1],
-	// 	confine_to: Option<Window>[4],
-	// 	cursor: Option<Cursor>[4],
-	// 	button: Specificity<Button>[1],
-	// 	?[1],
-	// 	key_mask: KeyMask[2],
-	// }
-
-	29: pub struct UngrabButton<3>(button: Specificity<Button>) {
-		grab_window: Window[4],
-		modifiers: Window[2],
-		?[2], // 2 unused bytes
-	}
-
-	30: pub struct ChangeActivePointerGrab<4> {
-		cursor: Option<Cursor>[4],
-		time: Time[4],
-		event_mask: PointerEventMask[2],
-		?[2], // 2 unused bytes
-	}
-
-	// 31: pub struct GrabKeyboard<4>(owner_events: bool) -> GrabKeyboardReply {
-	// 	grab_window: Window[4],
-	// 	pointer_mode: GrabMode[1],
-	// 	keyboard_mode: GrabMode[1],
-	// 	?[2],
-	// }
-
-	/// Ceases a keyboard grab.
-	32: pub struct UngrabKeyboard<2> {
-		/// The time this request was sent.
-		time: Time[4],
-	}
-
-	// 33: pub struct GrabKey<4>(owner_events: bool) {
-	//     grab_window: Window[4],
-	//     modifiers: KeyMask[2],
-	//     key: Specificity<Keycode>[1],
-	//     pointer_mode: GrabMode[1],
-	//     keyboard_mode: GrabMode[1],
-	//     ?[3],
-	// }
-
-	34: pub struct UngrabKey<3>(key: Specificity<Keycode>) {
-		grab_window: Window[4],
-		modifiers: KeyMask[2],
-		?[2], // 2 unused bytes
-	}
-
-	// 35: pub struct AllowEvents<2>(mode: AllowEventsMode) time: Time[4];
-
-	/// Grabs the server, preventing the server from processing until the grab
-	/// ceases.
-	///
-	/// See also: [UngrabServer]
-	36: pub struct GrabServer;
-	/// Ceases a server grab.
-	///
-	/// See also: [GrabServer]
-	37: pub struct UngrabServer;
-
-	38: pub struct QueryPointer<2> target_window: Window[4] -> QueryPointerReply;
-
-	/// Gets pointer motion events generated on the `target_window` between the
-	/// `start` and `end` time.
-	39: pub struct GetMotionEvents<4> -> GetMotionEventsReply {
-		target_window: Window[4],
-		start: Time[4],
-		stop: Time[4],
-	}
-
-	/// Translate coordinates from one window's coordinate space to another.
-	///
-	/// Coordinates within a window are relative to itself, including the
-	/// coordinates of child windows. That means that a window's coordinates
-	/// are relative to its parent. This request translates coordinates in the
-	/// relative coordinate space of a source window to the relative coordinate
-	/// space of the destination window. This will often be used to translate a
-	/// window's coordinates to coordinates relative to the root window.
-	40: pub struct TranslateCoordinates<4> -> TranslateCoordinatesReply {
-		/// The source window, particularly its coordinate space.
-		source_window: Window[4],
-		/// The destination window, particularly its coordinate space.
-		destination_window: Window[4],
-		/// The x-coordinate in the source window's coordinate space that is to
-		/// be translated.
-		source_x: i16[2],
-		/// The y-coordinate in the source window's coordinate space that is to
-		/// be translated.
-		source_y: i16[2],
-	}
-
-	41: pub struct WarpPointer<6> {
-		source_window: Option<Window>[4],
-		destination_window: Option<Window>[4],
-		source_x: i16[2],
-		source_y: i16[2],
-		source_width: u16[2],
-		source_height: u16[2],
-		destination_x: i16[2],
-		destination_y: i16[2],
-	}
-
-	// 42: pub struct SetInputFocus<3>(revert_to: RevertTo) {
-	//     focus: Option<Focus<Window>>[4],
-	//     time: Time[4],
-	// }
-
-	/// Query the current input focus.
-	43: pub struct GetInputFocus -> GetInputFocusReply;
-	/// Query the current keymap (the mapping of [`Keycode`]s to [`Keysym`]s).
-	44: pub struct QueryKeymap -> QueryKeymapReply;
-
-	// 45: OpenFont - waiting on algebraic length expressions
-
-	46: pub struct CloseFont<2> font: Font[4];
-	47: pub struct QueryFont<2> font: Fontable[4] -> QueryFontReply;
-
-	// 48: QueryTextExtents - waiting on algebraic length expressions
-	// 49: ListFonts - waiting on algebraic length expressions
-	// 50: ListFontsWithInfo - waiting on algebraic length expressions
-	// 51: SetFontPath - waiting on algebraic length expressions
-
-	52: pub struct GetFontPath -> GetFontPathReply;
-
-	/// Creates a new [`Pixmap`] with the given `pixmap_id`, `width`, and `height` from the given
-	/// `drawable`.
-	53: pub struct CreatePixmap<4>(depth: u8) {
-		pixmap_id: Pixmap[4],
-		drawable: Drawable[4],
-		width: u16[2],
-		height: u16[2],
-	}
-
-	54: pub struct FreePixmap<2> pixmap: Pixmap[4];
-
-	// 55: CreateGcontext - waiting on algebraic length expressions
-	// 56: ChangeGcontext - waiting on algebraic length expressions
-
-	// 57: pub struct CopyGcontext<4> {
-	// 	source_gcontext: Gcontext[4],
-	// 	destination_gcontext: Gcontext[4],
-	// 	value_mask: GcontextValueMask[4],
-	// }
-
-	// 58: SetDashes - waiting on algebraic length expressions
-	// 59: SetClipRectangles - waiting on algebraic length expressions
-
-	60: pub struct FreeGcontext<2> gcontext: Gcontext[4];
-
-	61: pub struct ClearArea<4>(exposures: bool) {
-		window: Window[4],
-		x: i16[2],
-		y: i16[2],
-		width: u16[2],
-		height: u16[2],
-	}
-
-	62: pub struct CopyArea<7> {
-		source: Drawable[4],
-		destination: Drawable[4],
-		gcontext: Gcontext[4],
-		source_x: i16[2],
-		source_y: i16[2],
-		destination_x: i16[2],
-		destination_y: i16[2],
-		width: u16[2],
-		height: u16[2],
-	}
-
-	63: pub struct CopyPlane<8> {
-		source: Drawable[4],
-		destination: Drawable[4],
-		gcontext: Gcontext[4],
-		source_x: i16[2],
-		source_y: i16[2],
-		destination_x: i16[2],
-		destination_y: i16[2],
-		width: u16[2],
-		height: u16[2],
-		bit_plane: u32[4],
-	}
-
-	// 64: PolyPoint - waiting on algebraic length expressions
-	// 65: PolyLine - waiting on algebraic length expressions
-	// 66: PolySegment - waiting on algebraic length expressions
-	// 67: PolyRectangle - waiting on algebraic length expressions
-	// 68: PolyArc - waiting on algebraic length expressions
-	// 69: FillPoly - waiting on algebraic length expressions
-	// 70: PolyFillRectangle - waiting on algebraic length expressions
-	// 71: PolyFillArc - waiting on algebraic length expressions
-	// 72: PutImage - waiting on algebraic length expressions
-
-	// 73: pub struct GetImage<5>(format: ImageFormat) -> GetImageReply {
-	//     drawable: Drawable[4],
-	//     x: i16[2],
-	//     y: i16[2],
-	//     width: u16[2],
-	//     height: u16[2],
-	//     plane_mask: u32[4],
-	// }
-
-	// 74: PolyText8 - waiting on algebraic length expressions
-	// 75: PolyText16 - waiting on algebraic length expressions
-	// 76: ImageText8 - waiting on algebraic length expressions
-	// 77: ImageText16 - waiting on algebraic length expressions
-
-	// 78: pub struct CreateColormap<4>(alloc: Allocation) {
-	// 	colormap_id: Colormap[4],
-	// 	owindow: Window[4],
-	// 	visual: VisualId[4],
-	// }
-
-	79: pub struct FreeColormap<2> target: Colormap[4];
-
-	80: pub struct CopyColormapAndFree<3> {
-		colormap_id: Colormap[4],
-		source_colormap: Colormap[4],
-	}
-
-	81: pub struct InstallColormap<2> colormap: Colormap[4];
-	82: pub struct UninstallColormap<2> colormap: Colormap[4];
-	83: pub struct ListInstalledColormaps<2> target_window: Window[4] -> ListInstalledColormapsReply;
-
-	// 84: AllocColor - waiting on structure field syntax
-	// 85: AllocNamedColor - waiting on algebraic length expressions
-
-	86: pub struct AllocColorCells<3>(contiguous: bool) -> AllocColorCellsReply {
-		target_colormap: Colormap[4],
-		colors: u16[2],
-		planes: u16[2],
-	}
-
-	// 87: AllocColorPlanes - waiting on structure field syntax
-	// 88: FreeColors - waiting on algebraic length expressions
-	// 89: StoreColors - waiting on algebraic length expressions
-	// 90: StoroeNamedColor - waiting on algebraic length expressions
-	// 91: QueryColors - waiting on algebraic length expressions
-	// 92: LookupColor - waiting on algebraic length expressions
-	// 93: CreateCursor - waiting on algebraic length expressions
-	// 94: CreateGlyphCursor - waiting on structure field syntax
-
-	95: pub struct FreeCursor<2> target: Cursor[4];
-
-	// 96: RecolorCursor - waiting on structure field syntax
-
-	// 97: pub struct QueryBestSize<3>(class: BestSizeClass) -> QueryBestSizeReply {
-	//     drawable: Drawable[4],
-	//     width: u16[2],
-	//     height: u16[2],
-	// }
-
-	// 98: QueryExtension - waiting on algebraic length expressions
-
-	/// Lists the current extensions.
-	99: pub struct ListExtensions -> ListExtensionsReply;
-
-	// 100: ChangeKeyboardMapping - waiting on algebraic length expressions
-
-	101: pub struct GetKeyboardMapping<2> -> GetKeyboardMappingReply {
-		first_keycode: Keycode[1],
-		count: u8[1],
-		?[2], // 2 unused bytes
-	}
-
-	// 102: ChangeKeyboardControl - waiting on algebraic length expressions
-
-	103: pub struct GetKeyboardControl -> GetKeyboardControlReply;
-	104: pub struct Bell(percent: u8);
-
-	105: pub struct ChangePointerControl<3> {
-		acceleration_numerator: i16[2],
-		acceleration_denominator: i16[2],
-		threshold: i16[2],
-		accelerate: bool,
-		enforce_threshold: bool,
-	}
-
-	106: pub struct GetPointerControl -> GetPointerControlReply;
-
-	// 107: pub struct SetScreenSaver<3> {
-	//     timeout: i16[2],
-	//     interval: i16[2],
-	//     prefer_blanking: Default<bool>,
-	//     allow_exposure: Default<bool>,
-	//     ?[2], // unused bytes
-	// }
-
-	108: pub struct GetScreenSaver -> GetScreenSaverReply;
-
-	// 109: ChangeHosts - waiting on algebraic length expressions
-
-	110: pub struct ListHosts -> ListHostsReply;
-	111: pub struct SetAccessControl(enabled: bool);
-
-	// 112: pub struct SetCloseDownMode(mode: CloseDownMode);
-
-	// 113: pub struct KillClient<2> resource: AllTemporary<u32>;
-
-	// 114: RotateProperties - waiting on algebraic length expressions
-
-	// 115: pub struct ForceScreenSaver(mode: enum ForceScreenSaverMode {
-	//     Reset = 0,
-	//     Activate = 1,
-	// });
-
-	// 116: SetPointerMapping - waiting on algebraic length expressions
-
-	117: pub struct GetPointerMapping -> GetPointerMappingReply;
-
-	// 118: SetModifierMapping - waiting on algebraic length expressions
-
-	119: pub struct GetModifierMapping -> GetModifierMappingReply;
-
-	// 127: NoOperation - waiting on algebraic length expressions
-}
-
-// These are temporary until the reply macro syntax is complete and these can
-// actually be defined. Most of these also need the algebraic length expressions
-// and structure field syntax too.
-struct GetWindowAttributesReply;
-struct GetGeometryReply;
-struct QueryTreeReply;
-struct GetAtomNameReply;
-struct GetPropertyReply;
-struct ListPropertiesReply;
-struct GetSelectionOwnerReply;
-struct QueryPointerReply;
-struct GetMotionEventsReply;
-struct TranslateCoordinatesReply;
-struct GetInputFocusReply;
-struct QueryKeymapReply;
-struct QueryFontReply;
-struct GetFontPathReply;
-struct ListInstalledColormapsReply;
-struct AllocColorCellsReply;
-struct ListExtensionsReply;
-struct GetKeyboardMappingReply;
-struct GetKeyboardControlReply;
-struct GetPointerControlReply;
-struct GetScreenSaverReply;
-struct ListHostsReply;
-struct GetPointerMappingReply;
-struct GetModifierMappingReply;
-
 values! {
 	/// Window attributes that can be configured in various requests.
 	///
@@ -670,5 +144,830 @@ bitflags! {
 		///
 		/// [`Cursor`]:WinAttr::Cursor
 		const CURSOR = 0x_0000_4000;
+	}
+}
+
+requests! {
+	pub struct CreateWindow(1) {
+		pub $depth: u8,
+		pub window_id: Window,
+		pub parent: Window,
+		pub x: i16,
+		pub y: i16,
+		pub width: u16,
+		pub height: u16,
+		pub border_width: u16,
+		pub class: Inherit<WindowClass>,
+		pub visual: Inherit<VisualId>,
+		pub value_mask: WinAttrMask,
+		pub values: [WinAttr],
+	}
+
+	pub struct ChangeWindowAttributes(2) {
+		pub target: Window,
+		pub value_mask: WinAttrMask,
+		pub values: [WinAttr],
+	}
+
+	pub struct GetWindowAttributes(3) -> GetWindowAttributesReply {
+		pub target: Window,
+	}
+
+	pub struct GetWindowAttributesReply for GetWindowAttributes {
+		pub $backing_store: BackingStore,
+		pub visual: VisualId,
+		pub class: WindowClass,
+		pub bit_gravity: BitGravity,
+		pub win_gravity: WinGravity,
+		pub backing_planes: u32,
+		pub backing_pixel: u32,
+		pub save_under: bool,
+		pub map_is_installed: bool,
+		pub map_state: enum MapState {
+			Unmapped = 0,
+			Unviewable = 1,
+			Viewable = 2,
+		},
+		pub override_redirect: bool,
+		pub colormap: Option<Colormap>,
+		pub all_event_masks: EventMask,
+		pub your_event_mask: EventMask,
+		pub do_not_propagate_mask: DeviceEventMask,
+		()[2],
+	}
+
+	pub struct DestroyWindow(4): pub target: Window;
+	pub struct DestroySubwindows(5): pub target: Window;
+
+	pub struct ChangeSaveSet(6) {
+		pub $mode: enum ChangeSaveSetMode {
+			Insert = 0,
+			Delete = 1,
+		},
+		pub target: Window,
+	}
+
+	pub struct ReparentWindow(7) {
+		pub target: Window,
+		pub new_parent: Window,
+		pub new_x: i16,
+		pub new_y: i16,
+	}
+
+	pub struct MapWindow(8): pub target: Window;
+	pub struct MapSubwindows(9): pub target: Window;
+
+	pub struct UnmapWindow(10): pub target: Window;
+	pub struct UnmapSubwindows(11): pub target: Window;
+
+	pub struct ConfigureWindow(12) {
+		pub target: Window,
+		pub value_mask: ConfigureWindowMask,
+		pub values: &[ConfigureWindowValue],
+	}
+
+	pub struct CirculateWindow(13) {
+		pub $direction: enum CirculateDirection {
+			RaiseLowest = 0,
+			RaiseHighest = 1,
+		},
+		pub target: Window,
+	}
+
+	pub struct GetGeometry(14) -> GetGeometryReply: pub target: Drawable;
+
+	pub struct GetGeometryReply for GetGeometry {
+		pub $depth: u8,
+		pub root: Window,
+		pub x: i16,
+		pub y: i16,
+		pub width: u16,
+		pub height: u16,
+		pub border_width: u16,
+		()[10],
+	}
+
+	pub struct QueryTree(15) -> QueryTreeReply: pub target: Window;
+
+	pub struct QueryTreeReply for QueryTree {
+		pub root: Window,
+		pub parent: Option<Window>,
+		#children,
+		()[14],
+		pub children: [Window],
+	}
+
+	pub struct InternAtom(16) -> InternAtomReply {
+		pub $only_if_exists: bool,
+		#name,
+		()[2],
+		pub name: String,
+		()[padding(name)],
+	}
+
+	pub struct InternAtomReply for InternAtom {
+		pub atom: Option<Atom>,
+		()[20],
+	}
+
+	pub struct GetAtomName(17) -> GetAtomNameReply: pub atom: Atom;
+
+	pub struct GetAtomNameReply for GetAtomName {
+		#name,
+		()[22],
+		pub name: String,
+		()[padding(name)],
+	}
+
+	// The property requests (`ChangeProperty(18)`, `DeleteProperty(19)`,
+	// `GetProperty(20)`, and `ListProperties(21)`) are special cases and need
+	// to be defined manually. You can find them in `mod properties;`.
+
+	pub struct SetSelectionOwner(22) {
+		pub $owner: Option<Window>,
+		pub selection: Atom,
+		pub time: Time,
+	}
+
+	pub struct GetSelectionOwner(23) -> GetSelectionOwnerReply: pub selection: Atom;
+
+	pub struct GetSelectionOwnerReply for GetSelectionOwner {
+		pub owner: Option<Window>,
+		()[20],
+	}
+
+	pub struct ConvertSelection(24) {
+		pub requestor: Window,
+		pub selection: Atom,
+		pub target: Atom,
+		pub property: Option<Atom>,
+		pub time: Time,
+	}
+
+	pub struct SendEvent(25) {
+		pub $propagate: bool,
+		pub destination: Destination,
+		pub event_mask: EventMask,
+		pub event: Box<dyn Event>,
+	}
+
+	pub struct GrabPointer(26) -> GrabPointerReply {
+		pub $owner_events: bool,
+		pub target_window: Window,
+		pub event_mask: PointerEventMask,
+		pub pointer_mode: enum GrabMode {
+			Synchronous = 0,
+			Asynchronous = 1,
+		},
+		pub keyboard_mode: GrabMode,
+		pub confine_to: Option<window>,
+		pub cursor_override: Option<Cursor>,
+		pub time: Time,
+	}
+
+	pub struct GrabPointerReply for GrabPointer {
+		pub $status: enum GrabStatus {
+			Success = 0,
+			AlreadyGrabbed = 1,
+			InvalidTime = 2,
+			NotViewable = 3,
+			Frozen = 4,
+		},
+		()[24],
+	}
+
+	pub struct UngrabPointer(27): pub time: Time;
+
+	pub struct GrabButton(28) {
+		pub $owner_events: bool,
+		pub target_window: Window,
+		pub event_mask: PointerEventMask,
+		pub pointer_mode: GrabMode,
+		pub keyboard_mode: GrabMode,
+		pub confine_to: Option<Window>,
+		pub cursor_override: Option<Cursor>,
+		pub button: Specificity<Button>,
+		()[1],
+		pub modifiers: ModifierKeyMask,
+	}
+
+	pub struct UngrabButton(29) {
+		pub $button: Specificity<Button>,
+		pub target_window: Window,
+		pub modifiers: ModifierKeyMask,
+		()[2],
+	}
+
+	pub struct ChangeActivePointerGrab(30) {
+		pub cursor_override: Option<Cursor>,
+		pub time: Time,
+		pub event_mask: PointerEventMask,
+		()[2],
+	}
+
+	pub struct GrabKeyboard(31) -> GrabPointerReply {
+		pub $owner_events: bool,
+		pub target_window: Window,
+		pub time: Time,
+		pub pointer_mode: GrabMode,
+		pub keyboard_mode: GrabMode,
+		()[2],
+	}
+
+	pub struct GrabKeyboardReply for GrabKeyboard {
+		pub $status: GrabStatus,
+		()[24],
+	}
+
+	pub struct UngrabKeyboard(32): pub time: Time;
+
+	pub struct GrabKey(33) {
+		pub $owner_events: bool,
+		pub target_window: Window,
+		pub modifiers: ModifierKeyMask,
+		pub key: Specificity<Keycode>,
+		pub pointer_mode: GrabMode,
+		pub keyboard_mode: GrabMode,
+		()[3],
+	}
+
+	pub struct UngrabKey(34) {
+		pub $key: Specificity<Keycode>,
+		pub target_window: Window,
+		pub modifiers: ModifierKeyMask,
+		()[2],
+	}
+
+	pub struct AllowEvents(35) {
+		pub $mode: enum AllowEventsMode {
+			AsyncPointer = 0,
+			SyncPointer = 1,
+			ReplayPointer = 2,
+			AsyncKeyboard = 3,
+			SyncKeyboard = 4,
+			ReplayKeyboard = 5,
+			AsyncBoth = 6,
+			SyncBoth = 7,
+		},
+		pub time: Time,
+	}
+
+	pub struct GrabServer(36);
+	pub struct UngrabSever(37);
+
+	pub struct QueryPointer(38) -> QueryPointerReply: pub target: Window;
+
+	pub struct QueryPointerReply for QueryPointer {
+		pub $same_screen: bool,
+		pub root: Window,
+		pub child: Option<Window>,
+		pub root_x: i16,
+		pub root_y: i16,
+		pub win_x: i16,
+		pub win_y: i16,
+		pub mask: KeyButtonMask,
+		()[6],
+	}
+
+	pub struct GetMotionEvents(39) -> GetMotionEventsReply {
+		pub target: Window,
+		pub start: Time,
+		pub stop: Time,
+	}
+
+	pub struct GetMotionEventsReply for GetMotionEvents {
+		#events[u32],
+		()[20],
+		pub events: [(Timestamp, (i16, i16))],
+	}
+
+	pub struct TranslateCoordinates(40) -> TranslateCoordinatesReply {
+		pub source: Window,
+		pub destination: Window,
+		pub src_x: u16,
+		pub src_y: u16,
+	}
+
+	pub struct TranslateCoordinatesReply for TranslateCoordinates {
+		pub $same_screen: bool,
+		pub child: Option<Window>,
+		pub dest_x: i16,
+		pub dest_y: i16,
+		()[16],
+	}
+
+	pub struct WarpPointer(41) {
+		pub source: Option<Window>,
+		pub destination: Option<Window>,
+		pub src_x: i16,
+		pub src_y: i16,
+		pub src_width: u16,
+		pub src_height: u16,
+		pub dest_x: u16,
+		pub dest_y: u16,
+	}
+
+	pub struct SetInputFocus(42) {
+		pub $revert_to: Option<RevertTo>,
+		pub focus: Option<Focus<Window>>,
+		pub time: Time,
+	}
+
+	pub struct GetInputFocus(43) -> GetInputFocusReply;
+
+	pub struct GetInputFocusReply for GetInputFocus {
+		pub $revert_to: Option<RevertTo>,
+		pub focus: Option<Focus<Window>>,
+		()[20],
+	}
+
+	pub struct QueryKeymap(44) -> QueryKeymapReply;
+
+	pub struct QueryKeymapReply for QueryKeymap {
+		pub keys: [u8; 32],
+	}
+
+	pub struct OpenFont(45) {
+		pub font_id: Font,
+		#name,
+		()[2],
+		pub name: String,
+		()[padding(name)],
+	}
+
+	pub struct CloseFont(46): pub font: Font;
+
+	pub struct QueryFont(47) -> QueryFontReply: pub font: Fontable;
+
+	pub struct QueryFontReply for QueryFont {
+		pub min_bounds: CharInfo,
+		()[4],
+		pub max_bounds: CharInfo,
+		()[4],
+		pub min_char_or_byte2: u16,
+		pub max_char_or_byte2: u16,
+		#properties,
+		pub draw_direction: enum DrawDirection {
+			LeftToRight = 0,
+			RightToLeft = 1,
+		},
+		pub min_byte1: u8,
+		pub max_byte1: u8,
+		pub all_chars_exist: bool,
+		pub font_ascent: i16,
+		pub font_descent: i16,
+		#charinfos[u32],
+		pub properties: [FontProp],
+		pub charinfos: [CharInfo],
+	}
+
+	pub struct QueryTextExtends(48) -> QueryTextExtentsReply {
+		pub $odd_length: bool,
+		pub font: Fontable,
+		pub string: String16,
+		()[padding(string)],
+	}
+
+	pub struct QueryTextExtentsReply for QueryTextExtents {
+		pub $draw_direction: DrawDirection,
+		pub font_ascent: i16,
+		pub font_descent: i16,
+		pub overall_ascent: i16,
+		pub overall_Descent: i16,
+		pub overall_width: i32,
+		pub overall_left: i32,
+		pub overall_right: i32,
+		()[4],
+	}
+
+	pub struct ListFonts(49) -> ListFontsReply {
+		pub max_names: u16,
+		#pattern,
+		pub pattern: String,
+		()[padding(pattern)],
+	}
+
+	pub struct ListFontsReply for ListFonts {
+		#names, // number of STRs in names??
+		()[22],
+		pub names: [Str], // STRs??
+		()[padding(names)],
+	}
+
+	// ListFontsWithInfo has a special format for its reply that needs to be
+	// done manually, so both the request and the reply are contained within the
+	// `mod list_fonts_with_info;` module.
+
+	pub struct SetFontPath(51) {
+		#names, // number of STRs in path??
+		()[2],
+		pub path: [Str], // STRs??
+		()[padding(path)],
+	}
+
+	// GetFontPath has a special format for its request. Both the request and
+	// the reply are done manually and can be found in the `mod get_font_path;`
+	// module.
+
+	pub struct CreatePixmap(53) {
+		pub $depth: u8,
+		pub pixmap_id: Pixmap,
+		pub drawable: Drawable,
+		pub width: u16,
+		pub height: u16,
+	}
+
+	pub struct FreePixmap(54): pub pixmap: Pixmap;
+
+	pub struct CreateGcontext(55) {
+		pub context_id: GraphicsContext,
+		pub drawable: Drawable,
+		pub value_mask: GraphicsContextMask,
+		pub values: [GraphicsContextValue],
+	}
+
+	pub struct ChangeGraphicsContext(56) {
+		pub context: GraphicsContext,
+		pub value_mask: GraphicsContextMask,
+		pub values: [GraphicsContextValue],
+	}
+
+	pub struct CopyGraphicsContext(57) {
+		pub source: GraphicsContext,
+		pub destination: GraphicsContext,
+		pub value_mask: GraphicsContextMask,
+	}
+
+	pub struct SetDashes(58) {
+		pub context: GraphicsContext,
+		pub dash_offset: u16,
+		#dashes,
+		pub dashes: [u8],
+		()[padding(dashes)],
+	}
+
+	pub struct SetClipRectangles(59) {
+		pub $ordering: enum Ordering {
+			Unsorted = 0,
+			Ysorted = 1,
+			YxSorted = 2,
+			YxBanded = 3,
+		},
+		pub context: GraphicsContext,
+		pub clip_x_origin: i16,
+		pub clip_y_origin: i16,
+		pub rectangles: [Rectangle],
+	}
+
+	pub struct FreeGraphicsContext(60): pub context: GraphicsContext;
+
+	pub struct ClearArea(61) {
+		pub $exposures: bool,
+		pub target_window: Window,
+		pub x: i16,
+		pub y: i16,
+		pub width: u16,
+		pub height: u16,
+	}
+
+	pub struct CopyArea(62) {
+		pub source: Drawable,
+		pub destination: Drawable,
+		pub context: GraphicsContext,
+		pub src_x: i16,
+		pub src_y: i16,
+		pub dest_x: i16,
+		pub dest_y: i16,
+		pub width: u16,
+		pub height: u16,
+	}
+
+	pub struct CopyPlane(63) {
+		pub source: Drawable,
+		pub destination: Drawable,
+		pub context: GraphicsContext,
+		pub src_x: i16,
+		pub src_y: i16,
+		pub dest_x: i16,
+		pub dest_y: i16,
+		pub width: u16,
+		pub height: u16,
+		pub bit_plane: u32,
+	}
+
+	pub struct PolyPoint(64) {
+		pub $coordinate_mode: enum CoordinateMode {
+			Origin = 0,
+			Previous = 1,
+		},
+		pub drawable: Drawable,
+		pub context: GraphicsContext,
+		pub points: [(i16, i16)],
+	}
+
+	pub struct PolyLine(65) {
+		pub $coordinate_mode: CoordinateMode,
+		pub drawable: Drawable,
+		pub context: GraphicsContext,
+		pub points: [(i16, i16)],
+	}
+
+	pub struct PolySegment(66) {
+		pub drawable: Drawable,
+		pub context: GraphicsContext,
+		pub segments: [((i16, i16), (i16, i16))],
+	}
+
+	pub struct PolyRectangle(67) {
+		pub drawable: Drawable,
+		pub context: GraphicsContext,
+		pub rectangles: [Rectangle],
+	}
+
+	pub struct PolyArc(68) {
+		pub drawable: Drawable,
+		pub context: GraphicsContext,
+		pub arcs: [GeomArc],
+	}
+
+	pub struct FillPoly(69) {
+		pub drawable: Drawable,
+		pub context: GraphicsContext,
+		pub shape: enum Shape {
+			Complex = 0,
+			Nonconvex = 1,
+			Convex = 2,
+		},
+		pub coordinate_mode: CoordinateMode,
+		()[2],
+		pub points: [(i16, i16)],
+	}
+
+	pub struct PolyFillRectangle(70) {
+		pub drawable: Drawable,
+		pub context: GraphicsContext,
+		pub rectangles: [Rectangle],
+	}
+
+	pub struct PolyFillArc(71) {
+		pub drawable: Drawable,
+		pub context: GraphicsContext,
+		pub arcs: [GeomArc],
+	}
+
+	pub struct PutImage(72) {
+		pub $format: Bitmap<ImageFormat>,
+		pub drawable: Drawable,
+		pub context: GraphicsContext,
+		pub width: u16,
+		pub height: u16,
+		pub dest_x: i16,
+		pub dest_y: i16,
+		pub left-padding: u8,
+		pub depth: u8,
+		()[2],
+		pub data: [u8],
+		()[padding(data)],
+	}
+
+	pub struct GetImage(73) -> GetImageReply {
+		pub $format: ImageFormat,
+		pub drawable: Drawable,
+		pub x: i16,
+		pub y: i16,
+		pub width: u16,
+		pub height: u16,
+		pub plane_mask: u32,
+	}
+
+	pub struct GetImageReply for GetImage {
+		pub $depth: u8,
+		pub visual: Option<VisualId>,
+		()[20],
+		pub data: [u8],
+		()[padding(data)],
+	}
+
+	pub struct PolyText(74) {
+		pub drawable: Drawable,
+		pub context: GraphicsContext,
+		pub x: i16,
+		pub y: i16,
+		pub items: [TextItem],
+		()[padding(items)],
+	}
+
+	pub struct PolyText16(75) {
+		pub drawable: Drawable,
+		pub context: GraphicsContext,
+		pub x: i16,
+		pub y: i16,
+		pub items: [TextItem16],
+		()[padding(items)],
+	}
+
+	pub struct ImageText(76) {
+		pub drawable: Drawable,
+		pub context: GraphicsContext,
+		pub x: i16,
+		pub y: i16,
+		pub string: String,
+		()[padding(string)],
+	}
+
+	pub struct ImageText16(77) {
+		pub drawable: Drawable,
+		pub context: GraphicsContext,
+		pub x: i16,
+		pub y: i16,
+		pub string: String16,
+		()[padding(string)],
+	}
+
+	pub struct CreateColormap(78) {
+		pub $alloc: enum ColormapAlloc {
+			None = 0,
+			All = 1,
+		},
+		pub colormap_id: Colormap,
+		pub window: Window,
+		pub visual: VisualId,
+	}
+
+	pub struct FreeColormap(79): pub colormap: Colormap;
+
+	pub struct CopyColormapAndFree(80) {
+		pub colormap_id: Colormap,
+		pub source: Colormap,
+	}
+
+	pub struct InstallColormap(81): pub colormap: Colormap;
+	pub struct UninstallColormap(82): pub colormap: Colormap;
+
+	pub struct ListInstalledColormaps(73) -> ListInstalledColormapsReply {
+		pub target_window: Window,
+	}
+
+	pub struct ListInstalledColormapsReply for ListInstalledColormaps {
+		#colormaps,
+		()[22],
+		pub colormaps: [Colormap],
+	}
+
+	pub struct AllocColor(84) -> AllocColorReply {
+		pub colormap: Colormap,
+		pub color: (u16, u16, u16),
+		()[2],
+	}
+
+	pub struct AllocColorReply for AllocColor {
+		pub color: (u16, u16, u16),
+		()[2],
+		pub pixel: u32,
+		()[12],
+	}
+
+	pub struct AllocNamedColor(85) -> AllocNamedColorReply {
+		pub colormap: Colormap,
+		#name,
+		()[2],
+		pub name: String,
+		()[padding(name)],
+	}
+
+	pub struct AllocNamedColorReply for AllocNamedColor {
+		pub pixel: u32,
+		pub exact_color: (u16, u16, u16),
+		pub visual_color: (u16, u16, u16),
+		()[8],
+	}
+
+	pub struct AllocColorCells(86) -> AllocColorCellsReply {
+		pub $contiguous: bool,
+		pub colormap: Colormap,
+		pub num_colors: u16, // TODO: its just called `colors`... is it the number?
+		pub planes: u16,
+	}
+
+	pub struct AllocColorCellsReply for AllocColorCells {
+		#pixels,
+		#masks,
+		()[20],
+		pub pixels: [u32],
+		pub masks: [u32],
+	}
+
+	pub struct AllocColorPlanes(87) -> AllocColorPlanesReply {
+		pub $contiguous: bool,
+		pub colormap: Colormap,
+		pub num_colors: u16, // TODO: its just called `colors`... is it the number?
+		pub colors: (u16, u16, u16),
+	}
+
+	pub struct AllocColorPlanesReply for AllocColorPlanes {
+		#pixels,
+		()[2],
+		pub color_mask: (u16, u16, u16),
+		()[8],
+		pub pixels: [u32],
+	}
+
+	pub struct FreeColors(88) {
+		pub colormap: Colormap,
+		pub plane_mask: u32,
+		pub pixels: [u32],
+	}
+
+	pub struct StoreColors(89) {
+		pub colormap: Colormap,
+		pub items: [ColorItem],
+	}
+
+	pub struct StoreNamedColor(90) {
+		pub $channel_mask: ColorChannelMask,
+		pub colormap: Colormap,
+		pub pixel: u32,
+		#name,
+		()[2],
+		pub name: String,
+		()[padding(name)],
+	}
+
+	// The QueryColorsReply for the QueryColors request uses a special format
+	// for its list of colors, and so the reply must be done manually. The
+	// reply and request have been put in `mod query_colors;`.
+
+	pub struct LookupColor(92) -> LookupColorReply {
+		pub colormap: Colormap,
+		#name,
+		()[2],
+		pub name: String,
+		()[padding(name)],
+	}
+
+	pub struct LookupColorReply for LookupColor {
+		pub exact_color: (u16, u16, u16),
+		pub visual_color: (u16, u16, u16),
+		()[12],
+	}
+
+	pub struct CreateCursor(93) {
+		pub cursor_id: Cursor,
+		pub source: Pixmap,
+		pub mask: Option<Pixmap>,
+		pub foreground_color: (u16, u16, u16),
+		pub background_color: (u16, u16, u16),
+		pub x: u16,
+		pub y: u16,
+	}
+
+	pub struct CreateGlyphCursor(94) {
+		pub cursor_id: Cursor,
+		pub source_font: Font,
+		pub mask_font: Option<Font>,
+		pub source_char: u16,
+		pub mask_char: u16,
+		pub foreground_color: (u16, u16, u16),
+		pub background_color: (u16, u16, u16),
+	}
+
+	pub struct FreeCursor(95): pub cursor: Cursor;
+
+	pub struct RecolorCursor(96) {
+		pub cursor: Cursor,
+		pub foreground_color: (u16, u16, u16),
+		pub background_color: (u16, u16, u16),
+	}
+
+	pub struct QueryBestSize(97) -> QueryBestSizeReply {
+		pub $class: enum SizeClass {
+			Cursor = 0,
+			Tile = 1,
+			Stipple = 2,
+		},
+		pub drawable: Drawable,
+		pub width: u16,
+		pub height: u16,
+	}
+
+	pub struct QueryBestSizeReply for QueryBestSize {
+		pub width: u16,
+		pub height: u16,
+		()[20],
+	}
+
+	pub struct QueryExtension(98) -> QueryExtensionReply {
+		#name,
+		()[2],
+		pub name: String,
+		()[padding(name)],
+	}
+
+	pub struct QueryExtensionReply for QueryExtension {
+		pub $present: bool,
+		pub major_opcode: u8,
+		pub first_event: u8,
+		pub first_error: u8,
+		()[20],
 	}
 }
