@@ -17,7 +17,7 @@ use quote::{ToTokens, TokenStreamExt};
 /// This is typically fields associated with the message, but also includes
 /// other information about the encoding of the message: unused bytes and
 /// lengths of list fields.
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct Content {
 	/// A metabyte item is an item that is stored in the 'metabyte'.
 	///
@@ -50,7 +50,7 @@ pub struct Content {
 ///
 /// While the content of a message is typically fields, it can also include the
 /// length of other fields or unused bytes.
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Item {
 	/// Unused bytes within a message.
 	///
@@ -123,7 +123,7 @@ pub enum Item {
 }
 
 /// The number of unused bytes. Can be an absolute value, or it can pad a field.
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum UnusedByteSize {
 	/// An absolute number of bytes.
 	Number(u8),
@@ -138,7 +138,7 @@ pub enum UnusedByteSize {
 /// A lot of requests define enums that are only used for the purpose of that
 /// request only, so it is convenient to be able to define those enums directly
 /// within the request.
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct Enum {
 	/// The name of this enum definition.
 	///
@@ -163,8 +163,8 @@ pub struct Enum {
 	pub variants: Punctuated<Variant, Token![,]>,
 }
 
-#[derive(Clone)]
 /// An enum variant with a name and value used to serialize it.
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct Variant {
 	pub attributes: Vec<Attribute>,
 	/// The name of this variant (e.g. `XySorted`).
@@ -225,27 +225,98 @@ impl ToTokens for Variant {
 
 impl Parse for Content {
 	fn parse(input: ParseStream) -> Result<Self> {
-		// `{` and `}`.
-		let content;
-		braced!(content in input);
-
-		// Initialise variables for the loop.
+		// Keep track of the metabyte item separately, if any is given. This is
+		// because there can only be zero or one metabyte items, i.e. `None` or
+		// `Some`.
 		let mut metabyte: Option<Item> = None;
 		let mut items: Vec<Item> = vec![];
 
-		while !content.is_empty() {
-			if metabyte.is_none() && content.peek(Token![$]) {
-				// If the metabyte is not already set and there is a `$` token,
-				// read the metabyte item.
-				content.parse::<Token![$]>()?;
-				metabyte = content.parse().ok();
+		// Lets us build an error with the tokens that were found.
+		let look = input.lookahead1();
+
+		if look.peek(Token![:]) {
+			// This is a shorthand definition with just a single item.
+
+			// Parse the colon.
+			input
+				.parse::<Token![:]>()
+				.expect("we already checked for the presence of a colon");
+
+			// Parse the item.
+			let item: Item = input.parse()?;
+
+			// If the item was a metabyte declaration, set it as the metabyte,
+			// otherwise push it as the single element of the items vector.
+			if match item {
+				Item::Field { metabyte, .. } => metabyte,
+				Item::FieldLength { metabyte, .. } => metabyte,
+				Item::UnusedBytes(..) => false,
+			} {
+				metabyte = Some(item);
 			} else {
-				// Otherwise, read the item like normal...
-				items.push(content.parse()?);
+				items.push(item);
 			}
 
-			// Require a comma after every item, even the last one, for simplicity.
-			input.parse::<Token![,]>()?;
+			// Require a semicolon following a shorthand item definition.
+			input.parse::<Token![;]>()?;
+		} else if look.peek(token::Brace) {
+			// `{` and `}`.
+			let content;
+			braced!(content in input);
+
+			// Keeps track of whether this is the first item to be parsed, so that
+			// the check for a preceding comma is not done for the first item.
+			//
+			// While it logically makes sense that the comma comes after an item,
+			// it is easier to check that the comma comes before any item other
+			// than the first.
+			let mut initial_loop = true;
+
+			while !content.is_empty() {
+				if initial_loop {
+					// If this is the first item, then set `initial_loop` to false
+					// so we make the comma check next time.
+					initial_loop = false;
+				} else {
+					// Break from the loop if no comma was found, or no item was
+					// found after the comma. This is only met by the final item.
+					if content.parse::<Token![,]>().is_err() || content.is_empty() {
+						break;
+					}
+				}
+
+				// Parse an item.
+				let item: Item = content.parse()?;
+
+				// If this item is declared as a metabyte item declaration with
+				// `$` syntax...
+				if match item {
+					Item::Field { metabyte, .. } => metabyte,
+					Item::FieldLength { metabyte, .. } => metabyte,
+					Item::UnusedBytes(..) => false,
+				} {
+					if metabyte.is_some() {
+						// If the item was declared as a metabyte item but one has
+						// already been declared as such for this message, then
+						// we can't honor its declaration as a metabyte item.
+						panic!("found too many metabyte item declarations");
+					}
+
+					// Store this as the metabyte item, rather than appending it to
+					// the list of other items.
+					metabyte = Some(item);
+				} else {
+					// If this is just an ordinary non-metabyte item declaration,
+					// add it to the list.
+					items.push(item);
+				}
+			}
+		} else if !look.peek(Token![;]) {
+			// If no shorthand item definition nor full brace definition was
+			// found, nor was a semicolon to end the definition, then this is
+			// a syntax error, so we return an error built by `look` that refers
+			// to the expected tokens that were not found.
+			return Err(look.error());
 		}
 
 		Ok(Self { metabyte, items })
@@ -254,12 +325,18 @@ impl Parse for Content {
 
 impl Parse for Item {
 	fn parse(input: ParseStream) -> Result<Self> {
-		if input.peek(Token![#]) {
+		if input.peek(Token![#]) || input.peek(Token![$]) && input.peek2(Token![#]) {
+			// If the item starts with `#` it is a normal list length encoding,
+			// and if it starts with `$#` it is a metabyte list length encoding.
+
 			// Length of a list field.
 			// #fieldname
 			// #fieldname[u16]
+			// $#fieldname[u8] // metabyte position
 
-			// `#` token
+			// Whether this is a metabyte list length encoding with `$`.
+			let metabyte = input.parse::<Token![$]>().is_ok();
+			// `#` token that precedes a list length encoding.
 			input.parse::<Token![#]>()?;
 			// Name of the field in question.
 			let name: Ident = input.parse()?;
@@ -274,8 +351,14 @@ impl Parse for Item {
 				None
 			};
 
-			Ok(Self::FieldLength(name, ty))
+			Ok(Self::FieldLength {
+				metabyte,
+				name,
+				length_type: ty,
+			})
 		} else if input.peek(token::Paren) {
+			// If the item starts with `(`, then it is an unused bytes encoding.
+
 			// Unused bytes.
 			// ()[22]
 			// ()[padding(fieldname)]
@@ -284,8 +367,9 @@ impl Parse for Item {
 			let content;
 			parenthesized!(content in input);
 
-			// TODO: Is there a better way to do this maybe? Testing for a unit
-			// `()`.
+			// If there was anything found within the parentheses, we have a
+			// problem... the syntax we're looking for is just `()`, i.e. the
+			// unit value.
 			assert!(content.is_empty());
 
 			// `[` and `]`
@@ -317,6 +401,9 @@ impl Parse for Item {
 				Err(look.error())
 			}
 		} else {
+			// If the item doesn't start with `#`, `$#`, or `()`, then it is a
+			// field.
+
 			// A field with a name and type.
 			// pub hosts: [Host]
 
