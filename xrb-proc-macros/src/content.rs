@@ -57,7 +57,7 @@ use quote::{ToTokens, TokenStreamExt};
 ///         // `$` means this is a metabyte item, and `#map[u8]` means it is
 ///         // counting the length of the `map` field (as it is a list) and
 ///         // writing it as a `u8`-type value.
-///         $#map,
+///         $#map[u8],
 ///         // This means there are 24 unused bytes between the header and the
 ///         // `map` field.
 ///         ()[24],
