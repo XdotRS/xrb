@@ -17,6 +17,60 @@ use quote::{ToTokens, TokenStreamExt};
 /// This is typically fields associated with the message, but also includes
 /// other information about the encoding of the message: unused bytes and
 /// lengths of list fields.
+///
+/// # Examples
+/// Full request definition with just normal fields:
+/// ```rust
+/// requests! {
+///     pub struct CopyArea(62) {
+///         pub source: Drawable,
+///         pub destination: Drawable,
+///         pub context: GraphicsContext,
+///         pub src_x: i16,
+///         pub src_y: i16,
+///         pub dest_x: i16,
+///         pub dest_y: i16,
+///         pub width: u16,
+///         pub height: u16,
+///     }
+/// }
+/// ```
+/// Shorthand request definition (only one item):
+/// ```rust
+/// requests! {
+///     // A request with a single `Window` field.
+///     pub struct DeleteWindow(4): pub target: Window;
+/// }
+/// ```
+/// Shorthand request definition (only one item), using a metabyte item:
+/// ```rust
+/// requests! {
+///     // A request with a single boolean field in the metabyte position.
+///     pub struct SetAccessControl(111): pub $enabled: bool;
+/// }
+/// ```
+/// Full reply definition, using a metabyte item, list length encoding, unused
+/// byte encoding, unused padding byte, and a normal field:
+/// ```rust
+/// requests! {
+///     pub struct GetPointerMappingReply for GetPointerMapping {
+///         // `$` means this is a metabyte item, and `#map[u8]` means it is
+///         // counting the length of the `map` field (as it is a list) and
+///         // writing it as a `u8`-type value.
+///         $#map,
+///         // This means there are 24 unused bytes between the header and the
+///         // `map` field.
+///         ()[24],
+///         // A field, just like in a normal struct definition.
+///         pub map: [u8],
+///         // An unused bytes encoding that automatically adds the correct
+///         // amount of padding bytes depending on the size of the `map` field
+///         // to bring the size up to a multiple of 4, which is required by
+///         // the X11 protocol.
+///         ()[padding(map)],
+///     }
+/// }
+/// ```
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct Content {
 	/// A metabyte item is an item that is stored in the 'metabyte'.
@@ -50,12 +104,52 @@ pub struct Content {
 ///
 /// While the content of a message is typically fields, it can also include the
 /// length of other fields or unused bytes.
+///
+/// # Examples
+/// 20 unused bytes:
+/// ```
+/// ()[20]
+/// ```
+/// Automatically add the correct number of padding bytes for the `map` field
+/// to bring it to a multiple of 4 bytes, as required by the X11 protocol:
+/// ```
+/// ()[padding(map)]
+/// ```
+/// Write the length of the `charinfos` list as a [`u32`] value:
+/// ```
+/// #charinfos[u32]
+/// ```
+/// Define a boolean field for the metabyte position:
+/// ```
+/// pub $exposures: bool
+/// ```
+/// Define a field with an inline enum definition for convenience:
+/// ```
+/// pub draw_direction: enum DrawDirection {
+///     LeftToRight = 0,
+///     RightToLeft = 1,
+/// }
+/// ```
+/// Define a `Window`-type field:
+/// ```
+/// pub target: Window
+/// ```
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Item {
 	/// Unused bytes within a message.
 	///
 	/// These are written as empty bytes when serializing, and skipped when
 	/// deserializing.
+	///
+	/// # Examples
+	/// 20 unused bytes:
+	/// ```
+	/// ()[20]
+	/// ```
+	/// Automatically add padding bytes for the `map` field:
+	/// ```
+	/// ()[padding(map)]
+	/// ```
 	UnusedBytes(UnusedByteSize),
 	/// Encodes the length of a collection field.
 	///
@@ -63,6 +157,18 @@ pub enum Item {
 	/// defined in the X11 protocol. The length of lists does not accompany
 	/// the lists themselves directly in X11, so we must specify the location
 	/// where that length is encoded.
+	///
+	/// # Examples
+	/// Write the length of the `map` list as the default field length type of
+	/// [`u16`]:
+	/// ```
+	/// #map
+	/// ```
+	/// Write the length of the `map` list as a [`u8`] value in the metabyte
+	/// position:
+	/// ```
+	/// $#map[u8]
+	/// ```
 	FieldLength {
 		/// Whether this is the definition of a 'metabyte' list length encoding.
 		///
@@ -89,6 +195,12 @@ pub enum Item {
 	///
 	/// That special ability being that enums can be defined 'inline' in one of
 	/// these fields for convenience, as they are used in quite a few messages.
+	///
+	/// # Examples
+	/// Define a `time` field:
+	/// ```
+	/// pub time: Time
+	/// ```
 	Field {
 		/// Whether this is the definition of a 'metabyte' field.
 		///
