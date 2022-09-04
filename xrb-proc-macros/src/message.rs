@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use syn::parse::{Parse, ParseStream};
-use syn::{Attribute, Ident, Result, Token, Visibility, parenthesized, token, Type, LitInt};
+use syn::{parenthesized, token, Attribute, Ident, LitInt, Result, Token, Type, Visibility};
 
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{ToTokens, TokenStreamExt};
@@ -142,16 +142,17 @@ impl Parse for RequestMetadata {
 			// Major opcode (required)
 			major_opcode: content.parse::<LitInt>()?.base10_parse()?,
 			// Minor opcode (optional, requires a comma token preceding it if so)
-			minor_opcode: content.parse::<Token![,]>()
-				.ok()
-				.and(content.parse::<LitInt>()
-					 .ok()
-					 .map(|lit| lit.base10_parse().ok())
-					 .flatten()
-				),
+			minor_opcode: content.parse::<Token![,]>().ok().and(
+				content
+					.parse::<LitInt>()
+					.ok()
+					.map(|lit| lit.base10_parse().ok())
+					.flatten(),
+			),
 			// Reply type (if `->` is not given, it is `None`, but if `->` is
 			// given then panic if the type is not also given).
-			reply: input.parse::<Token![->]>()
+			reply: input
+				.parse::<Token![->]>()
 				.ok()
 				.map(|_| input.parse::<Type>().unwrap()),
 		})
