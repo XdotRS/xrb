@@ -7,6 +7,7 @@ use crate::IoResult;
 
 use bytes::BufMut;
 
+/// Utilities to extend the functionality of [bytes::BufMut] for serialization.
 pub trait ByteWriter: BufMut {
 	/// Writes a [`ToBytes`] implementing type as bytes.
 	///

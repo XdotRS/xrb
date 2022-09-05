@@ -11,13 +11,13 @@ pub use byte_writer::ByteWriter;
 use crate::IoResult;
 use bytes::{Buf, BufMut};
 
+/// Defines the size of a type in bytes.
 pub trait ByteSize {
 	/// The size of this type in bytes.
 	fn byte_size(&self) -> usize;
 }
 
-/// The size of a type in bytes, for types whose size can be known at compile
-/// time.
+/// Defines the size of a type in bytes for types whose byte size does not vary.
 pub trait StaticByteSize {
 	/// The size of this type in bytes.
 	fn static_byte_size() -> usize;

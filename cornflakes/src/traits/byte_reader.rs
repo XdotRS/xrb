@@ -7,6 +7,7 @@ use crate::IoResult;
 
 use bytes::Buf;
 
+/// Utilities to extend the functionality of [bytes::Buf] for deserialization.
 pub trait ByteReader: Buf {
 	/// Reads a [`FromBytes`] implementing type.
 	///
