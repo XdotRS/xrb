@@ -3,10 +3,12 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use syn::parse::{Parse, ParseStream};
-use syn::{parenthesized, token, Attribute, Ident, LitInt, Result, Token, Type, Visibility};
+use syn::{parenthesized, token, Attribute, Ident, LitInt, Result, Token, Type, Visibility, Generics};
 
-use proc_macro2::{Span, TokenStream as TokenStream2};
+use proc_macro2::{Delimiter, Group, Span, TokenStream as TokenStream2};
 use quote::{ToTokens, TokenStreamExt};
+
+use crate::content::Content;
 
 /// A request or a reply generated from a request.
 #[derive(Clone)]
@@ -19,6 +21,7 @@ pub struct Message {
 	pub vis: Option<Visibility>,
 	/// The name of the message.
 	pub name: Ident,
+	pub generics: Option<Generics>,
 	/// The metadata relevant to this particular type of message.
 	///
 	/// Requests and replies have different metadata associated with them.
@@ -48,8 +51,10 @@ impl ToTokens for Message {
 		tokens.append(Ident::new("struct", Span::call_site()));
 		// Name
 		self.name.to_tokens(tokens);
+		// Generics
+		self.generics.to_tokens(tokens);
 		// Fields
-		self.content.fields_to_tokens(tokens);
+		Group::new(Delimiter::Brace, self.content.fields_to_tokenstream()).to_tokens(tokens);
 	}
 }
 
@@ -66,13 +71,6 @@ pub enum Metadata {
 	///
 	/// Requries a request type declaration.
 	Reply(ReplyMetadata),
-}
-
-#[derive(Clone)]
-pub struct Content;
-
-impl Content {
-	pub fn fields_to_tokens(&self, _tokens: &mut TokenStream2) {}
 }
 
 /// Information specifically associated with requests, not replies.
@@ -93,6 +91,8 @@ pub struct ReplyMetadata {
 	pub request: Type,
 }
 
+// Parsing {{{
+
 impl Parse for Message {
 	fn parse(input: ParseStream) -> Result<Self> {
 		// Parse attributes for the message.
@@ -107,6 +107,8 @@ impl Parse for Message {
 			vis,
 			// Parse the message's name.
 			name: input.parse()?,
+			// Parse any generic definitions, e.g. `'a` or `T`.
+			generics: input.parse().ok(),
 			// Parse the message's metadata (specific to the type of message).
 			metadata: input.parse()?,
 			// Parse the message's content. Includes fields, unused bytes, etc.
@@ -172,8 +174,4 @@ impl Parse for ReplyMetadata {
 	}
 }
 
-impl Parse for Content {
-	fn parse(_input: ParseStream) -> Result<Self> {
-		Ok(Self)
-	}
-}
+// }}}

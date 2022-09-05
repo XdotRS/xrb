@@ -2,12 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-//use crate::x11::common::masks::*;
-//use crate::x11::common::values::*;
-//use crate::x11::wrappers::*;
+use crate::x11::common::masks::*;
+use crate::x11::common::structures::*;
+use crate::x11::common::values::*;
+use crate::x11::wrappers::*;
 
 use cornflakes::ToBytes;
-//use xrb_proc_macros::requests;
+use xrb_proc_macros::requests;
 
 /// A request is a message sent from an X client to the X server.
 ///
@@ -46,13 +47,7 @@ pub trait Request<REPLY = ()>: ToBytes {
 	fn length(&self) -> u16;
 }
 
-// TODO: temporary: to stop the errors from getting in the way until the macro
-// syntax is complete.
-macro_rules! _requests {
-	($($t:tt)*) => {};
-}
-
-_requests! {
+requests! {
 	pub struct CreateWindow(1) {
 		pub $depth: u8,
 		pub window_id: Window,
@@ -62,16 +57,16 @@ _requests! {
 		pub width: u16,
 		pub height: u16,
 		pub border_width: u16,
-		pub class: Inherit<WindowClass>,
+		//pub class: Inherit<WindowClass>,
 		pub visual: Inherit<VisualId>,
-		pub value_mask: WinAttrMask,
-		pub values: [WinAttr],
+		//pub value_mask: WinAttrMask,
+		//pub values: &'a [WinAttr],
 	}
 
 	pub struct ChangeWindowAttributes(2) {
 		pub target: Window,
-		pub value_mask: WinAttrMask,
-		pub values: [WinAttr],
+		//pub value_mask: WinAttrMask,
+		//pub values: &'a [WinAttr],
 	}
 
 	pub struct GetWindowAttributes(3) -> GetWindowAttributesReply {
@@ -79,9 +74,9 @@ _requests! {
 	}
 
 	pub struct GetWindowAttributesReply for GetWindowAttributes {
-		pub $backing_store: BackingStore,
+		//pub $backing_store: BackingStore,
 		pub visual: VisualId,
-		pub class: WindowClass,
+		//pub class: WindowClass,
 		pub bit_gravity: BitGravity,
 		pub win_gravity: WinGravity,
 		pub backing_planes: u32,
@@ -127,8 +122,8 @@ _requests! {
 
 	pub struct ConfigureWindow(12) {
 		pub target: Window,
-		pub value_mask: ConfigureWindowMask,
-		pub values: &[ConfigureWindowValue],
+		//pub value_mask: ConfigureWindowMask,
+		//pub values: &'a [ConfigureWindowValue],
 	}
 
 	pub struct CirculateWindow(13) {
@@ -213,7 +208,7 @@ _requests! {
 		pub $propagate: bool,
 		pub destination: Destination,
 		pub event_mask: EventMask,
-		pub event: Box<dyn Event>,
+		//pub event: Box<dyn Event>,
 	}
 
 	pub struct GrabPointer(26) -> GrabPointerReply {
@@ -225,7 +220,7 @@ _requests! {
 			Asynchronous = 1,
 		},
 		pub keyboard_mode: GrabMode,
-		pub confine_to: Option<window>,
+		pub confine_to: Option<Window>,
 		pub cursor_override: Option<Cursor>,
 		pub time: Time,
 	}
@@ -252,14 +247,14 @@ _requests! {
 		pub confine_to: Option<Window>,
 		pub cursor_override: Option<Cursor>,
 		pub button: Specificity<Button>,
-		(), // single unused byte
-		pub modifiers: ModifierKeyMask,
+		[(); 1],
+		//pub modifiers: ModifierKeyMask,
 	}
 
 	pub struct UngrabButton(29) {
 		pub $button: Specificity<Button>,
 		pub target_window: Window,
-		pub modifiers: ModifierKeyMask,
+		//pub modifiers: ModifierKeyMask,
 		[(); 2],
 	}
 
@@ -289,7 +284,7 @@ _requests! {
 	pub struct GrabKey(33) {
 		pub $owner_events: bool,
 		pub target_window: Window,
-		pub modifiers: ModifierKeyMask,
+		//pub modifiers: ModifierKeyMask,
 		pub key: Specificity<Keycode>,
 		pub pointer_mode: GrabMode,
 		pub keyboard_mode: GrabMode,
@@ -299,7 +294,7 @@ _requests! {
 	pub struct UngrabKey(34) {
 		pub $key: Specificity<Keycode>,
 		pub target_window: Window,
-		pub modifiers: ModifierKeyMask,
+		//pub modifiers: ModifierKeyMask,
 		[(); 2],
 	}
 
@@ -317,8 +312,8 @@ _requests! {
 		pub time: Time,
 	}
 
-	pub struct GrabServer(36);
-	pub struct UngrabSever(37);
+	//pub struct GrabServer(36);
+	//pub struct UngrabSever(37);
 
 	pub struct QueryPointer(38) -> QueryPointerReply: pub target: Window;
 
@@ -373,20 +368,20 @@ _requests! {
 	}
 
 	pub struct SetInputFocus(42) {
-		pub $revert_to: Option<RevertTo>,
-		pub focus: Option<Focus<Window>>,
+		//pub $revert_to: Option<RevertTo>,
+		pub focus: Option<Focus>,
 		pub time: Time,
 	}
 
-	pub struct GetInputFocus(43) -> GetInputFocusReply;
+	//pub struct GetInputFocus(43) -> GetInputFocusReply;
 
 	pub struct GetInputFocusReply for GetInputFocus {
-		pub $revert_to: Option<RevertTo>,
-		pub focus: Option<Focus<Window>>,
+		//pub $revert_to: Option<RevertTo>,
+		pub focus: Option<Focus>,
 		[(); 20],
 	}
 
-	pub struct QueryKeymap(44) -> QueryKeymapReply;
+	//pub struct QueryKeymap(44) -> QueryKeymapReply;
 
 	pub struct QueryKeymapReply for QueryKeymap {
 		pub keys: [u8; 32],
@@ -405,9 +400,9 @@ _requests! {
 	pub struct QueryFont(47) -> QueryFontReply: pub font: Fontable;
 
 	pub struct QueryFontReply for QueryFont {
-		pub min_bounds: CharInfo,
+		//pub min_bounds: CharInfo,
 		[(); 4],
-		pub max_bounds: CharInfo,
+		//pub max_bounds: CharInfo,
 		[(); 4],
 		pub min_char_or_byte2: u16,
 		pub max_char_or_byte2: u16,
@@ -422,14 +417,14 @@ _requests! {
 		pub font_ascent: i16,
 		pub font_descent: i16,
 		#charinfos[u32],
-		pub properties: [FontProp],
-		pub charinfos: [CharInfo],
+		//pub properties: [FontProp],
+		//pub charinfos: [CharInfo],
 	}
 
-	pub struct QueryTextExtends(48) -> QueryTextExtentsReply {
+	pub struct QueryTextExtends<'a>(48) -> QueryTextExtentsReply {
 		pub $odd_length: bool,
 		pub font: Fontable,
-		pub string: String16,
+		pub string: String16<'a>,
 		[(); padding(string)],
 	}
 
@@ -438,7 +433,7 @@ _requests! {
 		pub font_ascent: i16,
 		pub font_descent: i16,
 		pub overall_ascent: i16,
-		pub overall_Descent: i16,
+		pub overall_descent: i16,
 		pub overall_width: i32,
 		pub overall_left: i32,
 		pub overall_right: i32,
@@ -455,7 +450,7 @@ _requests! {
 	pub struct ListFontsReply for ListFonts {
 		#names, // number of STRs in names??
 		[(); 22],
-		pub names: [Str], // STRs??
+		//pub names: [Str], // STRs??
 		[(); padding(names)],
 	}
 
@@ -466,7 +461,7 @@ _requests! {
 	pub struct SetFontPath(51) {
 		#names, // number of STRs in path??
 		[(); 2],
-		pub path: [Str], // STRs??
+		//pub path: [Str], // STRs??
 		[(); padding(path)],
 	}
 
@@ -485,26 +480,26 @@ _requests! {
 	pub struct FreePixmap(54): pub pixmap: Pixmap;
 
 	pub struct CreateGcontext(55) {
-		pub context_id: GraphicsContext,
+		//pub context_id: GraphicsContext,
 		pub drawable: Drawable,
-		pub value_mask: GraphicsContextMask,
-		pub values: [GraphicsContextValue],
+		//pub value_mask: GraphicsContextMask,
+		//pub values: [GraphicsContextValue],
 	}
 
 	pub struct ChangeGraphicsContext(56) {
-		pub context: GraphicsContext,
-		pub value_mask: GraphicsContextMask,
-		pub values: [GraphicsContextValue],
+		//pub context: GraphicsContext,
+		//pub value_mask: GraphicsContextMask,
+		//pub values: [GraphicsContextValue],
 	}
 
 	pub struct CopyGraphicsContext(57) {
-		pub source: GraphicsContext,
-		pub destination: GraphicsContext,
-		pub value_mask: GraphicsContextMask,
+		//pub source: GraphicsContext,
+		//pub destination: GraphicsContext,
+		//pub value_mask: GraphicsContextMask,
 	}
 
 	pub struct SetDashes(58) {
-		pub context: GraphicsContext,
+		//pub context: GraphicsContext,
 		pub dash_offset: u16,
 		#dashes,
 		pub dashes: [u8],
@@ -518,13 +513,13 @@ _requests! {
 			YxSorted = 2,
 			YxBanded = 3,
 		},
-		pub context: GraphicsContext,
+		//pub context: GraphicsContext,
 		pub clip_x_origin: i16,
 		pub clip_y_origin: i16,
 		pub rectangles: [Rectangle],
 	}
 
-	pub struct FreeGraphicsContext(60): pub context: GraphicsContext;
+	//pub struct FreeGraphicsContext(60): pub context: GraphicsContext;
 
 	pub struct ClearArea(61) {
 		pub $exposures: bool,
@@ -538,7 +533,7 @@ _requests! {
 	pub struct CopyArea(62) {
 		pub source: Drawable,
 		pub destination: Drawable,
-		pub context: GraphicsContext,
+		//pub context: GraphicsContext,
 		pub src_x: i16,
 		pub src_y: i16,
 		pub dest_x: i16,
@@ -550,7 +545,7 @@ _requests! {
 	pub struct CopyPlane(63) {
 		pub source: Drawable,
 		pub destination: Drawable,
-		pub context: GraphicsContext,
+		//pub context: GraphicsContext,
 		pub src_x: i16,
 		pub src_y: i16,
 		pub dest_x: i16,
@@ -566,38 +561,38 @@ _requests! {
 			Previous = 1,
 		},
 		pub drawable: Drawable,
-		pub context: GraphicsContext,
+		//pub context: GraphicsContext,
 		pub points: [(i16, i16)],
 	}
 
 	pub struct PolyLine(65) {
 		pub $coordinate_mode: CoordinateMode,
 		pub drawable: Drawable,
-		pub context: GraphicsContext,
+		//pub context: GraphicsContext,
 		pub points: [(i16, i16)],
 	}
 
 	pub struct PolySegment(66) {
 		pub drawable: Drawable,
-		pub context: GraphicsContext,
+		//pub context: GraphicsContext,
 		pub segments: [((i16, i16), (i16, i16))], // (start, end)
 	}
 
 	pub struct PolyRectangle(67) {
 		pub drawable: Drawable,
-		pub context: GraphicsContext,
+		//pub context: GraphicsContext,
 		pub rectangles: [Rectangle],
 	}
 
 	pub struct PolyArc(68) {
 		pub drawable: Drawable,
-		pub context: GraphicsContext,
-		pub arcs: [GeomArc],
+		//pub context: GraphicsContext,
+		//pub arcs: [GeomArc],
 	}
 
 	pub struct FillPoly(69) {
 		pub drawable: Drawable,
-		pub context: GraphicsContext,
+		//pub context: GraphicsContext,
 		pub shape: enum Shape {
 			Complex = 0,
 			Nonconvex = 1,
@@ -610,25 +605,25 @@ _requests! {
 
 	pub struct PolyFillRectangle(70) {
 		pub drawable: Drawable,
-		pub context: GraphicsContext,
+		//pub context: GraphicsContext,
 		pub rectangles: [Rectangle],
 	}
 
 	pub struct PolyFillArc(71) {
 		pub drawable: Drawable,
-		pub context: GraphicsContext,
-		pub arcs: [GeomArc],
+		//pub context: GraphicsContext,
+		//pub arcs: [GeomArc],
 	}
 
 	pub struct PutImage(72) {
-		pub $format: Bitmap<ImageFormat>,
+		//pub $format: Bitmap<ImageFormat>,
 		pub drawable: Drawable,
-		pub context: GraphicsContext,
+		//pub context: GraphicsContext,
 		pub width: u16,
 		pub height: u16,
 		pub dest_x: i16,
 		pub dest_y: i16,
-		pub left-padding: u8,
+		pub left_padding: u8,
 		pub depth: u8,
 		[(); 2],
 		pub data: [u8],
@@ -636,7 +631,7 @@ _requests! {
 	}
 
 	pub struct GetImage(73) -> GetImageReply {
-		pub $format: ImageFormat,
+		//pub $format: ImageFormat,
 		pub drawable: Drawable,
 		pub x: i16,
 		pub y: i16,
@@ -655,37 +650,37 @@ _requests! {
 
 	pub struct PolyText(74) {
 		pub drawable: Drawable,
-		pub context: GraphicsContext,
+		//pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
-		pub items: [TextItem],
+		//pub items: [TextItem],
 		[(); padding(items)],
 	}
 
 	pub struct PolyText16(75) {
 		pub drawable: Drawable,
-		pub context: GraphicsContext,
+		//pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
-		pub items: [TextItem16],
+		//pub items: [TextItem16],
 		[(); padding(items)],
 	}
 
 	pub struct ImageText(76) {
 		pub drawable: Drawable,
-		pub context: GraphicsContext,
+		//pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
 		pub string: String,
 		[(); padding(string)],
 	}
 
-	pub struct ImageText16(77) {
+	pub struct ImageText16<'a>(77) {
 		pub drawable: Drawable,
-		pub context: GraphicsContext,
+		//pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
-		pub string: String16,
+		pub string: String16<'a>,
 		[(); padding(string)],
 	}
 
@@ -754,12 +749,12 @@ _requests! {
 		pub planes: u16,
 	}
 
-	pub struct AllocColorCellsReply for AllocColorCells {
+	pub struct AllocColorCellsReply<'a> for AllocColorCells {
 		#pixels,
 		#masks,
 		[(); 20],
-		pub pixels: [u32],
-		pub masks: [u32],
+		pub pixels: &'a [u32],
+		pub masks: &'a [u32],
 	}
 
 	pub struct AllocColorPlanes(87) -> AllocColorPlanesReply {
@@ -785,11 +780,11 @@ _requests! {
 
 	pub struct StoreColors(89) {
 		pub colormap: Colormap,
-		pub items: [ColorItem],
+		//pub items: [ColorItem],
 	}
 
 	pub struct StoreNamedColor(90) {
-		pub $channel_mask: ColorChannelMask,
+		//pub $channel_mask: ColorChannelMask,
 		pub colormap: Colormap,
 		pub pixel: u32,
 		#name,
@@ -876,12 +871,12 @@ _requests! {
 		[(); 20],
 	}
 
-	pub struct ListExtensions(99) -> ListExtensionsReply;
+	//pub struct ListExtensions(99) -> ListExtensionsReply;
 
 	pub struct ListExtensionsReply for ListExtensions {
 		$#names[u8], // number of STRs in names??
 		[(); 24],
-		pub names: [Str], // STRs??
+		//pub names: [Str], // STRs??
 		[(); padding(names)],
 	}
 
@@ -894,7 +889,7 @@ _requests! {
 	// list, so it has to be done manually. It can be found in the
 	// `mod change_keyboard_control;` module.
 
-	pub struct GetKeyboardControl(103) -> GetKeyboardControlReply;
+	//pub struct GetKeyboardControl(103) -> GetKeyboardControlReply;
 
 	pub struct GetKeyboardControlReply for GetKeyboardControl {
 		pub $global_auto_repeat: bool,
@@ -917,7 +912,7 @@ _requests! {
 		pub enable_threshold: bool,
 	}
 
-	pub struct GetPointerControl(106) -> GetPointerControlReply;
+	//pub struct GetPointerControl(106) -> GetPointerControlReply;
 
 	pub struct GetPointerControlReply for GetPointerControl {
 		pub acceleration_numerator: i16,
@@ -929,12 +924,12 @@ _requests! {
 	pub struct SetScreenSaver(107) {
 		pub timeout: i16,
 		pub interval: i16,
-		pub prefer_blanking: Defaulty<bool>,
-		pub allow_exposures: Defaulty<bool>,
+		//pub prefer_blanking: Defaulty<bool>,
+		//pub allow_exposures: Defaulty<bool>,
 		[(); 2],
 	}
 
-	pub struct GetScreenSaver(108) -> GetScreenSaverReply;
+	//pub struct GetScreenSaver(108) -> GetScreenSaverReply;
 
 	pub struct GetScreenSaverReply for GetScreenSaver {
 		pub timeout: i16,
@@ -954,13 +949,13 @@ _requests! {
 			Decnet = 1,
 			Chaos = 2,
 		},
-		(),
+		[(); 1],
 		#address,
 		pub address: [u8],
 		[(); padding(address)],
 	}
 
-	pub struct ListHosts(110) -> ListHostsReply;
+	//pub struct ListHosts(110) -> ListHostsReply;
 
 	pub struct ListHostsReply for ListHosts {
 		pub $enabled: bool,
@@ -977,7 +972,7 @@ _requests! {
 		RetainTemporary = 2,
 	};
 
-	pub struct KillClient(113): pub resource: AllTemp<u32>;
+	//pub struct KillClient(113): pub resource: AllTemp<u32>;
 
 	pub struct RotateProperties(114) {
 		pub target: Window,
@@ -1005,7 +1000,7 @@ _requests! {
 		[(); 24],
 	}
 
-	pub struct GetPointerMapping(117) -> GetPointerMappingReply;
+	//pub struct GetPointerMapping(117) -> GetPointerMappingReply;
 
 	pub struct GetPointerMappingReply for GetPointerMapping {
 		$#map[u8],

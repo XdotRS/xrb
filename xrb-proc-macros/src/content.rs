@@ -100,6 +100,58 @@ pub struct Content {
 	pub items: Vec<Item>,
 }
 
+impl Content {
+	/// Writes all fields contained in the content, as in a struct definition.
+	pub fn fields_to_tokenstream(&self) -> TokenStream2 {
+		let mut tokens = TokenStream2::new();
+
+		let mut items = self.items.clone();
+		self.metabyte.clone().map(|metabyte| items.insert(0, metabyte));
+
+		for item in items {
+			match item {
+				Item::Field { attributes, vis, name, ty, .. } => {
+					// Attributes.
+					for attribute in attributes {
+						attribute.to_tokens(&mut tokens);
+					}
+
+					// Visibility.
+					vis.to_tokens(&mut tokens);
+					// Name.
+					name.to_tokens(&mut tokens);
+					// Colon.
+					tokens.append(Punct::new(':', Spacing::Alone));
+					// Type.
+					ty.to_tokens(&mut tokens);
+					// Comma.
+					tokens.append(Punct::new(',', Spacing::Alone));
+				}
+				_ => {}
+			}
+		}
+
+		tokens
+	}
+
+	pub fn enum_definitions(&self) -> Vec<Enum> {
+		let mut enums = self.items.iter()
+			.filter_map(|item| {
+			match item {
+				Item::Field { enum_definition, .. } => enum_definition.clone(),
+				_ => None,
+			}
+		}).collect::<Vec<Enum>>();
+
+		self.metabyte.clone().map(|item| match item {
+			Item::Field { enum_definition, .. } => enum_definition,
+			_ => None,
+		}.map(|enum_def| enums.insert(0, enum_def)));
+
+		enums
+	}
+}
+
 /// An item definition in the content of a message.
 ///
 /// While the content of a message is typically fields, it can also include the
@@ -468,25 +520,27 @@ impl Parse for Item {
 				name,
 				length_type: ty,
 			})
-		} else if input.peek(token::Paren) {
-			// If the item starts with `(`, then it is an unused bytes encoding.
+		} else if input.peek(token::Bracket) {
+			// If the item starts with `[`, then it is an unused bytes encoding.
 
 			// Unused bytes.
-			// ()[22]
-			// ()[padding(fieldname)]
+			// [(); 22]
+			// [(); padding(fieldname)]
+
+			let content;
+			bracketed!(content in input);
 
 			// `(` and `)`
-			let content;
-			parenthesized!(content in input);
+			let paren;
+			parenthesized!(paren in content);
 
 			// If there was anything found within the parentheses, we have a
 			// problem... the syntax we're looking for is just `()`, i.e. the
 			// unit value.
-			assert!(content.is_empty());
+			assert!(paren.is_empty());
 
-			// `[` and `]`
-			let content;
-			bracketed!(content in input);
+			// `;`
+			content.parse::<Token![;]>()?;
 
 			// Allows an error to be constructed if neither of the wanted tokens
 			// are found.
@@ -513,7 +567,7 @@ impl Parse for Item {
 				Err(look.error())
 			}
 		} else {
-			// If the item doesn't start with `#`, `$#`, or `()`, then it is a
+			// If the item doesn't start with `#`, `$#`, or `[`, then it is a
 			// field.
 
 			// A field with a name and type.
