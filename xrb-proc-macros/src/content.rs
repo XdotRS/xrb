@@ -89,7 +89,7 @@ pub struct Content {
 	/// ```
 	/// requests! {
 	///     pub struct SetPointerMapping(116) -> SetPointerMappingReply {
-	///         $#map, // the length of the `map` list in metabyte position
+	///         $#map[u8], // the length of the `map` list in metabyte position
 	///         pub map: [u8],
 	///         ()[padding(map)],
 	///     }
