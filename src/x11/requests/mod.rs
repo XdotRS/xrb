@@ -2,27 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-mod create_window;
+//use crate::x11::common::masks::*;
+//use crate::x11::common::values::*;
+//use crate::x11::wrappers::*;
 
-pub use create_window::*;
-
-use bitflags::bitflags;
-
-use crate::x11::common::masks::*;
-use crate::x11::common::values::*;
-use crate::x11::wrappers::*;
-
-use crate::rw::Serialize;
-
-use crate::values;
-
-use xrb_proc_macros::requests;
+use cornflakes::ToBytes;
+//use xrb_proc_macros::requests;
 
 /// A request is a message sent from an X client to the X server.
 ///
 /// Since an X client will never receive an actual request message,
 /// deserialization is not implemented for requests for the sake of simplicity.
-pub trait Request<REPLY = ()>: Serialize {
+pub trait Request<REPLY = ()>: ToBytes {
 	/// The major opcode that uniquely identifies this request or extension.
 	///
 	/// X core protocol requests have unique major opcodes, but each extension
@@ -55,7 +46,13 @@ pub trait Request<REPLY = ()>: Serialize {
 	fn length(&self) -> u16;
 }
 
-requests! {
+// TODO: temporary: to stop the errors from getting in the way until the macro
+// syntax is complete.
+macro_rules! _requests {
+	($($t:tt)*) => {};
+}
+
+_requests! {
 	pub struct CreateWindow(1) {
 		pub $depth: u8,
 		pub window_id: Window,
@@ -101,7 +98,7 @@ requests! {
 		pub all_event_masks: EventMask,
 		pub your_event_mask: EventMask,
 		pub do_not_propagate_mask: DeviceEventMask,
-		()[2],
+		[(); 2],
 	}
 
 	pub struct DestroyWindow(4): pub target: Window;
@@ -152,7 +149,7 @@ requests! {
 		pub width: u16,
 		pub height: u16,
 		pub border_width: u16,
-		()[10],
+		[(); 10],
 	}
 
 	pub struct QueryTree(15) -> QueryTreeReply: pub target: Window;
@@ -161,30 +158,30 @@ requests! {
 		pub root: Window,
 		pub parent: Option<Window>,
 		#children,
-		()[14],
+		[(); 14],
 		pub children: [Window],
 	}
 
 	pub struct InternAtom(16) -> InternAtomReply {
 		pub $only_if_exists: bool,
 		#name,
-		()[2],
+		[(); 2],
 		pub name: String,
-		()[padding(name)],
+		[(); padding(name)],
 	}
 
 	pub struct InternAtomReply for InternAtom {
 		pub atom: Option<Atom>,
-		()[20],
+		[(); 20],
 	}
 
 	pub struct GetAtomName(17) -> GetAtomNameReply: pub atom: Atom;
 
 	pub struct GetAtomNameReply for GetAtomName {
 		#name,
-		()[22],
+		[(); 22],
 		pub name: String,
-		()[padding(name)],
+		[(); padding(name)],
 	}
 
 	// The property requests (`ChangeProperty(18)`, `DeleteProperty(19)`,
@@ -201,7 +198,7 @@ requests! {
 
 	pub struct GetSelectionOwnerReply for GetSelectionOwner {
 		pub owner: Option<Window>,
-		()[20],
+		[(); 20],
 	}
 
 	pub struct ConvertSelection(24) {
@@ -241,7 +238,7 @@ requests! {
 			NotViewable = 3,
 			Frozen = 4,
 		},
-		()[24],
+		[(); 24],
 	}
 
 	pub struct UngrabPointer(27): pub time: Time;
@@ -255,7 +252,7 @@ requests! {
 		pub confine_to: Option<Window>,
 		pub cursor_override: Option<Cursor>,
 		pub button: Specificity<Button>,
-		()[1],
+		(), // single unused byte
 		pub modifiers: ModifierKeyMask,
 	}
 
@@ -263,14 +260,14 @@ requests! {
 		pub $button: Specificity<Button>,
 		pub target_window: Window,
 		pub modifiers: ModifierKeyMask,
-		()[2],
+		[(); 2],
 	}
 
 	pub struct ChangeActivePointerGrab(30) {
 		pub cursor_override: Option<Cursor>,
 		pub time: Time,
 		pub event_mask: PointerEventMask,
-		()[2],
+		[(); 2],
 	}
 
 	pub struct GrabKeyboard(31) -> GrabPointerReply {
@@ -279,12 +276,12 @@ requests! {
 		pub time: Time,
 		pub pointer_mode: GrabMode,
 		pub keyboard_mode: GrabMode,
-		()[2],
+		[(); 2],
 	}
 
 	pub struct GrabKeyboardReply for GrabKeyboard {
 		pub $status: GrabStatus,
-		()[24],
+		[(); 24],
 	}
 
 	pub struct UngrabKeyboard(32): pub time: Time;
@@ -296,14 +293,14 @@ requests! {
 		pub key: Specificity<Keycode>,
 		pub pointer_mode: GrabMode,
 		pub keyboard_mode: GrabMode,
-		()[3],
+		[(); 3],
 	}
 
 	pub struct UngrabKey(34) {
 		pub $key: Specificity<Keycode>,
 		pub target_window: Window,
 		pub modifiers: ModifierKeyMask,
-		()[2],
+		[(); 2],
 	}
 
 	pub struct AllowEvents(35) {
@@ -334,7 +331,7 @@ requests! {
 		pub win_x: i16,
 		pub win_y: i16,
 		pub mask: KeyButtonMask,
-		()[6],
+		[(); 6],
 	}
 
 	pub struct GetMotionEvents(39) -> GetMotionEventsReply {
@@ -345,7 +342,7 @@ requests! {
 
 	pub struct GetMotionEventsReply for GetMotionEvents {
 		#events[u32],
-		()[20],
+		[(); 20],
 		pub events: [(Timestamp, (i16, i16))],
 	}
 
@@ -361,7 +358,7 @@ requests! {
 		pub child: Option<Window>,
 		pub dest_x: i16,
 		pub dest_y: i16,
-		()[16],
+		[(); 16],
 	}
 
 	pub struct WarpPointer(41) {
@@ -386,7 +383,7 @@ requests! {
 	pub struct GetInputFocusReply for GetInputFocus {
 		pub $revert_to: Option<RevertTo>,
 		pub focus: Option<Focus<Window>>,
-		()[20],
+		[(); 20],
 	}
 
 	pub struct QueryKeymap(44) -> QueryKeymapReply;
@@ -398,9 +395,9 @@ requests! {
 	pub struct OpenFont(45) {
 		pub font_id: Font,
 		#name,
-		()[2],
+		[(); 2],
 		pub name: String,
-		()[padding(name)],
+		[(); padding(name)],
 	}
 
 	pub struct CloseFont(46): pub font: Font;
@@ -409,9 +406,9 @@ requests! {
 
 	pub struct QueryFontReply for QueryFont {
 		pub min_bounds: CharInfo,
-		()[4],
+		[(); 4],
 		pub max_bounds: CharInfo,
-		()[4],
+		[(); 4],
 		pub min_char_or_byte2: u16,
 		pub max_char_or_byte2: u16,
 		#properties,
@@ -433,7 +430,7 @@ requests! {
 		pub $odd_length: bool,
 		pub font: Fontable,
 		pub string: String16,
-		()[padding(string)],
+		[(); padding(string)],
 	}
 
 	pub struct QueryTextExtentsReply for QueryTextExtents {
@@ -445,21 +442,21 @@ requests! {
 		pub overall_width: i32,
 		pub overall_left: i32,
 		pub overall_right: i32,
-		()[4],
+		[(); 4],
 	}
 
 	pub struct ListFonts(49) -> ListFontsReply {
 		pub max_names: u16,
 		#pattern,
 		pub pattern: String,
-		()[padding(pattern)],
+		[(); padding(pattern)],
 	}
 
 	pub struct ListFontsReply for ListFonts {
 		#names, // number of STRs in names??
-		()[22],
+		[(); 22],
 		pub names: [Str], // STRs??
-		()[padding(names)],
+		[(); padding(names)],
 	}
 
 	// ListFontsWithInfo has a special format for its reply that needs to be
@@ -468,9 +465,9 @@ requests! {
 
 	pub struct SetFontPath(51) {
 		#names, // number of STRs in path??
-		()[2],
+		[(); 2],
 		pub path: [Str], // STRs??
-		()[padding(path)],
+		[(); padding(path)],
 	}
 
 	// GetFontPath has a special format for its request. Both the request and
@@ -511,7 +508,7 @@ requests! {
 		pub dash_offset: u16,
 		#dashes,
 		pub dashes: [u8],
-		()[padding(dashes)],
+		[(); padding(dashes)],
 	}
 
 	pub struct SetClipRectangles(59) {
@@ -583,7 +580,7 @@ requests! {
 	pub struct PolySegment(66) {
 		pub drawable: Drawable,
 		pub context: GraphicsContext,
-		pub segments: [((i16, i16), (i16, i16))],
+		pub segments: [((i16, i16), (i16, i16))], // (start, end)
 	}
 
 	pub struct PolyRectangle(67) {
@@ -607,7 +604,7 @@ requests! {
 			Convex = 2,
 		},
 		pub coordinate_mode: CoordinateMode,
-		()[2],
+		[(); 2],
 		pub points: [(i16, i16)],
 	}
 
@@ -633,9 +630,9 @@ requests! {
 		pub dest_y: i16,
 		pub left-padding: u8,
 		pub depth: u8,
-		()[2],
+		[(); 2],
 		pub data: [u8],
-		()[padding(data)],
+		[(); padding(data)],
 	}
 
 	pub struct GetImage(73) -> GetImageReply {
@@ -651,9 +648,9 @@ requests! {
 	pub struct GetImageReply for GetImage {
 		pub $depth: u8,
 		pub visual: Option<VisualId>,
-		()[20],
+		[(); 20],
 		pub data: [u8],
-		()[padding(data)],
+		[(); padding(data)],
 	}
 
 	pub struct PolyText(74) {
@@ -662,7 +659,7 @@ requests! {
 		pub x: i16,
 		pub y: i16,
 		pub items: [TextItem],
-		()[padding(items)],
+		[(); padding(items)],
 	}
 
 	pub struct PolyText16(75) {
@@ -671,7 +668,7 @@ requests! {
 		pub x: i16,
 		pub y: i16,
 		pub items: [TextItem16],
-		()[padding(items)],
+		[(); padding(items)],
 	}
 
 	pub struct ImageText(76) {
@@ -680,7 +677,7 @@ requests! {
 		pub x: i16,
 		pub y: i16,
 		pub string: String,
-		()[padding(string)],
+		[(); padding(string)],
 	}
 
 	pub struct ImageText16(77) {
@@ -689,7 +686,7 @@ requests! {
 		pub x: i16,
 		pub y: i16,
 		pub string: String16,
-		()[padding(string)],
+		[(); padding(string)],
 	}
 
 	pub struct CreateColormap(78) {
@@ -718,36 +715,36 @@ requests! {
 
 	pub struct ListInstalledColormapsReply for ListInstalledColormaps {
 		#colormaps,
-		()[22],
+		[(); 22],
 		pub colormaps: [Colormap],
 	}
 
 	pub struct AllocColor(84) -> AllocColorReply {
 		pub colormap: Colormap,
 		pub color: (u16, u16, u16),
-		()[2],
+		[(); 2],
 	}
 
 	pub struct AllocColorReply for AllocColor {
 		pub color: (u16, u16, u16),
-		()[2],
+		[(); 2],
 		pub pixel: u32,
-		()[12],
+		[(); 12],
 	}
 
 	pub struct AllocNamedColor(85) -> AllocNamedColorReply {
 		pub colormap: Colormap,
 		#name,
-		()[2],
+		[(); 2],
 		pub name: String,
-		()[padding(name)],
+		[(); padding(name)],
 	}
 
 	pub struct AllocNamedColorReply for AllocNamedColor {
 		pub pixel: u32,
 		pub exact_color: (u16, u16, u16),
 		pub visual_color: (u16, u16, u16),
-		()[8],
+		[(); 8],
 	}
 
 	pub struct AllocColorCells(86) -> AllocColorCellsReply {
@@ -760,7 +757,7 @@ requests! {
 	pub struct AllocColorCellsReply for AllocColorCells {
 		#pixels,
 		#masks,
-		()[20],
+		[(); 20],
 		pub pixels: [u32],
 		pub masks: [u32],
 	}
@@ -774,9 +771,9 @@ requests! {
 
 	pub struct AllocColorPlanesReply for AllocColorPlanes {
 		#pixels,
-		()[2],
+		[(); 2],
 		pub color_mask: (u16, u16, u16),
-		()[8],
+		[(); 8],
 		pub pixels: [u32],
 	}
 
@@ -796,9 +793,9 @@ requests! {
 		pub colormap: Colormap,
 		pub pixel: u32,
 		#name,
-		()[2],
+		[(); 2],
 		pub name: String,
-		()[padding(name)],
+		[(); padding(name)],
 	}
 
 	// The QueryColorsReply for the QueryColors request uses a special format
@@ -808,15 +805,15 @@ requests! {
 	pub struct LookupColor(92) -> LookupColorReply {
 		pub colormap: Colormap,
 		#name,
-		()[2],
+		[(); 2],
 		pub name: String,
-		()[padding(name)],
+		[(); padding(name)],
 	}
 
 	pub struct LookupColorReply for LookupColor {
 		pub exact_color: (u16, u16, u16),
 		pub visual_color: (u16, u16, u16),
-		()[12],
+		[(); 12],
 	}
 
 	pub struct CreateCursor(93) {
@@ -861,14 +858,14 @@ requests! {
 	pub struct QueryBestSizeReply for QueryBestSize {
 		pub width: u16,
 		pub height: u16,
-		()[20],
+		[(); 20],
 	}
 
 	pub struct QueryExtension(98) -> QueryExtensionReply {
 		#name,
-		()[2],
+		[(); 2],
 		pub name: String,
-		()[padding(name)],
+		[(); padding(name)],
 	}
 
 	pub struct QueryExtensionReply for QueryExtension {
@@ -876,16 +873,16 @@ requests! {
 		pub major_opcode: u8,
 		pub first_event: u8,
 		pub first_error: u8,
-		()[20],
+		[(); 20],
 	}
 
 	pub struct ListExtensions(99) -> ListExtensionsReply;
 
 	pub struct ListExtensionsReply for ListExtensions {
 		$#names[u8], // number of STRs in names??
-		()[24],
+		[(); 24],
 		pub names: [Str], // STRs??
-		()[padding(names)],
+		[(); padding(names)],
 	}
 
 	// The `ChangeKeyboardMapping` and `GetKeyboardMapping` requests, as well as
@@ -906,7 +903,7 @@ requests! {
 		pub bell_percent: u8,
 		pub bell_pitch: u16,
 		pub bell_duration: u16,
-		()[2],
+		[(); 2],
 		pub auto_repeats: [u8; 32],
 	}
 
@@ -926,7 +923,7 @@ requests! {
 		pub acceleration_numerator: i16,
 		pub acceleration_denominator: u16,
 		pub threshold: u16,
-		()[18],
+		[(); 18],
 	}
 
 	pub struct SetScreenSaver(107) {
@@ -934,7 +931,7 @@ requests! {
 		pub interval: i16,
 		pub prefer_blanking: Defaulty<bool>,
 		pub allow_exposures: Defaulty<bool>,
-		()[2],
+		[(); 2],
 	}
 
 	pub struct GetScreenSaver(108) -> GetScreenSaverReply;
@@ -944,7 +941,7 @@ requests! {
 		pub interval: i16,
 		pub prefer_blanking: bool,
 		pub allow_exposures: bool,
-		()[18],
+		[(); 18],
 	}
 
 	pub struct ChangeHosts(109) {
@@ -957,10 +954,10 @@ requests! {
 			Decnet = 1,
 			Chaos = 2,
 		},
-		()[1],
+		(),
 		#address,
 		pub address: [u8],
-		()[padding(address)],
+		[(); padding(address)],
 	}
 
 	pub struct ListHosts(110) -> ListHostsReply;
@@ -968,7 +965,7 @@ requests! {
 	pub struct ListHostsReply for ListHosts {
 		pub $enabled: bool,
 		#hosts,
-		()[22],
+		[(); 22],
 		pub hosts: [Host],
 	}
 
@@ -995,9 +992,9 @@ requests! {
 	};
 
 	pub struct SetPointerMapping(116) -> SetPointerMappingReply {
-		$#map,
+		$#map[u8],
 		pub map: [u8],
-		()[padding(map)],
+		[(); padding(map)],
 	}
 
 	pub struct SetPointerMappingReply for SetPointerMapping {
@@ -1005,16 +1002,16 @@ requests! {
 			Success = 0,
 			Busy = 1,
 		},
-		()[24],
+		[(); 24],
 	}
 
 	pub struct GetPointerMapping(117) -> GetPointerMappingReply;
 
 	pub struct GetPointerMappingReply for GetPointerMapping {
-		$#map,
-		()[24],
+		$#map[u8],
+		[(); 24],
 		pub map: [u8],
-		()[padding(map)],
+		[(); padding(map)],
 	}
 
 	// `SetModifierMapping` and `GetModifierMappingReply` both use a special

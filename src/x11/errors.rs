@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::errors;
 use std::error::Error;
 
 /// An X protocol error that can be returned when sending requests.
@@ -26,10 +25,15 @@ pub trait Xerror: Error {
 // around these simple implementations in XRB, or whether XRB will be more
 // involved in that.
 
+// TODO: temporary, need error handling solution. kept for reference.
+macro_rules! _errors {
+	($($t:tt)*) => {};
+}
+
 // Automatically generate error structs. This is not an enum: external errors can
 // always be added at any time. It's just a convenience macro for defining many
 // errors.
-errors! {
+_errors! {
 	#[error("the major or minor opcode does not specify a valid request")]
 	pub struct RequestXerror(1) {}
 	#[error("`{bad_value:?}` falls outside the range of values accepted by this request")]

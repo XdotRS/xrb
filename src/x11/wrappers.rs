@@ -2,10 +2,81 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use cornflakes::{ByteReader, ByteWriter, FromBytes, StaticByteSize, ToBytes};
+
 use crate::x11::common::values::{Timestamp, Window};
 
-use crate::rw::{ReadResult, ReadValue, WriteResult, WriteValue};
-use crate::wrappers;
+/// Automatically implements [`cornflakes::FromBytes`] and [`cornflakes::ToBytes`]
+/// for wrapper-like types alike [std]'s [`Option`].
+macro_rules! wrappers {
+	(
+		$(
+			$(#[$outer:meta])*
+			$vis:vis enum $Name:ident$(<$T:ident>)? {
+				$(#[$value_meta:meta])*
+				$Value:ident($val:ty),
+				$(
+					$(#[$variant_meta:meta])*
+					$Variant:ident = $encode:expr
+				),+$(,)?
+			}
+		)+
+	) => {
+		$(
+			$vis enum $Name$(<$T>)? {
+				$(#[$outer])*
+				$Value($val),
+				$(
+					$(#[$variant_meta])*
+					$Variant
+				),+
+			}
+
+			impl$(<$T>)? StaticByteSize for $Name$(<$T>)?
+			$(where
+				$T: StaticByteSize,)?
+			{
+				fn static_byte_size() -> usize {
+					<$val>::static_byte_size()
+				}
+			}
+
+			impl$(<$T>)? FromBytes for $Name$(<$T>)?
+			$(where
+				$T: FromBytes + StaticByteSize,)?
+			{
+				fn read_from(reader: &mut impl ByteReader) -> Result<Self, std::io::Error> {
+					let mut bytes = reader.copy_to_bytes(<$val>::static_byte_size());
+
+					let sum = bytes.iter().sum::<u8>();
+
+					$(if sum == $encode {
+						Ok(Self::$Variant)
+					} else)+ {
+						Ok(Self::$Value(<$val>::read_from(&mut bytes)?))
+					}
+				}
+			}
+
+			impl$(<$T>)? ToBytes for $Name$(<$T>)?
+			$(where
+				$T: ToBytes + StaticByteSize,)?
+			{
+				fn write_to(&self, writer: &mut impl ByteWriter) -> Result<(), std::io::Error> {
+					match self {
+						// FIXME: this isn't writing $encode as the correct length!
+						// need a trait that allows casting to a certain length
+						// to be implemented?
+						$(Self::$Variant => $encode.write_to(writer)?,)+
+						Self::$Value(val) => val.write_to(writer)?,
+					};
+
+					Ok(())
+				}
+			}
+		)+
+	};
+}
 
 wrappers! {
 	/// Allows fields to inherit their values from their 'parent'.
@@ -58,68 +129,5 @@ wrappers! {
 	pub enum Focus {
 		Window(Window),
 		PointerRoot = 1,
-	}
-}
-
-// Implement serialization for [`Option`] enum wrappers too. None = 0.
-impl<T> WriteValue for Option<T>
-where
-	T: WriteValue,
-{
-	fn write_1b(self) -> WriteResult<u8> {
-		match self {
-			None => Ok(0),
-			Some(val) => val.write_1b(),
-		}
-	}
-
-	fn write_2b(self) -> WriteResult<u16> {
-		match self {
-			None => Ok(0),
-			Some(val) => val.write_2b(),
-		}
-	}
-
-	fn write_4b(self) -> WriteResult<u32> {
-		match self {
-			None => Ok(0),
-			Some(val) => val.write_4b(),
-		}
-	}
-}
-
-// Implement deserialization for [`Option`] enum wrappers too. 0 = None.
-impl<T> ReadValue for Option<T>
-where
-	T: ReadValue,
-{
-	fn read_1b(byte: u8) -> ReadResult<Self>
-	where
-		Self: Sized,
-	{
-		Ok(match byte {
-			0 => None,
-			_ => Some(T::read_1b(byte)?),
-		})
-	}
-
-	fn read_2b(bytes: u16) -> ReadResult<Self>
-	where
-		Self: Sized,
-	{
-		Ok(match bytes {
-			0 => None,
-			_ => Some(T::read_2b(bytes)?),
-		})
-	}
-
-	fn read_4b(bytes: u32) -> ReadResult<Self>
-	where
-		Self: Sized,
-	{
-		Ok(match bytes {
-			0 => None,
-			_ => Some(T::read_4b(bytes)?),
-		})
 	}
 }

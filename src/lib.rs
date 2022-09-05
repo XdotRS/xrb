@@ -48,22 +48,10 @@ pub const PROTOCOL_MAJOR_VERSION: u16 = 11;
 /// protocol; seeing as this has not happened since the 80s, it's probably safe to assume it won't.
 pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 
-/// Traits pertaining to the reading and writing of structures.
-///
-/// Provides the [`ReadValue`](crate::rw::ReadValue) and
-/// [`WriteValue`](crate::rw::WriteValue) traits for reading and writing values
-/// to [`u8`], [`u16`], and [`u32`] quantities, as well as the
-/// [`Serialize`](crate::rw::Serialize) and [`Deserialize`](crate::rw::Deserialize)
-/// traits for serializing and deserializing structures containing values.
-pub mod rw;
-
-mod macros;
-
 /// Contains representations of the X11 protocol data types and structures.
 mod x11;
 
-pub use x11::requests::{BackingStore, Class};
-pub use x11::requests::{Request, WinAttr, WinAttrMask};
+pub use x11::requests::Request;
 
 pub use x11::atoms::*;
 pub use x11::common::masks::*;
