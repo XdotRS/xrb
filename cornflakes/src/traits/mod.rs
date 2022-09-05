@@ -80,7 +80,7 @@ pub trait ToBytes: ByteSize {
 	/// Equivalent to:
 	/// ```rust
 	/// let mut bytes: Vec<u8> = vec![];
-	/// self.to_bytes(&mut bytes);
+	/// self.write_to(&mut bytes)?;
 	/// ```
 	fn to_bytes(&self) -> IoResult<Vec<u8>> {
 		let mut bytes: Vec<u8> = vec![];
