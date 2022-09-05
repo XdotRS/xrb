@@ -8,8 +8,8 @@ mod byte_writer;
 pub use byte_reader::ByteReader;
 pub use byte_writer::ByteWriter;
 
-use crate::IoResult;
 use bytes::{Buf, BufMut};
+use std::io::Error;
 
 /// Defines the size of a type in bytes.
 pub trait ByteSize {
@@ -20,13 +20,45 @@ pub trait ByteSize {
 /// Defines the size of a type in bytes for types whose byte size does not vary.
 pub trait StaticByteSize {
 	/// The size of this type in bytes.
-	fn static_byte_size() -> usize;
+	fn static_byte_size() -> usize
+	where
+		Self: Sized;
+}
+
+/// Allows a type to be read from bytes in a [`ByteReader`], given a byte size
+/// to read with.
+pub trait FromBytesWithSize {
+	/// Reads [`Self`] from a [`ByteReader`] with the given byte `size`.
+	///
+	/// # Errors
+	/// Returns [`ErrorKind::InvalidInput`] if the given byte size is not
+	/// supported.
+	///
+	/// [`ErrorKind::InvalidInput`]: std::io::ErrorKind::InvalidInput
+	fn read_from_with_size(reader: &mut impl ByteReader, size: usize) -> Result<Self, Error>
+	where
+		Self: Sized;
+}
+
+/// Allows a type to be written to bytes in a [`ByteWriter`], given a byte size
+/// to write with.
+pub trait ToBytesWithSize: ToBytes {
+	/// Writes [`Self`] to a [`ByteWriter`] with the given byte `size`.
+	///
+	/// # Errors
+	/// Returns [`ErrorKind::InvalidInput`] if the given byte size is not
+	/// supported.
+	///
+	/// [`ErrorKind::InvalidInput`]: std::io::ErrorKind::InvalidInput
+	fn write_to_with_size(&self, writer: &mut impl ByteWriter, size: usize) -> Result<(), Error>
+	where
+		Self: Sized;
 }
 
 /// Allows a type to be read from bytes in a [`ByteReader`].
 pub trait FromBytes {
 	/// Reads [`Self`] from a [`ByteReader`].
-	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
+	fn read_from(reader: &mut impl ByteReader) -> Result<Self, Error>
 	where
 		Self: Sized;
 
@@ -35,7 +67,7 @@ pub trait FromBytes {
 	/// # Implementors note
 	/// It is recommended to override this method if it can be optimized for
 	/// this type.
-	fn read_vectored_from(reader: &mut impl ByteReader) -> IoResult<Vec<Self>>
+	fn read_vectored_from(reader: &mut impl ByteReader) -> Result<Vec<Self>, Error>
 	where
 		Self: Sized,
 	{
@@ -56,14 +88,16 @@ pub trait ToBytes: ByteSize {
 	/// # Implementors note
 	/// The number of bytes written must be equal to the number of bytes given
 	/// by `self`'s [`ByteSize`] implementation.
-	fn write_to(&self, writer: &mut impl ByteWriter) -> IoResult;
+	fn write_to(&self, writer: &mut impl ByteWriter) -> Result<(), Error>
+	where
+		Self: Sized;
 
 	/// Writes all of the provided `selves` to a [`ByteWriter`].
 	///
 	/// # Implementors note
 	/// It is recommended to override this method if it can be optimized for
 	/// this type.
-	fn write_vectored_to(selves: &[Self], writer: &mut impl ByteWriter) -> IoResult
+	fn write_vectored_to(selves: &[Self], writer: &mut impl ByteWriter) -> Result<(), Error>
 	where
 		Self: Sized,
 	{
@@ -82,10 +116,26 @@ pub trait ToBytes: ByteSize {
 	/// let mut bytes: Vec<u8> = vec![];
 	/// self.write_to(&mut bytes)?;
 	/// ```
-	fn to_bytes(&self) -> IoResult<Vec<u8>> {
+	fn to_bytes(&self) -> Result<Vec<u8>, Error>
+	where
+		Self: Sized,
+	{
 		let mut bytes: Vec<u8> = vec![];
 		self.write_to(&mut bytes)?;
 
 		Ok(bytes)
 	}
+}
+
+// This is just here so that `cornflakes` won't compile if any of these traits
+// are not object safe, to make sure they haven't accidentally been made
+// object unsafe.
+fn _assert_object_safety(
+	_byte_size: &dyn ByteSize,
+	_static_byte_size: &dyn StaticByteSize,
+	_from_bytes_with_size: &dyn FromBytesWithSize,
+	_to_bytes_with_size: &dyn ToBytesWithSize,
+	_from_bytes: &dyn FromBytes,
+	_to_bytes: &dyn ToBytes,
+) {
 }

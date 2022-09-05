@@ -2,10 +2,137 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::traits::{ByteReader, ByteWriter, FromBytes, StaticByteSize, ToBytes};
+use crate::traits::{
+	ByteReader, ByteWriter, FromBytes, FromBytesWithSize, StaticByteSize, ToBytes, ToBytesWithSize,
+};
 
 use crate::IoResult;
 use std::io::{Error as IoError, ErrorKind as IoErrorKind};
+
+// Don't even ask about the generated code from this macro. It implements
+// `FromBytesWithSize` and `ToBytesWithSize`, that's what matters ;)
+macro_rules! with_size {
+	(
+		$(
+			$ty:ty$([$static_size:expr])? $({
+				$($size:expr => $sty:ty),+$(,)?
+			})?;
+		)+
+	) => {
+		$(
+			impl FromBytesWithSize for $ty {
+				fn read_from_with_size(reader: &mut impl ByteReader, size: usize) -> IoResult<Self> {
+					match size {
+						$($static_size => Ok(reader.read()?),)?
+						$($($size => reader.read_with_size::<$sty>(size)?
+								.try_into()
+								.ok()
+								.ok_or(IoError::from(IoErrorKind::InvalidData))
+							),+,)?
+						_ => Err(IoError::from(IoErrorKind::InvalidInput)),
+					}
+				}
+			}
+
+			impl ToBytesWithSize for $ty {
+				fn write_to_with_size(&self, writer: &mut impl ByteWriter, size: usize) -> IoResult {
+					match size {
+						$($static_size => writer.write(*self)?,)?
+						$($($size => writer.write_with_size::<$sty>(
+								<$sty as TryFrom<$ty>>::try_from(*self)
+										.ok()
+										.ok_or(IoError::from(IoErrorKind::InvalidData))?,
+								size
+							)?),+,)?
+						_ => return Err(IoError::from(IoErrorKind::InvalidInput)),
+					};
+
+					Ok(())
+				}
+			}
+		)+
+	};
+}
+
+with_size! {
+	// Unsigned
+	u8[1] {
+		2 => u16,
+		4 => u32,
+		8 => u64,
+		16 => u128,
+	};
+
+	u16[2] {
+		1 => u8,
+		4 => u32,
+		8 => u64,
+		16 => u128,
+	};
+
+	u32[4] {
+		1 => u8,
+		2 => u16,
+		8 => u64,
+		16 => u128,
+	};
+
+	u64[8] {
+		1 => u8,
+		2 => u16,
+		4 => u32,
+		16 => u128,
+	};
+
+	u128[16] {
+		1 => u8,
+		2 => u16,
+		4 => u32,
+		8 => u32,
+	};
+
+	//Signed
+	i8[1] {
+		2 => i16,
+		4 => i32,
+		8 => i64,
+		16 => i128,
+	};
+
+	i16[2] {
+		1 => i8,
+		4 => i32,
+		8 => i64,
+		16 => i128,
+	};
+
+	i32[4] {
+		1 => i8,
+		2 => i16,
+		8 => i64,
+		16 => i128,
+	};
+
+	i64[8] {
+		1 => i8,
+		2 => i16,
+		4 => i32,
+		16 => i128,
+	};
+
+	i128[16] {
+		1 => i8,
+		2 => i16,
+		4 => i32,
+		8 => i64,
+	};
+
+	// Char
+	char[4] {
+		8 => u32,
+		16 => u32,
+	};
+}
 
 impl FromBytes for bool {
 	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
@@ -169,6 +296,30 @@ where
 		}
 
 		Ok(selves)
+	}
+}
+
+impl<T> FromBytesWithSize for [T]
+where
+	T: FromBytes + StaticByteSize,
+	[T]: Clone,
+{
+	fn read_from_with_size(reader: &mut impl ByteReader, size: usize) -> Result<Self, IoError>
+	where
+		Self: Sized,
+	{
+		if size % T::static_byte_size() != 0 {
+			return Err(IoError::from(IoErrorKind::InvalidInput));
+		}
+
+		let length = size / T::static_byte_size();
+		let mut selves: Vec<T> = vec![];
+
+		for _ in 0..length {
+			selves.push(reader.read()?);
+		}
+
+		Ok(AsRef::<[T]>::as_ref(&selves).clone())
 	}
 }
 

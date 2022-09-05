@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use super::{ByteReader, ByteSize, ToBytes};
+use super::{ByteReader, ByteSize, ToBytes, ToBytesWithSize};
 use crate::IoResult;
 
 use bytes::BufMut;
@@ -23,6 +23,23 @@ pub trait ByteWriter: BufMut {
 	{
 		// Limit `self` to `thing`'s given `byte_size()`.
 		thing.write_to(&mut self.limit(thing.byte_size()))?;
+
+		Ok(())
+	}
+
+	/// Writes a [`ToBytesWithSize`] implementing type as bytes with the given
+	/// byte `size`.
+	///
+	/// This is equivalent to calling [`thing.write_to_with_size`] with this
+	/// writer.
+	///
+	/// [`thing.write_to_with_size`]: ToBytesWithSize::write_to_with_size
+	fn write_with_size<T>(&mut self, thing: T, size: usize) -> IoResult
+	where
+		T: ToBytesWithSize,
+		Self: Sized,
+	{
+		thing.write_to(&mut self.limit(size))?;
 
 		Ok(())
 	}
@@ -56,7 +73,10 @@ pub trait ByteWriter: BufMut {
 	/// ```rust
 	/// wire.write_bytes_limited(message.to_bytes_vec(), 32);
 	/// ```
-	fn write_bytes_limited(&mut self, bytes: impl ByteReader, limit: usize) {
+	fn write_bytes_limited(&mut self, bytes: impl ByteReader, limit: usize)
+	where
+		Self: Sized,
+	{
 		self.limit(limit).put(bytes);
 	}
 
@@ -323,3 +343,6 @@ pub trait ByteWriter: BufMut {
 	//     }}}
 	// }}}
 }
+
+// Ensure [`ByteWriter`] is object safe by failing to compile if it isn't.
+fn _assert_byte_writer_object_safety(_: &dyn ByteWriter) {}

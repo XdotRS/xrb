@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use super::FromBytes;
+use super::{FromBytes, FromBytesWithSize};
 use crate::IoResult;
 
 use bytes::Buf;
@@ -22,6 +22,21 @@ pub trait ByteReader: Buf {
 		Self: Sized,
 	{
 		T::read_from(self)
+	}
+
+	/// Reads a [`FromBytesWithSize`] implementing type with the given byte `size`.
+	///
+	/// This is equivallent to calling [`T::read_from_with_size`] with `self`
+	/// and `size`.
+	///
+	/// [`T::read_from_with_size`]: FromBytesWithSize::read_from_with_size
+	fn read_with_size<T>(&mut self, size: usize) -> IoResult<T>
+	where
+		T: FromBytesWithSize,
+		Self: Sized,
+	{
+		// Limit to `size`.
+		T::read_from_with_size(&mut self.take(size), size)
 	}
 
 	/// Continuously reads `T`s to a vector until the end of this [`ByteReader`].
@@ -353,3 +368,6 @@ pub trait ByteReader: Buf {
 	//     }}}
 	// }}}
 }
+
+// Fail to compile if [`ByteReader`] is not object safe.
+fn _assert_byte_reader_object_safety(_: &dyn ByteReader) {}
