@@ -2,7 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use super::{ByteReader, ByteSize, RwResult, ToBytes};
+use super::{ByteReader, ByteSize, ToBytes};
+use crate::IoResult;
+
 use bytes::BufMut;
 
 pub trait ByteWriter: BufMut {
@@ -11,7 +13,7 @@ pub trait ByteWriter: BufMut {
 	/// This is equivalent to calling [`thing.write_to`] with this writer.
 	///
 	/// [`thing.write_to`]: ToBytes::write_to
-	fn write<T>(&mut self, thing: T) -> RwResult
+	fn write<T>(&mut self, thing: T) -> IoResult
 	where
 		T: ToBytes + ByteSize,
 		Self: Sized,
@@ -27,7 +29,7 @@ pub trait ByteWriter: BufMut {
 	/// This uses [`T::write_vectored_to`].
 	///
 	/// [`T::write_vectored_to`]: ToBytes::write_vectored_to
-	fn write_all<T>(&mut self, things: &[T]) -> RwResult
+	fn write_all<T>(&mut self, things: &[T]) -> IoResult
 	where
 		T: ToBytes + ByteSize,
 		Self: Sized,

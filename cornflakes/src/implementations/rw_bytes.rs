@@ -2,12 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::traits::{
-	ByteReader, ByteWriter, FromBytes, RwError, RwResult, StaticByteSize, ToBytes,
-};
+use crate::traits::{ByteReader, ByteWriter, FromBytes, StaticByteSize, ToBytes};
+
+use crate::IoResult;
+use std::io::{Error as IoError, ErrorKind as IoErrorKind};
 
 impl FromBytes for bool {
-	fn read_from(reader: &mut impl ByteReader) -> RwResult<Self>
+	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
 	where
 		Self: Sized,
 	{
@@ -16,7 +17,7 @@ impl FromBytes for bool {
 }
 
 impl ToBytes for bool {
-	fn write_to(&self, writer: &mut impl ByteWriter) -> RwResult {
+	fn write_to(&self, writer: &mut impl ByteWriter) -> IoResult {
 		writer.write_u8(*self as u8);
 
 		Ok(())
@@ -24,16 +25,19 @@ impl ToBytes for bool {
 }
 
 impl FromBytes for char {
-	fn read_from(reader: &mut impl ByteReader) -> RwResult<Self>
+	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
 	where
 		Self: Sized,
 	{
-		char::from_u32(reader.read_u32_ne()).ok_or(RwError::InvalidData)
+		char::from_u32(reader.read_u32_ne()).ok_or(IoError::new(
+			IoErrorKind::InvalidData,
+			"attempted to read invalid UTF-8 `char`",
+		))
 	}
 }
 
 impl ToBytes for char {
-	fn write_to(&self, writer: &mut impl ByteWriter) -> RwResult {
+	fn write_to(&self, writer: &mut impl ByteWriter) -> IoResult {
 		writer.write_u32_ne(*self as u32);
 
 		Ok(())
@@ -44,13 +48,13 @@ macro_rules! numeric {
     ($($ty:ty: $read:ident(), $write:ident()),+$(,)?) => {
         $(
             impl FromBytes for $ty {
-                fn read_from(reader: &mut impl ByteReader) -> RwResult<Self> {
+                fn read_from(reader: &mut impl ByteReader) -> IoResult<Self> {
                     Ok(reader.$read())
                 }
             }
 
             impl ToBytes for $ty {
-                fn write_to(&self, writer: &mut impl ByteWriter) -> RwResult {
+                fn write_to(&self, writer: &mut impl ByteWriter) -> IoResult {
                     writer.$write(*self);
 
                     Ok(())
@@ -81,7 +85,7 @@ numeric! {
 }
 
 impl FromBytes for () {
-	fn read_from(reader: &mut impl ByteReader) -> Result<Self, RwError>
+	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
 	where
 		Self: Sized,
 	{
@@ -90,7 +94,7 @@ impl FromBytes for () {
 		Ok(())
 	}
 
-	fn read_vectored_from(reader: &mut impl ByteReader) -> RwResult<Vec<Self>>
+	fn read_vectored_from(reader: &mut impl ByteReader) -> IoResult<Vec<Self>>
 	where
 		Self: Sized,
 	{
@@ -102,13 +106,13 @@ impl FromBytes for () {
 }
 
 impl ToBytes for () {
-	fn write_to(&self, writer: &mut impl ByteWriter) -> RwResult {
+	fn write_to(&self, writer: &mut impl ByteWriter) -> IoResult {
 		writer.write_u8(0);
 
 		Ok(())
 	}
 
-	fn write_vectored_to(selves: &[Self], writer: &mut impl ByteWriter) -> RwResult
+	fn write_vectored_to(selves: &[Self], writer: &mut impl ByteWriter) -> IoResult
 	where
 		Self: Sized,
 	{
@@ -122,7 +126,7 @@ impl<T> FromBytes for Option<T>
 where
 	T: FromBytes + StaticByteSize,
 {
-	fn read_from(reader: &mut impl ByteReader) -> Result<Self, RwError>
+	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
 	where
 		Self: Sized,
 	{
@@ -140,7 +144,7 @@ impl<T> ToBytes for Option<T>
 where
 	T: ToBytes + StaticByteSize,
 {
-	fn write_to(&self, writer: &mut impl ByteWriter) -> RwResult {
+	fn write_to(&self, writer: &mut impl ByteWriter) -> IoResult {
 		match self {
 			None => writer.write_many(0, T::static_byte_size()),
 			Some(thing) => thing.write_to(writer)?,
@@ -154,7 +158,7 @@ impl<T, const N: usize> FromBytes for [T; N]
 where
 	T: FromBytes + Default + Copy,
 {
-	fn read_from(reader: &mut impl ByteReader) -> Result<Self, RwError>
+	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
 	where
 		Self: Sized,
 	{
@@ -173,7 +177,7 @@ where
 	A: FromBytes,
 	B: FromBytes,
 {
-	fn read_from(reader: &mut impl ByteReader) -> Result<Self, RwError>
+	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
 	where
 		Self: Sized,
 	{
@@ -186,7 +190,7 @@ where
 	A: ToBytes,
 	B: ToBytes,
 {
-	fn write_to(&self, writer: &mut impl ByteWriter) -> RwResult {
+	fn write_to(&self, writer: &mut impl ByteWriter) -> IoResult {
 		self.0.write_to(writer)?;
 		self.1.write_to(writer)?;
 
@@ -200,7 +204,7 @@ where
 	B: FromBytes,
 	C: FromBytes,
 {
-	fn read_from(reader: &mut impl ByteReader) -> Result<Self, RwError>
+	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
 	where
 		Self: Sized,
 	{
@@ -214,7 +218,7 @@ where
 	B: ToBytes,
 	C: ToBytes,
 {
-	fn write_to(&self, writer: &mut impl ByteWriter) -> RwResult {
+	fn write_to(&self, writer: &mut impl ByteWriter) -> IoResult {
 		self.0.write_to(writer)?;
 		self.1.write_to(writer)?;
 		self.2.write_to(writer)?;
@@ -230,7 +234,7 @@ where
 	C: FromBytes,
 	D: FromBytes,
 {
-	fn read_from(reader: &mut impl ByteReader) -> Result<Self, RwError>
+	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
 	where
 		Self: Sized,
 	{
@@ -250,7 +254,7 @@ where
 	C: ToBytes,
 	D: ToBytes,
 {
-	fn write_to(&self, writer: &mut impl ByteWriter) -> RwResult {
+	fn write_to(&self, writer: &mut impl ByteWriter) -> IoResult {
 		self.0.write_to(writer)?;
 		self.1.write_to(writer)?;
 		self.2.write_to(writer)?;
@@ -268,7 +272,7 @@ where
 	D: FromBytes,
 	E: FromBytes,
 {
-	fn read_from(reader: &mut impl ByteReader) -> Result<Self, RwError>
+	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
 	where
 		Self: Sized,
 	{
@@ -290,7 +294,7 @@ where
 	D: ToBytes,
 	E: ToBytes,
 {
-	fn write_to(&self, writer: &mut impl ByteWriter) -> RwResult {
+	fn write_to(&self, writer: &mut impl ByteWriter) -> IoResult {
 		self.0.write_to(writer)?;
 		self.1.write_to(writer)?;
 		self.2.write_to(writer)?;
@@ -310,7 +314,7 @@ where
 	E: FromBytes,
 	F: FromBytes,
 {
-	fn read_from(reader: &mut impl ByteReader) -> Result<Self, RwError>
+	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
 	where
 		Self: Sized,
 	{
@@ -334,7 +338,7 @@ where
 	E: ToBytes,
 	F: ToBytes,
 {
-	fn write_to(&self, writer: &mut impl ByteWriter) -> RwResult {
+	fn write_to(&self, writer: &mut impl ByteWriter) -> IoResult {
 		self.0.write_to(writer)?;
 		self.1.write_to(writer)?;
 		self.2.write_to(writer)?;
@@ -356,7 +360,7 @@ where
 	F: FromBytes,
 	G: FromBytes,
 {
-	fn read_from(reader: &mut impl ByteReader) -> Result<Self, RwError>
+	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
 	where
 		Self: Sized,
 	{
@@ -382,7 +386,7 @@ where
 	F: ToBytes,
 	G: ToBytes,
 {
-	fn write_to(&self, writer: &mut impl ByteWriter) -> RwResult {
+	fn write_to(&self, writer: &mut impl ByteWriter) -> IoResult {
 		self.0.write_to(writer)?;
 		self.1.write_to(writer)?;
 		self.2.write_to(writer)?;
@@ -406,7 +410,7 @@ where
 	G: FromBytes,
 	H: FromBytes,
 {
-	fn read_from(reader: &mut impl ByteReader) -> Result<Self, RwError>
+	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
 	where
 		Self: Sized,
 	{
@@ -434,7 +438,7 @@ where
 	G: ToBytes,
 	H: ToBytes,
 {
-	fn write_to(&self, writer: &mut impl ByteWriter) -> RwResult {
+	fn write_to(&self, writer: &mut impl ByteWriter) -> IoResult {
 		self.0.write_to(writer)?;
 		self.1.write_to(writer)?;
 		self.2.write_to(writer)?;
@@ -460,7 +464,7 @@ where
 	H: FromBytes,
 	I: FromBytes,
 {
-	fn read_from(reader: &mut impl ByteReader) -> Result<Self, RwError>
+	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
 	where
 		Self: Sized,
 	{
@@ -490,7 +494,7 @@ where
 	H: ToBytes,
 	I: ToBytes,
 {
-	fn write_to(&self, writer: &mut impl ByteWriter) -> RwResult {
+	fn write_to(&self, writer: &mut impl ByteWriter) -> IoResult {
 		self.0.write_to(writer)?;
 		self.1.write_to(writer)?;
 		self.2.write_to(writer)?;
@@ -518,7 +522,7 @@ where
 	I: FromBytes,
 	J: FromBytes,
 {
-	fn read_from(reader: &mut impl ByteReader) -> Result<Self, RwError>
+	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
 	where
 		Self: Sized,
 	{
@@ -550,7 +554,7 @@ where
 	I: ToBytes,
 	J: ToBytes,
 {
-	fn write_to(&self, writer: &mut impl ByteWriter) -> RwResult {
+	fn write_to(&self, writer: &mut impl ByteWriter) -> IoResult {
 		self.0.write_to(writer)?;
 		self.1.write_to(writer)?;
 		self.2.write_to(writer)?;
@@ -580,7 +584,7 @@ where
 	J: FromBytes,
 	K: FromBytes,
 {
-	fn read_from(reader: &mut impl ByteReader) -> Result<Self, RwError>
+	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
 	where
 		Self: Sized,
 	{
@@ -614,7 +618,7 @@ where
 	J: ToBytes,
 	K: ToBytes,
 {
-	fn write_to(&self, writer: &mut impl ByteWriter) -> RwResult {
+	fn write_to(&self, writer: &mut impl ByteWriter) -> IoResult {
 		self.0.write_to(writer)?;
 		self.1.write_to(writer)?;
 		self.2.write_to(writer)?;
@@ -646,7 +650,7 @@ where
 	K: FromBytes,
 	L: FromBytes,
 {
-	fn read_from(reader: &mut impl ByteReader) -> Result<Self, RwError>
+	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
 	where
 		Self: Sized,
 	{
@@ -682,7 +686,7 @@ where
 	K: ToBytes,
 	L: ToBytes,
 {
-	fn write_to(&self, writer: &mut impl ByteWriter) -> RwResult {
+	fn write_to(&self, writer: &mut impl ByteWriter) -> IoResult {
 		self.0.write_to(writer)?;
 		self.1.write_to(writer)?;
 		self.2.write_to(writer)?;

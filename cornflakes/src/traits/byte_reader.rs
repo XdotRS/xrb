@@ -2,7 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use super::{FromBytes, RwResult};
+use super::FromBytes;
+use crate::IoResult;
+
 use bytes::Buf;
 
 pub trait ByteReader: Buf {
@@ -11,7 +13,7 @@ pub trait ByteReader: Buf {
 	/// This is equivalent to calling [`T::read_from`] with `self`.
 	///
 	/// [`T::read_from`]: FromBytes::read_from
-	fn read<T>(&mut self) -> RwResult<T>
+	fn read<T>(&mut self) -> IoResult<T>
 	where
 		T: FromBytes,
 		Self: Sized,
@@ -24,7 +26,7 @@ pub trait ByteReader: Buf {
 	/// This will call [`T::read_vectored_from`] with `self`.
 	///
 	/// [`T::read_vectored_from`]: FromBytes::read_vectored_from
-	fn read_all<T>(&mut self) -> RwResult<Vec<T>>
+	fn read_all<T>(&mut self) -> IoResult<Vec<T>>
 	where
 		T: FromBytes,
 		Self: Sized,

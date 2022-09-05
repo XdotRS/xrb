@@ -7,3 +7,5 @@ mod traits;
 
 pub use implementations::*;
 pub use traits::*;
+
+pub(crate) type IoResult<T = ()> = Result<T, std::io::Error>;

@@ -2,19 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use bytes::{Buf, BufMut};
-
 mod byte_reader;
 mod byte_writer;
 
 pub use byte_reader::ByteReader;
 pub use byte_writer::ByteWriter;
 
-pub enum RwError {
-	InvalidData,
-}
-
-pub type RwResult<T = ()> = Result<T, RwError>;
+use crate::IoResult;
+use bytes::{Buf, BufMut};
 
 pub trait ByteSize {
 	/// The size of this type in bytes.
@@ -31,7 +26,7 @@ pub trait StaticByteSize {
 /// Allows a type to be read from bytes in a [`ByteReader`].
 pub trait FromBytes {
 	/// Reads [`Self`] from a [`ByteReader`].
-	fn read_from(reader: &mut impl ByteReader) -> Result<Self, RwError>
+	fn read_from(reader: &mut impl ByteReader) -> IoResult<Self>
 	where
 		Self: Sized;
 
@@ -40,7 +35,7 @@ pub trait FromBytes {
 	/// # Implementors note
 	/// It is recommended to override this method if it can be optimized for
 	/// this type.
-	fn read_vectored_from(reader: &mut impl ByteReader) -> RwResult<Vec<Self>>
+	fn read_vectored_from(reader: &mut impl ByteReader) -> IoResult<Vec<Self>>
 	where
 		Self: Sized,
 	{
@@ -58,16 +53,17 @@ pub trait FromBytes {
 pub trait ToBytes: ByteSize {
 	/// Writes `self` to a [`ByteWriter`].
 	///
+	/// # Implementors note
 	/// The number of bytes written must be equal to the number of bytes given
 	/// by `self`'s [`ByteSize`] implementation.
-	fn write_to(&self, writer: &mut impl ByteWriter) -> RwResult;
+	fn write_to(&self, writer: &mut impl ByteWriter) -> IoResult;
 
 	/// Writes all of the provided `selves` to a [`ByteWriter`].
 	///
 	/// # Implementors note
 	/// It is recommended to override this method if it can be optimized for
 	/// this type.
-	fn write_vectored_to(selves: &[Self], writer: &mut impl ByteWriter) -> RwResult
+	fn write_vectored_to(selves: &[Self], writer: &mut impl ByteWriter) -> IoResult
 	where
 		Self: Sized,
 	{
@@ -86,7 +82,7 @@ pub trait ToBytes: ByteSize {
 	/// let mut bytes: Vec<u8> = vec![];
 	/// self.to_bytes(&mut bytes);
 	/// ```
-	fn to_bytes(&self) -> RwResult<Vec<u8>> {
+	fn to_bytes(&self) -> IoResult<Vec<u8>> {
 		let mut bytes: Vec<u8> = vec![];
 		self.write_to(&mut bytes)?;
 
