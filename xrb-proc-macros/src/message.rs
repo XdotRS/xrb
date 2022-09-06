@@ -3,12 +3,15 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use syn::parse::{Parse, ParseStream};
-use syn::{parenthesized, token, Attribute, Ident, LitInt, Result, Token, Type, Visibility, Generics};
+use syn::{
+	parenthesized, token, Attribute, Generics, Ident, LitInt, Result, Token, Type, Visibility,
+};
+use syn::punctuated::Punctuated;
 
 use proc_macro2::{Delimiter, Group, Span, TokenStream as TokenStream2};
-use quote::{ToTokens, TokenStreamExt};
+use quote::{quote, ToTokens, TokenStreamExt};
 
-use crate::content::Content;
+use crate::content::*;
 
 /// A request or a reply generated from a request.
 #[derive(Clone)]
@@ -18,10 +21,12 @@ pub struct Message {
 	/// This includes doc comments.
 	pub attributes: Vec<Attribute>,
 	/// The visibility that will be associated with this message's `struct`.
-	pub vis: Option<Visibility>,
+	pub vis: Visibility,
+	pub struct_token: Token![struct],
 	/// The name of the message.
 	pub name: Ident,
-	pub generics: Option<Generics>,
+	/// Generics. Ex: `<'a, T>`.
+	pub generics: Generics,
 	/// The metadata relevant to this particular type of message.
 	///
 	/// Requests and replies have different metadata associated with them.
@@ -53,8 +58,118 @@ impl ToTokens for Message {
 		self.name.to_tokens(tokens);
 		// Generics
 		self.generics.to_tokens(tokens);
+
 		// Fields
-		Group::new(Delimiter::Brace, self.content.fields_to_tokenstream()).to_tokens(tokens);
+		let mut content = TokenStream2::new();
+		let mut fields: Punctuated<Field, Token![,]> = Punctuated::new();
+
+		match &self.content {
+			// If this is a shorthand definition and it has a field, write that
+			// field's definition to `fields`.
+			Content::Shorthand(shorthand) => {
+				shorthand.field().map(|field| fields.push(field));
+			}
+
+			// If this is a longhand definition, write the definitions of any
+			// and all fields to `fields`.
+			Content::Longhand(longhand) => {
+				for field in longhand.fields() {
+					fields.push(field.clone());
+				}
+			}
+		}
+
+		// If this is a reply, append `major_opcode`, `minor_opcode`, and
+		// `sequence` fields for the `Reply` trait implementation.
+		match self.metadata {
+			Metadata::Reply(_) => {
+				quote! {
+					major_op: u8,
+					minor_op: u8,
+					sequence_num: u16,
+				}
+				.to_tokens(&mut content);
+			}
+			_ => (),
+		}
+
+		fields.to_tokens(&mut content);
+
+		// Surround the fields with `{` and `}` and append them to `tokens`.
+		tokens.append(Group::new(Delimiter::Brace, content));
+	}
+}
+
+impl Message {
+	pub fn message_trait_impl(&self) -> TokenStream2 {
+		let name = &self.name;
+
+		let (impl_generics, ty_generics, where_clause) = self.generics.split_for_impl();
+
+		match &self.metadata {
+			Metadata::Request(request) => {
+				let item_size = match &self.content {
+					Content::Longhand(longhand) => longhand.items.iter().map(|item| item.size()).collect(),
+					Content::Shorthand(shorthand) => {
+						vec![shorthand.item.clone().map_or(quote!(0), |def| def.1.size())]
+					}
+				};
+
+				let reply = request.reply.clone().map(|reply| reply.1);
+
+				let major = request.major_opcode;
+				let minor = match request.minor_opcode {
+					Some((_, minor)) => quote!(Some(#minor)),
+					None => quote!(None),
+				};
+
+				quote! {
+					impl #impl_generics crate::Request<#reply> for #name #ty_generics #where_clause {
+						fn major_opcode() -> u8 {
+							#major
+						}
+
+						fn minor_opcode() -> Option<u8> {
+							#minor
+						}
+
+						fn length(&self) -> u16 {
+							1u16 #(+ ((#item_size) as u16))*
+						}
+					}
+				}
+			}
+			Metadata::Reply(reply) => {
+				let item_size = match &self.content {
+					Content::Longhand(longhand) => longhand.items.iter().map(|item| item.size()).collect(),
+					Content::Shorthand(shorthand) => {
+						vec![shorthand.item.clone().map_or(quote!(0), |def| def.1.size())]
+					}
+				};
+
+				let request_ty = &reply.request.1;
+
+				quote! {
+					impl #impl_generics crate::Reply<#request_ty> for #name #ty_generics #where_clause {
+						fn sequence(&self) -> u16 {
+							self.sequence_num
+						}
+
+						fn major_opcode(&self) -> u8 {
+							self.major_op
+						}
+
+						fn minor_opcode(&self) -> u8 {
+							self.minor_op
+						}
+
+						fn length(&self) -> u32 {
+							0u32 #(+ ((#item_size) as u32))*
+						}
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -76,39 +191,34 @@ pub enum Metadata {
 /// Information specifically associated with requests, not replies.
 #[derive(Clone)]
 pub struct RequestMetadata {
+	pub paren_token: token::Paren,
 	/// The major opcode of this request.
 	pub major_opcode: u8,
 	/// The minor opcode of this request, if any. Only used in extensions.
-	pub minor_opcode: Option<u8>,
+	pub minor_opcode: Option<(Token![,], u8)>,
 	/// The type of reply that is returned by this request, if any.
-	pub reply: Option<Type>,
+	pub reply: Option<(Token![->], Type)>,
 }
 
 /// Information specifically associated with replies, not requests.
 #[derive(Clone)]
 pub struct ReplyMetadata {
 	/// The request which this reply is returned for.
-	pub request: Type,
+	pub request: (Token![for], Type),
 }
 
 // Parsing {{{
 
 impl Parse for Message {
 	fn parse(input: ParseStream) -> Result<Self> {
-		// Parse attributes for the message.
-		let attributes: Vec<Attribute> = input.call(Attribute::parse_outer)?;
-		// Parse the message's visibility.
-		let vis: Option<Visibility> = input.parse().ok();
-		// Require a `struct` token to precede the `name`.
-		input.parse::<Token![struct]>()?;
-
 		Ok(Self {
-			attributes,
-			vis,
+			attributes: input.call(Attribute::parse_outer)?,
+			vis: input.parse()?,
+			struct_token: input.parse()?,
 			// Parse the message's name.
 			name: input.parse()?,
 			// Parse any generic definitions, e.g. `'a` or `T`.
-			generics: input.parse().ok(),
+			generics: input.parse()?,
 			// Parse the message's metadata (specific to the type of message).
 			metadata: input.parse()?,
 			// Parse the message's content. Includes fields, unused bytes, etc.
@@ -138,38 +248,28 @@ impl Parse for RequestMetadata {
 	fn parse(input: ParseStream) -> Result<Self> {
 		// Parnetheses (`(` and `)`) for the opcodes.
 		let content;
-		parenthesized!(content in input);
 
 		Ok(Self {
-			// Major opcode (required)
+			// `(` and `)`.
+			paren_token: parenthesized!(content in input),
+			// Major opcode.
 			major_opcode: content.parse::<LitInt>()?.base10_parse()?,
-			// Minor opcode (optional, requires a comma token preceding it if so)
-			minor_opcode: content.parse::<Token![,]>().ok().and(
-				content
-					.parse::<LitInt>()
-					.ok()
-					.map(|lit| lit.base10_parse().ok())
-					.flatten(),
-			),
-			// Reply type (if `->` is not given, it is `None`, but if `->` is
-			// given then panic if the type is not also given).
-			reply: input
-				.parse::<Token![->]>()
+			// Optional: `,` + minor opcode.
+			minor_opcode: content
+				.parse() // ,
 				.ok()
-				.map(|_| input.parse::<Type>().unwrap()),
+				.map(|comma| (comma, content.parse::<LitInt>().unwrap().base10_parse().unwrap())),
+			// Optional: `->` + reply type.
+			reply: input.parse().ok().zip(input.parse().ok()),
 		})
 	}
 }
 
 impl Parse for ReplyMetadata {
 	fn parse(input: ParseStream) -> Result<Self> {
-		// Require the `for` token for the request type declaration
-		// in replies.
-		input.parse::<Token![for]>()?;
-
 		Ok(Self {
-			// Require the request type.
-			request: input.parse()?,
+			// `for` + request type.
+			request: (input.parse()?, input.parse()?),
 		})
 	}
 }

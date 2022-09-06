@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use xrb_proc_macros::{StaticByteSize, ByteSize};
 use crate::x11::common::values::{Char1b, Char2b, HostFamily};
 
 pub type String8<'a> = &'a [Char1b];
@@ -11,6 +12,7 @@ pub type String16<'a> = &'a [Char2b];
 ///
 /// The coordinates are those of the upper-left corner of the rectangle. The
 /// units for the coordinates and dimensions are not specified.
+#[derive(StaticByteSize)]
 pub struct Rectangle {
 	/// X-coordinate of the upper-left corner of the rectangle.
 	pub x: i16,
@@ -23,6 +25,7 @@ pub struct Rectangle {
 }
 
 /// A geometric arc, represented by its coordinates, dimensions, and start and end angles.
+#[derive(StaticByteSize)]
 pub struct Arc {
 	/// X-coordinate of the arc.
 	pub x: i16,
@@ -38,6 +41,7 @@ pub struct Arc {
 	pub end: i16,
 }
 
+#[derive(ByteSize)]
 pub struct Host {
 	/// The protocol family of the host, e.g. [InternetV6](HostFamily::InternetV6).
 	pub family: HostFamily,

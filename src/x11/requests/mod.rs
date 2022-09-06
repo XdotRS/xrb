@@ -7,20 +7,19 @@ use crate::x11::common::structures::*;
 use crate::x11::common::values::*;
 use crate::x11::wrappers::*;
 
-use cornflakes::ToBytes;
 use xrb_proc_macros::requests;
 
 /// A request is a message sent from an X client to the X server.
 ///
 /// Since an X client will never receive an actual request message,
 /// deserialization is not implemented for requests for the sake of simplicity.
-pub trait Request<REPLY = ()>: ToBytes {
+pub trait Request<REPLY = ()> {
 	/// The major opcode that uniquely identifies this request or extension.
 	///
 	/// X core protocol requests have unique major opcodes, but each extension
 	/// is only assigned one major opcode. Extensions are assigned major opcodes
 	/// from 127 through to 255.
-	fn opcode() -> u8;
+	fn major_opcode() -> u8;
 
 	/// The minor opcode that uniquely identifies this request within its
 	/// extension.
@@ -47,18 +46,69 @@ pub trait Request<REPLY = ()>: ToBytes {
 	fn length(&self) -> u16;
 }
 
+pub trait Reply<R>
+where
+	R: Request<Self>,
+	Self: Sized,
+{
+	fn sequence(&self) -> u16;
+	fn major_opcode(&self) -> u8;
+	fn minor_opcode(&self) -> u8;
+	fn length(&self) -> u32;
+}
+
 requests! {
+	/// Creates an unmapped window with the given `window_id`.
+	//
+	//TODO: improve the documentation here. A main description 'paragraph' or
+	//whatever is needed. See the X11 protocol document for an explanation of
+	//all the requests and a glossary at the end.
+	//
+	/// # Errors
+	/// - [Alloc]
+	/// - [Colormap]
+	/// - [Cursor]
+	/// - [IdChoice]
+	/// - [Match]
+	/// - [Pixmap]
+	/// - [Value]
+	/// - [Window]
+	///
+	/// [Alloc]: crate::x11::errors::Alloc
+	/// [Colormap]: crate::x11::errors::Colormap
+	/// [Cursor]: crate::x11::errors::Cursor
+	/// [IdChoice]: crate::x11::errors::IdChoice
+	/// [Match]: crate::x11::errors::Match
+	/// [Pixmap]: crate::x11::errors::Pixmap
+	/// [Value]: crate::x11::errors::Value
+	/// [Window]: crate::x11::errors::Window
 	pub struct CreateWindow(1) {
-		pub $depth: u8,
 		pub window_id: Window,
 		pub parent: Window,
-		pub x: i16,
-		pub y: i16,
-		pub width: u16,
-		pub height: u16,
-		pub border_width: u16,
 		//pub class: Inherit<WindowClass>,
+		/// The color depth of the window in bits per pixel.
+		///
+		/// If the class is not [`InputOnly`], [`CopyFromParent`] will copy the
+		/// `depth` from the parent. __If the class is [`InputOnly`], this must
+		/// be set to [`CopyFromParent`],__ else a [`Match`] error shall occur.
+		///
+		/// [`InputOnly`]: WindowClass::InputOnly
+		/// [`CopyFromParent`]: Inherit::CopyFromParent
+		/// [`Match`]: crate::x11::errors::Match
+		pub $depth: Inherit<u8>,
 		pub visual: Inherit<VisualId>,
+		/// The initial x-coordinate of the window relative to its parent's
+		/// top-left corner.
+		pub x: i16,
+		/// The initial y-coordinate of the window relative to its parent's
+		/// top-right corner.
+		pub y: i16,
+		/// The width of the window.
+		pub width: u16,
+		/// The height of the window.
+		pub height: u16,
+		/// The 'border width'.
+		pub border_width: u16,
 		//pub value_mask: WinAttrMask,
 		//pub values: &'a [WinAttr],
 	}
@@ -68,6 +118,7 @@ requests! {
 		//pub value_mask: WinAttrMask,
 		//pub values: &'a [WinAttr],
 	}
+
 
 	pub struct GetWindowAttributes(3) -> GetWindowAttributesReply {
 		pub target: Window,
@@ -83,7 +134,7 @@ requests! {
 		pub backing_pixel: u32,
 		pub save_under: bool,
 		pub map_is_installed: bool,
-		pub map_state: enum MapState {
+		pub map_state: pub enum MapState {
 			Unmapped = 0,
 			Unviewable = 1,
 			Viewable = 2,
@@ -100,7 +151,7 @@ requests! {
 	pub struct DestroySubwindows(5): pub target: Window;
 
 	pub struct ChangeSaveSet(6) {
-		pub $mode: enum ChangeSaveSetMode {
+		pub $mode: pub enum ChangeSaveSetMode {
 			Insert = 0,
 			Delete = 1,
 		},
@@ -127,7 +178,7 @@ requests! {
 	}
 
 	pub struct CirculateWindow(13) {
-		pub $direction: enum CirculateDirection {
+		pub $direction: pub enum CirculateDirection {
 			RaiseLowest = 0,
 			RaiseHighest = 1,
 		},
@@ -147,14 +198,14 @@ requests! {
 		[(); 10],
 	}
 
-	pub struct QueryTree(15) -> QueryTreeReply: pub target: Window;
+	pub struct QueryTree(15) -> QueryTreeReply<'_>: pub target: Window;
 
-	pub struct QueryTreeReply for QueryTree {
+	pub struct QueryTreeReply<'a> for QueryTree {
 		pub root: Window,
 		pub parent: Option<Window>,
 		#children,
 		[(); 14],
-		pub children: [Window],
+		pub children: &'a [Window],
 	}
 
 	pub struct InternAtom(16) -> InternAtomReply {
@@ -162,7 +213,7 @@ requests! {
 		#name,
 		[(); 2],
 		pub name: String,
-		[(); padding(name)],
+		[(); {name}],
 	}
 
 	pub struct InternAtomReply for InternAtom {
@@ -176,7 +227,7 @@ requests! {
 		#name,
 		[(); 22],
 		pub name: String,
-		[(); padding(name)],
+		[(); {name}],
 	}
 
 	// The property requests (`ChangeProperty(18)`, `DeleteProperty(19)`,
@@ -215,7 +266,7 @@ requests! {
 		pub $owner_events: bool,
 		pub target_window: Window,
 		pub event_mask: PointerEventMask,
-		pub pointer_mode: enum GrabMode {
+		pub pointer_mode: pub enum GrabMode {
 			Synchronous = 0,
 			Asynchronous = 1,
 		},
@@ -226,7 +277,7 @@ requests! {
 	}
 
 	pub struct GrabPointerReply for GrabPointer {
-		pub $status: enum GrabStatus {
+		pub $status: pub enum GrabStatus {
 			Success = 0,
 			AlreadyGrabbed = 1,
 			InvalidTime = 2,
@@ -247,7 +298,7 @@ requests! {
 		pub confine_to: Option<Window>,
 		pub cursor_override: Option<Cursor>,
 		pub button: Specificity<Button>,
-		[(); 1],
+		(),
 		//pub modifiers: ModifierKeyMask,
 	}
 
@@ -265,7 +316,7 @@ requests! {
 		[(); 2],
 	}
 
-	pub struct GrabKeyboard(31) -> GrabPointerReply {
+	pub struct GrabKeyboard(31) -> GrabKeyboardReply {
 		pub $owner_events: bool,
 		pub target_window: Window,
 		pub time: Time,
@@ -299,7 +350,7 @@ requests! {
 	}
 
 	pub struct AllowEvents(35) {
-		pub $mode: enum AllowEventsMode {
+		pub $mode: pub enum AllowEventsMode {
 			AsyncPointer = 0,
 			SyncPointer = 1,
 			ReplayPointer = 2,
@@ -312,8 +363,8 @@ requests! {
 		pub time: Time,
 	}
 
-	//pub struct GrabServer(36);
-	//pub struct UngrabSever(37);
+	pub struct GrabServer(36);
+	pub struct UngrabSever(37);
 
 	pub struct QueryPointer(38) -> QueryPointerReply: pub target: Window;
 
@@ -329,16 +380,16 @@ requests! {
 		[(); 6],
 	}
 
-	pub struct GetMotionEvents(39) -> GetMotionEventsReply {
+	pub struct GetMotionEvents(39) -> GetMotionEventsReply<'_> {
 		pub target: Window,
 		pub start: Time,
 		pub stop: Time,
 	}
 
-	pub struct GetMotionEventsReply for GetMotionEvents {
-		#events[u32],
+	pub struct GetMotionEventsReply<'a> for GetMotionEvents {
+		#events[4],
 		[(); 20],
-		pub events: [(Timestamp, (i16, i16))],
+		pub events: &'a [(Timestamp, (i16, i16))],
 	}
 
 	pub struct TranslateCoordinates(40) -> TranslateCoordinatesReply {
@@ -373,7 +424,7 @@ requests! {
 		pub time: Time,
 	}
 
-	//pub struct GetInputFocus(43) -> GetInputFocusReply;
+	pub struct GetInputFocus(43) -> GetInputFocusReply;
 
 	pub struct GetInputFocusReply for GetInputFocus {
 		//pub $revert_to: Option<RevertTo>,
@@ -381,7 +432,7 @@ requests! {
 		[(); 20],
 	}
 
-	//pub struct QueryKeymap(44) -> QueryKeymapReply;
+	pub struct QueryKeymap(44) -> QueryKeymapReply;
 
 	pub struct QueryKeymapReply for QueryKeymap {
 		pub keys: [u8; 32],
@@ -389,10 +440,10 @@ requests! {
 
 	pub struct OpenFont(45) {
 		pub font_id: Font,
-		#name,
+		#name[2],
 		[(); 2],
 		pub name: String,
-		[(); padding(name)],
+		[(); {name}],
 	}
 
 	pub struct CloseFont(46): pub font: Font;
@@ -406,8 +457,8 @@ requests! {
 		[(); 4],
 		pub min_char_or_byte2: u16,
 		pub max_char_or_byte2: u16,
-		#properties,
-		pub draw_direction: enum DrawDirection {
+		//#properties[2],
+		pub draw_direction: pub enum DrawDirection {
 			LeftToRight = 0,
 			RightToLeft = 1,
 		},
@@ -416,19 +467,19 @@ requests! {
 		pub all_chars_exist: bool,
 		pub font_ascent: i16,
 		pub font_descent: i16,
-		#charinfos[u32],
+		//#charinfos[4],
 		//pub properties: [FontProp],
 		//pub charinfos: [CharInfo],
 	}
 
-	pub struct QueryTextExtends<'a>(48) -> QueryTextExtentsReply {
+	pub struct QueryTextExtents<'a>(48) -> QueryTextExtentsReply {
 		pub $odd_length: bool,
 		pub font: Fontable,
 		pub string: String16<'a>,
-		[(); padding(string)],
+		[(); {string}],
 	}
 
-	pub struct QueryTextExtentsReply for QueryTextExtents {
+	pub struct QueryTextExtentsReply for QueryTextExtents<'_> {
 		pub $draw_direction: DrawDirection,
 		pub font_ascent: i16,
 		pub font_descent: i16,
@@ -442,16 +493,16 @@ requests! {
 
 	pub struct ListFonts(49) -> ListFontsReply {
 		pub max_names: u16,
-		#pattern,
+		#pattern[2],
 		pub pattern: String,
-		[(); padding(pattern)],
+		[(); {pattern}],
 	}
 
 	pub struct ListFontsReply for ListFonts {
-		#names, // number of STRs in names??
+		//#names[2], // number of STRs in names??
 		[(); 22],
 		//pub names: [Str], // STRs??
-		[(); padding(names)],
+		//[(); {names}],
 	}
 
 	// ListFontsWithInfo has a special format for its reply that needs to be
@@ -459,10 +510,10 @@ requests! {
 	// `mod list_fonts_with_info;` module.
 
 	pub struct SetFontPath(51) {
-		#names, // number of STRs in path??
+		#names[2], // number of STRs in path??
 		[(); 2],
 		//pub path: [Str], // STRs??
-		[(); padding(path)],
+		//[(); {path}],
 	}
 
 	// GetFontPath has a special format for its request. Both the request and
@@ -498,16 +549,16 @@ requests! {
 		//pub value_mask: GraphicsContextMask,
 	}
 
-	pub struct SetDashes(58) {
+	pub struct SetDashes<'a>(58) {
 		//pub context: GraphicsContext,
 		pub dash_offset: u16,
-		#dashes,
-		pub dashes: [u8],
-		[(); padding(dashes)],
+		#dashes[2],
+		pub dashes: &'a [u8],
+		[(); {dashes}],
 	}
 
-	pub struct SetClipRectangles(59) {
-		pub $ordering: enum Ordering {
+	pub struct SetClipRectangles<'a>(59) {
+		pub $ordering: pub enum Ordering {
 			Unsorted = 0,
 			Ysorted = 1,
 			YxSorted = 2,
@@ -516,7 +567,7 @@ requests! {
 		//pub context: GraphicsContext,
 		pub clip_x_origin: i16,
 		pub clip_y_origin: i16,
-		pub rectangles: [Rectangle],
+		pub rectangles: &'a [Rectangle],
 	}
 
 	//pub struct FreeGraphicsContext(60): pub context: GraphicsContext;
@@ -555,21 +606,21 @@ requests! {
 		pub bit_plane: u32,
 	}
 
-	pub struct PolyPoint(64) {
-		pub $coordinate_mode: enum CoordinateMode {
+	pub struct PolyPoint<'a>(64) {
+		pub $coordinate_mode: pub enum CoordinateMode {
 			Origin = 0,
 			Previous = 1,
 		},
 		pub drawable: Drawable,
 		//pub context: GraphicsContext,
-		pub points: [(i16, i16)],
+		pub points: &'a [(i16, i16)],
 	}
 
-	pub struct PolyLine(65) {
+	pub struct PolyLine<'a>(65) {
 		pub $coordinate_mode: CoordinateMode,
 		pub drawable: Drawable,
 		//pub context: GraphicsContext,
-		pub points: [(i16, i16)],
+		pub points: &'a [(i16, i16)],
 	}
 
 	pub struct PolySegment(66) {
@@ -590,23 +641,23 @@ requests! {
 		//pub arcs: [GeomArc],
 	}
 
-	pub struct FillPoly(69) {
+	pub struct FillPoly<'a>(69) {
 		pub drawable: Drawable,
 		//pub context: GraphicsContext,
-		pub shape: enum Shape {
+		pub shape: pub enum Shape {
 			Complex = 0,
 			Nonconvex = 1,
 			Convex = 2,
 		},
 		pub coordinate_mode: CoordinateMode,
 		[(); 2],
-		pub points: [(i16, i16)],
+		pub points: &'a [(i16, i16)],
 	}
 
-	pub struct PolyFillRectangle(70) {
+	pub struct PolyFillRectangle<'a>(70) {
 		pub drawable: Drawable,
 		//pub context: GraphicsContext,
-		pub rectangles: [Rectangle],
+		pub rectangles: &'a [Rectangle],
 	}
 
 	pub struct PolyFillArc(71) {
@@ -615,7 +666,7 @@ requests! {
 		//pub arcs: [GeomArc],
 	}
 
-	pub struct PutImage(72) {
+	pub struct PutImage<'a>(72) {
 		//pub $format: Bitmap<ImageFormat>,
 		pub drawable: Drawable,
 		//pub context: GraphicsContext,
@@ -626,11 +677,11 @@ requests! {
 		pub left_padding: u8,
 		pub depth: u8,
 		[(); 2],
-		pub data: [u8],
-		[(); padding(data)],
+		pub data: &'a [u8],
+		[(); {data}],
 	}
 
-	pub struct GetImage(73) -> GetImageReply {
+	pub struct GetImage(73) -> GetImageReply<'_> {
 		//pub $format: ImageFormat,
 		pub drawable: Drawable,
 		pub x: i16,
@@ -640,12 +691,12 @@ requests! {
 		pub plane_mask: u32,
 	}
 
-	pub struct GetImageReply for GetImage {
+	pub struct GetImageReply<'a> for GetImage {
 		pub $depth: u8,
 		pub visual: Option<VisualId>,
 		[(); 20],
-		pub data: [u8],
-		[(); padding(data)],
+		pub data: &'a [u8],
+		[(); {data}],
 	}
 
 	pub struct PolyText(74) {
@@ -654,7 +705,7 @@ requests! {
 		pub x: i16,
 		pub y: i16,
 		//pub items: [TextItem],
-		[(); padding(items)],
+		//[(); {items}],
 	}
 
 	pub struct PolyText16(75) {
@@ -663,7 +714,7 @@ requests! {
 		pub x: i16,
 		pub y: i16,
 		//pub items: [TextItem16],
-		[(); padding(items)],
+		//[(); {items}],
 	}
 
 	pub struct ImageText(76) {
@@ -672,7 +723,7 @@ requests! {
 		pub x: i16,
 		pub y: i16,
 		pub string: String,
-		[(); padding(string)],
+		[(); {string}],
 	}
 
 	pub struct ImageText16<'a>(77) {
@@ -681,11 +732,11 @@ requests! {
 		pub x: i16,
 		pub y: i16,
 		pub string: String16<'a>,
-		[(); padding(string)],
+		[(); {string}],
 	}
 
 	pub struct CreateColormap(78) {
-		pub $alloc: enum ColormapAlloc {
+		pub $alloc: pub enum ColormapAlloc {
 			None = 0,
 			All = 1,
 		},
@@ -704,14 +755,14 @@ requests! {
 	pub struct InstallColormap(81): pub colormap: Colormap;
 	pub struct UninstallColormap(82): pub colormap: Colormap;
 
-	pub struct ListInstalledColormaps(73) -> ListInstalledColormapsReply {
+	pub struct ListInstalledColormaps(73) -> ListInstalledColormapsReply<'_> {
 		pub target_window: Window,
 	}
 
-	pub struct ListInstalledColormapsReply for ListInstalledColormaps {
-		#colormaps,
+	pub struct ListInstalledColormapsReply<'a> for ListInstalledColormaps {
+		#colormaps[2],
 		[(); 22],
-		pub colormaps: [Colormap],
+		pub colormaps: &'a [Colormap],
 	}
 
 	pub struct AllocColor(84) -> AllocColorReply {
@@ -729,10 +780,10 @@ requests! {
 
 	pub struct AllocNamedColor(85) -> AllocNamedColorReply {
 		pub colormap: Colormap,
-		#name,
+		#name[2],
 		[(); 2],
 		pub name: String,
-		[(); padding(name)],
+		[(); {name}],
 	}
 
 	pub struct AllocNamedColorReply for AllocNamedColor {
@@ -749,33 +800,33 @@ requests! {
 		pub planes: u16,
 	}
 
-	pub struct AllocColorCellsReply<'a> for AllocColorCells {
-		#pixels,
-		#masks,
+	pub struct AllocColorCellsReply for AllocColorCells {
+		//#pixels[2],
+		//#masks[2],
 		[(); 20],
-		pub pixels: &'a [u32],
-		pub masks: &'a [u32],
+		//pub pixels: &'a [u32],
+		//pub masks: &'a [u32],
 	}
 
-	pub struct AllocColorPlanes(87) -> AllocColorPlanesReply {
+	pub struct AllocColorPlanes(87) -> AllocColorPlanesReply<'_> {
 		pub $contiguous: bool,
 		pub colormap: Colormap,
 		pub num_colors: u16, // TODO: its just called `colors`... is it the number?
 		pub colors: (u16, u16, u16),
 	}
 
-	pub struct AllocColorPlanesReply for AllocColorPlanes {
-		#pixels,
+	pub struct AllocColorPlanesReply<'a> for AllocColorPlanes {
+		#pixels[2],
 		[(); 2],
 		pub color_mask: (u16, u16, u16),
 		[(); 8],
-		pub pixels: [u32],
+		pub pixels: &'a [u32],
 	}
 
-	pub struct FreeColors(88) {
+	pub struct FreeColors<'a>(88) {
 		pub colormap: Colormap,
 		pub plane_mask: u32,
-		pub pixels: [u32],
+		pub pixels: &'a [u32],
 	}
 
 	pub struct StoreColors(89) {
@@ -787,10 +838,10 @@ requests! {
 		//pub $channel_mask: ColorChannelMask,
 		pub colormap: Colormap,
 		pub pixel: u32,
-		#name,
+		#name[2],
 		[(); 2],
 		pub name: String,
-		[(); padding(name)],
+		[(); {name}],
 	}
 
 	// The QueryColorsReply for the QueryColors request uses a special format
@@ -799,10 +850,10 @@ requests! {
 
 	pub struct LookupColor(92) -> LookupColorReply {
 		pub colormap: Colormap,
-		#name,
+		#name[2],
 		[(); 2],
 		pub name: String,
-		[(); padding(name)],
+		[(); {name}],
 	}
 
 	pub struct LookupColorReply for LookupColor {
@@ -833,23 +884,79 @@ requests! {
 
 	pub struct FreeCursor(95): pub cursor: Cursor;
 
+	/// Changes the color of the given `cursor`.
+	///
+	/// If the `cursor` is currently being displayed on a screen, the change is
+	/// visible immediately.
+	///
+	/// # Errors
+	/// - [`Cursor`]
+	///
+	/// [`Cursor`]: crate::x11::errors::Cursor
 	pub struct RecolorCursor(96) {
 		pub cursor: Cursor,
+		/// The tint to apply to the cursor's foreground.
+		///
+		/// This is in RGB format (i.e. `(red, green, blue)`).
 		pub foreground_color: (u16, u16, u16),
+		/// The tint to apply to the cursor's background.
+		///
+		/// This is in RGB format (i.e. `(red, green, blue)`).
 		pub background_color: (u16, u16, u16),
 	}
 
+	/// Gets the closest ideal size to the given `width` and `height`.
+	///
+	/// For [`Cursor`], this is the largest size that can be fully displayed
+	/// within `width` and `height`. For [`Tile`], this is the size that can be
+	/// tiled fastest. For [`Stipple`], this is the size that can be stippled
+	/// fastest.
+	///
+	/// # Errors
+	/// - [`Drawable`]
+	/// - [`Match`] -- Generated if an [`InputOnly`] [window] is used with the
+	///   [`Tile`] or [`Stipple`] classes.
+	/// - [`Value`]
+	///
+	/// # Reply
+	/// This request generates a [`QueryBestSizeReply`].
+	///
+	/// [`Cursor`]: SizeClass::Cursor
+	/// [`Tile`]: SizeClass::Tile
+	/// [`Stipple`]: SizeClass::Stipple
+	/// [`Drawable`]: crate::x11::errors::Drawable
+	/// [`Match`]: crate::x11::errors::Match
+	/// [`Value`]: crate::x11::errors::Value
+	/// [window]: Window
+	/// [`InputOnly`]: WindowClass::InputOnly
 	pub struct QueryBestSize(97) -> QueryBestSizeReply {
-		pub $class: enum SizeClass {
+		/// The 'type' of 'best size' being queried.
+		pub $class: pub enum SizeClass {
 			Cursor = 0,
 			Tile = 1,
 			Stipple = 2,
 		},
+		/// Indicates the desired screen.
+		///
+		/// For [`Tile`] and [`Stipple`], the `drawable` indicates the screen
+		/// and also possibly the window class and depth.
+		///
+		/// An [`InputOnly`] [`Window`] cannot be used as the drawable for
+		/// [`Tile`] or [`Stipple`], else a [`Match`] error occurs.
+		///
+		/// [`Tile`]: SizeClass::Tile
+		/// [`Stipple`]: SizeClass::Stipple
+		/// [`InputOnly`]: WindowClass::InputOnly
 		pub drawable: Drawable,
 		pub width: u16,
 		pub height: u16,
 	}
 
+	/// The reply for the [`QueryBestSize`] request.
+	///
+	/// This contains the closest ideal size to the `width` and `height` that
+	/// was given in the [`QueryBestSize`] request. See the request's docs for
+	/// more information.
 	pub struct QueryBestSizeReply for QueryBestSize {
 		pub width: u16,
 		pub height: u16,
@@ -857,10 +964,10 @@ requests! {
 	}
 
 	pub struct QueryExtension(98) -> QueryExtensionReply {
-		#name,
+		#name[2],
 		[(); 2],
 		pub name: String,
-		[(); padding(name)],
+		[(); {name}],
 	}
 
 	pub struct QueryExtensionReply for QueryExtension {
@@ -871,13 +978,13 @@ requests! {
 		[(); 20],
 	}
 
-	//pub struct ListExtensions(99) -> ListExtensionsReply;
+	pub struct ListExtensions(99) -> ListExtensionsReply;
 
 	pub struct ListExtensionsReply for ListExtensions {
-		$#names[u8], // number of STRs in names??
+		#$names, // number of STRs in names??
 		[(); 24],
 		//pub names: [Str], // STRs??
-		[(); padding(names)],
+		//[(); {names}],
 	}
 
 	// The `ChangeKeyboardMapping` and `GetKeyboardMapping` requests, as well as
@@ -889,7 +996,7 @@ requests! {
 	// list, so it has to be done manually. It can be found in the
 	// `mod change_keyboard_control;` module.
 
-	//pub struct GetKeyboardControl(103) -> GetKeyboardControlReply;
+	pub struct GetKeyboardControl(103) -> GetKeyboardControlReply;
 
 	pub struct GetKeyboardControlReply for GetKeyboardControl {
 		pub $global_auto_repeat: bool,
@@ -912,7 +1019,7 @@ requests! {
 		pub enable_threshold: bool,
 	}
 
-	//pub struct GetPointerControl(106) -> GetPointerControlReply;
+	pub struct GetPointerControl(106) -> GetPointerControlReply;
 
 	pub struct GetPointerControlReply for GetPointerControl {
 		pub acceleration_numerator: i16,
@@ -929,7 +1036,7 @@ requests! {
 		[(); 2],
 	}
 
-	//pub struct GetScreenSaver(108) -> GetScreenSaverReply;
+	pub struct GetScreenSaver(108) -> GetScreenSaverReply;
 
 	pub struct GetScreenSaverReply for GetScreenSaver {
 		pub timeout: i16,
@@ -939,34 +1046,34 @@ requests! {
 		[(); 18],
 	}
 
-	pub struct ChangeHosts(109) {
-		pub $mode: enum ChangeHostsMode {
+	pub struct ChangeHosts<'a>(109) {
+		pub $mode: pub enum ChangeHostsMode {
 			Insert = 0,
 			Delete = 1,
 		},
-		pub family: enum HostFamily {
+		pub family: pub enum HostFamily {
 			Internet = 0,
 			Decnet = 1,
 			Chaos = 2,
 		},
 		[(); 1],
-		#address,
-		pub address: [u8],
-		[(); padding(address)],
+		#address[2],
+		pub address: &'a [u8],
+		[(); {address}],
 	}
 
-	//pub struct ListHosts(110) -> ListHostsReply;
+	pub struct ListHosts(110) -> ListHostsReply<'_>;
 
-	pub struct ListHostsReply for ListHosts {
+	pub struct ListHostsReply<'a> for ListHosts {
 		pub $enabled: bool,
-		#hosts,
+		#hosts[2],
 		[(); 22],
-		pub hosts: [Host],
+		pub hosts: &'a [Host],
 	}
 
 	pub struct SetAccessControl(111): pub $enabled: bool;
 
-	pub struct SetCloseDownMode(112): pub $mode: enum CloseDownMode {
+	pub struct SetCloseDownMode(112): pub $mode: pub enum CloseDownMode {
 		Destroy = 0,
 		RetainPermanent = 1,
 		RetainTemporary = 2,
@@ -974,39 +1081,39 @@ requests! {
 
 	//pub struct KillClient(113): pub resource: AllTemp<u32>;
 
-	pub struct RotateProperties(114) {
+	pub struct RotateProperties<'a>(114) {
 		pub target: Window,
 		#properties,
 		pub delta: i16,
-		pub properties: [Atom],
+		pub properties: &'a [Atom],
 	}
 
-	pub struct ForceScreenSaver(115): pub $mode: enum ForceScreenSaverMode {
+	pub struct ForceScreenSaver(115): pub $mode: pub enum ForceScreenSaverMode {
 		Reset = 0,
 		Activate = 1,
 	};
 
-	pub struct SetPointerMapping(116) -> SetPointerMappingReply {
-		$#map[u8],
-		pub map: [u8],
-		[(); padding(map)],
+	pub struct SetPointerMapping<'a>(116) -> SetPointerMappingReply {
+		#$map,
+		pub map: &'a [u8],
+		[(); {map}],
 	}
 
-	pub struct SetPointerMappingReply for SetPointerMapping {
-		pub $status: enum SetPointerMappingStatus {
+	pub struct SetPointerMappingReply for SetPointerMapping<'_> {
+		pub $status: pub enum SetPointerMappingStatus {
 			Success = 0,
 			Busy = 1,
 		},
 		[(); 24],
 	}
 
-	//pub struct GetPointerMapping(117) -> GetPointerMappingReply;
+	pub struct GetPointerMapping(117) -> GetPointerMappingReply<'_>;
 
-	pub struct GetPointerMappingReply for GetPointerMapping {
-		$#map[u8],
+	pub struct GetPointerMappingReply<'a> for GetPointerMapping {
+		#$map,
 		[(); 24],
-		pub map: [u8],
-		[(); padding(map)],
+		pub map: &'a [u8],
+		[(); {map}],
 	}
 
 	// `SetModifierMapping` and `GetModifierMappingReply` both use a special

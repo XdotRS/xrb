@@ -3,6 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use bitflags::bitflags;
+use xrb_proc_macros::StaticByteSize;
 
 // [`WriteValue`] and [`ReadValue`] are not implemented for bitmasks, because
 // [`bitflags`] already offers a simpler solution: use the generated `bits` and
@@ -12,6 +13,7 @@ bitflags! {
 	/// A bitmask of X core protocol events.
 	///
 	/// Bitmask value `0xfe000000` must be zero.
+	#[derive(StaticByteSize)]
 	pub struct EventMask: u32 {
 		const KEY_PRESS = 0x00000001;
 		const KEY_RELEASE = 0x00000002;
@@ -44,6 +46,7 @@ bitflags! {
 	/// A bitmask of X core protocol events, specifically used in pointer events.
 	///
 	/// Bitmask value `0xffff8003` must be zero.
+	#[derive(StaticByteSize)]
 	pub struct PointerEventMask: u32 {
 		const KEY_PRESS = 0x00000001;
 		const KEY_RELEASE = 0x00000002;
@@ -76,6 +79,7 @@ bitflags! {
 	/// A bitmask of X core protocol events, specifically used in device events.
 	///
 	/// Bitmask value `0xffffc0b0` must be zero.
+	#[derive(StaticByteSize)]
 	pub struct DeviceEventMask: u32 {
 		const KEY_PRESS = 0x00000001;
 		const KEY_RELEASE = 0x00000002;
@@ -108,6 +112,7 @@ bitflags! {
 	/// A bitmask of modifier keys and mouse buttons.
 	///
 	/// Bitmask value `0xe000` must be zero.
+	#[derive(StaticByteSize)]
 	pub struct KeyButtonMask: u16 {
 		const SHIFT = 0x0001;
 		const LOCK = 0x0002;
@@ -129,6 +134,7 @@ bitflags! {
 	/// A bitmask of modifier keys and mouse buttons, specifically used in key events.
 	///
 	/// Bitmask value `0xff00` must be zero.
+	#[derive(StaticByteSize)]
 	pub struct KeyMask: u16 {
 		const SHIFT = 0x0001;
 		const LOCK = 0x0002;

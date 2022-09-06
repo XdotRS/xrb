@@ -5,6 +5,8 @@
 use cornflakes::*;
 use std::io::{Error, ErrorKind};
 
+use xrb_proc_macros::StaticByteSize;
+
 /// A raw bitmask value that indicates the presence of certain fields.
 pub type Mask = u32;
 /// A _resource ID_ that can be used to specify a particular window.
@@ -53,6 +55,7 @@ pub type Button = u8;
 pub type Char1b = u8;
 pub type Char2b = u16;
 
+#[derive(StaticByteSize)]
 pub enum BitGravity {
 	Forget,
 	NorthWest,
@@ -67,6 +70,7 @@ pub enum BitGravity {
 	Static,
 }
 
+#[derive(StaticByteSize)]
 pub enum WinGravity {
 	Unmap,
 	NorthWest,
@@ -81,18 +85,13 @@ pub enum WinGravity {
 	Static,
 }
 
+#[derive(StaticByteSize)]
 pub enum HostFamily {
 	Internet,
 	Decnet,
 	Chaos,
 	ServerInterpreted,
 	InternetV6,
-}
-
-impl StaticByteSize for BitGravity {
-	fn static_byte_size() -> usize {
-		1
-	}
 }
 
 impl FromBytes for BitGravity {
@@ -136,12 +135,6 @@ impl ToBytes for BitGravity {
 			Self::Static => 10,
 		}
 		.write_to(writer)
-	}
-}
-
-impl StaticByteSize for WinGravity {
-	fn static_byte_size() -> usize {
-		1
 	}
 }
 
