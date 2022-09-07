@@ -23,6 +23,18 @@ macro_rules! static_byte_sizes {
     };
 }
 
+impl<T> StaticByteSize for &T where T: StaticByteSize {
+	fn static_byte_size() -> usize {
+		T::static_byte_size()
+	}
+}
+
+impl<T> ByteSize for &T where T: ByteSize {
+	fn byte_size(&self) -> usize {
+		(*self).byte_size()
+	}
+}
+
 static_byte_sizes! {
 	bool: 1,
 	char: 4,
