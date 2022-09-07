@@ -2,11 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use xrb_proc_macros::{StaticByteSize, ByteSize};
 use crate::x11::common::values::{Char1b, Char2b, HostFamily};
+use xrb_proc_macros::{ByteSize, StaticByteSize};
 
-pub type String8<'a> = &'a [Char1b];
-pub type String16<'a> = &'a [Char2b];
+pub type String8 = Vec<Char1b>;
+pub type String16 = Vec<Char2b>;
 
 /// A rectangle represented by its coordinates and dimensions.
 ///
@@ -26,7 +26,7 @@ pub struct Rectangle {
 
 /// A geometric arc, represented by its coordinates, dimensions, and start and end angles.
 #[derive(StaticByteSize)]
-pub struct Arc {
+pub struct GeomArc {
 	/// X-coordinate of the arc.
 	pub x: i16,
 	/// Y-coordinate of the arc.

@@ -20,10 +20,10 @@ pub type Pixmap = u32;
 pub type Cursor = u32;
 /// A _resource ID_ that can be used to specify a particular system font.
 pub type Font = u32;
-/// A _resource ID_ that can be used to specify a particular gcontext.
+/// A _resource ID_ that can be used to specify a particular graphics context.
 ///
-/// TODO: What's a gcontext?
-pub type Gcontext = u32;
+/// The [`GraphicsContext`] is used in many graphics-related requests.
+pub type GraphicsContext = u32;
 /// A _resource ID_ that can be used to specify a particular colormap.
 ///
 /// A colormap can be thought of as a palette of colors - it allows a limited

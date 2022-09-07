@@ -2,11 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+mod reply;
+mod request;
+
+pub use reply::*;
+pub use request::*;
+
 use syn::parse::{Parse, ParseStream};
-use syn::{
-	parenthesized, token, Attribute, Generics, Ident, LitInt, Result, Token, Type, Visibility,
-};
 use syn::punctuated::Punctuated;
+use syn::{token, Attribute, Generics, Ident, Result, Token, Visibility};
 
 use proc_macro2::{Delimiter, Group, Span, TokenStream as TokenStream2};
 use quote::{quote, ToTokens, TokenStreamExt};
@@ -38,6 +42,14 @@ pub struct Message {
 	/// lengths of list fields are only used for (de)serialization.
 	pub content: Content,
 }
+
+#[derive(Clone)]
+pub enum Metadata {
+	Request(RequestMetadata),
+	Reply(ReplyMetadata),
+}
+
+// Expansion {{{
 
 impl ToTokens for Message {
 	// This writes the `struct` definition of this message.
@@ -84,9 +96,9 @@ impl ToTokens for Message {
 		match self.metadata {
 			Metadata::Reply(_) => {
 				quote! {
-					major_op: u8,
-					minor_op: u8,
-					sequence_num: u16,
+					__sequence: u16,
+					__major_opcode: Option<u8>,
+					__minor_opcode: Option<u8>,
 				}
 				.to_tokens(&mut content);
 			}
@@ -108,13 +120,6 @@ impl Message {
 
 		match &self.metadata {
 			Metadata::Request(request) => {
-				let item_size = match &self.content {
-					Content::Longhand(longhand) => longhand.items.iter().map(|item| item.size()).collect(),
-					Content::Shorthand(shorthand) => {
-						vec![shorthand.item.clone().map_or(quote!(0), |def| def.1.size())]
-					}
-				};
-
 				let reply = request.reply.clone().map(|reply| reply.1);
 
 				let major = request.major_opcode;
@@ -134,37 +139,30 @@ impl Message {
 						}
 
 						fn length(&self) -> u16 {
-							1u16 #(+ ((#item_size) as u16))*
+							1u16
 						}
 					}
 				}
 			}
 			Metadata::Reply(reply) => {
-				let item_size = match &self.content {
-					Content::Longhand(longhand) => longhand.items.iter().map(|item| item.size()).collect(),
-					Content::Shorthand(shorthand) => {
-						vec![shorthand.item.clone().map_or(quote!(0), |def| def.1.size())]
-					}
-				};
-
 				let request_ty = &reply.request.1;
 
 				quote! {
 					impl #impl_generics crate::Reply<#request_ty> for #name #ty_generics #where_clause {
 						fn sequence(&self) -> u16 {
-							self.sequence_num
+							self.__sequence
 						}
 
-						fn major_opcode(&self) -> u8 {
-							self.major_op
+						fn major_opcode(&self) -> Option<u8> {
+							self.__major_opcode
 						}
 
-						fn minor_opcode(&self) -> u8 {
-							self.minor_op
+						fn minor_opcode(&self) -> Option<u8> {
+							self.__minor_opcode
 						}
 
 						fn length(&self) -> u32 {
-							0u32 #(+ ((#item_size) as u32))*
+							0u32
 						}
 					}
 				}
@@ -173,39 +171,7 @@ impl Message {
 	}
 }
 
-/// Specific metadata about the message, depending on whether it is a request or
-/// a reply.
-#[derive(Clone)]
-pub enum Metadata {
-	/// Information specific to a request.
-	///
-	/// Requries a major opcode, and optionally allows a minor opcode and reply
-	/// type declaration.
-	Request(RequestMetadata),
-	/// Information specific to a reply.
-	///
-	/// Requries a request type declaration.
-	Reply(ReplyMetadata),
-}
-
-/// Information specifically associated with requests, not replies.
-#[derive(Clone)]
-pub struct RequestMetadata {
-	pub paren_token: token::Paren,
-	/// The major opcode of this request.
-	pub major_opcode: u8,
-	/// The minor opcode of this request, if any. Only used in extensions.
-	pub minor_opcode: Option<(Token![,], u8)>,
-	/// The type of reply that is returned by this request, if any.
-	pub reply: Option<(Token![->], Type)>,
-}
-
-/// Information specifically associated with replies, not requests.
-#[derive(Clone)]
-pub struct ReplyMetadata {
-	/// The request which this reply is returned for.
-	pub request: (Token![for], Type),
-}
+// }}}
 
 // Parsing {{{
 
@@ -241,36 +207,6 @@ impl Parse for Metadata {
 			// Construct an error along the lines of 'expected `(` or `for`'.
 			Err(look.error())
 		}
-	}
-}
-
-impl Parse for RequestMetadata {
-	fn parse(input: ParseStream) -> Result<Self> {
-		// Parnetheses (`(` and `)`) for the opcodes.
-		let content;
-
-		Ok(Self {
-			// `(` and `)`.
-			paren_token: parenthesized!(content in input),
-			// Major opcode.
-			major_opcode: content.parse::<LitInt>()?.base10_parse()?,
-			// Optional: `,` + minor opcode.
-			minor_opcode: content
-				.parse() // ,
-				.ok()
-				.map(|comma| (comma, content.parse::<LitInt>().unwrap().base10_parse().unwrap())),
-			// Optional: `->` + reply type.
-			reply: input.parse().ok().zip(input.parse().ok()),
-		})
-	}
-}
-
-impl Parse for ReplyMetadata {
-	fn parse(input: ParseStream) -> Result<Self> {
-		Ok(Self {
-			// `for` + request type.
-			request: (input.parse()?, input.parse()?),
-		})
 	}
 }
 
