@@ -92,17 +92,19 @@ pub enum WindowClass {
 
 messages! {
 	/// Creates an unmapped window with the given `window_id`.
-	//
-	//TODO: improve the documentation here. A main description 'paragraph' or
-	//whatever is needed. See the X11 protocol document for an explanation of
-	//all the requests and a glossary at the end.
-	//
+	///
+	/// # Events
+	/// - [CreateNotify]
+	///
 	/// # Errors
 	/// - [Alloc]
 	/// - [Colormap]
 	/// - [Cursor]
 	/// - [IdChoice]
-	/// - [Match]
+	/// - [Match] -- Generated if the `class` is [`InputOutput`] and the `visual`
+	///   type and `depth` are not a combination supported by the screen, or if
+	///   the `class` is [`InputOnly`] and the `depth` is not [`CopyFromParent`]
+	///   or `0`.
 	/// - [Pixmap]
 	/// - [Value]
 	/// - [Window]
@@ -115,17 +117,28 @@ messages! {
 	/// [Pixmap]: crate::x11::errors::Pixmap
 	/// [Value]: crate::x11::errors::Value
 	/// [Window]: crate::x11::errors::Window
-	pub struct CreateWindow(1) {
+	pub struct CreateWindow<'a>(1) {
 		/// The resource ID given to the window.
 		pub window_id: Window,
 		/// The parent of which the window will be created as a child of.
 		pub parent: Window,
+		/// The [window class] of the window.
+		///
+		/// For [`InputOutput`], the `visual` type and `depth` must be a
+		/// combination supported by the screen, else a [`Match`] error occurs.
+		///
+		/// For [`InputOnly`], the `depth` must be [`CopyFromParent`] (or `0`).
+		///
+		/// [`InputOutput`]: WindowClass::InputOutput
+		/// [`InputOnly`]: WindowClass::InputOnly
+		/// [window class]: WindowClass
+		/// [`Match`]: crate::x11::errors::Match
 		pub class: Inherit<WindowClass>,
 		/// The color depth of the window in bits per pixel.
 		///
 		/// If the class is not [`InputOnly`], [`CopyFromParent`] will copy the
 		/// `depth` from the parent. __If the class is [`InputOnly`], this must
-		/// be set to [`CopyFromParent`],__ else a [`Match`] error shall occur.
+		/// be set to [`CopyFromParent`]__, else a [`Match`] error shall occur.
 		///
 		/// [`InputOnly`]: WindowClass::InputOnly
 		/// [`CopyFromParent`]: Inherit::CopyFromParent
@@ -144,7 +157,44 @@ messages! {
 		pub height: u16,
 		pub border_width: u16,
 		//pub value_mask: WinAttrMask,
-		//pub values: &'a [WinAttr],
+		/// A list of [window attributes] that are to configured for the window.
+		///
+		/// |Attribute           |Default value              |Class                          |
+		/// |--------------------|---------------------------|-------------------------------|
+		/// |[BackgroundPixmap]  |[`None`]                   |[`InputOutput`]                |
+		/// |[BorderPixmap]      |[`Inherit::CopyFromParent`]|[`InputOutput`]                |
+		/// |[BitGravity]        |[`BitGravity::Forget`]     |[`InputOutput`]                |
+		/// |[WinGravity]        |[`WinGravity::NorthWest`]  |[`InputOutput`] & [`InputOnly`]|
+		/// |[BackingStore]      |[`BackingStore::NotUseful`]|[`InputOutput`]                |
+		/// |[BackingPlanes]     |`0xFFFFFFFF`               |[`InputOutput`]                |
+		/// |[BackingPixel]      |`0`                        |[`InputOutput`]                |
+		/// |[SaveUnder]         |`false`                    |[`InputOutput`]                |
+		/// |[EventMask]         |[`EventMask::none()`]      |[`InputOutput`] & [`InputOnly`]|
+		/// |[DoNotPropagateMask]|[`DeviceEventMask::none()`]|[`InputOutput`] & [`InputOnly`]|
+		/// |[OverrideRedirect]  |`false`                    |[`InputOutput`] & [`InputOnly`]|
+		/// |[Colormap]          |[`Inherit::CopyFromParent`]|[`InputOutput`]
+		/// |[Cursor]            |[`None`]                   |[`InputOutput`] & [`InputOnly`]|
+		///
+		/// [window attributes]: WinAttr
+		/// [attributes]: WinAttr
+		/// [`InputOutput`]: WindowClass::InputOutput
+		/// [`InputOnly`]: WindowClass::InputOnly
+		/// [BackgroundPixmap]: WinAttr::BackgroundPixmap
+		/// [BorderPixmap]: WinAttr::BorderPixmap
+		/// [BitGravity]: WinAttr::BitGravity
+		/// [WinGravity]: WinAttr::WinGravity
+		/// [BackingStore]: WinAttr::BackingStore
+		/// [BackingPlanes]: WinAttr::BackingPlanes
+		/// [BackingPixe]: WinAttr::BackingPixel
+		/// [SaveUnder]: WinAttr::SaveUnder
+		/// [EventMask]: WinAttr::EventMask
+		/// [DoNotPropagateMask]: WinAttr::DoNotPropagateMask
+		/// [OverrideRedirect]: WinAttr::OverrideRedirect
+		/// [Colormap]: WinAttr::Colormap
+		/// [Cursor]: WinAttr::Cursor
+		/// [`EventMask::none()`]: EventMask::none
+		/// [`DeviceEventMask::none()`]: DeviceEventMask::none
+		pub values: &'a [Window], // Window is a placeholder until WinAttr is done
 	}
 
 	pub struct ChangeWindowAttributes(2) {
