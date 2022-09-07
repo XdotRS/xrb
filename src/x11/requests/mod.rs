@@ -7,7 +7,7 @@ use crate::x11::common::structures::*;
 use crate::x11::common::values::*;
 use crate::x11::wrappers::*;
 
-use xrb_proc_macros::messages;
+use xrb_proc_macros::{messages, ByteSize, StaticByteSize};
 
 /// A request is a message sent from an X client to the X server.
 ///
@@ -83,6 +83,12 @@ where
 	fn length(&self) -> u32;
 }
 
+#[derive(StaticByteSize, ByteSize)]
+pub enum WindowClass {
+	InputOutput = 1,
+	InputOnly = 2,
+}
+
 messages! {
 	/// Creates an unmapped window with the given `window_id`.
 	//
@@ -109,9 +115,11 @@ messages! {
 	/// [Value]: crate::x11::errors::Value
 	/// [Window]: crate::x11::errors::Window
 	pub struct CreateWindow(1) {
+		/// The resource ID given to the window.
 		pub window_id: Window,
+		/// The parent of which the window will be created as a child of.
 		pub parent: Window,
-		//pub class: Inherit<WindowClass>,
+		pub class: Inherit<WindowClass>,
 		/// The color depth of the window in bits per pixel.
 		///
 		/// If the class is not [`InputOnly`], [`CopyFromParent`] will copy the
@@ -133,7 +141,6 @@ messages! {
 		pub width: u16,
 		/// The height of the window.
 		pub height: u16,
-		/// The 'border width'.
 		pub border_width: u16,
 		//pub value_mask: WinAttrMask,
 		//pub values: &'a [WinAttr],
@@ -146,10 +153,18 @@ messages! {
 	}
 }
 
+#[derive(StaticByteSize, ByteSize)]
 pub enum MapState {
 	Unmapped,
 	Unviewable,
 	Viewable,
+}
+
+#[derive(StaticByteSize, ByteSize)]
+pub enum BackingStore {
+	NotUseful,
+	WhenMapped,
+	Always,
 }
 
 messages! {
@@ -158,9 +173,9 @@ messages! {
 	}
 
 	pub struct GetWindowAttributesReply for GetWindowAttributes {
-		//pub $backing_store: BackingStore,
+		pub $backing_store: BackingStore,
 		pub visual: VisualId,
-		//pub class: WindowClass,
+		pub class: WindowClass,
 		pub bit_gravity: BitGravity,
 		pub win_gravity: WinGravity,
 		pub backing_planes: u32,
@@ -181,6 +196,9 @@ messages! {
 }
 
 pub mod change_save_set {
+	use xrb_proc_macros::{ByteSize, StaticByteSize};
+
+	#[derive(StaticByteSize, ByteSize)]
 	pub enum Mode {
 		Insert,
 		Delete,
@@ -214,6 +232,9 @@ messages! {
 }
 
 pub mod circulate_window {
+	use xrb_proc_macros::{ByteSize, StaticByteSize};
+
+	#[derive(StaticByteSize, ByteSize)]
 	pub enum Direction {
 		RaiseLowest,
 		RaiseHighest,
@@ -306,11 +327,13 @@ messages! {
 	}
 }
 
+#[derive(StaticByteSize, ByteSize)]
 pub enum GrabMode {
 	Synchronous,
 	Asynchronous,
 }
 
+#[derive(StaticByteSize, ByteSize)]
 pub enum GrabStatus {
 	Success,
 	AlreadyGrabbed,
@@ -399,6 +422,7 @@ messages! {
 	}
 }
 
+#[derive(StaticByteSize, ByteSize)]
 pub enum AllowEventsMode {
 	AsyncPointer,
 	SyncPointer,
@@ -502,31 +526,48 @@ messages! {
 	pub struct CloseFont(46): pub font: Font;
 }
 
+#[derive(StaticByteSize, ByteSize)]
 pub enum DrawDirection {
 	LeftToRight,
 	RightToLeft,
+}
+
+#[derive(StaticByteSize, ByteSize)]
+pub struct FontProperty {
+	pub name: Atom,
+	pub value: u32,
+}
+
+#[derive(StaticByteSize, ByteSize)]
+pub struct CharInfo {
+	pub left_side_bearing: i16,
+	pub right_side_bearing: i16,
+	pub character_width: i16,
+	pub ascent: i16,
+	pub descent: i16,
+	pub attributes: u16,
 }
 
 messages! {
 	pub struct QueryFont(47) -> QueryFontReply: pub font: Fontable;
 
 	pub struct QueryFontReply for QueryFont {
-		//pub min_bounds: CharInfo,
+		pub min_bounds: CharInfo,
 		[(); 4],
-		//pub max_bounds: CharInfo,
+		pub max_bounds: CharInfo,
 		[(); 4],
 		pub min_char_or_byte2: u16,
 		pub max_char_or_byte2: u16,
-		//#properties: u16,
+		#properties: u16,
 		pub draw_direction: DrawDirection,
 		pub min_byte1: u8,
 		pub max_byte1: u8,
 		pub all_chars_exist: bool,
 		pub font_ascent: i16,
 		pub font_descent: i16,
-		//#charinfos: u32,
-		//pub properties: Vec<FontProp>,
-		//pub charinfos: Vec<CharInfo>,
+		#charinfos: u32,
+		pub properties: Vec<FontProperty>,
+		pub charinfos: Vec<CharInfo>,
 	}
 
 	pub struct QueryTextExtents(48) -> QueryTextExtentsReply {
@@ -556,21 +597,21 @@ messages! {
 	}
 
 	pub struct ListFontsReply for ListFonts {
-		//#names[2], // number of STRs in names??
+		#names: u32,
 		[(); 22],
-		//pub names: [Str], // STRs??
-		//[(); {names}],
+		pub names: Vec<Xstring>,
+		[(); {names}],
 	}
 
 	// ListFontsWithInfo has a special format for its reply that needs to be
 	// done manually, so both the request and the reply are contained within the
 	// `mod list_fonts_with_info;` module.
 
-	pub struct SetFontPath(51) {
-		#names: u16, // number of STRs in path??
+	pub struct SetFontPath<'a>(51) {
+		#path: u16,
 		[(); 2],
-		//pub path: [Str], // STRs??
-		//[(); {path}],
+		pub path: &'a [Xstring],
+		[(); {path}],
 	}
 
 	// GetFontPath has a special format for its request. Both the request and
@@ -615,6 +656,7 @@ messages! {
 	}
 }
 
+#[derive(StaticByteSize, ByteSize)]
 pub enum Ordering {
 	Unsorted,
 	Ysorted,
@@ -668,9 +710,16 @@ messages! {
 	}
 }
 
+#[derive(StaticByteSize, ByteSize)]
 pub enum CoordinateMode {
 	Origin,
 	Previous,
+}
+
+#[derive(StaticByteSize, ByteSize)]
+pub struct Segment {
+	pub start: (i16, i16),
+	pub end: (i16, i16),
 }
 
 messages! {
@@ -688,16 +737,16 @@ messages! {
 		pub points: &'a [(i16, i16)],
 	}
 
-	pub struct PolySegment(66) {
+	pub struct PolySegment<'a>(66) {
 		pub drawable: Drawable,
 		pub context: GraphicsContext,
-		pub segments: [((i16, i16), (i16, i16))], // (start, end)
+		pub segments: &'a [Segment],
 	}
 
-	pub struct PolyRectangle(67) {
+	pub struct PolyRectangle<'a>(67) {
 		pub drawable: Drawable,
 		pub context: GraphicsContext,
-		pub rectangles: [Rectangle],
+		pub rectangles: &'a [Rectangle],
 	}
 
 	pub struct PolyArc<'a>(68) {
@@ -707,6 +756,7 @@ messages! {
 	}
 }
 
+#[derive(StaticByteSize, ByteSize)]
 pub enum Shape {
 	Complex,
 	Nonconvex,
@@ -773,7 +823,7 @@ messages! {
 		pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
-		//pub items: &'a [TextItem],
+		//pub items: &'a [TextItem8], // TODO: TextItem8 and TextItem16 need to be done separately
 		//[(); {items}],
 	}
 
@@ -782,7 +832,7 @@ messages! {
 		pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
-		//pub items: [TextItem16],
+		//pub items: [TextItem16], // TODO: TextItem8 and TextItem16 need to be done separately
 		//[(); {items}],
 	}
 
@@ -805,6 +855,7 @@ messages! {
 	}
 }
 
+#[derive(StaticByteSize, ByteSize)]
 pub enum ColormapAlloc {
 	None,
 	All,
@@ -904,7 +955,7 @@ messages! {
 
 	pub struct StoreColors(89) {
 		pub colormap: Colormap,
-		//pub items: [ColorItem],
+		//pub items: [ColorItem], // ColorItems need to be done separately
 	}
 
 	pub struct StoreNamedColor(90) {
@@ -980,9 +1031,12 @@ messages! {
 }
 
 pub mod query_best_size {
+	use xrb_proc_macros::{ByteSize, StaticByteSize};
+
 	/// The 'type' of 'best size' being queried in a [`QueryBestSize`] request.
 	///
 	/// [`QueryBestSize`]: super::QueryBestSize
+	#[derive(StaticByteSize, ByteSize)]
 	pub enum Class {
 		Cursor,
 		Tile,
@@ -1063,10 +1117,10 @@ messages! {
 	pub struct ListExtensions(99) -> ListExtensionsReply;
 
 	pub struct ListExtensionsReply for ListExtensions {
-		$#names: u8, // number of STRs in names??
+		$#names: u8,
 		[(); 24],
-		//pub names: [Str], // STRs??
-		//[(); {names}],
+		pub names: Vec<Xstring>,
+		[(); {names}],
 	}
 
 	// The `ChangeKeyboardMapping` and `GetKeyboardMapping` requests, as well as
@@ -1109,12 +1163,20 @@ messages! {
 		pub threshold: u16,
 		[(); 18],
 	}
+}
 
+#[derive(StaticByteSize /*ByteSize*/)]
+pub enum OrDefault<T> {
+	Default,
+	Some(T),
+}
+
+messages! {
 	pub struct SetScreenSaver(107) {
 		pub timeout: i16,
 		pub interval: i16,
-		//pub prefer_blanking: Defaulty<bool>,
-		//pub allow_exposures: Defaulty<bool>,
+		pub prefer_blanking: OrDefault<bool>,
+		pub allow_exposures: OrDefault<bool>,
 		[(); 2],
 	}
 
@@ -1130,11 +1192,15 @@ messages! {
 }
 
 pub mod change_hosts {
+	use xrb_proc_macros::{ByteSize, StaticByteSize};
+
+	#[derive(StaticByteSize, ByteSize)]
 	pub enum Mode {
 		Insert,
 		Delete,
 	}
 
+	#[derive(StaticByteSize, ByteSize)]
 	pub enum HostFamily {
 		Internet,
 		Decnet,
@@ -1165,6 +1231,9 @@ messages! {
 }
 
 pub mod set_close_down_mode {
+	use xrb_proc_macros::{ByteSize, StaticByteSize};
+
+	#[derive(StaticByteSize, ByteSize)]
 	pub enum Mode {
 		Destroy,
 		RetainPermanent,
@@ -1186,6 +1255,9 @@ messages! {
 }
 
 pub mod force_screen_saver {
+	use xrb_proc_macros::{ByteSize, StaticByteSize};
+
+	#[derive(StaticByteSize, ByteSize)]
 	pub enum Mode {
 		Reset,
 		Activate,
@@ -1197,6 +1269,9 @@ messages! {
 }
 
 pub mod set_pointer_mapping {
+	use xrb_proc_macros::{ByteSize, StaticByteSize};
+
+	#[derive(StaticByteSize, ByteSize)]
 	pub enum Status {
 		Success,
 		Busy,

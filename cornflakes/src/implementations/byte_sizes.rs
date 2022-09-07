@@ -13,6 +13,12 @@ macro_rules! static_byte_sizes {
                     $size
                 }
             }
+
+            impl ByteSize for $ty {
+                fn byte_size(&self) -> usize {
+                    $size
+                }
+            }
         )+
     };
 }
@@ -53,12 +59,21 @@ where
 	}
 }
 
-impl<T> ByteSize for T
+impl<T> ByteSize for Option<T>
+where
+    T: StaticByteSize,
+{
+    fn byte_size(&self) -> usize {
+        T::static_byte_size()
+    }
+}
+
+impl<T, const LEN: usize> StaticByteSize for [T; LEN]
 where
 	T: StaticByteSize,
 {
-	fn byte_size(&self) -> usize {
-		T::static_byte_size()
+	fn static_byte_size() -> usize {
+		LEN * T::static_byte_size()
 	}
 }
 
@@ -113,6 +128,267 @@ impl ByteSize for str {
 impl ByteSize for &str {
 	fn byte_size(&self) -> usize {
 		self.len()
+	}
+}
+
+impl<A, B> StaticByteSize for (A, B)
+where
+	A: StaticByteSize,
+	B: StaticByteSize,
+{
+	fn static_byte_size() -> usize
+	where
+		Self: Sized,
+	{
+		A::static_byte_size() + B::static_byte_size()
+	}
+}
+
+impl<A, B, C> StaticByteSize for (A, B, C)
+where
+	A: StaticByteSize,
+	B: StaticByteSize,
+	C: StaticByteSize,
+{
+	fn static_byte_size() -> usize
+	where
+		Self: Sized,
+	{
+		A::static_byte_size() + B::static_byte_size() + C::static_byte_size()
+	}
+}
+
+impl<A, B, C, D> StaticByteSize for (A, B, C, D)
+where
+	A: StaticByteSize,
+	B: StaticByteSize,
+	C: StaticByteSize,
+	D: StaticByteSize,
+{
+	fn static_byte_size() -> usize
+	where
+		Self: Sized,
+	{
+		A::static_byte_size()
+			+ B::static_byte_size()
+			+ C::static_byte_size()
+			+ D::static_byte_size()
+	}
+}
+
+impl<A, B, C, D, E> StaticByteSize for (A, B, C, D, E)
+where
+	A: StaticByteSize,
+	B: StaticByteSize,
+	C: StaticByteSize,
+	D: StaticByteSize,
+	E: StaticByteSize,
+{
+	fn static_byte_size() -> usize
+	where
+		Self: Sized,
+	{
+		A::static_byte_size()
+			+ B::static_byte_size()
+			+ C::static_byte_size()
+			+ D::static_byte_size()
+			+ E::static_byte_size()
+	}
+}
+
+impl<A, B, C, D, E, F> StaticByteSize for (A, B, C, D, E, F)
+where
+	A: StaticByteSize,
+	B: StaticByteSize,
+	C: StaticByteSize,
+	D: StaticByteSize,
+	E: StaticByteSize,
+	F: StaticByteSize,
+{
+	fn static_byte_size() -> usize
+	where
+		Self: Sized,
+	{
+		A::static_byte_size()
+			+ B::static_byte_size()
+			+ C::static_byte_size()
+			+ D::static_byte_size()
+			+ E::static_byte_size()
+			+ F::static_byte_size()
+	}
+}
+
+impl<A, B, C, D, E, F, G> StaticByteSize for (A, B, C, D, E, F, G)
+where
+	A: StaticByteSize,
+	B: StaticByteSize,
+	C: StaticByteSize,
+	D: StaticByteSize,
+	E: StaticByteSize,
+	F: StaticByteSize,
+	G: StaticByteSize,
+{
+	fn static_byte_size() -> usize
+	where
+		Self: Sized,
+	{
+		A::static_byte_size()
+			+ B::static_byte_size()
+			+ C::static_byte_size()
+			+ D::static_byte_size()
+			+ E::static_byte_size()
+			+ F::static_byte_size()
+			+ G::static_byte_size()
+	}
+}
+
+impl<A, B, C, D, E, F, G, H> StaticByteSize for (A, B, C, D, E, F, G, H)
+where
+	A: StaticByteSize,
+	B: StaticByteSize,
+	C: StaticByteSize,
+	D: StaticByteSize,
+	E: StaticByteSize,
+	F: StaticByteSize,
+	G: StaticByteSize,
+	H: StaticByteSize,
+{
+	fn static_byte_size() -> usize
+	where
+		Self: Sized,
+	{
+		A::static_byte_size()
+			+ B::static_byte_size()
+			+ C::static_byte_size()
+			+ D::static_byte_size()
+			+ E::static_byte_size()
+			+ F::static_byte_size()
+			+ G::static_byte_size()
+			+ H::static_byte_size()
+	}
+}
+
+impl<A, B, C, D, E, F, G, H, I> StaticByteSize for (A, B, C, D, E, F, G, H, I)
+where
+	A: StaticByteSize,
+	B: StaticByteSize,
+	C: StaticByteSize,
+	D: StaticByteSize,
+	E: StaticByteSize,
+	F: StaticByteSize,
+	G: StaticByteSize,
+	H: StaticByteSize,
+	I: StaticByteSize,
+{
+	fn static_byte_size() -> usize
+	where
+		Self: Sized,
+	{
+		A::static_byte_size()
+			+ B::static_byte_size()
+			+ C::static_byte_size()
+			+ D::static_byte_size()
+			+ E::static_byte_size()
+			+ F::static_byte_size()
+			+ G::static_byte_size()
+			+ H::static_byte_size()
+			+ I::static_byte_size()
+	}
+}
+
+impl<A, B, C, D, E, F, G, H, I, J> StaticByteSize for (A, B, C, D, E, F, G, H, I, J)
+where
+	A: StaticByteSize,
+	B: StaticByteSize,
+	C: StaticByteSize,
+	D: StaticByteSize,
+	E: StaticByteSize,
+	F: StaticByteSize,
+	G: StaticByteSize,
+	H: StaticByteSize,
+	I: StaticByteSize,
+	J: StaticByteSize,
+{
+	fn static_byte_size() -> usize
+	where
+		Self: Sized,
+	{
+		A::static_byte_size()
+			+ B::static_byte_size()
+			+ C::static_byte_size()
+			+ D::static_byte_size()
+			+ E::static_byte_size()
+			+ F::static_byte_size()
+			+ G::static_byte_size()
+			+ H::static_byte_size()
+			+ I::static_byte_size()
+			+ J::static_byte_size()
+	}
+}
+
+impl<A, B, C, D, E, F, G, H, I, J, K> StaticByteSize for (A, B, C, D, E, F, G, H, I, J, K)
+where
+	A: StaticByteSize,
+	B: StaticByteSize,
+	C: StaticByteSize,
+	D: StaticByteSize,
+	E: StaticByteSize,
+	F: StaticByteSize,
+	G: StaticByteSize,
+	H: StaticByteSize,
+	I: StaticByteSize,
+	J: StaticByteSize,
+	K: StaticByteSize,
+{
+	fn static_byte_size() -> usize
+	where
+		Self: Sized,
+	{
+		A::static_byte_size()
+			+ B::static_byte_size()
+			+ C::static_byte_size()
+			+ D::static_byte_size()
+			+ E::static_byte_size()
+			+ F::static_byte_size()
+			+ G::static_byte_size()
+			+ H::static_byte_size()
+			+ I::static_byte_size()
+			+ J::static_byte_size()
+			+ K::static_byte_size()
+	}
+}
+
+impl<A, B, C, D, E, F, G, H, I, J, K, L> StaticByteSize for (A, B, C, D, E, F, G, H, I, J, K, L)
+where
+	A: StaticByteSize,
+	B: StaticByteSize,
+	C: StaticByteSize,
+	D: StaticByteSize,
+	E: StaticByteSize,
+	F: StaticByteSize,
+	G: StaticByteSize,
+	H: StaticByteSize,
+	I: StaticByteSize,
+	J: StaticByteSize,
+	K: StaticByteSize,
+	L: StaticByteSize,
+{
+	fn static_byte_size() -> usize
+	where
+		Self: Sized,
+	{
+		A::static_byte_size()
+			+ B::static_byte_size()
+			+ C::static_byte_size()
+			+ D::static_byte_size()
+			+ E::static_byte_size()
+			+ F::static_byte_size()
+			+ G::static_byte_size()
+			+ H::static_byte_size()
+			+ I::static_byte_size()
+			+ J::static_byte_size()
+			+ K::static_byte_size()
+			+ L::static_byte_size()
 	}
 }
 

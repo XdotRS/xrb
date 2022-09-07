@@ -5,7 +5,7 @@
 use cornflakes::*;
 use std::io::{Error, ErrorKind};
 
-use xrb_proc_macros::StaticByteSize;
+use xrb_proc_macros::{StaticByteSize, ByteSize};
 
 /// A raw bitmask value that indicates the presence of certain fields.
 pub type Mask = u32;
@@ -55,7 +55,7 @@ pub type Button = u8;
 pub type Char1b = u8;
 pub type Char2b = u16;
 
-#[derive(StaticByteSize)]
+#[derive(StaticByteSize, ByteSize)]
 pub enum BitGravity {
 	Forget,
 	NorthWest,
@@ -70,7 +70,7 @@ pub enum BitGravity {
 	Static,
 }
 
-#[derive(StaticByteSize)]
+#[derive(StaticByteSize, ByteSize)]
 pub enum WinGravity {
 	Unmap,
 	NorthWest,
@@ -85,7 +85,7 @@ pub enum WinGravity {
 	Static,
 }
 
-#[derive(StaticByteSize)]
+#[derive(StaticByteSize, ByteSize)]
 pub enum HostFamily {
 	Internet,
 	Decnet,

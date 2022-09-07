@@ -323,6 +323,29 @@ where
 	}
 }
 
+impl<T> FromBytesWithSize for Vec<T>
+where
+	T: FromBytes + StaticByteSize,
+{
+	fn read_from_with_size(reader: &mut impl ByteReader, size: usize) -> Result<Self, IoError>
+	where
+		Self: Sized,
+	{
+		if size % T::static_byte_size() != 0 {
+			return Err(IoError::from(IoErrorKind::InvalidInput));
+		}
+
+		let length = size / T::static_byte_size();
+		let mut selves: Vec<T> = vec![];
+
+		for _ in 0..length {
+			selves.push(reader.read()?);
+		}
+
+		Ok(selves)
+	}
+}
+
 impl<A, B> FromBytes for (A, B)
 where
 	A: FromBytes,

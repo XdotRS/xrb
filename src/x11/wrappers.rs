@@ -2,8 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use cornflakes::{ByteReader, ByteWriter, FromBytes, StaticByteSize, ToBytes};
-
 use crate::x11::common::values::{Timestamp, Window};
 
 /// Automatically implements [`cornflakes::FromBytes`] and [`cornflakes::ToBytes`]
@@ -32,37 +30,46 @@ macro_rules! wrappers {
 				),+
 			}
 
-			impl$(<$T>)? StaticByteSize for $Name$(<$T>)?
+			impl$(<$T>)? cornflakes::StaticByteSize for $Name$(<$T>)?
 			$(where
-				$T: StaticByteSize,)?
+				$T: cornflakes::StaticByteSize,)?
 			{
 				fn static_byte_size() -> usize {
 					<$val>::static_byte_size()
 				}
 			}
 
-			impl$(<$T>)? FromBytes for $Name$(<$T>)?
+			impl$(<$T>)? cornflakes::ByteSize for $Name$(<$T>)?
 			$(where
-				$T: FromBytes + StaticByteSize,)?
+				$T: cornflakes::StaticByteSize,)?
 			{
-				fn read_from(reader: &mut impl ByteReader) -> Result<Self, std::io::Error> {
-					let mut bytes = reader.copy_to_bytes(<$val>::static_byte_size());
+				fn byte_size(&self) -> usize {
+					<$val as cornflakes::StaticByteSize>::static_byte_size()
+				}
+			}
+
+			impl$(<$T>)? cornflakes::FromBytes for $Name$(<$T>)?
+			$(where
+				$T: cornflakes::FromBytes + cornflakes::StaticByteSize,)?
+			{
+				fn read_from(reader: &mut impl cornflakes::ByteReader) -> Result<Self, std::io::Error> {
+					let mut bytes = reader.copy_to_bytes(<$val as cornflakes::StaticByteSize>::static_byte_size());
 
 					let sum = bytes.iter().sum::<u8>();
 
 					$(if sum == $encode {
 						Ok(Self::$Variant)
 					} else)+ {
-						Ok(Self::$Value(<$val>::read_from(&mut bytes)?))
+						Ok(Self::$Value(<$val as cornflakes::FromBytes>::read_from(&mut bytes)?))
 					}
 				}
 			}
 
-			impl$(<$T>)? ToBytes for $Name$(<$T>)?
+			impl$(<$T>)? cornflakes::ToBytes for $Name$(<$T>)?
 			$(where
-				$T: ToBytes + StaticByteSize,)?
+				$T: cornflakes::ToBytes + cornflakes::StaticByteSize,)?
 			{
-				fn write_to(&self, writer: &mut impl ByteWriter) -> Result<(), std::io::Error> {
+				fn write_to(&self, writer: &mut impl cornflakes::ByteWriter) -> Result<(), std::io::Error> {
 					match self {
 						// FIXME: this isn't writing $encode as the correct length!
 						// need a trait that allows casting to a certain length

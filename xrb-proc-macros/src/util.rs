@@ -153,7 +153,7 @@ pub fn byte_size_sum(data: &Data) -> TokenStream2 {
 						});
 
 						// For every named field, add its size.
-						quote!(Self::#name => 1 #(+ #recurse)*)
+						quote!(Self::#name => 1 #(+ #recurse)*,)
 					}
 
 					Fields::Unnamed(ref fields) => {
@@ -168,7 +168,7 @@ pub fn byte_size_sum(data: &Data) -> TokenStream2 {
 						quote!(Self::#name => 1 #(+ #recurse)*)
 					}
 
-					Fields::Unit => quote!(Self::#name => 1),
+					Fields::Unit => quote!(Self::#name => 1,),
 				}
 			});
 

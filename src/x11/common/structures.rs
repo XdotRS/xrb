@@ -3,10 +3,38 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use crate::x11::common::values::{Char1b, Char2b, HostFamily};
+
+use cornflakes::{ByteReader, ByteSize, ByteWriter, FromBytes, ToBytes};
 use xrb_proc_macros::{ByteSize, StaticByteSize};
+
+use std::io::Error;
 
 pub type String8 = Vec<Char1b>;
 pub type String16 = Vec<Char2b>;
+
+pub struct Xstring(String8);
+
+impl ByteSize for Xstring {
+	fn byte_size(&self) -> usize {
+		self.0.byte_size() + 1
+	}
+}
+
+impl FromBytes for Xstring {
+	fn read_from(reader: &mut impl ByteReader) -> Result<Self, Error> {
+		let len = reader.read_u8() as usize;
+		Ok(Self(reader.read_with_size(len)?))
+	}
+}
+
+impl ToBytes for Xstring {
+	fn write_to(&self, writer: &mut impl ByteWriter) -> Result<(), Error> {
+		writer.write(self.0.len() as u8)?;
+		writer.write_all(&self.0)?;
+
+		Ok(())
+	}
+}
 
 /// A rectangle represented by its coordinates and dimensions.
 ///
