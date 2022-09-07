@@ -61,11 +61,11 @@ where
 	/// it is sent, starting with one. This sequence number can therefore be
 	/// used to keep track of exactly which request generated this reply.
 	fn sequence(&self) -> u16;
-	/// The major opcode, if any, associated with the request that this reply
-	/// is for.
+	/// The major opcode, if any, associated with the request that generated
+	/// this reply.
 	fn major_opcode(&self) -> Option<u8>;
-	/// The minor opcode, if any, associated with the request that this reply
-	/// is for.
+	/// The minor opcode, if any, associated with the request that generated
+	/// this reply.
 	fn minor_opcode(&self) -> Option<u8>;
 	/// The length of this reply in 4-byte units minus 8.
 	///
@@ -73,13 +73,14 @@ where
 	/// additional bytes of data; this method indicates the number of additional
 	/// bytes of data within this reply.
 	///
-	/// |'Actual' length in bytes (32 + 4n)|`length()` (n)|
-	/// |----------------------------------|--------------|
-	/// |32                                |0             |
-	/// |36                                |1             |
-	/// |40                                |2             |
-	/// |44                                |3             |
-	/// |...                               |...           |
+	/// |'Actual' length in bytes|`length()`|
+	/// |------------------------|----------|
+	/// |32                      |0         |
+	/// |36                      |1         |
+	/// |40                      |2         |
+	/// |44                      |3         |
+	/// |...                     |...       |
+	/// |32 + 4n                 |n         |
 	fn length(&self) -> u32;
 }
 
