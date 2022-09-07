@@ -90,6 +90,29 @@ pub enum WindowClass {
 	InputOnly = 2,
 }
 
+// TODO: docs
+/// See also: [`AttributeMask`]
+///
+/// [`AttributeMask`]: crate::x11::common::masks::AttributeMask
+#[derive(StaticByteSize, ByteSize)]
+pub enum Attribute {
+	BackgroundPixmap(Option<Relative<Pixmap>>),
+	BackgroundPixel(u32),
+	BorderPixmap(Inherit<Pixmap>),
+	BorderPixel(u32),
+	BitGravity(BitGravity),
+	WinGravity(WinGravity),
+	BackingStore(BackingStore),
+	BackingPlanes(u32),
+	BackingPixel(u32),
+	OverrideRedirect(bool),
+	SaveUnder(bool),
+	EventMask(EventMask),
+	DoNotPropagateMask(DeviceEventMask),
+	Colormap(Inherit<Colormap>),
+	Cursor(Option<Cursor>),
+}
+
 messages! {
 	/// Creates an unmapped window with the given `window_id`.
 	///
@@ -156,51 +179,17 @@ messages! {
 		/// The height of the window.
 		pub height: u16,
 		pub border_width: u16,
-		//pub value_mask: WinAttrMask,
+		pub value_mask: AttributeMask,
 		/// A list of [window attributes] that are to configured for the window.
 		///
-		/// |Attribute           |Default value              |Class                          |
-		/// |--------------------|---------------------------|-------------------------------|
-		/// |[BackgroundPixmap]  |[`None`]                   |[`InputOutput`]                |
-		/// |[BorderPixmap]      |[`Inherit::CopyFromParent`]|[`InputOutput`]                |
-		/// |[BitGravity]        |[`BitGravity::Forget`]     |[`InputOutput`]                |
-		/// |[WinGravity]        |[`WinGravity::NorthWest`]  |[`InputOutput`] & [`InputOnly`]|
-		/// |[BackingStore]      |[`BackingStore::NotUseful`]|[`InputOutput`]                |
-		/// |[BackingPlanes]     |`0xFFFFFFFF`               |[`InputOutput`]                |
-		/// |[BackingPixel]      |`0`                        |[`InputOutput`]                |
-		/// |[SaveUnder]         |`false`                    |[`InputOutput`]                |
-		/// |[EventMask]         |[`EventMask::none()`]      |[`InputOutput`] & [`InputOnly`]|
-		/// |[DoNotPropagateMask]|[`DeviceEventMask::none()`]|[`InputOutput`] & [`InputOnly`]|
-		/// |[OverrideRedirect]  |`false`                    |[`InputOutput`] & [`InputOnly`]|
-		/// |[Colormap]          |[`Inherit::CopyFromParent`]|[`InputOutput`]
-		/// |[Cursor]            |[`None`]                   |[`InputOutput`] & [`InputOnly`]|
-		///
-		/// [window attributes]: WinAttr
-		/// [attributes]: WinAttr
-		/// [`InputOutput`]: WindowClass::InputOutput
-		/// [`InputOnly`]: WindowClass::InputOnly
-		/// [BackgroundPixmap]: WinAttr::BackgroundPixmap
-		/// [BorderPixmap]: WinAttr::BorderPixmap
-		/// [BitGravity]: WinAttr::BitGravity
-		/// [WinGravity]: WinAttr::WinGravity
-		/// [BackingStore]: WinAttr::BackingStore
-		/// [BackingPlanes]: WinAttr::BackingPlanes
-		/// [BackingPixe]: WinAttr::BackingPixel
-		/// [SaveUnder]: WinAttr::SaveUnder
-		/// [EventMask]: WinAttr::EventMask
-		/// [DoNotPropagateMask]: WinAttr::DoNotPropagateMask
-		/// [OverrideRedirect]: WinAttr::OverrideRedirect
-		/// [Colormap]: WinAttr::Colormap
-		/// [Cursor]: WinAttr::Cursor
-		/// [`EventMask::none()`]: EventMask::none
-		/// [`DeviceEventMask::none()`]: DeviceEventMask::none
-		pub values: &'a [Window], // Window is a placeholder until WinAttr is done
+		/// [window attributes]: Attribute
+		pub values: &'a [Attribute], // Window is a placeholder until WinAttr is done
 	}
 
-	pub struct ChangeWindowAttributes(2) {
+	pub struct ChangeWindowAttributes<'a>(2) {
 		pub target: Window,
-		//pub value_mask: WinAttrMask,
-		//pub values: &'a [WinAttr],
+		pub value_mask: AttributeMask,
+		pub values: &'a [Attribute],
 	}
 }
 
@@ -251,7 +240,7 @@ pub mod change_save_set {
 
 	#[derive(StaticByteSize, ByteSize)]
 	pub enum Mode {
-		Insert,
+		Insertl,
 		Delete,
 	}
 }
@@ -422,13 +411,12 @@ messages! {
 		pub cursor_override: Option<Cursor>,
 		pub button: Specificity<Button>,
 		(),
-		//pub modifiers: ModifierKeyMask,
+		pub modifiers: AnyModifierKeyMask,
 	}
 
 	pub struct UngrabButton(29) {
 		pub $button: Specificity<Button>,
 		pub target_window: Window,
-		//pub modifiers: ModifierKeyMask,
 		[(); 2],
 	}
 
@@ -458,7 +446,7 @@ messages! {
 	pub struct GrabKey(33) {
 		pub $owner_events: bool,
 		pub target_window: Window,
-		//pub modifiers: ModifierKeyMask,
+		pub modifiers: AnyModifierKeyMask,
 		pub key: Specificity<Keycode>,
 		pub pointer_mode: GrabMode,
 		pub keyboard_mode: GrabMode,
@@ -468,7 +456,7 @@ messages! {
 	pub struct UngrabKey(34) {
 		pub $key: Specificity<Keycode>,
 		pub target_window: Window,
-		//pub modifiers: ModifierKeyMask,
+		pub modifiers: AnyModifierKeyMask,
 		[(); 2],
 	}
 }
@@ -504,7 +492,7 @@ messages! {
 		pub root_y: i16,
 		pub win_x: i16,
 		pub win_y: i16,
-		pub mask: KeyButtonMask,
+		pub mask: ModifierMask,
 		[(); 6],
 	}
 
@@ -682,20 +670,20 @@ messages! {
 	pub struct CreateGcontext(55) {
 		pub context_id: GraphicsContext,
 		pub drawable: Drawable,
-		//pub value_mask: GraphicsContextMask,
+		pub value_mask: GraphicsContextMask,
 		//pub values: [GraphicsContextValue],
 	}
 
 	pub struct ChangeGraphicsContext(56) {
 		pub context: GraphicsContext,
-		//pub value_mask: GraphicsContextMask,
+		pub value_mask: GraphicsContextMask,
 		//pub values: [GraphicsContextValue],
 	}
 
 	pub struct CopyGraphicsContext(57) {
 		pub source: GraphicsContext,
 		pub destination: GraphicsContext,
-		//pub value_mask: GraphicsContextMask,
+		pub value_mask: GraphicsContextMask,
 	}
 
 	pub struct SetDashes<'a>(58) {
