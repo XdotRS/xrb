@@ -4,7 +4,7 @@
 
 use proc_macro2::{Span, TokenStream as TokenStream2};
 
-use quote::{quote, quote_spanned};
+use quote::{quote, quote_spanned, format_ident};
 
 use syn::spanned::Spanned;
 use syn::{parse_quote, Data, Fields, GenericParam, Generics, Index, Type};
@@ -158,14 +158,20 @@ pub fn byte_size_sum(data: &Data) -> TokenStream2 {
 
 					Fields::Unnamed(ref fields) => {
 						// Unnamed fields in a variant
+						let fields = fields.unnamed.iter().enumerate();
 
-						let recurse = fields.unnamed.iter().enumerate().map(|(i, field)| {
+						let recurse = fields.map(|(i, field)| {
 							let index = Index::from(i);
-							byte_size_recurse(quote!(self.#index), field.span())
-						});
+							let ident = format_ident!("_{}", index);
+
+							(ident.clone(), byte_size_recurse(quote!(#ident), field.span()))
+						}).collect::<Vec<_>>();
+
+						let ident = recurse.iter().map(|(ident, _)| ident);
+						let size = recurse.iter().map(|(_, size)| size);
 
 						// For every unnamed field, add its size.
-						quote!(Self::#name => 1 #(+ #recurse)*)
+						quote!(Self::#name(#(#ident),*) => 1 #(+ #size)*,)
 					}
 
 					Fields::Unit => quote!(Self::#name => 1,),
