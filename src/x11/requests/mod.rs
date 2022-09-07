@@ -801,7 +801,7 @@ messages! {
 		[(); {data}],
 	}
 
-	pub struct GetImage(73) -> GetImageReply<'_> {
+	pub struct GetImage(73) -> GetImageReply {
 		//pub $format: ImageFormat,
 		pub drawable: Drawable,
 		pub x: i16,
@@ -811,11 +811,11 @@ messages! {
 		pub plane_mask: u32,
 	}
 
-	pub struct GetImageReply<'a> for GetImage {
+	pub struct GetImageReply for GetImage {
 		pub $depth: u8,
 		pub visual: Option<VisualId>,
 		[(); 20],
-		pub data: &'a [u8],
+		pub data: Vec<u8>,
 		[(); {data}],
 	}
 
