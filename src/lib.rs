@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+#![feature(doc_notable_trait)]
+
 //! # X Rust Bindings
 //! X Rust Bindings is a Rust library directly implementing the types and protocol messages of the
 //! [X11 protocol specification](https://x.org/releases/X11R7.7/doc/xproto/xprotocol.html/). XRB is

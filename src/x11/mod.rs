@@ -3,11 +3,8 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 pub mod wrappers;
-
 pub mod common;
-
-pub mod atoms;
-pub mod identifiers;
+pub mod id;
 
 pub(crate) mod events;
 pub(crate) mod requests;
