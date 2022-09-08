@@ -2,9 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::x11::common::masks::*;
-use crate::x11::common::structures::*;
-use crate::x11::common::values::*;
+use crate::x11::common::*;
+use crate::x11::id::atoms::Atom;
+use crate::x11::id::*;
 use crate::x11::wrappers::*;
 
 use xrb_proc_macros::{messages, ByteSize, StaticByteSize};
@@ -287,7 +287,7 @@ messages! {
 		pub target: Window,
 	}
 
-	pub struct GetGeometry(14) -> GetGeometryReply: pub target: Drawable;
+	pub struct GetGeometry(14) -> GetGeometryReply: pub target: Box<dyn Drawable>;
 
 	pub struct GetGeometryReply for GetGeometry {
 		pub $depth: u8,
@@ -588,9 +588,9 @@ pub struct CharInfo {
 }
 
 messages! {
-	pub struct QueryFont(47) -> QueryFontReply: pub font: Fontable;
+	pub struct QueryFont<'a>(47) -> QueryFontReply: pub font: &'a dyn Fontable;
 
-	pub struct QueryFontReply for QueryFont {
+	pub struct QueryFontReply for QueryFont<'_> {
 		pub min_bounds: CharInfo,
 		[(); 4],
 		pub max_bounds: CharInfo,
@@ -611,7 +611,7 @@ messages! {
 
 	pub struct QueryTextExtents(48) -> QueryTextExtentsReply {
 		pub $odd_length: bool,
-		pub font: Fontable,
+		pub font: Box<dyn Fontable>,
 		pub string: String16,
 		[(); {string}],
 	}
@@ -638,7 +638,7 @@ messages! {
 	pub struct ListFontsReply for ListFonts {
 		#names: u32,
 		[(); 22],
-		pub names: Vec<Xstring>,
+		pub names: Vec<LenString8>,
 		[(); {names}],
 	}
 
@@ -649,7 +649,7 @@ messages! {
 	pub struct SetFontPath<'a>(51) {
 		#path: u16,
 		[(); 2],
-		pub path: &'a [Xstring],
+		pub path: &'a [LenString8],
 		[(); {path}],
 	}
 
@@ -657,27 +657,27 @@ messages! {
 	// the reply are done manually and can be found in the `mod get_font_path;`
 	// module.
 
-	pub struct CreatePixmap(53) {
+	pub struct CreatePixmap<'a>(53) {
 		pub $depth: u8,
 		pub pixmap_id: Pixmap,
-		pub drawable: Drawable,
+		pub drawable: &'a dyn Drawable,
 		pub width: u16,
 		pub height: u16,
 	}
 
 	pub struct FreePixmap(54): pub pixmap: Pixmap;
 
-	pub struct CreateGcontext(55) {
+	pub struct CreateGraphicsContext<'a>(55) {
 		pub context_id: GraphicsContext,
-		pub drawable: Drawable,
+		pub drawable: &'a dyn Drawable,
 		pub value_mask: GraphicsContextMask,
-		//pub values: [GraphicsContextValue],
+		//pub values: &'a [GraphicsContextValue],
 	}
 
 	pub struct ChangeGraphicsContext(56) {
 		pub context: GraphicsContext,
 		pub value_mask: GraphicsContextMask,
-		//pub values: [GraphicsContextValue],
+		//pub values: &'a [GraphicsContextValue],
 	}
 
 	pub struct CopyGraphicsContext(57) {
@@ -723,9 +723,9 @@ messages! {
 		pub height: u16,
 	}
 
-	pub struct CopyArea(62) {
-		pub source: Drawable,
-		pub destination: Drawable,
+	pub struct CopyArea<'a>(62) {
+		pub source: &'a dyn Drawable,
+		pub destination: &'a dyn Drawable,
 		pub context: GraphicsContext,
 		pub src_x: i16,
 		pub src_y: i16,
@@ -735,9 +735,9 @@ messages! {
 		pub height: u16,
 	}
 
-	pub struct CopyPlane(63) {
-		pub source: Drawable,
-		pub destination: Drawable,
+	pub struct CopyPlane<'a>(63) {
+		pub source: &'a dyn Drawable,
+		pub destination: &'a dyn Drawable,
 		pub context: GraphicsContext,
 		pub src_x: i16,
 		pub src_y: i16,
@@ -764,32 +764,32 @@ pub struct Segment {
 messages! {
 	pub struct PolyPoint<'a>(64) {
 		pub $coordinate_mode: CoordinateMode,
-		pub drawable: Drawable,
+		pub drawable: &'a dyn Drawable,
 		pub context: GraphicsContext,
 		pub points: &'a [(i16, i16)],
 	}
 
 	pub struct PolyLine<'a>(65) {
 		pub $coordinate_mode: CoordinateMode,
-		pub drawable: Drawable,
+		pub drawable: &'a dyn Drawable,
 		pub context: GraphicsContext,
 		pub points: &'a [(i16, i16)],
 	}
 
 	pub struct PolySegment<'a>(66) {
-		pub drawable: Drawable,
+		pub drawable: &'a dyn Drawable,
 		pub context: GraphicsContext,
 		pub segments: &'a [Segment],
 	}
 
 	pub struct PolyRectangle<'a>(67) {
-		pub drawable: Drawable,
+		pub drawable: &'a dyn Drawable,
 		pub context: GraphicsContext,
 		pub rectangles: &'a [Rectangle],
 	}
 
 	pub struct PolyArc<'a>(68) {
-		pub drawable: Drawable,
+		pub drawable: &'a dyn Drawable,
 		pub context: GraphicsContext,
 		pub arcs: &'a [GeomArc],
 	}
@@ -804,7 +804,7 @@ pub enum Shape {
 
 messages! {
 	pub struct FillPoly<'a>(69) {
-		pub drawable: Drawable,
+		pub drawable: &'a dyn Drawable,
 		pub context: GraphicsContext,
 		pub shape: Shape,
 		pub coordinate_mode: CoordinateMode,
@@ -813,20 +813,20 @@ messages! {
 	}
 
 	pub struct PolyFillRectangle<'a>(70) {
-		pub drawable: Drawable,
+		pub drawable: &'a dyn Drawable,
 		pub context: GraphicsContext,
 		pub rectangles: &'a [Rectangle],
 	}
 
 	pub struct PolyFillArc<'a>(71) {
-		pub drawable: Drawable,
+		pub drawable: &'a dyn Drawable,
 		pub context: GraphicsContext,
 		pub arcs: &'a [GeomArc],
 	}
 
 	pub struct PutImage<'a>(72) {
 		//pub $format: Bitmap<ImageFormat>,
-		pub drawable: Drawable,
+		pub drawable: &'a dyn Drawable,
 		pub context: GraphicsContext,
 		pub width: u16,
 		pub height: u16,
@@ -839,9 +839,9 @@ messages! {
 		[(); {data}],
 	}
 
-	pub struct GetImage(73) -> GetImageReply {
+	pub struct GetImage<'a>(73) -> GetImageReply {
 		//pub $format: ImageFormat,
-		pub drawable: Drawable,
+		pub drawable: &'a dyn Drawable,
 		pub x: i16,
 		pub y: i16,
 		pub width: u16,
@@ -849,7 +849,7 @@ messages! {
 		pub plane_mask: u32,
 	}
 
-	pub struct GetImageReply for GetImage {
+	pub struct GetImageReply for GetImage<'_> {
 		pub $depth: u8,
 		pub visual: Option<VisualId>,
 		[(); 20],
@@ -857,8 +857,8 @@ messages! {
 		[(); {data}],
 	}
 
-	pub struct PolyText(74) {
-		pub drawable: Drawable,
+	pub struct PolyText8<'a>(74) {
+		pub drawable: &'a dyn Drawable,
 		pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
@@ -866,8 +866,8 @@ messages! {
 		//[(); {items}],
 	}
 
-	pub struct PolyText16(75) {
-		pub drawable: Drawable,
+	pub struct PolyText16<'a>(75) {
+		pub drawable: &'a dyn Drawable,
 		pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
@@ -875,8 +875,8 @@ messages! {
 		//[(); {items}],
 	}
 
-	pub struct ImageText(76) {
-		pub drawable: Drawable,
+	pub struct ImageText8<'a>(76) {
+		pub drawable: &'a dyn Drawable,
 		pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
@@ -884,8 +884,8 @@ messages! {
 		[(); {string}],
 	}
 
-	pub struct ImageText16(77) {
-		pub drawable: Drawable,
+	pub struct ImageText16<'a>(77) {
+		pub drawable: &'a dyn Drawable,
 		pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
@@ -1108,7 +1108,7 @@ messages! {
 	/// [`Value`]: crate::x11::errors::Value
 	/// [window]: Window
 	/// [`InputOnly`]: WindowClass::InputOnly
-	pub struct QueryBestSize(97) -> QueryBestSizeReply {
+	pub struct QueryBestSize<'a>(97) -> QueryBestSizeReply {
 		/// The 'type' of 'best size' being queried.
 		pub $class: query_best_size::Class,
 		/// Indicates the desired screen.
@@ -1122,7 +1122,7 @@ messages! {
 		/// [`Tile`]: query_best_size::Class::Tile
 		/// [`Stipple`]: query_best_size::Class::Stipple
 		/// [`InputOnly`]: query_best_size::Class::InputOnly
-		pub drawable: Drawable,
+		pub drawable: &'a dyn Drawable,
 		pub width: u16,
 		pub height: u16,
 	}
@@ -1132,7 +1132,7 @@ messages! {
 	/// This contains the closest ideal size to the `width` and `height` that
 	/// was given in the [`QueryBestSize`] request. See the request's docs for
 	/// more information.
-	pub struct QueryBestSizeReply for QueryBestSize {
+	pub struct QueryBestSizeReply for QueryBestSize<'_> {
 		pub width: u16,
 		pub height: u16,
 		[(); 20],
@@ -1158,7 +1158,7 @@ messages! {
 	pub struct ListExtensionsReply for ListExtensions {
 		$#names: u8,
 		[(); 24],
-		pub names: Vec<Xstring>,
+		pub names: Vec<LenString8>,
 		[(); {names}],
 	}
 

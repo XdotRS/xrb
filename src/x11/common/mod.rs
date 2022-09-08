@@ -5,11 +5,10 @@
 use xrb_proc_macros::{ByteSize, StaticByteSize};
 
 mod string;
-pub use string::*;
+mod masks;
 
-pub mod masks;
-pub mod structures;
-pub mod values;
+pub use string::*;
+pub use masks::*;
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
 pub enum BitGravity {
@@ -41,6 +40,56 @@ pub enum WinGravity {
 	Static,
 }
 
+/// A rectangle with coordinates and dimensions.
+///
+/// The coordinates are those of the upper-left corner of the rectangle. The
+/// units for the coordinates and dimensions are not specified.
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub struct Rectangle {
+	/// X-coordinate of the upper-left corner of the rectangle.
+	pub x: i16,
+	/// Y-coordinate of the upper-left corner of the rectangle.
+	pub y: i16,
+	/// Width of the rectangle.
+	pub width: u16,
+	/// Height of the rectangle.
+	pub height: u16,
+}
+
+/// An arc (the geometry kind) with coordinates, dimensions, and angles.
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub struct GeomArc {
+	/// X-coordinate of the arc.
+	pub x: i16,
+	/// Y-coordinate of the arc.
+	pub y: i16,
+	/// Width of the arc.
+	pub width: u16,
+	/// Height of the arc.
+	pub height: u16,
+	/// The start angle of the arc.
+	pub start: i16,
+	/// The end angle of the arc.
+	pub end: i16,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug, ByteSize)]
+pub struct Host {
+	/// The protocol family of the host, e.g. [InternetV6](HostFamily::InternetV6).
+	pub family: HostFamily,
+	/// The address of the host in question.
+	pub address: String8,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum HostFamily {
+	Internet,
+	Decnet,
+	Chaos,
+	ServerInterpreted,
+	InternetV6,
+}
+
 /// An identifier representing the concept of all possible keys.
 ///
 /// The difference between a `Keysym` and a [`Keycode`] is that the `Keysym`
@@ -68,3 +117,5 @@ pub type Keycode = u8;
 /// For example, button 1 is the primary mouse button, commonly found on the
 /// left of a mouse.
 pub type Button = u8;
+
+pub type Timestamp = u32;
