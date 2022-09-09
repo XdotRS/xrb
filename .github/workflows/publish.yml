@@ -173,11 +173,10 @@ jobs:
         path: template
 
   deploy-docs:
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
-    runs-on: ubuntu-latest
     # Can't deploy the documentation until it exists!
     needs: build-docs
 
