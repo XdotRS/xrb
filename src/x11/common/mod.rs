@@ -6,9 +6,15 @@ use xrb_proc_macros::{ByteSize, StaticByteSize};
 
 mod string;
 mod masks;
+mod wrappers;
+mod id;
 
 pub use string::*;
 pub use masks::*;
+pub use wrappers::*;
+pub use id::*;
+
+pub use id::atoms::Atom;
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
 pub enum BitGravity {
@@ -119,3 +125,42 @@ pub type Keycode = u8;
 pub type Button = u8;
 
 pub type Timestamp = u32;
+
+/// Specifies how to pick the window to revert focus to when the current
+/// window is unmapped.
+//
+// Would this be better as a `Parent` unit struct and a type alias for
+// `Option<InputFocus<Parent>>`? Did it like this so that you don't have to do:
+// ```
+// Some(InputFocus::Specific(Parent))
+// ```
+// and can instead do:
+// ```
+// RevertTo::Parent
+// ```
+pub enum RevertTo {
+	/// Revert the focus to none at all.
+	///
+	/// It is recommended to avoid setting this: it might lead to behavior you
+	/// don't expect. Only set this as the [`RevertTo`] if you know the
+	/// potential consequences.
+	None,
+	// TODO: What is this?
+	PointerRoot,
+	/// Revert the focus to the parent of the window.
+	///
+	/// This is the recommended [`RevertTo`] option for most cases.
+	Parent,
+}
+
+/// The destination for an [`Event`] in a [`SendEvent`] request.
+///
+/// This is the window that the event will be sent to.
+pub enum Destination {
+	/// The [`Window`] the pointer is currently within.
+	PointerWindow,
+	/// The [`Window`] that currently has input focus.
+	InputFocus,
+	/// A specific [`Window`].
+	Specific(Window),
+}

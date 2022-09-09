@@ -2,11 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-pub mod wrapper;
-pub mod common;
-pub mod id;
+mod common;
 
-pub(crate) mod events;
-pub(crate) mod requests;
+pub use common::*;
 
+pub mod events;
+pub mod requests;
 pub mod errors;

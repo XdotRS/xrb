@@ -2,9 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::x11::common::*;
-use crate::x11::id::atoms::Atom;
-use crate::x11::id::*;
+use crate::x11::*;
 
 use xrb_proc_macros::{messages, ByteSize, StaticByteSize};
 
@@ -95,9 +93,9 @@ pub enum WindowClass {
 /// [`AttributeMask`]: crate::x11::common::masks::AttributeMask
 #[derive(StaticByteSize, ByteSize)]
 pub enum Attribute {
-	BackgroundPixmap(Option<Relative<Pixmap>>),
+	BackgroundPixmap(Option<Relatable<Pixmap>>),
 	BackgroundPixel(u32),
-	BorderPixmap(Inherit<Pixmap>),
+	BorderPixmap(Inheritable<Pixmap>),
 	BorderPixel(u32),
 	BitGravity(BitGravity),
 	WinGravity(WinGravity),
@@ -108,7 +106,7 @@ pub enum Attribute {
 	SaveUnder(bool),
 	EventMask(EventMask),
 	DoNotPropagateMask(DeviceEventMask),
-	Colormap(Inherit<Colormap>),
+	Colormap(Inheritable<Colormap>),
 	Cursor(Option<Cursor>),
 }
 
@@ -155,7 +153,7 @@ messages! {
 		/// [`InputOnly`]: WindowClass::InputOnly
 		/// [window class]: WindowClass
 		/// [`Match`]: crate::x11::errors::Match
-		pub class: Inherit<WindowClass>,
+		pub class: Inheritable<WindowClass>,
 		/// The color depth of the window in bits per pixel.
 		///
 		/// If the class is not [`InputOnly`], [`CopyFromParent`] will copy the
@@ -165,8 +163,8 @@ messages! {
 		/// [`InputOnly`]: WindowClass::InputOnly
 		/// [`CopyFromParent`]: Inherit::CopyFromParent
 		/// [`Match`]: crate::x11::errors::Match
-		pub $depth: Inherit<u8>,
-		pub visual: Inherit<VisualId>,
+		pub $depth: Inheritable<u8>,
+		pub visual: Inheritable<VisualId>,
 		/// The initial x-coordinate of the window relative to its parent's
 		/// top-left corner.
 		pub x: i16,
@@ -408,13 +406,13 @@ messages! {
 		pub keyboard_mode: GrabMode,
 		pub confine_to: Option<Window>,
 		pub cursor_override: Option<Cursor>,
-		pub button: Specificity<Button>,
+		pub button: Any<Button>,
 		(),
 		pub modifiers: AnyModifierKeyMask,
 	}
 
 	pub struct UngrabButton(29) {
-		pub $button: Specificity<Button>,
+		pub $button: Any<Button>,
 		pub target_window: Window,
 		[(); 2],
 	}
@@ -446,14 +444,14 @@ messages! {
 		pub $owner_events: bool,
 		pub target_window: Window,
 		pub modifiers: AnyModifierKeyMask,
-		pub key: Specificity<Keycode>,
+		pub key: Any<Keycode>,
 		pub pointer_mode: GrabMode,
 		pub keyboard_mode: GrabMode,
 		[(); 3],
 	}
 
 	pub struct UngrabKey(34) {
-		pub $key: Specificity<Keycode>,
+		pub $key: Any<Keycode>,
 		pub target_window: Window,
 		pub modifiers: AnyModifierKeyMask,
 		[(); 2],
@@ -535,15 +533,15 @@ messages! {
 
 	pub struct SetInputFocus(42) {
 		//pub $revert_to: Option<RevertTo>,
-		pub focus: Option<Focus>,
+		pub focus: Option<InputFocus>,
 		pub time: Time,
 	}
 
 	pub struct GetInputFocus(43) -> GetInputFocusReply;
 
 	pub struct GetInputFocusReply for GetInputFocus {
-		//pub $revert_to: Option<RevertTo>,
-		pub focus: Option<Focus>,
+		pub $revert_to: RevertTo,
+		pub focus: Option<InputFocus>,
 		[(); 20],
 	}
 
