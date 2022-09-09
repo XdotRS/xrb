@@ -1,0 +1,103 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+name: Format code, run tests, publish docs
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          components: rustfmt, clippy
+      
+      - name: Run  checks
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+
+  clippy:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Clippy analysis
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          
+  tests:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Run tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          
+  format:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Auto-format with rustfmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all
+      
+      - name: Configure git credentials
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+      
+      - name: Commit and push changes
+        run: |
+          git add .
+          git commit -m "Formatted with rustfmt [${{ github.run_number }}]"
+          git push
+  
+  docs:
+    runs-on: ubuntu-latest
+    needs: format
+    steps:
+      - name: Checkout docs
+        uses: actions/checkout@v3
+        with:
+          ref: docs
+          path: docs
+      
+      - name: Generate documentation
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: --no-deps --workspace --document-private-items
+      
+      - name: Replace previous documentation
+        run: |
+          rm -r docs/doc
+          cp -r target/doc .docs/
+      
+      - name: Configure git credentials
+        run: |
+          git -C docs config user.name github-actions
+          git -C docs config user.email github-actions@github.com
+      
+      - name: Commit and push changes
+        run: |
+          git -C docs add .
+          git -C docs commit --allow-empty -m "Regenerated documentation [${{ github.run_number }}]"
+          git -C docs push
