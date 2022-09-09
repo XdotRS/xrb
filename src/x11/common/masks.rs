@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use bitflags::bitflags;
-use xrb_proc_macros::{StaticByteSize, ByteSize};
+use xrb_proc_macros::{ByteSize, StaticByteSize};
 
 bitflags! {
 	/// A mask of events.

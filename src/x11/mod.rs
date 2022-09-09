@@ -6,6 +6,6 @@ mod common;
 
 pub use common::*;
 
+pub mod errors;
 pub mod events;
 pub mod requests;
-pub mod errors;

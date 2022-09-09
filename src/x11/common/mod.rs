@@ -4,15 +4,15 @@
 
 use xrb_proc_macros::{ByteSize, StaticByteSize};
 
-mod string;
-mod masks;
-mod wrappers;
 mod id;
+mod masks;
+mod string;
+mod wrappers;
 
-pub use string::*;
-pub use masks::*;
-pub use wrappers::*;
 pub use id::*;
+pub use masks::*;
+pub use string::*;
+pub use wrappers::*;
 
 pub use id::atoms::Atom;
 

@@ -4,7 +4,7 @@
 
 use crate::x11::{Timestamp, Window};
 
-use cornflakes::{StaticByteSize, ByteSize};
+use cornflakes::{ByteSize, StaticByteSize};
 
 /// Allows a value to be copied from the parent at its initialization.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]

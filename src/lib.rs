@@ -33,8 +33,8 @@ pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 /// Contains representations of the X11 protocol data types and structures.
 mod x11;
 
-pub use x11::*;
 pub use x11::requests::{Reply, Request};
+pub use x11::*;
 
 pub mod queries {}
 pub mod events {}
