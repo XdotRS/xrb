@@ -6,12 +6,11 @@
 # documentation.
 name: Continuous integration
 
-# This workflow runs on the default branch, i.e. `main`.
 on:
   push:
-    branches: [ $default-branch ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ $default-branch ]
+    branches: [ "main" ]
 
 permissions:
   pages: write
