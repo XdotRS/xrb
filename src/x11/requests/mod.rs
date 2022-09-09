@@ -5,7 +5,6 @@
 use crate::x11::common::*;
 use crate::x11::id::atoms::Atom;
 use crate::x11::id::*;
-use crate::x11::wrappers::*;
 
 use xrb_proc_macros::{messages, ByteSize, StaticByteSize};
 
