@@ -135,7 +135,7 @@ jobs:
       # 'Download' XRB to `./xrb`.
       - name: Checkout XRB
         uses: actions/checkout@v3
-		with:
+        with:
           path: xrb
 
       # 'Download' a template to put the generated docs in.
@@ -160,17 +160,15 @@ jobs:
 
       - name: Generate documentation
         working-directory: xrb
-        uses: actions-rs/cargo@v1
-        with:
-          command: doc
-          args: --no-deps --workspace --document-private-items
+        run: cargo doc --no-deps --workspace --document-private-items
 
       - name: Move generated docs into docs template
         run: mv xrb/target/doc template/doc
 
       - name: Upload GH Pages artifact
         uses: actions/upload-pages-artifact@v1
-        path: template
+	with:
+          path: template
 
   deploy-docs:
     environment:
