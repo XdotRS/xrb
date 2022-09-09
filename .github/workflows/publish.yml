@@ -2,19 +2,35 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+# Runs checks, tests, code analysis, auto-formats code, and publishes
+# documentation.
 name: Continuous integration
 
+# This workflow runs on the default branch, i.e. `main`.
 on:
   push:
-    branches: [ "main" ]
+    branches: [ $default-branch ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ $default-branch ]
+
+permissions:
+  pages: write
+  id-token: write
 
 jobs:
-  check-errors:
+  initial-checks:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      # If this workflow is already in progress or queued, we cancel it; we are
+      # about to do the exact same tests and documentation on potentially new
+      # code, so it is pointless to continue them.
+      - name: Cancel existing workflow runs
+      	uses: styfle/cancel-workflow-action@0.10.0
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Checkout XRB
         uses: actions/checkout@v3
 
       - name: Install latest nightly
@@ -32,9 +48,10 @@ jobs:
 
   clippy-analyse:
     runs-on: ubuntu-latest
-    needs: check-errors
+    needs: initial-checks
+
     steps:
-      - name: Checkout
+      - name: Checkout XRB
         uses: actions/checkout@v3
 
       - name: Install latest nightly
@@ -52,9 +69,10 @@ jobs:
 
   run-tests:
     runs-on: ubuntu-latest
-    needs: check-errors
+    needs: initial-checks
+
     steps:
-      - name: Checkout
+      - name: Checkout XRB
         uses: actions/checkout@v3
 
       - name: Install latest nightly
@@ -72,9 +90,10 @@ jobs:
 
   auto-format:
     runs-on: ubuntu-latest
-    needs: check-errors
+    needs: initial-checks
+
     steps:
-      - name: Checkout
+      - name: Checkout XRB
         uses: actions/checkout@v3
 
       - name: Install latest nightly
@@ -102,16 +121,31 @@ jobs:
           git commit -m "Formatted with rustfmt [${{ github.run_number }}]"
           git push
 
-  publish-docs:
+  # Generate the docs with rustdoc.
+  build-docs:
     runs-on: ubuntu-latest
     # Always perform the publish-docs job, even if auto-formatting was
     # unsuccessful.
     if: ${{ always() }}
+    # We only build the documentation after the code has been formatted so that
+    # the code sources linked in the documentation are formatted.
     needs: auto-format
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
 
+    steps:
+      # 'Download' XRB to `./xrb`.
+      - name: Checkout XRB
+        uses: actions/checkout@v3
+		with:
+          path: xrb
+
+      # 'Download' a template to put the generated docs in.
+      - name: Checkout XRB docs template
+        uses: actions/checkout@v3
+        with:
+          repository: XdotRS/xrb-docs-template
+          path: template
+
+      # Install the Rust toolchain so that docs can be generated.
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
@@ -120,32 +154,35 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-      - name: Checkout docs
-        uses: actions/checkout@v3
-        with:
-          ref: docs
-          path: docs
+      # Setup GitHub Pages to easily deploy to it.
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v2
 
       - name: Generate documentation
+        working-directory: xrb
         uses: actions-rs/cargo@v1
         with:
           command: doc
           args: --no-deps --workspace --document-private-items
 
-      - name: Replace previous documentation
-        run: |
-          rm -r docs/doc
-          cp -r target/doc docs/
+      - name: Move generated docs into docs template
+        run: mv xrb/target/doc template/doc
 
-      - name: Configure git credentials
-        working-directory: docs
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
+      - name: Upload GH Pages artifact
+        uses: actions/upload-pages-artifact@v1
+        path: template
 
-      - name: Commit and push changes
-        working-directory: docs
-        run: |
-          git add .
-          git commit --allow-empty -m "Regenerated documentation [${{ github.run_number }}]"
-          git push
+  deploy-docs:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    # Can't deploy the documentation until it exists!
+    needs: build-docs
+
+    steps:
+      # Deploys the documentation to GitHub Pages using the artifact (stored
+      # but not committed changes for Actions) saved earlier.
+      - name: Deploy documentation to GitHub Pages
+        uses: actions/deploy-pages@v1
