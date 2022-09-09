@@ -26,7 +26,7 @@ jobs:
       # about to do the exact same tests and documentation on potentially new
       # code, so it is pointless to continue them.
       - name: Cancel existing workflow runs
-      	uses: styfle/cancel-workflow-action@0.10.0
+        uses: styfle/cancel-workflow-action@0.10.0
         with:
           access_token: ${{ github.token }}
 
@@ -135,7 +135,7 @@ jobs:
       # 'Download' XRB to `./xrb`.
       - name: Checkout XRB
         uses: actions/checkout@v3
-		with:
+        with:
           path: xrb
 
       # 'Download' a template to put the generated docs in.
@@ -160,17 +160,15 @@ jobs:
 
       - name: Generate documentation
         working-directory: xrb
-        uses: actions-rs/cargo@v1
-        with:
-          command: doc
-          args: --no-deps --workspace --document-private-items
+        run: cargo doc --no-deps --workspace --document-private-items
 
       - name: Move generated docs into docs template
         run: mv xrb/target/doc template/doc
 
       - name: Upload GH Pages artifact
         uses: actions/upload-pages-artifact@v1
-        path: template
+	with:
+          path: template
 
   deploy-docs:
     runs-on: ubuntu-latest
