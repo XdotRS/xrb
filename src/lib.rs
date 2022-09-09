@@ -30,7 +30,7 @@ pub const PROTOCOL_MAJOR_VERSION: u16 = 11;
 /// protocol; seeing as this has not happened since the 80s, it's probably safe to assume it won't.
 pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 
-/// Contains representations of the X11 protocol data types and structures.
+/// Implementations for the core X11 protocol.
 mod x11;
 
 pub use x11::requests::{Reply, Request};

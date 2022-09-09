@@ -93,7 +93,7 @@ pub trait ByteReader: Buf {
 		if cfg!(target_endian = "big") {
 			self.get_u32()
 		} else {
-			self.get_u32()
+			self.get_u32_le()
 		}
 	}
 
@@ -107,7 +107,7 @@ pub trait ByteReader: Buf {
 		if cfg!(target_endian = "big") {
 			self.get_u64()
 		} else {
-			self.get_u64()
+			self.get_u64_le()
 		}
 	}
 
@@ -153,7 +153,7 @@ pub trait ByteReader: Buf {
 		if cfg!(target_endian = "big") {
 			self.get_i32()
 		} else {
-			self.get_i32()
+			self.get_i32_le()
 		}
 	}
 
@@ -167,7 +167,7 @@ pub trait ByteReader: Buf {
 		if cfg!(target_endian = "big") {
 			self.get_i64()
 		} else {
-			self.get_i64()
+			self.get_i64_le()
 		}
 	}
 
@@ -213,7 +213,7 @@ pub trait ByteReader: Buf {
 		if cfg!(target_endian = "big") {
 			self.get_f64()
 		} else {
-			self.get_f64()
+			self.get_f64_le()
 		}
 	}
 
