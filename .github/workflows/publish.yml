@@ -13,10 +13,10 @@ on:
 jobs:
   check-errors:
     runs-on: ubuntu-latest
-    steps: 
+    steps:
       - name: Checkout
         uses: actions/checkout@v3
-      
+
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
@@ -24,7 +24,7 @@ jobs:
           toolchain: nightly
           override: true
           components: rustfmt, clippy
-          
+
       - name: Run checks
         uses: actions-rs/cargo@v1
         with:
@@ -36,7 +36,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      
+
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
@@ -44,19 +44,19 @@ jobs:
           toolchain: nightly
           override: true
           components: rustfmt, clippy
-      
+
       - name: Clippy analysis
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          
+
   run-tests:
     runs-on: ubuntu-latest
     needs: check-errors
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      
+
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
@@ -64,19 +64,19 @@ jobs:
           toolchain: nightly
           override: true
           components: rustfmt, clippy
-          
+
       - name: Run tests
         uses: actions-rs/cargo@v1
         with:
           command: test
-          
+
   auto-format:
     runs-on: ubuntu-latest
     needs: check-errors
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      
+
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
@@ -84,31 +84,31 @@ jobs:
           toolchain: nightly
           override: true
           components: rustfmt, clippy
-          
+
       - name: Auto-format with rustfmt
         uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: --all
-      
+
       - name: Configure git credentials
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-      
+
       - name: Commit and push changes
         run: |
           git add .
           git commit -m "Formatted with rustfmt [${{ github.run_number }}]"
           git push
-  
+
   publish-docs:
     runs-on: ubuntu-latest
     needs: auto-format
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      
+
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
@@ -116,30 +116,30 @@ jobs:
           toolchain: nightly
           override: true
           components: rustfmt, clippy
-      
+
       - name: Checkout docs
         uses: actions/checkout@v3
         with:
           ref: docs
           path: docs
-      
+
       - name: Generate documentation
         uses: actions-rs/cargo@v1
         with:
           command: doc
           args: --no-deps --workspace --document-private-items
-      
+
       - name: Replace previous documentation
         run: |
           rm -r docs/doc
-          cp -r target/doc .docs/
-      
+          cp -r target/doc docs/
+
       - name: Configure git credentials
         working-directory: docs
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-      
+
       - name: Commit and push changes
         working-directory: docs
         run: |
