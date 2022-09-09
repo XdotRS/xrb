@@ -104,6 +104,9 @@ jobs:
 
   publish-docs:
     runs-on: ubuntu-latest
+    # Always perform the publish-docs job, even if auto-formatting was
+    # unsuccessful.
+    if: ${{ always() }}
     needs: auto-format
     steps:
       - name: Checkout
