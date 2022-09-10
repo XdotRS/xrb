@@ -98,7 +98,7 @@ jobs:
 
       - name: Commit fixes
         continue-on-error: true
-        run: git commit -am "Applied recommended fixes #${{ github.run_number }}"
+        run: git commit -am "Applied recommended fixes ${{ github.run_number }}"
 
       - name: Format code with rustfmt
         uses: actions-rs/cargo@v1
@@ -108,7 +108,7 @@ jobs:
 
       - name: Commit formatting changes
         continue-on-error: true
-        run: git commit -am "Formatted code with rustfmt #${{ github.run_number }}"
+        run: git commit -am "Formatted code with rustfmt ${{ github.run_number }}"
 
       - name: Push changes
         run: git push
