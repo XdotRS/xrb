@@ -33,7 +33,7 @@ pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 /// Implementations for the core X11 protocol.
 mod x11;
 
-pub use x11::requests::{Reply, Request};
+pub use x11::traits::{Reply, Request};
 pub use x11::*;
 
 pub mod queries {}

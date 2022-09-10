@@ -19,6 +19,136 @@ pub use wrappers::*;
 pub use id::atoms::Atom;
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum Status {
+	Success,
+	Busy,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum ScreenSaverMode {
+	Reset,
+	Activate,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum CloseDownMode {
+	Destroy,
+	RetainPermanent,
+	RetainTemporary,
+}
+
+/// The 'type' of 'best size' being queried in a [`QueryBestSize`] request.
+///
+/// [`QueryBestSize`]: super::QueryBestSize
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum QueryBestSizeClass {
+	Cursor,
+	Tile,
+	Stipple,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum ColormapAlloc {
+	None,
+	All,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum Shape {
+	Complex,
+	Nonconvex,
+	Convex,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum CoordinateMode {
+	Origin,
+	Previous,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub struct Segment {
+	pub start: (i16, i16),
+	pub end: (i16, i16),
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum Ordering {
+	Unsorted,
+	Ysorted,
+	YxSorted,
+	YxBanded,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum DrawDirection {
+	LeftToRight,
+	RightToLeft,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub struct FontProperty {
+	pub name: Atom,
+	pub value: u32,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub struct CharInfo {
+	pub left_side_bearing: i16,
+	pub right_side_bearing: i16,
+	pub character_width: i16,
+	pub ascent: i16,
+	pub descent: i16,
+	pub attributes: u16,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum AllowEventsMode {
+	AsyncPointer,
+	SyncPointer,
+	ReplayPointer,
+	AsyncKeyboard,
+	SyncKeyboard,
+	ReplayKeyboard,
+	AsyncBoth,
+	SyncBoth,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum HostFamilyA {
+	Internet,
+	Decnet,
+	Chaos,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum GrabMode {
+	Synchronous,
+	Asynchronous,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum GrabStatus {
+	Success,
+	AlreadyGrabbed,
+	InvalidTime,
+	NotViewable,
+	Frozen,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum CirculateDirection {
+	RaiseLowest,
+	RaiseHighest,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum EditMode {
+	Insert,
+	Delete,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
 pub enum Format {
 	XyPixmap = 1,
 	Zpixmap = 2,

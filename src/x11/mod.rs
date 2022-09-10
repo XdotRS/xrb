@@ -3,8 +3,9 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 mod common;
-
 pub use common::*;
+
+pub mod traits;
 
 pub mod errors;
 pub mod events;

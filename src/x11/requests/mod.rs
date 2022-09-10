@@ -3,83 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use crate::x11::*;
-
-use xrb_proc_macros::{messages, ByteSize, StaticByteSize};
-
-/// A request is a message sent from an X client to the X server.
-///
-/// A request may have a specific reply associated with it. That reply is
-/// indicated by `T`.
-pub trait Request<T = ()> {
-	/// The major opcode that uniquely identifies this request or extension.
-	///
-	/// X core protocol requests have unique major opcodes, but each extension
-	/// is only assigned one major opcode. Extensions are assigned major opcodes
-	/// from 127 through to 255.
-	fn major_opcode() -> u8;
-
-	/// The minor opcode that uniquely identifies this request within its
-	/// extension.
-	///
-	/// As each extension is only assigned one major opcode, the minor opcode
-	/// can be used to distinguish different requests contained within an
-	/// extension.
-	///
-	/// [`None`] means that either this request is not from an extension, or the
-	/// extension does not make use of the minor opcode, likely because it only
-	/// has one request.
-	///
-	/// [`Some`] means that there is indeed a minor opcode associated with this
-	/// request. This request is therefore from an extension.
-	fn minor_opcode() -> Option<u8>;
-
-	/// The length of this request, including the header, in 4-byte units.
-	///
-	/// Every request contains a header whcih is 4 bytes long. This header is
-	/// included in the length, so the minimum length is 1 unit (4 bytes). The
-	/// length represents the _exact_ length of the request: padding bytes may
-	/// need to be added to the end of the request to ensure its length is
-	/// brought up to a multiple of 4, if it is not already.
-	fn length(&self) -> u16;
-}
-
-/// A reply is a message sent from the X server to an X client in response to a
-/// request.
-///
-/// The request associated with a reply is indicated by `T`.
-pub trait Reply<T>
-where
-	T: Request<Self>,
-	Self: Sized,
-{
-	/// The sequence number associated with the request that this reply is for.
-	///
-	/// Every request on a given connection is assigned a sequence number when
-	/// it is sent, starting with one. This sequence number can therefore be
-	/// used to keep track of exactly which request generated this reply.
-	fn sequence(&self) -> u16;
-	/// The major opcode, if any, associated with the request that generated
-	/// this reply.
-	fn major_opcode(&self) -> Option<u8>;
-	/// The minor opcode, if any, associated with the request that generated
-	/// this reply.
-	fn minor_opcode(&self) -> Option<u8>;
-	/// The length of this reply in 4-byte units minus 8.
-	///
-	/// Every reply always consists of 32 bytes followed by zero or more
-	/// additional bytes of data; this method indicates the number of additional
-	/// bytes of data within this reply.
-	///
-	/// |'Actual' length in bytes|`length()`|
-	/// |------------------------|----------|
-	/// |32                      |0         |
-	/// |36                      |1         |
-	/// |40                      |2         |
-	/// |44                      |3         |
-	/// |...                     |...       |
-	/// |`32 + 4n`               |`n`       |
-	fn length(&self) -> u32;
-}
+use xrb_proc_macros::messages;
 
 messages! {
 	/// Creates an unmapped window with the given `window_id`.
@@ -185,21 +109,9 @@ messages! {
 
 	pub struct DestroyWindow(4): pub target: Window;
 	pub struct DestroySubwindows(5): pub target: Window;
-}
 
-pub mod change_save_set {
-	use xrb_proc_macros::{ByteSize, StaticByteSize};
-
-	#[derive(StaticByteSize, ByteSize)]
-	pub enum Mode {
-		Insertl,
-		Delete,
-	}
-}
-
-messages! {
 	pub struct ChangeSaveSet(6) {
-		pub $mode: change_save_set::Mode,
+		pub $mode: EditMode,
 		pub target: Window,
 	}
 
@@ -221,21 +133,9 @@ messages! {
 		pub value_mask: ConfigureWindowMask,
 		pub values: &'a [ConfigureWindowValue],
 	}
-}
 
-pub mod circulate_window {
-	use xrb_proc_macros::{ByteSize, StaticByteSize};
-
-	#[derive(StaticByteSize, ByteSize)]
-	pub enum Direction {
-		RaiseLowest,
-		RaiseHighest,
-	}
-}
-
-messages! {
 	pub struct CirculateWindow(13) {
-		pub $direction: circulate_window::Direction,
+		pub $direction: CirculateDirection,
 		pub target: Window,
 	}
 
@@ -317,24 +217,7 @@ messages! {
 		pub event_mask: EventMask,
 		//pub event: Box<dyn Event>,
 	}
-}
 
-#[derive(StaticByteSize, ByteSize)]
-pub enum GrabMode {
-	Synchronous,
-	Asynchronous,
-}
-
-#[derive(StaticByteSize, ByteSize)]
-pub enum GrabStatus {
-	Success,
-	AlreadyGrabbed,
-	InvalidTime,
-	NotViewable,
-	Frozen,
-}
-
-messages! {
 	pub struct GrabPointer(26) -> GrabPointerReply {
 		pub $owner_events: bool,
 		pub target_window: Window,
@@ -411,21 +294,7 @@ messages! {
 		pub modifiers: AnyModifierKeyMask,
 		[(); 2],
 	}
-}
 
-#[derive(StaticByteSize, ByteSize)]
-pub enum AllowEventsMode {
-	AsyncPointer,
-	SyncPointer,
-	ReplayPointer,
-	AsyncKeyboard,
-	SyncKeyboard,
-	ReplayKeyboard,
-	AsyncBoth,
-	SyncBoth,
-}
-
-messages! {
 	pub struct AllowEvents(35) {
 		pub $mode: AllowEventsMode,
 		pub time: Time,
@@ -515,31 +384,7 @@ messages! {
 	}
 
 	pub struct CloseFont(46): pub font: Font;
-}
 
-#[derive(StaticByteSize, ByteSize)]
-pub enum DrawDirection {
-	LeftToRight,
-	RightToLeft,
-}
-
-#[derive(StaticByteSize, ByteSize)]
-pub struct FontProperty {
-	pub name: Atom,
-	pub value: u32,
-}
-
-#[derive(StaticByteSize, ByteSize)]
-pub struct CharInfo {
-	pub left_side_bearing: i16,
-	pub right_side_bearing: i16,
-	pub character_width: i16,
-	pub ascent: i16,
-	pub descent: i16,
-	pub attributes: u16,
-}
-
-messages! {
 	pub struct QueryFont<'a>(47) -> QueryFontReply: pub font: &'a dyn Fontable;
 
 	pub struct QueryFontReply for QueryFont<'_> {
@@ -645,17 +490,7 @@ messages! {
 		pub dashes: &'a [u8],
 		[(); {dashes}],
 	}
-}
 
-#[derive(StaticByteSize, ByteSize)]
-pub enum Ordering {
-	Unsorted,
-	Ysorted,
-	YxSorted,
-	YxBanded,
-}
-
-messages! {
 	pub struct SetClipRectangles<'a>(59) {
 		pub $ordering: Ordering,
 		pub context: GraphicsContext,
@@ -699,21 +534,7 @@ messages! {
 		pub height: u16,
 		pub bit_plane: u32,
 	}
-}
 
-#[derive(StaticByteSize, ByteSize)]
-pub enum CoordinateMode {
-	Origin,
-	Previous,
-}
-
-#[derive(StaticByteSize, ByteSize)]
-pub struct Segment {
-	pub start: (i16, i16),
-	pub end: (i16, i16),
-}
-
-messages! {
 	pub struct PolyPoint<'a>(64) {
 		pub $coordinate_mode: CoordinateMode,
 		pub drawable: &'a dyn Drawable,
@@ -745,16 +566,7 @@ messages! {
 		pub context: GraphicsContext,
 		pub arcs: &'a [GeomArc],
 	}
-}
 
-#[derive(StaticByteSize, ByteSize)]
-pub enum Shape {
-	Complex,
-	Nonconvex,
-	Convex,
-}
-
-messages! {
 	pub struct FillPoly<'a>(69) {
 		pub drawable: &'a dyn Drawable,
 		pub context: GraphicsContext,
@@ -844,15 +656,7 @@ messages! {
 		pub string: String16,
 		[(); {string}],
 	}
-}
 
-#[derive(StaticByteSize, ByteSize)]
-pub enum ColormapAlloc {
-	None,
-	All,
-}
-
-messages! {
 	pub struct CreateColormap(78) {
 		pub $alloc: ColormapAlloc,
 		pub colormap_id: Colormap,
@@ -1019,23 +823,7 @@ messages! {
 		/// This is in RGB format (i.e. `(red, green, blue)`).
 		pub background_color: (u16, u16, u16),
 	}
-}
 
-pub mod query_best_size {
-	use xrb_proc_macros::{ByteSize, StaticByteSize};
-
-	/// The 'type' of 'best size' being queried in a [`QueryBestSize`] request.
-	///
-	/// [`QueryBestSize`]: super::QueryBestSize
-	#[derive(StaticByteSize, ByteSize)]
-	pub enum Class {
-		Cursor,
-		Tile,
-		Stipple,
-	}
-}
-
-messages! {
 	/// Gets the closest ideal size to the given `width` and `height`.
 	///
 	/// For [`Cursor`], this is the largest size that can be fully displayed
@@ -1062,7 +850,7 @@ messages! {
 	/// [`InputOnly`]: WindowClass::InputOnly
 	pub struct QueryBestSize<'a>(97) -> QueryBestSizeReply {
 		/// The 'type' of 'best size' being queried.
-		pub $class: query_best_size::Class,
+		pub $class: QueryBestSizeClass,
 		/// Indicates the desired screen.
 		///
 		/// For [`Tile`] and [`Stipple`], the `drawable` indicates the screen
@@ -1158,20 +946,12 @@ messages! {
 		pub threshold: u16,
 		[(); 18],
 	}
-}
 
-#[derive(StaticByteSize /*ByteSize*/)]
-pub enum OrDefault<T> {
-	Default,
-	Some(T),
-}
-
-messages! {
 	pub struct SetScreenSaver(107) {
 		pub timeout: i16,
 		pub interval: i16,
-		pub prefer_blanking: OrDefault<bool>,
-		pub allow_exposures: OrDefault<bool>,
+		pub prefer_blanking: Defaultable<bool>,
+		pub allow_exposures: Defaultable<bool>,
 		[(); 2],
 	}
 
@@ -1184,29 +964,10 @@ messages! {
 		pub allow_exposures: bool,
 		[(); 18],
 	}
-}
 
-pub mod change_hosts {
-	use xrb_proc_macros::{ByteSize, StaticByteSize};
-
-	#[derive(StaticByteSize, ByteSize)]
-	pub enum Mode {
-		Insert,
-		Delete,
-	}
-
-	#[derive(StaticByteSize, ByteSize)]
-	pub enum HostFamily {
-		Internet,
-		Decnet,
-		Chaos,
-	}
-}
-
-messages! {
 	pub struct ChangeHosts<'a>(109) {
-		pub $mode: change_hosts::Mode,
-		pub family: HostFamily,
+		pub $mode: EditMode,
+		pub family: HostFamilyA,
 		[(); 1],
 		#address: u16,
 		pub address: &'a [u8],
@@ -1223,21 +984,8 @@ messages! {
 	}
 
 	pub struct SetAccessControl(111): pub $enabled: bool;
-}
 
-pub mod set_close_down_mode {
-	use xrb_proc_macros::{ByteSize, StaticByteSize};
-
-	#[derive(StaticByteSize, ByteSize)]
-	pub enum Mode {
-		Destroy,
-		RetainPermanent,
-		RetainTemporary,
-	}
-}
-
-messages! {
-	pub struct SetCloseDownMode(112): pub $mode: set_close_down_mode::Mode;
+	pub struct SetCloseDownMode(112): pub $mode: CloseDownMode;
 
 	//pub struct KillClient(113): pub resource: AllTemp<u32>;
 
@@ -1247,33 +995,9 @@ messages! {
 		pub delta: i16,
 		pub properties: &'a [Atom],
 	}
-}
 
-pub mod force_screen_saver {
-	use xrb_proc_macros::{ByteSize, StaticByteSize};
+	pub struct ForceScreenSaver(115): pub $mode: ScreenSaverMode;
 
-	#[derive(StaticByteSize, ByteSize)]
-	pub enum Mode {
-		Reset,
-		Activate,
-	}
-}
-
-messages! {
-	pub struct ForceScreenSaver(115): pub $mode: force_screen_saver::Mode;
-}
-
-pub mod set_pointer_mapping {
-	use xrb_proc_macros::{ByteSize, StaticByteSize};
-
-	#[derive(StaticByteSize, ByteSize)]
-	pub enum Status {
-		Success,
-		Busy,
-	}
-}
-
-messages! {
 	pub struct SetPointerMapping<'a>(116) -> SetPointerMappingReply {
 		$#map: u8,
 		pub map: &'a [u8],
@@ -1281,7 +1005,7 @@ messages! {
 	}
 
 	pub struct SetPointerMappingReply for SetPointerMapping<'_> {
-		pub $status: set_pointer_mapping::Status,
+		pub $status: Status,
 		[(); 24],
 	}
 
