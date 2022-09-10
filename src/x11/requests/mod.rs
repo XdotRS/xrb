@@ -81,35 +81,6 @@ where
 	fn length(&self) -> u32;
 }
 
-#[derive(StaticByteSize, ByteSize)]
-pub enum WindowClass {
-	InputOutput = 1,
-	InputOnly = 2,
-}
-
-// TODO: docs
-/// See also: [`AttributeMask`]
-///
-/// [`AttributeMask`]: crate::x11::common::masks::AttributeMask
-#[derive(StaticByteSize, ByteSize)]
-pub enum Attribute {
-	BackgroundPixmap(Option<Relatable<Pixmap>>),
-	BackgroundPixel(u32),
-	BorderPixmap(Inheritable<Pixmap>),
-	BorderPixel(u32),
-	BitGravity(BitGravity),
-	WinGravity(WinGravity),
-	BackingStore(BackingStore),
-	BackingPlanes(u32),
-	BackingPixel(u32),
-	OverrideRedirect(bool),
-	SaveUnder(bool),
-	EventMask(EventMask),
-	DoNotPropagateMask(DeviceEventMask),
-	Colormap(Inheritable<Colormap>),
-	Cursor(Option<Cursor>),
-}
-
 messages! {
 	/// Creates an unmapped window with the given `window_id`.
 	///
@@ -188,23 +159,7 @@ messages! {
 		pub value_mask: AttributeMask,
 		pub values: &'a [Attribute],
 	}
-}
 
-#[derive(StaticByteSize, ByteSize)]
-pub enum MapState {
-	Unmapped,
-	Unviewable,
-	Viewable,
-}
-
-#[derive(StaticByteSize, ByteSize)]
-pub enum BackingStore {
-	NotUseful,
-	WhenMapped,
-	Always,
-}
-
-messages! {
 	pub struct GetWindowAttributes(3) -> GetWindowAttributesReply {
 		pub target: Window,
 	}
@@ -261,10 +216,10 @@ messages! {
 	pub struct UnmapWindow(10): pub target: Window;
 	pub struct UnmapSubwindows(11): pub target: Window;
 
-	pub struct ConfigureWindow(12) {
+	pub struct ConfigureWindow<'a>(12) {
 		pub target: Window,
-		//pub value_mask: ConfigureWindowMask,
-		//pub values: &'a [ConfigureWindowValue],
+		pub value_mask: ConfigureWindowMask,
+		pub values: &'a [ConfigureWindowValue],
 	}
 }
 
@@ -668,13 +623,13 @@ messages! {
 		pub context_id: GraphicsContext,
 		pub drawable: &'a dyn Drawable,
 		pub value_mask: GraphicsContextMask,
-		//pub values: &'a [GraphicsContextValue],
+		pub values: &'a [GraphicsContextValue],
 	}
 
-	pub struct ChangeGraphicsContext(56) {
+	pub struct ChangeGraphicsContext<'a>(56) {
 		pub context: GraphicsContext,
 		pub value_mask: GraphicsContextMask,
-		//pub values: &'a [GraphicsContextValue],
+		pub values: &'a [GraphicsContextValue],
 	}
 
 	pub struct CopyGraphicsContext(57) {
@@ -822,7 +777,7 @@ messages! {
 	}
 
 	pub struct PutImage<'a>(72) {
-		//pub $format: Bitmap<ImageFormat>,
+		pub $format: BitmapFormat,
 		pub drawable: &'a dyn Drawable,
 		pub context: GraphicsContext,
 		pub width: u16,
@@ -837,7 +792,7 @@ messages! {
 	}
 
 	pub struct GetImage<'a>(73) -> GetImageReply {
-		//pub $format: ImageFormat,
+		pub $format: Format,
 		pub drawable: &'a dyn Drawable,
 		pub x: i16,
 		pub y: i16,
@@ -995,7 +950,7 @@ messages! {
 	}
 
 	pub struct StoreNamedColor(90) {
-		//pub $channel_mask: ColorChannelMask,
+		pub $channel_mask: ColorChannelMask,
 		pub colormap: Colormap,
 		pub pixel: u32,
 		#name: u16,
@@ -1120,7 +1075,9 @@ messages! {
 		/// [`Stipple`]: query_best_size::Class::Stipple
 		/// [`InputOnly`]: query_best_size::Class::InputOnly
 		pub drawable: &'a dyn Drawable,
+		/// The given width to find an ideal size for.
 		pub width: u16,
+		/// The given height to find an ideal size for.
 		pub height: u16,
 	}
 
@@ -1130,7 +1087,9 @@ messages! {
 	/// was given in the [`QueryBestSize`] request. See the request's docs for
 	/// more information.
 	pub struct QueryBestSizeReply for QueryBestSize<'_> {
+		/// The width of the ideal size found.
 		pub width: u16,
+		/// The height of the ideal size found.
 		pub height: u16,
 		[(); 20],
 	}

@@ -6,6 +6,16 @@ use bitflags::bitflags;
 use xrb_proc_macros::{ByteSize, StaticByteSize};
 
 bitflags! {
+	#[derive(StaticByteSize, ByteSize)]
+	pub struct ColorChannelMask: u8 {
+		/// Whether the red color channel is enabled.
+		const DO_RED = 0x01;
+		/// Whether the green color channel is enabled.
+		const DO_GREEN = 0x02;
+		/// Whether the blue color channel is enabled.
+		const DO_BLUE = 0x04;
+	}
+
 	/// A mask of events.
 	#[derive(StaticByteSize, ByteSize)]
 	pub struct EventMask: u32 {
@@ -524,63 +534,74 @@ bitflags! {
 	pub struct AttributeMask: u32 {
 		/// See also: [`BackgroundPixmap`]
 		///
-		/// [`BackgroundPixmap`]: crate::x11::requests::Attribute::BackgroundPixmap
+		/// [`BackgroundPixmap`]: crate::x11::Attribute::BackgroundPixmap
 		const BACKGROUND_PIXMAP = 0x00000001;
 		/// See also: [`BackgroundPixel`]
 		///
-		/// [`BackgroundPixel`]: crate::x11::requests::Attribute::BackgroundPixel
+		/// [`BackgroundPixel`]: crate::x11::Attribute::BackgroundPixel
 		const BACKGROUND_PIXEL = 0x00000002;
 		/// See also: [`BorderPixmap`]
 		///
-		/// [`BorderPixmap`]: crate::x11::requests::Attribute::BorderPixmap
+		/// [`BorderPixmap`]: crate::x11::Attribute::BorderPixmap
 		const BORDER_PIXMAP = 0x00000004;
 		/// See also: [`BorderPixel`]
 		///
-		/// [`BorderPixel`]: crate::x11::requests::Attribute::BorderPixel
+		/// [`BorderPixel`]: crate::x11::Attribute::BorderPixel
 		const BORDER_PIXEL = 0x00000008;
 		/// See also: [`BitGravity`]
 		///
-		/// [`BitGravity`]: crate::x11::requests::Attribute::BitGravity
+		/// [`BitGravity`]: crate::x11::Attribute::BitGravity
 		const BIT_GRAVITY = 0x00000010;
 		/// See also: [`WinGravity`]
 		///
-		/// [`WinGravity`]: crate::x11::requests::Attribute::WinGravity
+		/// [`WinGravity`]: crate::x11::Attribute::WinGravity
 		const WIN_GRAVITY = 0x00000020;
 		/// See also: [`BackingStore`]
 		///
-		/// [`BackingStore`]: crate::x11::requests::Attribute::BackingStore
+		/// [`BackingStore`]: crate::x11::Attribute::BackingStore
 		const BACKING_STORE = 0x00000040;
 		/// See also: [`BackingPlanes`]
 		///
-		/// [`BackingPlanes`]: crate::x11::requests::Attribute::BackingPlanes
+		/// [`BackingPlanes`]: crate::x11::Attribute::BackingPlanes
 		const BACKING_PLANES = 0x00000080;
 		/// See also: [`BackingPixel`]
 		///
-		/// [`BackingPixel`]: crate::x11::requests::Attribute::BackingPixel
+		/// [`BackingPixel`]: crate::x11::Attribute::BackingPixel
 		const BACKING_PIXEL = 0x00000100;
 		/// See also: [`OverrideRedirect`]
 		///
-		/// [`OverrideRedirect`]: crate::x11::requests::Attribute::OverrideRedirect
+		/// [`OverrideRedirect`]: crate::x11::Attribute::OverrideRedirect
 		const OVERRIDE_REDIRECT = 0x00000200;
 		/// See also: [`SaveUnder`]
 		///
-		/// [`SaveUnder`]: crate::x11::requests::Attribute::SaveUnder
+		/// [`SaveUnder`]: crate::x11::requests::SaveUnder
 		const SAVE_UNDER = 0x00000400;
 		/// See also: [`EventMask`]
 		///
-		/// [`Eventmask`]: crate::x11::requests::Attribute::EventMask
+		/// [`Eventmask`]: crate::x11::requests::EventMask
 		const EVENT_MASK = 0x00000800;
 		/// See also: [`DoNotPropagateMask`]
 		///
-		/// [`DoNotPropagateMask`]: crate::x11::requests::Attribute::DoNotPropagateMask
+		/// [`DoNotPropagateMask`]: crate::x11::Attribute::DoNotPropagateMask
 		const DO_NOT_PROPAGATE_MASK = 0x00001000;
 		/// See also: [`Colormap`]
 		///
-		/// [`Colormap`]: crate::x11::requests::Attribute::Colormap
+		/// [`Colormap`]: crate::x11::Attribute::Colormap
 		const COLORMAP = 0x00002000;
 		/// See also: [`Cursor`]
 		///
-		/// [`Cursor`]: crate::x11::requests::Attribute::Cursor
+		/// [`Cursor`]: crate::x11::Attribute::Cursor
 		const CURSOR = 0x00004000;
+	}
+
+	#[derive(StaticByteSize, ByteSize)]
+	pub struct ConfigureWindowMask: u16 {
+		const X = 0x0001;
+		const Y = 0x0002;
+		const WIDTH = 0x0004;
+		const HEIGHT = 0x0008;
+		const BORDER_WIDTH = 0x0010;
+		const SIBLING = 0x0020;
+		const STACK_MODE = 0x0040;
 	}
 }

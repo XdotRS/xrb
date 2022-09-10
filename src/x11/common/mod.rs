@@ -8,13 +8,50 @@ mod id;
 mod masks;
 mod string;
 mod wrappers;
+mod values;
 
 pub use id::*;
 pub use masks::*;
 pub use string::*;
 pub use wrappers::*;
+pub use values::*;
 
 pub use id::atoms::Atom;
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum Format {
+	XyPixmap = 1,
+	Zpixmap = 2,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum StackMode {
+	Above,
+	Below,
+	TopIf,
+	Bottomif,
+	Opposite,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum MapState {
+	Unmapped,
+	Unviewable,
+	Viewable,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum BackingStore {
+	NotUseful,
+	WhenMapped,
+	Always,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+pub enum WindowClass {
+	InputOutput = 1,
+	InputOnly = 2,
+}
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
 pub enum BitGravity {

@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::x11::{Timestamp, Window};
+use crate::x11::*;
 
 use cornflakes::{ByteSize, StaticByteSize};
 
@@ -75,6 +75,12 @@ pub enum InputFocus {
 	Specific(Window),
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+pub enum BitmapFormat {
+	Bitmap,
+	Specific(Format),
+}
+
 // Byte size implementations {{{
 
 impl<T> StaticByteSize for Inheritable<T>
@@ -125,6 +131,12 @@ impl StaticByteSize for InputFocus {
 	}
 }
 
+impl StaticByteSize for BitmapFormat {
+	fn static_byte_size() -> usize {
+		Format::static_byte_size()
+	}
+}
+
 impl<T> ByteSize for Inheritable<T>
 where
 	T: StaticByteSize,
@@ -170,6 +182,12 @@ impl ByteSize for Time {
 impl ByteSize for InputFocus {
 	fn byte_size(&self) -> usize {
 		Window::static_byte_size()
+	}
+}
+
+impl ByteSize for BitmapFormat {
+	fn byte_size(&self) -> usize {
+		Format::static_byte_size()
 	}
 }
 
