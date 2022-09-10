@@ -90,8 +90,6 @@ jobs:
   auto-format:
     runs-on: ubuntu-latest
     needs: initial-checks
-    # Continue to build documentation if this fails.
-    continue-on-error: true
 
     steps:
       - name: Checkout XRB
@@ -117,9 +115,10 @@ jobs:
           git config user.email github-actions@github.com
 
       - name: Commit and push changes
+        # Continue to build documentation if this fails.
+        continue-on-error: true
         run: |
-          git add .
-          git commit -m "Formatted with rustfmt [${{ github.run_number }}]"
+          git commit -am "Formatted with rustfmt [${{ github.run_number }}]"
           git push
 
   # Generate the docs with rustdoc.
