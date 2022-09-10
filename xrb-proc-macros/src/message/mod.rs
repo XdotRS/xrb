@@ -93,37 +93,34 @@ impl ToTokens for Message {
 
 		// If this is a reply, append `major_opcode`, `minor_opcode`, and
 		// `sequence` fields for the `Reply` trait implementation.
-		match self.metadata {
-			Metadata::Reply(_) => {
-				quote! {
-					/// The sequence number associated with the request that
-					/// generated this reply.
-					///
-					/// This is generated in the implementation of
-					/// [`Reply::sequence()`].
-					///
-					/// [`Reply::sequence()`]: crate::Reply::sequence
-					__sequence: u16,
-					/// The major opcode, if any, associated with the request
-					/// that generated this reply.
-					///
-					/// This is generated in the implementation of
-					/// [`Reply::major_opcode()`].
-					///
-					/// [`Reply::major_opcode()`]: crate::Reply::major_opcode
-					__major_opcode: Option<u8>,
-					/// The minor opcode, if any, associated with the request
-					/// that generated this reply.
-					///
-					/// This is generated in the implementation of
-					/// [`Reply::minor_opcode()`].
-					///
-					/// [`Reply::minor_opcode()`]: crate::Reply::minor_opcode
-					__minor_opcode: Option<u8>,
-				}
-				.to_tokens(&mut content);
+		if let Metadata::Reply(_) = self.metadata {
+			quote! {
+				/// The sequence number associated with the request that
+				/// generated this reply.
+				///
+				/// This is generated in the implementation of
+				/// [`Reply::sequence()`].
+				///
+				/// [`Reply::sequence()`]: crate::Reply::sequence
+				__sequence: u16,
+				/// The major opcode, if any, associated with the request
+				/// that generated this reply.
+				///
+				/// This is generated in the implementation of
+				/// [`Reply::major_opcode()`].
+				///
+				/// [`Reply::major_opcode()`]: crate::Reply::major_opcode
+				__major_opcode: Option<u8>,
+				/// The minor opcode, if any, associated with the request
+				/// that generated this reply.
+				///
+				/// This is generated in the implementation of
+				/// [`Reply::minor_opcode()`].
+				///
+				/// [`Reply::minor_opcode()`]: crate::Reply::minor_opcode
+				__minor_opcode: Option<u8>,
 			}
-			_ => (),
+			.to_tokens(&mut content);
 		}
 
 		fields.to_tokens(&mut content);
