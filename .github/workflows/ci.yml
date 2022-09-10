@@ -94,7 +94,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --workspace --fix --always
+          args: --workspace --fix --color always
 
       - name: Commit fixes
         continue-on-error: true
