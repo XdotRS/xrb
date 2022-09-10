@@ -79,7 +79,9 @@ impl ToTokens for Message {
 			// If this is a shorthand definition and it has a field, write that
 			// field's definition to `fields`.
 			Content::Shorthand(shorthand) => {
-				shorthand.field().map(|field| fields.push(field));
+				if let Some(field) = shorthand.field() {
+					fields.push(field)
+				}
 			}
 
 			// If this is a longhand definition, write the definitions of any

@@ -156,10 +156,12 @@ impl FromBytes for char {
 	where
 		Self: Sized,
 	{
-		char::from_u32(reader.read_u32_ne()).ok_or(IoError::new(
-			IoErrorKind::InvalidData,
-			"attempted to read invalid UTF-8 `char`",
-		))
+		char::from_u32(reader.read_u32_ne()).ok_or_else(|| {
+			IoError::new(
+				IoErrorKind::InvalidData,
+				"attempted to read invalid UTF-8 `char`",
+			)
+		})
 	}
 }
 
@@ -289,13 +291,18 @@ where
 	where
 		Self: Sized,
 	{
-		let mut selves = [T::default(); N];
+		let mut things: Vec<T> = vec![];
 
-		for i in 0..N {
-			selves[i] = reader.read()?;
+		// Read `N` many things.
+		for _ in 0..N {
+			things.push(reader.read()?);
 		}
 
-		Ok(selves)
+		// Initialize an array from `things`, or return an `InvalidData` error
+		// if unsuccessful, because that means that the data must have been
+		// invalid.
+		array_init::from_iter(things.into_iter())
+			.ok_or_else(|| IoError::from(IoErrorKind::InvalidData))
 	}
 }
 

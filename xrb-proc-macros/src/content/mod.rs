@@ -18,7 +18,7 @@ use syn::{braced, token, Result, Token};
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Content {
-	Shorthand(Shorthand),
+	Shorthand(Box<Shorthand>),
 	Longhand(Longhand),
 }
 
