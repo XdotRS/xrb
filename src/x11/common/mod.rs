@@ -7,14 +7,14 @@ use xrb_proc_macros::{ByteSize, StaticByteSize};
 mod id;
 mod masks;
 mod string;
-mod wrappers;
 mod values;
+mod wrappers;
 
 pub use id::*;
 pub use masks::*;
 pub use string::*;
-pub use wrappers::*;
 pub use values::*;
+pub use wrappers::*;
 
 pub use id::atoms::Atom;
 

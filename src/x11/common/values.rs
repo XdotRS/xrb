@@ -2,8 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use xrb_proc_macros::{StaticByteSize, ByteSize};
 use crate::x11::*;
+use xrb_proc_macros::{ByteSize, StaticByteSize};
 
 #[derive(StaticByteSize, ByteSize)]
 pub enum Attribute {
@@ -30,24 +30,24 @@ pub enum GraphicsContextValue {
 	PlaneMask(u32),
 	Foreground(u32),
 	Background(u32),
-	LineWidth(u16), // TODO: 2 bytes?
+	LineWidth(u16),       // TODO: 2 bytes?
 	LineStyle(LineStyle), //  TODO: 1 byte?
-	CapStyle(CapStyle), // TODO: 1 byte?
+	CapStyle(CapStyle),   // TODO: 1 byte?
 	JoinStyle(JoinStyle), // TODO: 1 byte?
 	FillStyle(FillStyle), // TODO: 1 byte?
-	FillRule(FillRule), // TODO: 1 byte?
+	FillRule(FillRule),   // TODO: 1 byte?
 	Tile(Pixmap),
 	Stipple(Pixmap),
 	TileStippleXorigin(u16), // TODO: 2 bytes?
 	TileStippleYorigin(u16), // TODO: 2 bytes?
 	Font(Font),
 	SubwindowMode(SubwindowMode), // TODO: 1 byte?
-	GraphicsExposures(bool), // TODO: 1 byte?
-	ClipXorigin(u16), // TODO: 2 bytes?
-	ClipYorigin(u16), // TODO: 2 bytes?
+	GraphicsExposures(bool),      // TODO: 1 byte?
+	ClipXorigin(u16),             // TODO: 2 bytes?
+	ClipYorigin(u16),             // TODO: 2 bytes?
 	ClipMask(Option<Pixmap>),
-	DashOffset(u16), // TODO: 2 bytes?
-	Dashes(u8), // TODO: 1 byte?
+	DashOffset(u16),  // TODO: 2 bytes?
+	Dashes(u8),       // TODO: 1 byte?
 	ArcMode(ArcMode), // TODO: 1 byte?
 }
 
@@ -88,7 +88,6 @@ pub enum LineStyle {
 	OnOffDash,
 	DoubleDash,
 }
-
 
 #[derive(StaticByteSize, ByteSize)]
 pub enum CapStyle {
