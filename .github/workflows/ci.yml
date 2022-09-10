@@ -45,6 +45,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
+          args: --workspace --color always
 
   run-tests:
     runs-on: ubuntu-latest
@@ -66,6 +67,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --workspace --color always
 
   fix-n-format:
     runs-on: ubuntu-latest
@@ -92,7 +94,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --fix
+          args: --workspace --fix --always
 
       - name: Commit fixes
         continue-on-error: true
@@ -132,6 +134,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
+          args: --workspace --color always
 
   # Generate the docs with rustdoc.
   build-docs:
