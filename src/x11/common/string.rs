@@ -69,12 +69,12 @@ impl TryFrom<String8> for String {
 
 	fn try_from(text: String8) -> Result<Self, FromUtf8Error> {
 		// Try to convert the byte to a character.
-		Ok(String::from_utf8(
+		String::from_utf8(
 			text.0
 				.iter()
 				.flat_map(|&r#char| (r#char as u32).to_ne_bytes())
 				.collect(),
-		)?)
+		)
 	}
 }
 
@@ -90,12 +90,12 @@ impl TryFrom<LenString8> for String {
 
 	fn try_from(text: LenString8) -> Result<Self, FromUtf8Error> {
 		// Try to convert the byte to a character.
-		Ok(String::from_utf8(
+		String::from_utf8(
 			text.0
 				.iter()
 				.flat_map(|&r#char| (r#char as u32).to_ne_bytes())
 				.collect(),
-		)?)
+		)
 	}
 }
 
@@ -119,7 +119,7 @@ impl TryFrom<String16> for String {
 
 	// Try to convert the pair of bytes to a character.
 	fn try_from(text: String16) -> Result<Self, Self::Error> {
-		Ok(String::from_utf8(
+		String::from_utf8(
 			text.0
 				.iter()
 				// Since characters are four bytes, we must expand the pair of
@@ -127,6 +127,6 @@ impl TryFrom<String16> for String {
 				// doing that.
 				.flat_map(|&(a, b)| (u16::from_ne_bytes([a, b]) as u32).to_ne_bytes())
 				.collect(),
-		)?)
+		)
 	}
 }
