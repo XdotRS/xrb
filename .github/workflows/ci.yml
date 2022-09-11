@@ -48,7 +48,7 @@ jobs:
           override: true
 
       # Matches errors, warnings, etc. so annotations can be added and such.
-      - uses: r7kamura/rust-problem-matchers
+      - uses: r7kamura/rust-problem-matchers@v1
 
       # Run unit tests with `cargo test`.
       - name: Run tests
@@ -188,7 +188,7 @@ jobs:
           components: clippy
 
       # Matches errors, warnings, etc. so annotations can be added and such.
-      - uses: r7kamura/rust-problem-matchers
+      - uses: r7kamura/rust-problem-matchers@v1
 
       # Analyse the code with `clippy`.
       - name: Clippy analysis
@@ -230,7 +230,7 @@ jobs:
           override: true
 
       # Matches errors, warnings, etc. so annotations can be added and such.
-      - uses: r7kamura/rust-problem-matchers
+      - uses: r7kamura/rust-problem-matchers@v1
 
       # Setup GitHub Pages to easily deploy to it.
       - name: Setup GitHub Pages
