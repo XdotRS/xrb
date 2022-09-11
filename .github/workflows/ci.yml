@@ -165,7 +165,7 @@ jobs:
           components: clippy
 
       - name: Clippy analysis
-      	working-directory: xrb
+        working-directory: xrb
         run: cargo clippy --workspace --color always
 
   # Generate the docs with rustdoc.
