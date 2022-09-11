@@ -146,7 +146,7 @@ jobs:
     runs-on: ubuntu-latest
     # We only build the documentation after the code has been changed so that
     # the code sources linked in the documentation are up-to-date.
-    needs: [clippy-fixes, auto-format]
+    needs: [run-tests, auto-format, clippy-fixes]
 
     steps:
       # 'Download' XRB to `./xrb`.
