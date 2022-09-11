@@ -121,7 +121,7 @@ jobs:
 
       - name: Format code with rustfmt
         working-directory: xrb
-        run: cargo fmt --all --color always
+        run: cargo fmt --all
 
       - name: Commit formatting changes
         # Commit changes, or, if that fails, do nothing.
