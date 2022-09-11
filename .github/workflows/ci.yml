@@ -69,8 +69,8 @@ jobs:
 
       - name: Configure git credentials
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
+          git -C xrb config user.name github-actions
+          git -C xrb config user.email github-actions@github.com
 
       - name: Apply recommended fixes
         working-directory: xrb
