@@ -52,10 +52,7 @@ jobs:
 
       # Run unit tests with `cargo test`.
       - name: Run tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --workspace --color always
+        run: cargo test --workspace --color always
 
   # Automatically applies suggested fixes from `clippy`.
   clippy-fixes:
@@ -192,10 +189,7 @@ jobs:
 
       # Analyse the code with `clippy`.
       - name: Clippy analysis
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --workspace --color always
+        run: cargo clippy --workspace --color always
 
   # Generate the docs with rustdoc.
   build-docs:
