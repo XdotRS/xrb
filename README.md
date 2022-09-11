@@ -1,15 +1,25 @@
-X11 protocol formats, structures, serialization, and deserialization.
+**X Rust Bindings** is an implementation of the X Window System protocol version
+11, more commonly known as X11, in Rust. It provides types and data structures
+for X11, as well as serialization and deserialization for them.
 
-# X Rust Bindings
-X Rust Bindings is a Rust library for the X Window System protocol version 11.
-It is _not_ a full API: XRB simply provides a mirror of the formats of X11
-protocol messages in the form of Rust `struct` and `enum` datastructures. It
-also provides tools for the serialization and deserialization of these messages
-to and from their format when sent along 'the wire', i.e., their underlying
-representations as raw bytes.
+XRB is not, however, an X library. It does not offer functionality for connecting
+to the X server, sending or receiving messages, nor an opinionated API. The idea
+is that those functionalities are implemented on top of XRB with an API wrapper,
+such as [X.RS](https://github.com/XdotRS/xrs). XRB provides a foundation for API
+wrappers so that they can focus on their APIs, not on implementing the X protocol.
 
-On its own, XRB does nothing. It is only useful when paired with a full X
-library API wrapping. The official API wrapper for XRB is
-[X.RS](https://github.com/XdotRS/xrs), but it may be freely used in the
-creation of any other X library, provided that the terms of the [Mozilla Public
-License v2.0](https://github.com/XdotRS/xrb/blob/main/LICENSE) are respected.
+# Contributing
+Contributions are welcome and encouraged for XRB! Here's a list of resources that
+you may find useful:
+ - [X Window System protocol version 11](https://x.org/releases/X11R7.7/doc/xproto/x11protocol.html)
+   – The protocol itself.
+   - [1. Protocol Formats](https://x.org/releases/X11R7.7/doc/xproto/x11protocol.html#Protocol_Formats)
+     – An overview of the format of messages in the X11 protocol.
+   - [Appendix B. Protocol Encoding](https://x.org/releases/X11R7.7/doc/xproto/x11protocol.html#protocol_encoding)
+     – The encoding of X11 types and data structures as bytes. Probably the most
+	 directly important section for the development of XRB.
+   - [Glossary](https://x.org/releases/X11R7.7/doc/xproto/x11protocol.html#glossary)
+     – A glossary of terms used in X, helpful to understand what's going on and
+	 especially to write documentation.
+ - [The Rust Programming Language](https://doc.rust-lang.org/book/) – A great
+   resource to learn Rust in general.
