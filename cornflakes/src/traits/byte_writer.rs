@@ -71,13 +71,33 @@ pub trait ByteWriter: BufMut {
 	/// In this example, messages must be written on the wire as no more than
 	/// 32 bytes:
 	/// ```rust
-	/// wire.write_bytes_limited(message.to_bytes_vec(), 32);
+	/// use cornflakes::{ToBytes, ByteWriter};
+	/// # use std::io::Error;
+	///
+	/// # struct Message;
+	/// #
+	/// # impl From<&str> for Message { fn from(string: &str) -> Self { Self } }
+	/// # impl cornflakes::ByteSize for Message { fn byte_size(&self) -> usize { 0 } }
+	/// #
+	/// # impl ToBytes for Message {
+	/// #     fn write_to(&self, writer: &mut impl ByteWriter) -> Result<(), Error> {
+	/// #         Ok(())
+	/// #     }
+	/// # }
+	/// #
+	/// # fn main() -> Result<(), Error> {
+	/// let mut wire: Vec<u8> = vec![];
+	/// let message = Message::from("this message takes up more than 32 bytes");
+	///
+	/// wire.write_bytes_limited(AsRef::<[u8]>::as_ref(&message.to_bytes()?), 32);
+	/// #     Ok(())
+	/// # }
 	/// ```
-	fn write_bytes_limited(&mut self, bytes: impl ByteReader, limit: usize)
+	fn write_bytes_limited(&mut self, reader: impl ByteReader, limit: usize)
 	where
 		Self: Sized,
 	{
-		self.limit(limit).put(bytes);
+		self.limit(limit).put(reader);
 	}
 
 	/// Writes the same byte `count` many times.
@@ -86,13 +106,17 @@ pub trait ByteWriter: BufMut {
 	/// In order to fill unused bytes in a message, it is convenient to be able
 	/// to write an exact number of the same byte:
 	/// ```rust
-	/// bytes.write_u32_ne(73);
+	/// use cornflakes::ByteWriter;
+	///
+	/// let mut message: Vec<u8> = vec![];
+	///
+	/// message.write_u32_ne(73);
 	///
 	/// // Since this message must have a total length of 32 bytes, and a single
 	/// // [`u32`] value is merely 4 bytes, we must fill the rest with unused
 	/// // bytes. The exact value of these bytes does not matter, but remember
 	/// // that they might not necessarily be zero.
-	/// bytes.write_mant(0, 28);
+	/// message.write_many(0, 28);
 	/// ```
 	fn write_many(&mut self, byte: u8, count: usize) {
 		self.put_bytes(byte, count);

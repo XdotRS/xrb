@@ -110,12 +110,6 @@ pub trait ToBytes: ByteSize {
 	}
 
 	/// Writes `self` as bytes.
-	///
-	/// Equivalent to:
-	/// ```rust
-	/// let mut bytes: Vec<u8> = vec![];
-	/// self.write_to(&mut bytes)?;
-	/// ```
 	fn to_bytes(&self) -> Result<Vec<u8>, Error>
 	where
 		Self: Sized,

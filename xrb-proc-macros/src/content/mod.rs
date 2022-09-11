@@ -27,8 +27,11 @@ pub struct Shorthand {
 	/// An optional item declaration preceded by a colon (`:`).
 	///
 	/// # Examples
-	/// ```
-	/// requests! {
+	/// ```ignore
+	/// use xrb_proc_macros::messages;
+	/// use xrb::Window;
+	///
+	/// messages! {
 	///     // With the optional item declaration:
 	///     pub struct DestroyWindow(4): pub target: Window;
 	///
