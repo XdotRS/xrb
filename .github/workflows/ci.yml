@@ -115,8 +115,8 @@ jobs:
 
       - name: Configure git credentials
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
+          git -C xrb config user.name github-actions
+          git -C xrb config user.email github-actions@github.com
 
       - name: Format code with rustfmt
         uses: actions-rs/cargo@v1
@@ -127,10 +127,11 @@ jobs:
       - name: Commit formatting changes
         # Commit changes, or, if that fails, do nothing.
         run: |
-          git pull && git commit -am "Formatted code with rustfmt ${{ github.run_number }}" || :
+          git -C xrb pull
+          git -C xrb commit -am "Formatted code with rustfmt ${{ github.run_number }}" || :
 
       - name: Push all changes
-        run: git push
+        run: git -C xrb push
 
       - name: Compress files into a tar archive
         run: tar -cvf xrb.tar xrb
@@ -164,10 +165,8 @@ jobs:
           components: clippy
 
       - name: Clippy analysis
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --workspace --color always
+      	working-directory: xrb
+        run: cargo clippy --workspace --color always
 
   # Generate the docs with rustdoc.
   build-docs:
@@ -185,9 +184,7 @@ jobs:
       # Extract XRB with any changes made by `clippy-fixes` or `auto-format` to
       # `xrb`.
       - name: Extract files from the tar archive
-        run: |
-          mkdir xrb
-          tar -xvf xrb.tar -C xrb
+        run: tar -xvf xrb.tar
 
       # 'Download' a template to put the generated docs in.
       - name: Checkout XRB docs template
