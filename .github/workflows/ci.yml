@@ -93,7 +93,7 @@ jobs:
       - name: Commit changes
         # Commit changes, or, if that fails, do nothing.
         run: |
-          git pull
+          git pull main
           git commit -am "Applied recommended fixes ${{ github.run_number }}" || :
 
       # This sets the `commit-id` to the latest commit. If there were changes
@@ -149,7 +149,7 @@ jobs:
       - name: Commit changes
         # Commit changes, or, if that fails, do nothing.
         run: |
-          git pull
+          git pull main
           git commit -am "Formatted code with rustfmt ${{ github.run_number }}" || :
 
       # This sets the `commit-id` to the latest commit. If there were changes
@@ -190,7 +190,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --clippy --workspace --color always
+          args: --workspace --color always
 
   # Generate the docs with rustdoc.
   build-docs:
