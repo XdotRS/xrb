@@ -10,6 +10,23 @@
 // type would not be "complete" without it. We use it for [`Request`] and
 // [`Reply`], for example.
 #![feature(doc_notable_trait)]
+// Deny the following clippy lints to enforce them:
+#![deny(clippy::complexity)]
+#![deny(clippy::correctness)]
+#![deny(clippy::nursery)]
+#![deny(clippy::perf)]
+#![deny(clippy::style)]
+#![deny(clippy::suspicious)]
+// Warn for these lints, rather than denying them.
+#![warn(clippy::use_self)]
+// Warn for pedantic & cargo lints. They are allowed completely by default.
+#![warn(clippy::pedantic)]
+#![warn(clippy::cargo)]
+// Do continue to allow this pedantic lint though. It's bringing up false
+// positives for our code.
+#![allow(clippy::doc_markdown)]
+// Allow for readability.
+#![allow(clippy::wildcard_imports)]
 
 //! # X Rust Bindings
 //! X Rust Bindings is a Rust library directly implementing the types and protocol messages of the
