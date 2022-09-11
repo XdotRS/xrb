@@ -18,7 +18,7 @@ permissions:
   id-token: write
 
 jobs:
-  initial-checks:
+  setup:
     runs-on: ubuntu-latest
 
     steps:
@@ -30,26 +30,8 @@ jobs:
         with:
           access_token: ${{ github.token }}
 
-      - name: Checkout XRB
-        uses: actions/checkout@v3
-
-      - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: true
-          components: rustfmt, clippy
-
-      - name: Run checks
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --workspace --color always
-
   run-tests:
     runs-on: ubuntu-latest
-    needs: initial-checks
 
     steps:
       - name: Checkout XRB
@@ -69,9 +51,41 @@ jobs:
           command: test
           args: --workspace --color always
 
-  fix-n-format:
+  auto-format:
     runs-on: ubuntu-latest
-    needs: initial-checks
+
+    steps:
+      - name: Checkout XRB
+        uses: actions/checkout@v3
+
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: rustfmt, clippy
+
+      - name: Configure git credentials
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+      - name: Format code with rustfmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all
+
+      - name: Commit formatting changes
+        run: |
+          git commit -am "Formatted code with rustfmt ${{ github.run_number }}" || echo "Nothing to be formatted!"
+
+      - name: Push changes
+        run: git push
+
+  clippy-fixes:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout XRB
@@ -97,18 +111,8 @@ jobs:
           args: --workspace --fix --color always
 
       - name: Commit fixes
-        continue-on-error: true
-        run: git commit -am "Applied recommended fixes ${{ github.run_number }}"
-
-      - name: Format code with rustfmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all
-
-      - name: Commit formatting changes
-        continue-on-error: true
-        run: git commit -am "Formatted code with rustfmt ${{ github.run_number }}"
+        run: |
+          git commit -am "Applied recommended fixes ${{ github.run_number }}" || echo "Nothing to be fixed!"
 
       - name: Push changes
         run: git push
@@ -116,7 +120,7 @@ jobs:
   clippy-analyse:
     runs-on: ubuntu-latest
     # We run clippy analysis after any fixes that can be applied have been.
-    needs: fix-n-format
+    needs: clippy-fixes
 
     steps:
       - name: Checkout XRB
@@ -141,7 +145,7 @@ jobs:
     runs-on: ubuntu-latest
     # We only build the documentation after the code has been changed so that
     # the code sources linked in the documentation are up-to-date.
-    needs: fix-n-format
+    needs: [clippy-fixes, auto-format]
 
     steps:
       # 'Download' XRB to `./xrb`.
