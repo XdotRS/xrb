@@ -7,6 +7,10 @@ X Rust Bindings (a.k.a. XRB) is an implementation of the X Window System protoco
 11, more commonly known as X11, in Rust. It provides types and data structures
 for X11, as well as serialization and deserialization for them.
 
+> _Hey! Why not check out [XRB's documentation](https://docs.aquariwm.org/doc/xrb)?
+> It contains a lot of information about the project, and has many examples and
+> explanations._
+
 XRB is not, however, an X library. It does not offer functionality for connecting
 to the X server, sending or receiving messages, nor an opinionated API. The idea
 is that those functionalities are implemented on top of XRB with an API wrapper,
