@@ -79,7 +79,8 @@ jobs:
       - name: Commit fixes
         # Commit changes, or, if that fails, do nothing.
         run: |
-          git pull && git commit -am "Applied recommended fixes ${{ github.run_number }}" || :
+          git -C xrb pull
+          git -C xrb commit -am "Applied recommended fixes ${{ github.run_number }}" || :
 
       - name: Compress files into a tar archive
         run: tar -cvf xrb.tar xrb
@@ -119,19 +120,14 @@ jobs:
           git -C xrb config user.email github-actions@github.com
 
       - name: Format code with rustfmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all
+        working-directory: xrb
+        run: cargo fmt --all --color always
 
       - name: Commit formatting changes
         # Commit changes, or, if that fails, do nothing.
         run: |
           git -C xrb pull
           git -C xrb commit -am "Formatted code with rustfmt ${{ github.run_number }}" || :
-
-      - name: Push all changes
-        run: git -C xrb push
 
       - name: Compress files into a tar archive
         run: tar -cvf xrb.tar xrb
@@ -141,6 +137,22 @@ jobs:
         with:
           name: xrb-formatted
           path: xrb.tar
+
+  push-changes:
+    runs-on: ubuntu-latest
+    needs: [auto-format, clippy-fixes]
+
+    steps:
+      - name: Download XRB with changes made by `clippy-fixes` and `auto-format`
+        uses: actions/download-artifact@v3
+        with:
+          name: xrb-formatted
+
+      - name: Extract files from the tar archive
+        run: tar -xvf xrb.tar
+
+      - name: Push all changes
+        run: git -C xrb push
 
   clippy-analyse:
     runs-on: ubuntu-latest
