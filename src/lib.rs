@@ -22,11 +22,10 @@
 // Warn for pedantic & cargo lints. They are allowed completely by default.
 #![warn(clippy::pedantic)]
 #![warn(clippy::cargo)]
-// Do continue to allow this pedantic lint though. It's bringing up false
-// positives for our code.
+// Continue to allow these though.
 #![allow(clippy::doc_markdown)]
-// Allow for readability.
 #![allow(clippy::wildcard_imports)]
+#![allow(clippy::module_name_repetitions)]
 
 //! # X Rust Bindings
 //! X Rust Bindings is a Rust library directly implementing the types and protocol messages of the
