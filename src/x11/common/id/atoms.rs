@@ -22,7 +22,8 @@ pub struct Atom {
 
 impl Atom {
 	/// Creates a new [`Atom`] with the given ID.
-	#[must_use] pub const fn new(id: u32) -> Self {
+	#[must_use]
+	pub const fn new(id: u32) -> Self {
 		Self { id }
 	}
 }
