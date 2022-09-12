@@ -90,7 +90,7 @@ jobs:
 
       # Run unit tests with `cargo test`.
       - name: Run tests
-        run: cargo test --workspace --color always
+        run: cargo test --workspace --color never
 
       - name: Remove test problem matching
         if: ${{ success() || failure() }}
@@ -257,7 +257,7 @@ jobs:
 
       # Analyse the code with `clippy`.
       - name: Clippy analysis
-        run: cargo clippy --workspace --color always
+        run: cargo clippy --workspace --color never
 
       - name: Remove Rust problem matching
         if: ${{ success() || failure() }}
@@ -316,7 +316,7 @@ jobs:
       # Build documentation with `rustdoc`.
       - name: Build documentation
         working-directory: xrb
-        run: cargo doc --no-deps --workspace --document-private-items
+        run: cargo doc --no-deps --workspace --document-private-items --color never
 
       - name: Remove Rust problem matching
         if: ${{ success() || failure() }}
