@@ -90,11 +90,15 @@ jobs:
 
       # Run unit tests with `cargo test`.
       - name: Run tests
-        run: cargo test --workspace --color always
+        run: |
+          status = 0
+          cargo test --workspace --color always || status = $?
 
       - name: Remove test problem matching
-        if: ${{ success() || failure() }}
         run: echo "::remove-matcher owner=rust-tests::"
+
+      - name: Exit status
+        run: exit $status
 
   # Automatically applies suggested fixes from `clippy`.
   clippy-fixes:
@@ -257,11 +261,15 @@ jobs:
 
       # Analyse the code with `clippy`.
       - name: Clippy analysis
-        run: cargo clippy --workspace --color always
+        run: |
+          status = 0
+          cargo clippy --workspace --color always || status = $?
 
       - name: Remove Rust problem matching
-        if: ${{ success() || failure() }}
         run: echo "::remove-matcher owner=rustc::"
+
+      - name: Exit status
+        run: exit $status
 
   # Generate the docs with rustdoc.
   build-docs:
@@ -319,7 +327,6 @@ jobs:
         run: cargo doc --no-deps --workspace --document-private-items
 
       - name: Remove Rust problem matching
-        if: ${{ success() || failure() }}
         run: echo "::remove-matcher owner=rustc::"
 
       # Place the built documentation into the template, ready to be deployed.
