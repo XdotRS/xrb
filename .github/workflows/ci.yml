@@ -103,7 +103,7 @@ jobs:
         run: echo ::set-output name=commit-id::$(git log --format="%H" -n 1)
 
       - name: Push changes
-        run: git push origin HEAD:main
+        run: git push ${{ github.repositoryUrl }} HEAD:${{ github.ref }}
 
   # Automatically formats the code with `rustfmt`.
   auto-format:
@@ -159,7 +159,7 @@ jobs:
         run: echo ::set-output name=commit-id::$(git log --format="%H" -n 1)
 
       - name: Push changes
-        run: git push origin HEAD:main
+        run: git push ${{ github.repositoryUrl }} HEAD:${{ github.ref }}
 
   # Analyses the code with `clippy`.
   clippy-analyse:
