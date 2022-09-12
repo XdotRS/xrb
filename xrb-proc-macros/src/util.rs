@@ -7,12 +7,17 @@ use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{format_ident, quote, quote_spanned};
 
 use syn::spanned::Spanned;
-use syn::{parse_quote, Data, Fields, GenericParam, Generics, Index, Type, Ident};
+use syn::{parse_quote, Data, Fields, GenericParam, Generics, Ident, Index, Type};
 
 use crate::content::Content;
 use crate::message::*;
 
-pub fn serialize_request(name: Ident, generics: Generics, _metadata: RequestMetadata, _content: Content) -> TokenStream2 {
+pub fn serialize_request(
+	name: Ident,
+	generics: Generics,
+	_metadata: RequestMetadata,
+	_content: Content,
+) -> TokenStream2 {
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
 	quote! {
@@ -24,7 +29,12 @@ pub fn serialize_request(name: Ident, generics: Generics, _metadata: RequestMeta
 	}
 }
 
-pub fn deserialize_request(name: Ident, generics: Generics, _metadata: RequestMetadata, _content: Content) -> TokenStream2 {
+pub fn deserialize_request(
+	name: Ident,
+	generics: Generics,
+	_metadata: RequestMetadata,
+	_content: Content,
+) -> TokenStream2 {
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
 	quote! {
@@ -38,7 +48,12 @@ pub fn deserialize_request(name: Ident, generics: Generics, _metadata: RequestMe
 	}
 }
 
-pub fn serialize_reply(name: Ident, generics: Generics, _metadata: ReplyMetadata, _content: Content) -> TokenStream2 {
+pub fn serialize_reply(
+	name: Ident,
+	generics: Generics,
+	_metadata: ReplyMetadata,
+	_content: Content,
+) -> TokenStream2 {
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
 	quote! {
@@ -50,7 +65,12 @@ pub fn serialize_reply(name: Ident, generics: Generics, _metadata: ReplyMetadata
 	}
 }
 
-pub fn deserialize_reply(name: Ident, generics: Generics, _metadata: ReplyMetadata, _content: Content) -> TokenStream2 {
+pub fn deserialize_reply(
+	name: Ident,
+	generics: Generics,
+	_metadata: ReplyMetadata,
+	_content: Content,
+) -> TokenStream2 {
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
 	quote! {

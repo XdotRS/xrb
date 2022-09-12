@@ -28,7 +28,8 @@ impl Atom {
 	}
 
 	/// Creates a new [`Atom`] with an ID of `0`.
-	#[must_use] pub const fn empty() -> Self {
+	#[must_use]
+	pub const fn empty() -> Self {
 		Self { id: 0 }
 	}
 }
