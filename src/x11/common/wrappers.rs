@@ -18,10 +18,22 @@ pub enum Inheritable<T> {
 	Specific(T),
 }
 
+impl<T> Default for Inheritable<T> {
+	fn default() -> Self {
+		Self::CopyFromParent
+	}
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Relatable<T> {
 	ParentRelative,
 	Specific(T),
+}
+
+impl<T> Default for Relatable<T> {
+	fn default() -> Self {
+		Self::ParentRelative
+	}
 }
 
 /// Allows a value to be represented as an `Any` state.
@@ -32,6 +44,12 @@ pub enum Any<T> {
 	Any,
 	/// Provides a specific value, rather than representing `Any`.
 	Specific(T),
+}
+
+impl<T> Default for Any<T> {
+	fn default() -> Self {
+		Self::Any
+	}
 }
 
 /// Allows a field to be implicitly initialized as its default value.
@@ -45,6 +63,12 @@ pub enum Defaultable<T> {
 	Default,
 	/// Provides a specific value, rather than initializing as the default.
 	Specific(T),
+}
+
+impl<T> Default for Defaultable<T> {
+	fn default() -> Self {
+		Self::Default
+	}
 }
 
 /// Represents a point in time.
@@ -67,6 +91,12 @@ pub enum Time {
 	///
 	/// [current time]: Time::Current
 	Specific(Timestamp),
+}
+
+impl Default for Time {
+	fn default() -> Self {
+		Self::Current
+	}
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]

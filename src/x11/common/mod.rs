@@ -66,7 +66,13 @@ pub enum CoordinateMode {
 	Previous,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+impl Default for CoordinateMode {
+	fn default() -> Self {
+		Self::Origin
+	}
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize, Default)]
 pub struct Segment {
 	pub start: (i16, i16),
 	pub end: (i16, i16),
@@ -84,6 +90,12 @@ pub enum Ordering {
 pub enum DrawDirection {
 	LeftToRight,
 	RightToLeft,
+}
+
+impl Default for DrawDirection {
+	fn default() -> Self {
+		DrawDirection::LeftToRight
+	}
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
@@ -114,6 +126,12 @@ pub enum AllowEventsMode {
 	SyncBoth,
 }
 
+impl Default for AllowEventsMode {
+	fn default() -> Self {
+		Self::AsyncBoth
+	}
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
 pub enum HostFamilyA {
 	Internet,
@@ -121,10 +139,22 @@ pub enum HostFamilyA {
 	Chaos,
 }
 
+impl Default for HostFamilyA {
+	fn default() -> Self {
+		Self::Internet
+	}
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
 pub enum GrabMode {
 	Synchronous,
 	Asynchronous,
+}
+
+impl Default for GrabMode {
+	fn default() -> Self {
+		Self::Asynchronous
+	}
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
@@ -148,6 +178,12 @@ pub enum EditMode {
 	Delete,
 }
 
+impl Default for EditMode {
+	fn default() -> Self {
+		Self::Insert
+	}
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
 pub enum Format {
 	XyPixmap = 1,
@@ -163,11 +199,23 @@ pub enum StackMode {
 	Opposite,
 }
 
+impl Default for StackMode {
+	fn default() -> Self {
+		Self::Above
+	}
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
 pub enum MapState {
 	Unmapped,
 	Unviewable,
 	Viewable,
+}
+
+impl Default for MapState {
+	fn default() -> Self {
+		Self::Unmapped
+	}
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
@@ -181,6 +229,12 @@ pub enum BackingStore {
 pub enum WindowClass {
 	InputOutput = 1,
 	InputOnly = 2,
+}
+
+impl Default for WindowClass {
+	fn default() -> Self {
+		Self::InputOutput
+	}
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
@@ -198,6 +252,12 @@ pub enum BitGravity {
 	Static,
 }
 
+impl Default for BitGravity {
+	fn default() -> Self {
+		Self::NorthWest
+	}
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
 pub enum WinGravity {
 	Unmap,
@@ -211,6 +271,12 @@ pub enum WinGravity {
 	South,
 	SouthEast,
 	Static,
+}
+
+impl Default for WinGravity {
+	fn default() -> Self {
+		Self::NorthWest
+	}
 }
 
 /// A rectangle with coordinates and dimensions.
@@ -227,6 +293,17 @@ pub struct Rectangle {
 	pub width: u16,
 	/// Height of the rectangle.
 	pub height: u16,
+}
+
+impl Default for Rectangle {
+	fn default() -> Self {
+		Self {
+			x: 0,
+			y: 0,
+			width: 1,
+			height: 1,
+		}
+	}
 }
 
 /// An arc (the geometry kind) with coordinates, dimensions, and angles.
@@ -261,6 +338,12 @@ pub enum HostFamily {
 	Chaos,
 	ServerInterpreted,
 	InternetV6,
+}
+
+impl Default for HostFamily {
+	fn default() -> Self {
+		Self::ServerInterpreted
+	}
 }
 
 /// An identifier representing the concept of all possible keys.
@@ -320,6 +403,12 @@ pub enum RevertTo {
 	Parent,
 }
 
+impl Default for RevertTo {
+	fn default() -> Self {
+		Self::Parent
+	}
+}
+
 /// The destination for an [`Event`] in a [`SendEvent`] request.
 ///
 /// This is the window that the event will be sent to.
@@ -330,4 +419,10 @@ pub enum Destination {
 	InputFocus,
 	/// A specific [`Window`].
 	Specific(Window),
+}
+
+impl Default for Destination {
+	fn default() -> Self {
+		Self::InputFocus
+	}
 }

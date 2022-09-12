@@ -26,6 +26,11 @@ impl Atom {
 	pub const fn new(id: u32) -> Self {
 		Self { id }
 	}
+
+	/// Creates a new [`Atom`] with an ID of `0`.
+	pub const fn empty() -> Self {
+		Self { id: 0 }
+	}
 }
 
 /// An [`Atom`] representing the string "PRIMARY".

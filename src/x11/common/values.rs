@@ -82,11 +82,23 @@ pub enum Function {
 	Set,
 }
 
+impl Default for Function {
+	fn default() -> Self {
+		Self::NoOp
+	}
+}
+
 #[derive(StaticByteSize, ByteSize)]
 pub enum LineStyle {
 	Solid,
 	OnOffDash,
 	DoubleDash,
+}
+
+impl Default for LineStyle {
+	fn default() -> Self {
+		Self::Solid
+	}
 }
 
 #[derive(StaticByteSize, ByteSize)]
@@ -97,11 +109,23 @@ pub enum CapStyle {
 	Projecting,
 }
 
+impl Default for CapStyle {
+	fn default() -> Self {
+		Self::Butt
+	}
+}
+
 #[derive(StaticByteSize, ByteSize)]
 pub enum JoinStyle {
 	Miter,
 	Round,
 	Bevel,
+}
+
+impl Default for JoinStyle {
+	fn default() -> Self {
+		Self::Miter
+	}
 }
 
 #[derive(StaticByteSize, ByteSize)]
@@ -112,16 +136,34 @@ pub enum FillStyle {
 	OpaqueStippled,
 }
 
+impl Default for FillStyle {
+	fn default() -> Self {
+		Self::Solid
+	}
+}
+
 #[derive(StaticByteSize, ByteSize)]
 pub enum FillRule {
 	EvenOdd,
 	Winding,
 }
 
+impl Default for FillRule {
+	fn default() -> Self {
+		Self::EvenOdd
+	}
+}
+
 #[derive(StaticByteSize, ByteSize)]
 pub enum SubwindowMode {
 	ClipByChildren,
 	IncludeInferiors,
+}
+
+impl Default for SubwindowMode {
+	fn default() -> Self {
+		Self::ClipByChildren
+	}
 }
 
 #[derive(StaticByteSize, ByteSize)]
