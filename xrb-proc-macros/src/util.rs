@@ -12,23 +12,64 @@ use syn::{parse_quote, Data, Fields, GenericParam, Generics, Ident, Index, Type}
 use crate::content::Content;
 use crate::message::*;
 
+/// Returns the tokens that get the metabyte position for a message.
+pub fn metabyte(minor_opcode: Option<TokenStream2>, content: &Content) -> TokenStream2 {
+	minor_opcode.map_or_else(
+		|| match &content {
+			Content::Shorthand(shorthand) => shorthand
+				.item
+				.as_ref()
+				.map_or_else(|| quote!(0), |(_, item)| quote!(#item)),
+
+			Content::Longhand(longhand) => longhand
+				.metabyte()
+				.map_or_else(|| quote!(0), |item| quote!(#item)),
+		},
+		|minor| quote!(#minor),
+	)
+}
+
+#[allow(dead_code)]
 pub fn serialize_request(
 	name: Ident,
 	generics: Generics,
-	_metadata: RequestMetadata,
-	_content: Content,
+	metadata: RequestMetadata,
+	content: Content,
 ) -> TokenStream2 {
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+	let major_opcode = metadata.major_opcode;
+	let metabyte = metabyte(
+		metadata.minor_opcode.map(|(_, minor)| quote!(#minor)),
+		&content,
+	);
+
+	let items = match content {
+		Content::Shorthand(shorthand) => shorthand
+			.item
+			.map_or_else(|| vec![], |(_, item)| vec![item]),
+
+		Content::Longhand(longhand) => longhand.items_sans_metabyte(),
+	};
 
 	quote! {
 		impl #impl_generics cornflakes::ToBytes for #name #ty_generics #where_clause {
 			fn write_to(&self, writer: &mut impl cornflakes::ByteWriter) -> Result<(), std::io::Error> {
+				// Header
+				writer.write_u8(#major_opcode);
+				writer.write_u8(#metabyte);
+				writer.write_u16(crate::Request::length(self));
+
+				// Everything else
+				#(#items)*
+
 				Ok(())
 			}
 		}
 	}
 }
 
+#[allow(dead_code)]
 pub fn deserialize_request(
 	name: Ident,
 	generics: Generics,
@@ -39,32 +80,77 @@ pub fn deserialize_request(
 
 	quote! {
 		impl #impl_generics cornflakes::FromBytes for #name #ty_generics #where_clause {
-			fn read_from(reader: &mut impl cornflakes::ByteReader) -> Result<Self, std::io::Error> {
-				Ok(Self {
+			fn read_from(__reader: &mut impl cornflakes::ByteReader) -> Result<Self, std::io::Error> {
+				// Don't need to read the major opcode since we already know
+				// which request we're deserializing.
+				__reader.skip(1);
+				// if metabyte item, read metabyte item, else skip
 
+				// Read the length of the request (which is in units of 4
+				// bytes), and multiply it by 4 to get the length of the request
+				// in bytes.
+				let __length = (__reader.read::<u16>() * 4) as usize;
+				// Limit the `reader` to `length - 4`, as 4 bytes have already
+				// been read.
+				let __reader = __reader.limit(__length - 4);
+
+				// TODO: Loop over all non-metabyte items:
+				// - if unused, skip the unused bytes
+				// - if length, store length as `fieldname_length` for use in
+				//   deserializing `fieldname`
+				// - if field, `let fieldname = FieldType::read_from(reader)?;`
+
+				Ok(Self {
+					// TODO: If metabyte field, put metabyte field
+					// any other fields.
 				})
 			}
 		}
 	}
 }
 
+#[allow(dead_code)]
 pub fn serialize_reply(
 	name: Ident,
 	generics: Generics,
 	_metadata: ReplyMetadata,
-	_content: Content,
+	content: Content,
 ) -> TokenStream2 {
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+	let items = match content {
+		Content::Shorthand(shorthand) => shorthand
+			.item
+			.map_or_else(|| vec![], |(_, item)| vec![item]),
+
+		Content::Longhand(longhand) => longhand.items_sans_metabyte(),
+	};
 
 	quote! {
 		impl #impl_generics cornflakes::ToBytes for #name #ty_generics #where_clause {
 			fn write_to(&self, writer: &mut impl cornflakes::ByteWriter) -> Result<(), std::io::Error> {
+				/// A first byte of `1` indicates that this message is a reply.
+				writer.write_u8(1);
+
+				// TODO: If there's a metabyte item, write that, or if there's
+				// a minor opcode, write that, else write 0.
+
+				// Write the sequence number associated with the request that
+				// initiated the reply.
+				writer.write_u16(self.__sequence_number);
+				// Write the length of the reply.
+				writer.write_u32(crate::Reply::length(self));
+
+				// Everything else.
+				#(#items)*
+
 				Ok(())
 			}
 		}
 	}
 }
 
+#[allow(dead_code)]
 pub fn deserialize_reply(
 	name: Ident,
 	generics: Generics,
@@ -75,9 +161,22 @@ pub fn deserialize_reply(
 
 	quote! {
 		impl #impl_generics cornflakes::FromBytes for #name #ty_generics #where_clause {
-			fn read_from(reader: &mut impl cornflakes::ByteReader) -> Result<Self, std::io::Error> {
-				Ok(Self {
+			fn read_from(__reader: &mut impl cornflakes::ByteReader) -> Result<Self, std::io::Error> {
+				// The first byte of a reply is always `1`: we already know this
+				// is a reply, so we can skip it.
+				__reader.skip(1);
+				// TODO: if metabyte item, read metabyte item, else skip
 
+				let __sequence_number = __reader.read_u16();
+
+				let __length = ((reader.read_u32() * 4) + 32) as usize;
+				let __reader = reader.limit(__length - 8);
+
+				// TODO: read everything else
+
+				Ok(Self {
+					__sequence_number,
+					// TODO: everything else
 				})
 			}
 		}

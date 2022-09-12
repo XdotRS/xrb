@@ -85,9 +85,9 @@ impl Longhand {
 
 	/// Returns `self.items` with metabyte items removed.
 	#[allow(dead_code)]
-	pub fn items_sans_metabyte(&self) -> Vec<&Item> {
+	pub fn items_sans_metabyte(self) -> Vec<Item> {
 		self.items
-			.iter()
+			.into_iter()
 			.filter(|item| !item.is_metabyte())
 			.collect()
 	}
