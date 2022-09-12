@@ -15,7 +15,8 @@ impl VisualId {
 		Self(id)
 	}
 
-	#[must_use] pub const fn id(&self) -> u32 {
+	#[must_use]
+	pub const fn id(&self) -> u32 {
 		self.0
 	}
 }
