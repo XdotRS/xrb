@@ -1035,8 +1035,109 @@ mod tests {
 	use super::*;
 
 	#[test]
-	fn grab_button_major_opcode_is_correct() {
-		assert_eq!(GrabButton::major_opcode(), 28);
+	fn create_window_length_is_correct() {
+		let create_window = CreateWindow {
+			window_id: Window::new(0),
+			parent: Window::new(0),
+			class: Inheritable::CopyFromParent,
+			depth: Inheritable::CopyFromParent,
+			visual: Inheritable::CopyFromParent,
+			x: 0,
+			y: 0,
+			width: 0,
+			height: 0,
+			border_width: 0,
+			value_mask: AttributeMask::empty(),
+			values: &[Attribute::BackingPixel(0), Attribute::Cursor(None)],
+		};
+
+		assert_eq!(create_window.length(), 10);
+	}
+
+	#[test]
+	fn change_window_attributes_length_is_correct() {
+		let change_window_attributes = ChangeWindowAttributes {
+			target: Window::new(0),
+			value_mask: AttributeMask::empty(),
+			values: &[],
+		};
+
+		assert_eq!(change_window_attributes.length(), 3);
+	}
+
+	#[test]
+	fn get_window_attributes_length_is_correct() {
+		let get_window_attributes = GetWindowAttributes {
+			target: Window::new(0),
+		};
+
+		assert_eq!(get_window_attributes.length(), 2);
+	}
+
+	#[test]
+	fn get_window_attributes_reply_length_is_correct() {
+		let get_window_attributes_reply = GetWindowAttributesReply {
+			__sequence: 0,
+			__major_opcode: None,
+			__minor_opcode: None,
+			backing_store: BackingStore::Always,
+			visual: VisualId::new(0),
+			class: WindowClass::InputOnly,
+			bit_gravity: BitGravity::West,
+			win_gravity: WinGravity::West,
+			backing_planes: 0,
+			backing_pixel: 0,
+			save_under: false,
+			map_is_installed: false,
+			map_state: MapState::Unmapped,
+			override_redirect: false,
+			colormap: None,
+			all_event_masks: EventMask::empty(),
+			your_event_mask: EventMask::empty(),
+			do_not_propagate_mask: DeviceEventMask::empty(),
+		};
+
+		assert_eq!(get_window_attributes_reply.length(), 0);
+	}
+
+	#[test]
+	fn destroy_window_length_is_correct() {
+		let destroy_window = DestroyWindow {
+			target: Window::new(0),
+		};
+
+		assert_eq!(destroy_window.length(), 2);
+	}
+
+	#[test]
+	fn destroy_subwindows_length_is_correct() {
+		let destroy_subwindows = DestroySubwindows {
+			target: Window::new(0),
+		};
+
+		assert_eq!(destroy_subwindows.length(), 2);
+	}
+
+	#[test]
+	fn change_save_set_length_is_correct() {
+		let change_save_set = ChangeSaveSet {
+			mode: EditMode::Insert,
+			target: Window::new(0),
+		};
+
+		assert_eq!(change_save_set.length(), 2);
+	}
+
+	#[test]
+	fn reparent_window_length_is_correct() {
+		let reparent_window = ReparentWindow {
+			target: Window::new(0),
+			new_parent: Window::new(0),
+			new_x: 0,
+			new_y: 0,
+		};
+
+		assert_eq!(reparent_window.length(), 4);
 	}
 
 	#[test]

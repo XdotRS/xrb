@@ -9,6 +9,17 @@ use xrb_proc_macros::{ByteSize, StaticByteSize};
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
 pub struct VisualId(u32);
 
+impl VisualId {
+	#[must_use]
+	pub const fn new(id: u32) -> Self {
+		Self(id)
+	}
+
+	pub const fn id(&self) -> u32 {
+		self.0
+	}
+}
+
 /// An ID for resources that is unique among other resources.
 ///
 /// A _resource_ is a:
