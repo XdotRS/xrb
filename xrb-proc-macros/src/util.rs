@@ -7,7 +7,62 @@ use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{format_ident, quote, quote_spanned};
 
 use syn::spanned::Spanned;
-use syn::{parse_quote, Data, Fields, GenericParam, Generics, Index, Type};
+use syn::{parse_quote, Data, Fields, GenericParam, Generics, Index, Type, Ident};
+
+use crate::content::Content;
+use crate::message::*;
+
+pub fn serialize_request(name: Ident, generics: Generics, metadata: RequestMetadata, content: Content) -> TokenStream2 {
+	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+	quote! {
+		impl #impl_generics cornflakes::ToBytes for #name #ty_generics #where_clause {
+			fn write_to(&self, writer: &mut impl cornflakes::ByteWriter) -> Result<(), std::io::Error> {
+				Ok(())
+			}
+		}
+	}
+}
+
+pub fn deserialize_request(name: Ident, generics: Generics, metadata: RequestMetadata, content: Content) -> TokenStream2 {
+	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+	quote! {
+		impl #impl_generics cornflakes::FromBytes for #name #ty_generics #where_clause {
+			fn read_from(reader: &mut impl cornflakes::ByteReader) -> Result<Self, std::io::Error> {
+				Ok(Self {
+
+				})
+			}
+		}
+	}
+}
+
+pub fn serialize_reply(name: Ident, generics: Generics, metadata: ReplyMetadata, content: Content) -> TokenStream2 {
+	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+	quote! {
+		impl #impl_generics cornflakes::ToBytes for #name #ty_generics #where_clause {
+			fn write_to(&self, writer: &mut impl cornflakes::ByteWriter) -> Result<(), std::io::Error> {
+				Ok(())
+			}
+		}
+	}
+}
+
+pub fn deserialize_reply(name: Ident, generics: Generics, metadata: ReplyMetadata, content: Content) -> TokenStream2 {
+	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+	quote! {
+		impl #impl_generics cornflakes::FromBytes for #name #ty_generics #where_clause {
+			fn read_from(reader: &mut impl cornflakes::ByteReader) -> Result<Self, std::io::Error> {
+				Ok(Self {
+
+				})
+			}
+		}
+	}
+}
 
 /// Adds the given `r#trait` bounds to the given [`Generics`].
 pub fn add_trait_bounds(mut generics: Generics, r#trait: TokenStream2) -> Generics {

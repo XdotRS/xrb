@@ -16,16 +16,14 @@ impl VisualId {
 		Self(id)
 	}
 
-<<<<<<< HEAD
 	/// Creates a new [`VisualId`] with an `id` of `0`.
+	#[must_use]
 	pub const fn empty() -> Self {
 		Self(0)
 	}
 
 	/// Gets the `id` of the [`VisualId`].
-=======
 	#[must_use]
->>>>>>> 34230dc2d5e50d1bf48986c69b504d5257231ec1
 	pub const fn id(&self) -> u32 {
 		self.0
 	}
