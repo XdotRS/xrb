@@ -47,7 +47,7 @@ pub fn serialize_request(
 	let items = match content {
 		Content::Shorthand(shorthand) => shorthand
 			.item
-			.map_or_else(|| vec![], |(_, item)| vec![item]),
+			.map_or_else(std::vec::Vec::new, |(_, item)| vec![item]),
 
 		Content::Longhand(longhand) => longhand.items_sans_metabyte(),
 	};
@@ -121,7 +121,7 @@ pub fn serialize_reply(
 	let items = match content {
 		Content::Shorthand(shorthand) => shorthand
 			.item
-			.map_or_else(|| vec![], |(_, item)| vec![item]),
+			.map_or_else(std::vec::Vec::new, |(_, item)| vec![item]),
 
 		Content::Longhand(longhand) => longhand.items_sans_metabyte(),
 	};
