@@ -47,8 +47,8 @@ jobs:
           override: true
 
       # Matches errors, warnings, etc. so annotations can be added and such.
-      - name: Add problem matchers for Rust
-        uses: r7kamura/rust-problem-matchers@v1
+      - name: Add `rustc` problem matching
+        run: echo ::add-matcher::.github/rustc-problem-matcher.json
 
       - name: Build
         run: cargo build
@@ -88,9 +88,9 @@ jobs:
           toolchain: nightly
           override: true
 
-      # Matches errors, warnings, etc. so annotations can be added and such.
-      - name: Add problem matchers for Rust
-        uses: r7kamura/rust-problem-matchers@v1
+      # Matches test failures so annotations can be added and such.
+      - name: Add test problem matching
+        run: echo ::add-matcher::.github/test-problem-matcher.json
 
       # Run unit tests with `cargo test`.
       - name: Run tests
@@ -252,8 +252,8 @@ jobs:
           components: clippy
 
       # Matches errors, warnings, etc. so annotations can be added and such.
-      - name: Add problem matchers for Rust
-        uses: r7kamura/rust-problem-matchers@v1
+      - name: Add Rust problem matching
+        run: echo ::add-matcher::.github/rustc-problem-matcher.json
 
       # Analyse the code with `clippy`.
       - name: Clippy analysis
@@ -302,8 +302,8 @@ jobs:
           override: true
 
       # Matches errors, warnings, etc. so annotations can be added and such.
-      - name: Add problem matchers for Rust
-        uses: r7kamura/rust-problem-matchers@v1
+      - name: Add Rust problem matching
+        run: echo ::add-matcher::.github/rustc-problem-matcher.json
 
       # Setup GitHub Pages to easily deploy to it.
       - name: Setup GitHub Pages
