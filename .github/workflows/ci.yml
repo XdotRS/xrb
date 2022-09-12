@@ -91,8 +91,8 @@ jobs:
       # Run unit tests with `cargo test`.
       - name: Run tests
         run: |
-          status = 0
-          cargo test --workspace --color always || status = $?
+          status=0
+          cargo test --workspace --color always || status=$?
 
       - name: Remove test problem matching
         run: echo "::remove-matcher owner=rust-tests::"
@@ -262,8 +262,8 @@ jobs:
       # Analyse the code with `clippy`.
       - name: Clippy analysis
         run: |
-          status = 0
-          cargo clippy --workspace --color always || status = $?
+          status=0
+          cargo clippy --workspace --color always || status=$?
 
       - name: Remove Rust problem matching
         run: echo "::remove-matcher owner=rustc::"
