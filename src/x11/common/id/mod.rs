@@ -105,4 +105,46 @@ impl ResId for Colormap {
 	}
 }
 
+impl Window {
+	#[must_use]
+	pub const fn new(id: u32) -> Self {
+		Self { id }
+	}
+}
+
+impl Pixmap {
+	#[must_use]
+	pub const fn new(id: u32) -> Self {
+		Self { id }
+	}
+}
+
+impl Cursor {
+	#[must_use]
+	pub const fn new(id: u32) -> Self {
+		Self { id }
+	}
+}
+
+impl Font {
+	#[must_use]
+	pub const fn new(id: u32) -> Self {
+		Self { id }
+	}
+}
+
+impl GraphicsContext {
+	#[must_use]
+	pub const fn new(id: u32) -> Self {
+		Self { id }
+	}
+}
+
+impl Colormap {
+	#[must_use]
+	pub const fn new(id: u32) -> Self {
+		Self { id }
+	}
+}
+
 fn _assert_object_safety(_res_id: &dyn ResId) {}

@@ -1028,3 +1028,62 @@ messages! {
 	// format, so it has to be done manually. It is therefore found in the
 	// `mod no_operation;` module.
 }
+
+#[cfg(test)]
+mod tests {
+	use crate::traits::*;
+	use super::*;
+
+	#[test]
+	fn grab_button_major_opcode_is_correct() {
+		assert_eq!(GrabButton::major_opcode(), 28);
+	}
+
+	#[test]
+	fn convert_selection_length_is_correct() {
+		let convert_selection = ConvertSelection {
+			requestor: Window::new(0),
+			selection: Atom::new(0),
+			target: Atom::new(0),
+			property: None,
+			time: Time::Current,
+		};
+
+		assert_eq!(convert_selection.length(), 6);
+	}
+
+	#[test]
+	fn grab_pointer_length_is_correct() {
+		let grab_pointer = GrabPointer {
+			owner_events: false,
+			target_window: Window::new(0),
+			event_mask: PointerEventMask::empty(),
+			pointer_mode: GrabMode::Asynchronous,
+			keyboard_mode: GrabMode::Asynchronous,
+			confine_to: None,
+			cursor_override: None,
+			time: Time::Current,
+		};
+
+		assert_eq!(grab_pointer.length(), 6);
+	}
+
+	#[test]
+	fn grab_pointer_reply_length_is_correct() {
+		let grab_pointer_reply = GrabPointerReply {
+			__sequence: 0,
+			__major_opcode: None,
+			__minor_opcode: None,
+			status: GrabStatus::Success,
+		};
+
+		assert_eq!(grab_pointer_reply.length(), 0);
+	}
+
+	#[test]
+	fn grab_server_length_is_correct() {
+		let grab_server = GrabServer {};
+
+		assert_eq!(grab_server.length(), 1);
+	}
+}
