@@ -1031,8 +1031,8 @@ messages! {
 
 #[cfg(test)]
 mod tests {
-	use crate::traits::*;
 	use super::*;
+	use crate::traits::*;
 
 	#[test]
 	fn grab_button_major_opcode_is_correct() {
