@@ -93,6 +93,7 @@ jobs:
         run: cargo test --workspace --color always
 
       - name: Remove test problem matching
+        if: ${{ success() || failure() }}
         run: echo "::remove-matcher owner=rust-tests::"
 
   # Automatically applies suggested fixes from `clippy`.
@@ -259,6 +260,7 @@ jobs:
         run: cargo clippy --workspace --color always
 
       - name: Remove Rust problem matching
+        if: ${{ success() || failure() }}
         run: echo "::remove-matcher owner=rustc::"
 
   # Generate the docs with rustdoc.
@@ -317,6 +319,7 @@ jobs:
         run: cargo doc --no-deps --workspace --document-private-items
 
       - name: Remove Rust problem matching
+        if: ${{ success() || failure() }}
         run: echo "::remove-matcher owner=rustc::"
 
       # Place the built documentation into the template, ready to be deployed.

@@ -5,17 +5,14 @@
 			"severity": "warning",
 			"pattern": [
 				{
-					"regexp": "^(warning|warn|error|note)(?:\\[(\\w+)\\])?: (.*)$",
+					"regexp": "^(warning|warn|error|note)(?:\\[(\\w+)\\])?:\\s+(.*)(?:\\n\\s+-->\\s+((?:[\\w-.]+\\/)*)([\\w-.]+):(\\d+):(\\d+)$)?",
 					"severity": 1,
 					"code": 2,
-					"message": 3
-				},
-				{
-					"regexp": "(?:^(?:\\w+:)?\\s+-->\\s+((?:[\\w-.]+\\/)+)?([\\w.]+):(\\d+):(\\d+)$)?",
-					"fromPath": 1,
-					"file": 2,
-					"line": 3,
-					"column": 4
+					"message": 3,
+					"fromPath": 4,
+					"file": 5,
+					"line": 6,
+					"column": 7
 				}
 			]
 		}
