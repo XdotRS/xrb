@@ -133,7 +133,7 @@ impl Window {
 	}
 
 	/// Creates a new [`Window`] with an ID of `0`.
-	pub const fn empty() -> Self {
+	#[must_use] pub const fn empty() -> Self {
 		Self { id: 0 }
 	}
 }
@@ -146,7 +146,7 @@ impl Pixmap {
 	}
 
 	/// Creates a new [`Pixmap`] with an ID of `0`.
-	pub const fn empty() -> Self {
+	#[must_use] pub const fn empty() -> Self {
 		Self { id: 0 }
 	}
 }
@@ -159,7 +159,7 @@ impl Cursor {
 	}
 
 	/// Creates a new [`Cursor`] with an ID of `0`.
-	pub const fn empty() -> Self {
+	#[must_use] pub const fn empty() -> Self {
 		Self { id: 0 }
 	}
 }
@@ -172,7 +172,7 @@ impl Font {
 	}
 
 	/// Creates a new [`Font`] with an ID of `0`.
-	pub const fn empty() -> Self {
+	#[must_use] pub const fn empty() -> Self {
 		Self { id: 0 }
 	}
 }
@@ -185,7 +185,7 @@ impl GraphicsContext {
 	}
 
 	/// Creates a new [`GraphicsContext`] with an ID of `0`.
-	pub const fn empty() -> Self {
+	#[must_use] pub const fn empty() -> Self {
 		Self { id: 0 }
 	}
 }
@@ -198,7 +198,7 @@ impl Colormap {
 	}
 
 	/// Creates a new [`Colormap`] with an ID of `0`.
-	pub const fn empty() -> Self {
+	#[must_use] pub const fn empty() -> Self {
 		Self { id: 0 }
 	}
 }

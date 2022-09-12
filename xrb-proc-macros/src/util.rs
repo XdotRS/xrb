@@ -12,7 +12,7 @@ use syn::{parse_quote, Data, Fields, GenericParam, Generics, Index, Type, Ident}
 use crate::content::Content;
 use crate::message::*;
 
-pub fn serialize_request(name: Ident, generics: Generics, metadata: RequestMetadata, content: Content) -> TokenStream2 {
+pub fn serialize_request(name: Ident, generics: Generics, _metadata: RequestMetadata, _content: Content) -> TokenStream2 {
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
 	quote! {
@@ -24,7 +24,7 @@ pub fn serialize_request(name: Ident, generics: Generics, metadata: RequestMetad
 	}
 }
 
-pub fn deserialize_request(name: Ident, generics: Generics, metadata: RequestMetadata, content: Content) -> TokenStream2 {
+pub fn deserialize_request(name: Ident, generics: Generics, _metadata: RequestMetadata, _content: Content) -> TokenStream2 {
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
 	quote! {
@@ -38,7 +38,7 @@ pub fn deserialize_request(name: Ident, generics: Generics, metadata: RequestMet
 	}
 }
 
-pub fn serialize_reply(name: Ident, generics: Generics, metadata: ReplyMetadata, content: Content) -> TokenStream2 {
+pub fn serialize_reply(name: Ident, generics: Generics, _metadata: ReplyMetadata, _content: Content) -> TokenStream2 {
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
 	quote! {
@@ -50,7 +50,7 @@ pub fn serialize_reply(name: Ident, generics: Generics, metadata: ReplyMetadata,
 	}
 }
 
-pub fn deserialize_reply(name: Ident, generics: Generics, metadata: ReplyMetadata, content: Content) -> TokenStream2 {
+pub fn deserialize_reply(name: Ident, generics: Generics, _metadata: ReplyMetadata, _content: Content) -> TokenStream2 {
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
 	quote! {

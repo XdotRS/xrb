@@ -94,7 +94,7 @@ pub enum DrawDirection {
 
 impl Default for DrawDirection {
 	fn default() -> Self {
-		DrawDirection::LeftToRight
+		Self::LeftToRight
 	}
 }
 
