@@ -1031,8 +1031,8 @@ messages! {
 
 #[cfg(test)]
 mod tests {
-	use crate::traits::*;
 	use super::*;
+	use crate::traits::*;
 
 	#[test]
 	fn create_window_length_is_correct() {
