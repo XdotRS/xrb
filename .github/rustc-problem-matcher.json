@@ -5,7 +5,7 @@
 			"severity": "warning",
 			"pattern": [
 				{
-					"regexp": "^(warning|warn|error)(?:\\[(\\w+)\\])?: (.*)$",
+					"regexp": "^(warning|warn|error|note)(?:\\[(\\w+)\\])?: (.*)$",
 					"severity": 1,
 					"code": 2,
 					"message": 3
