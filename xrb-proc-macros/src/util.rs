@@ -12,21 +12,29 @@ use syn::{parse_quote, Data, Fields, GenericParam, Generics, Ident, Index, Type}
 use crate::content::Content;
 use crate::message::*;
 
-/// Returns the tokens that get the metabyte position for a message.
-pub fn metabyte(minor_opcode: Option<TokenStream2>, content: &Content) -> TokenStream2 {
-	minor_opcode.map_or_else(
-		|| match &content {
-			Content::Shorthand(shorthand) => shorthand
-				.item
-				.as_ref()
-				.map_or_else(|| quote!(0), |(_, item)| quote!(#item)),
+/// Returns the tokens that get the metabyte from [`Content`].
+///
+/// If there is a metabyte declared in the given `content`, this returns that
+/// metabyte item [`to_tokenstream()`], otherwise it will return a `0` token.
+///
+/// [`to_tokenstream()`]: quote::ToTokens::to_tokenstream
+pub fn metabyte(content: &Content) -> TokenStream2 {
+	match &content {
+		Content::Shorthand(shorthand) => shorthand
+			.item
+			.as_ref()
+			// Filter out the item if it isn't a metabyte.
+			.filter(|(_, item)| item.is_metabyte())
+			// If there is an item and it is a metabyte, quote that item,
+			// else quote `0`.
+			.map_or_else(|| quote!(0), |(_, item)| quote!(#item)),
 
-			Content::Longhand(longhand) => longhand
-				.metabyte()
-				.map_or_else(|| quote!(0), |item| quote!(#item)),
-		},
-		|minor| quote!(#minor),
-	)
+		Content::Longhand(longhand) => longhand
+			// Get the metabyte item if one is declared.
+			.metabyte()
+			// If it is declared, quote it, else quote `0`.
+			.map_or_else(|| quote!(0), |item| quote!(#item)),
+	}
 }
 
 #[allow(dead_code)]
@@ -36,17 +44,23 @@ pub fn serialize_request(
 	metadata: RequestMetadata,
 	content: Content,
 ) -> TokenStream2 {
+	// Split the provided generics to be placed in the generated code.
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
 	let major_opcode = metadata.major_opcode;
-	let metabyte = metabyte(
-		metadata.minor_opcode.map(|(_, minor)| quote!(#minor)),
-		&content,
-	);
+	// 'Metabyte' is our affectionate term for the second byte of a message
+	// header.
+	let metabyte = metadata
+		// Get the minor opcode, if one is declared...
+		.minor_opcode
+		// If it is declared, quote it, else find the metabyte from the
+		// `content`.
+		.map_or_else(|| metabyte(&content), |(_, minor)| quote!(#minor));
 
 	let items = match content {
 		Content::Shorthand(shorthand) => shorthand
 			.item
+			.filter(|(_, item)| !item.is_metabyte())
 			.map_or_else(std::vec::Vec::new, |(_, item)| vec![item]),
 
 		Content::Longhand(longhand) => longhand.items_sans_metabyte(),
@@ -84,7 +98,7 @@ pub fn deserialize_request(
 				// Don't need to read the major opcode since we already know
 				// which request we're deserializing.
 				__reader.skip(1);
-				// if metabyte item, read metabyte item, else skip
+				// TODO: if metabyte item, read metabyte item, else skip
 
 				// Read the length of the request (which is in units of 4
 				// bytes), and multiply it by 4 to get the length of the request
@@ -118,30 +132,44 @@ pub fn serialize_reply(
 ) -> TokenStream2 {
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
+	// Expand the serialization code for the metabyte item, if one is defined,
+	// else to simply write a single `0` byte.
+	let metabyte = metabyte(&content);
+
+	// Get a list of the non-metabyte items that are to be written in the body.
 	let items = match content {
 		Content::Shorthand(shorthand) => shorthand
 			.item
+			// Filter out the item if it is a metabyte item.
+			.filter(|(_, item)| !item.is_metabyte())
+			// If there was no item declared, or the declared item was in the
+			// metabyte position, create an empty `Vec` with `std::vec::Vec::new`,
+			// else create a `Vec` with the non-metabyte item.
 			.map_or_else(std::vec::Vec::new, |(_, item)| vec![item]),
 
+		// `Longhand` has its own method to get a list of non-metabyte items:
 		Content::Longhand(longhand) => longhand.items_sans_metabyte(),
 	};
 
 	quote! {
 		impl #impl_generics cornflakes::ToBytes for #name #ty_generics #where_clause {
 			fn write_to(&self, writer: &mut impl cornflakes::ByteWriter) -> Result<(), std::io::Error> {
-				/// A first byte of `1` indicates that this message is a reply.
+				// Header {{{
+
+				// A first byte of `1` indicates that this message is a reply.
 				writer.write_u8(1);
-
-				// TODO: If there's a metabyte item, write that, or if there's
-				// a minor opcode, write that, else write 0.
-
+				// Write the minor opcode if `Some`, else the metabyte.
+				writer.write_u8(self.__minor_opcode.unwrap_or_else(|| #metabyte));
 				// Write the sequence number associated with the request that
 				// initiated the reply.
 				writer.write_u16(self.__sequence_number);
+
 				// Write the length of the reply.
 				writer.write_u32(crate::Reply::length(self));
 
-				// Everything else.
+				// }}}
+
+				// Write any and all non-metabyte items.
 				#(#items)*
 
 				Ok(())

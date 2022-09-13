@@ -1037,15 +1037,15 @@ mod tests {
 	#[test]
 	fn create_window_length_is_correct() {
 		let create_window = CreateWindow {
-			window_id: Window::new(0),
-			parent: Window::new(0),
+			window_id: Window::empty(),
+			parent: Window::empty(),
 			class: Inheritable::CopyFromParent,
 			depth: Inheritable::CopyFromParent,
 			visual: Inheritable::CopyFromParent,
 			x: 0,
 			y: 0,
-			width: 0,
-			height: 0,
+			width: 1,
+			height: 1,
 			border_width: 0,
 			value_mask: AttributeMask::empty(),
 			values: &[Attribute::BackingPixel(0), Attribute::Cursor(None)],
