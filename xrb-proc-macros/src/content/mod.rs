@@ -69,6 +69,7 @@ impl<'a> Content {
 	}
 
 	/// Gets a <code>Vec<&'a [Item]></code> of the declared items.
+	#[allow(dead_code)]
 	pub fn items(&'a self) -> Vec<&'a Item> {
 		match self {
 			Self::Shorthand(shorthand) => shorthand

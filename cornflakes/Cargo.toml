@@ -5,9 +5,12 @@
 [package]
 name = "cornflakes"
 version = "0.1.0-dev"
+readme = false
+repository = "https://github.com/XdotRS/xrb/tree/main/cornflakes"
+documentation = "https://docs.aquariwm.org/doc/cornflakes"
 authors = [ "X.RS", "Antikyth <antikyth at gmail dot com>" ]
 edition = "2021"
-description = "Utilities for (de)serialization. Created for and used in X Rust Bindings."
+description = "Utilities for (de)serialization. Created for X Rust Bindings."
 license = "MPL-2.0"
 keywords = [ "serialization", "encoding", "bytes", "xrb" ]
 categories = [ "encoding" ]

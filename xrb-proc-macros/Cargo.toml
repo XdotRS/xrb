@@ -1,7 +1,19 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 [package]
-name = "xrb-proc-macros"
-version = "0.0.0"
+name = "xrb-proc-macros" # Procedural macros for XRB
+version = "0.1.0-dev"
+readme = false
+repository = "https://github.com/XdotRS/xrb/tree/main/xrb-proc-macros"
+documentation = "https://docs.aquariwm.org/doc/xrb-proc-macros"
+authors = [ "X.RS", "Antikyth <antikyth at gmail dot com>" ]
 edition = "2021"
+description = "Procedural macros for X Rust Bindings, a.k.a. XRB."
+license = "MPL-2.0"
+keywords = [ "xrb", "xrs", "proc-macro" ]
+categories = [ "development-tools::build-utils", "parser-implementations" ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

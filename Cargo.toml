@@ -5,12 +5,15 @@
 [package]
 name = "xrb" # X Rust Bindings
 version = "0.1.0-dev"
+readme = true
+repository = "https://github.com/XdotRS/xrb"
+documentation = "https://docs.aquariwm.org/doc/xrb"
 authors = [ "X.RS", "Antikyth <antikyth at gmail dot com>" ]
 edition = "2021"
 description = "Data structures and (de)serialization for the X11 protocol."
 license = "MPL-2.0"
 keywords = [ "x11", "xorg", "xproto", "xrs", "window" ]
-categories = [ "data-structures", "api-bindings" ]
+categories = [ "data-structures", "api-bindings", "encoding" ]
 
 [workspace]
 # XRB is defined as a workspace that automatically includes all its path
