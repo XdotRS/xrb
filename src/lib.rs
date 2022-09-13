@@ -10,6 +10,9 @@
 // type would not be "complete" without it. We use it for [`Request`] and
 // [`Reply`], for example.
 #![feature(doc_notable_trait)]
+// This is so we can provide a reason when we ignore a particular lint with
+// `allow`.
+#![feature(lint_reasons)]
 // Deny the following clippy lints to enforce them:
 #![deny(clippy::complexity)]
 #![deny(clippy::correctness)]

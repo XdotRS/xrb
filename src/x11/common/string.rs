@@ -46,6 +46,10 @@ impl FromBytes for LenString8 {
 }
 
 impl ToBytes for LenString8 {
+	#[allow(
+		clippy::cast_possible_truncation,
+		reason = "`LenString8`'s length must fit in a `u8` value by definition"
+	)]
 	fn write_to(&self, writer: &mut impl ByteWriter) -> Result<(), Error>
 	where
 		Self: Sized,
