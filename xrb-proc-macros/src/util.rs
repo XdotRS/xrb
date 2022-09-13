@@ -12,6 +12,91 @@ use syn::{parse_quote, Data, Fields, GenericParam, Generics, Ident, Index, Type}
 use crate::content::*;
 use crate::message::*;
 
+/// Deserialization for a single <code>[Option]<&[Item]></code> read from one
+/// byte.
+///
+/// This is used to generate the deserialization for metabyte items.
+pub fn deserialize_metabyte(metabyte: Option<&Item>) -> TokenStream2 {
+	metabyte.map_or_else(
+		|| quote!(__reader.skip(1);),
+		|item| match item {
+			// If the item is a field, read it into a variable with its own
+			// name.
+			Item::Field(field) => {
+				let name = &field.name;
+				let ty = &field.ty;
+
+				quote!(let #name: #ty = __reader.limit(1).read()?;)
+			}
+			// If the item is a field length, then we know the length must be of
+			// type `u8`, so we read that length as `u8` (and then cast to
+			// `usize`, as lengths in Rust are usually `usize`).
+			Item::FieldLength(field_len) => {
+				let field = &field_len.field_name;
+				let ident = format_ident!("__{}_len", field);
+
+				quote!(let #ident = __reader.read::<u8>()? as usize;)
+			}
+			// Since the metabyte is a single byte, we know that if this is an
+			// unused byte item, it is exactly one unused byte. So we just skip
+			// that byte.
+			Item::UnusedBytes(_) => quote!(__reader.skip(1);),
+		},
+	)
+}
+
+/// Deserialization for a <code>[Vec]<&[Item]></code>.
+///
+/// This is used to generate the deserialization code for non-metabyte items.
+pub fn deserialize_items(items: Vec<&Item>) -> Vec<TokenStream2> {
+	items
+		.into_iter()
+		.map(|item| match item {
+			// If the item is a field, read it into a variable with its own name.
+			//
+			// TODO: What if it is a list? How do we use the field lengths to read
+			// lists?
+			Item::Field(field) => {
+				let name = &field.name;
+				let ty = &field.ty;
+
+				quote!(let #name: #ty = __reader.read()?;)
+			}
+			// If the item is a field length, read it into a variable with the
+			// name `__fieldname_len`, where `fieldname` is the name of the
+			// field it is for, with the numerical type that it is for.
+			Item::FieldLength(field_len) => {
+				let field = &field_len.field_name;
+				let ident = format_ident!("__{}_len", field);
+
+				let ty = &field_len.ty;
+
+				quote!(let #ident = __reader.read::<#ty>()?;)
+			}
+			// If the item is unused bytes, skip the correct number of unused
+			// bytes.
+			Item::UnusedBytes(unused) => match unused {
+				// If it is a single unused byte, skip a single byte.
+				UnusedBytes::Single(_) => quote!(__reader.skip(1);),
+
+				UnusedBytes::FullySpecified(full) => match &full.definition {
+					// If it is a numerical definition, simply skip the given
+					// number of bytes.
+					UnusedBytesDefinition::Numerical(val) => quote!(__reader.skip(#val);),
+
+					// Otherwise, if it pads a field, calculate the correct
+					// number of bytes requried to pad that field and skip that
+					// many bytes.
+					UnusedBytesDefinition::Padding((_, field)) => quote! {
+						__reader.skip((4 - (cornflakes::ByteSize::byte_size(#field) % 4)) % 4);
+					},
+				},
+			},
+		})
+		.collect()
+}
+
+/// Serialization for a `Request`.
 #[allow(dead_code)]
 pub fn serialize_request(
 	name: Ident,
@@ -58,14 +143,28 @@ pub fn serialize_request(
 	}
 }
 
+/// Deserialization for a `Request`.
 #[allow(dead_code)]
 pub fn deserialize_request(
 	name: Ident,
 	generics: Generics,
 	_metadata: RequestMetadata,
-	_content: Content,
+	content: Content,
 ) -> TokenStream2 {
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+	// Punctuate the field names with commas, so that they can easily be
+	// inserted into the generated constructor invocation.
+	let fields = content.fields().into_iter().map(|field| {
+		let name = &field.name;
+		quote!(#name,)
+	});
+
+	// Deserialization for the metabyte.
+	let metabyte = deserialize_metabyte(content.metabyte());
+
+	// Deserialization for all other items.
+	let items = deserialize_items(content.items_sans_metabyte());
 
 	quote! {
 		impl #impl_generics cornflakes::FromBytes for #name #ty_generics #where_clause {
@@ -73,7 +172,8 @@ pub fn deserialize_request(
 				// Don't need to read the major opcode since we already know
 				// which request we're deserializing.
 				__reader.skip(1);
-				// TODO: if metabyte item, read metabyte item, else skip
+				// Read the metabyte.
+				#metabyte
 
 				// Read the length of the request (which is in units of 4
 				// bytes), and multiply it by 4 to get the length of the request
@@ -83,21 +183,23 @@ pub fn deserialize_request(
 				// been read.
 				let __reader = __reader.limit(__length - 4);
 
-				// TODO: Loop over all non-metabyte items:
-				// - if unused, skip the unused bytes
-				// - if length, store length as `fieldname_length` for use in
-				//   deserializing `fieldname`
-				// - if field, `let fieldname = FieldType::read_from(reader)?;`
+				// Read any and all non-metabyte items.
+				#(#items)*
 
 				Ok(Self {
-					// TODO: If metabyte field, put metabyte field
-					// any other fields.
+					// The names of every field, separated by commas; these
+					// fields will already have variables created in the
+					// generation of the deserialization code for their items,
+					// so we can put all the field names here to pass them to
+					// the constructor.
+					#(#fields)*
 				})
 			}
 		}
 	}
 }
 
+/// Serialization for a `Reply`.
 #[allow(dead_code)]
 pub fn serialize_reply(
 	name: Ident,
@@ -145,6 +247,7 @@ pub fn serialize_reply(
 	}
 }
 
+/// Deserialization for a `Reply`.
 #[allow(dead_code)]
 pub fn deserialize_reply(
 	name: Ident,
@@ -162,79 +265,10 @@ pub fn deserialize_reply(
 	});
 
 	// Deserialization for the metabyte.
-	let metabyte = content.metabyte().map_or_else(
-		|| quote!(__reader.skip(1);),
-		|item| match item {
-			// If the item is a field, read it into a variable with its own
-			// name.
-			Item::Field(field) => {
-				let name = &field.name;
-				let ty = &field.ty;
-
-				quote!(let #name: #ty = __reader.limit(1).read()?;)
-			}
-			// If the item is a field length, then we know the length must be of
-			// type `u8`, so we read that length as `u8` (and then cast to
-			// `usize`, as lengths in Rust are usually `usize`).
-			Item::FieldLength(field_len) => {
-				let field = &field_len.field_name;
-				let ident = format_ident!("__{}_len", field);
-
-				quote!(let #ident = __reader.read::<u8>()? as usize;)
-			}
-			// Since the metabyte is a single byte, we know that if this is an
-			// unused byte item, it is exactly one unused byte. So we just skip
-			// that byte.
-			Item::UnusedBytes(_) => quote!(__reader.skip(1);),
-		},
-	);
+	let metabyte = deserialize_metabyte(content.metabyte());
 
 	// Deserialization for all other items.
-	let items = content
-		.items_sans_metabyte()
-		.into_iter()
-		.map(|item| match item {
-			// If the item is a field, read it into a variable with its own name.
-			//
-			// TODO: What if it is a list? How do we use the field lengths to read
-			// lists?
-			Item::Field(field) => {
-				let name = &field.name;
-				let ty = &field.ty;
-
-				quote!(let #name: #ty = __reader.read()?;)
-			}
-			// If the item is a field length, read it into a variable with the
-			// name `__fieldname_len`, where `fieldname` is the name of the
-			// field it is for, with the numerical type that it is for.
-			Item::FieldLength(field_len) => {
-				let field = &field_len.field_name;
-				let ident = format_ident!("__{}_len", field);
-
-				let ty = &field_len.ty;
-
-				quote!(let #ident = __reader.read::<#ty>()?;)
-			}
-			// If the item is unused bytes, skip the correct number of unused
-			// bytes.
-			Item::UnusedBytes(unused) => match unused {
-				// If it is a single unused byte, skip a single byte.
-				UnusedBytes::Single(_) => quote!(__reader.skip(1);),
-
-				UnusedBytes::FullySpecified(full) => match &full.definition {
-					// If it is a numerical definition, simply skip the given
-					// number of bytes.
-					UnusedBytesDefinition::Numerical(val) => quote!(__reader.skip(#val);),
-
-					// Otherwise, if it pads a field, calculate the correct
-					// number of bytes requried to pad that field and skip that
-					// many bytes.
-					UnusedBytesDefinition::Padding((_, field)) => quote! {
-						__reader.skip((4 - (cornflakes::ByteSize::byte_size(#field) % 4)) % 4);
-					},
-				},
-			},
-		});
+	let items = deserialize_items(content.items_sans_metabyte());
 
 	quote! {
 		impl #impl_generics cornflakes::FromBytes for #name #ty_generics #where_clause {
