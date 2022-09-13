@@ -6,6 +6,7 @@
 ///
 /// A request may have a specific reply associated with it. That reply is
 /// indicated by `T`.
+#[doc(notable_trait)]
 pub trait Request<T = ()> {
 	/// The major opcode that uniquely identifies this request or extension.
 	///
@@ -43,6 +44,7 @@ pub trait Request<T = ()> {
 /// request.
 ///
 /// The request associated with a reply is indicated by `T`.
+#[doc(notable_trait)]
 pub trait Reply<T>
 where
 	T: Request<Self>,
