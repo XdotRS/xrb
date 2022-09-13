@@ -71,27 +71,10 @@ impl ToTokens for Message {
 		// Generics
 		self.generics.to_tokens(tokens);
 
-		// Fields
+		// Punctuate `self.content.fields()` with commas.
+		let fields: Punctuated<_, Token![,]> = self.content.fields().into_iter().collect();
+
 		let mut content = TokenStream2::new();
-		let mut fields: Punctuated<Field, Token![,]> = Punctuated::new();
-
-		match &self.content {
-			// If this is a shorthand definition and it has a field, write that
-			// field's definition to `fields`.
-			Content::Shorthand(shorthand) => {
-				if let Some(field) = shorthand.field() {
-					fields.push(field)
-				}
-			}
-
-			// If this is a longhand definition, write the definitions of any
-			// and all fields to `fields`.
-			Content::Longhand(longhand) => {
-				for field in longhand.fields() {
-					fields.push(field.clone());
-				}
-			}
-		}
 
 		// If this is a reply, append `major_opcode`, `minor_opcode`, and
 		// `sequence` fields for the `Reply` trait implementation.
@@ -113,6 +96,17 @@ impl ToTokens for Message {
 				///
 				/// [`Reply::major_opcode()`]: crate::Reply::major_opcode
 				__major_opcode: Option<u8>,
+
+				// TODO: Opt-in to minor opcodes? Surely those replies that
+				// define their metabyte position cannot have minor opcodes? And
+				// surely replies that are only generated for requests that do
+				// not have minor opcodes cannot have minor opcodes?
+				//
+				// I imagine the best way to check for this is to check whether
+				// the associated request has a minor opcode...? Though, I guess
+				// that might require keeping track of the requests at compile
+				// time, since we can't make use of its `Request` trait impl
+				// afaik.
 				/// The minor opcode, if any, associated with the request
 				/// that generated this reply.
 				///
@@ -133,6 +127,8 @@ impl ToTokens for Message {
 }
 
 impl Message {
+	/// Generate an implementation for the trait associated with this type of
+	/// message.
 	pub fn message_trait_impl(&self) -> TokenStream2 {
 		let name = &self.name;
 
@@ -159,7 +155,7 @@ impl Message {
 						}
 
 						fn length(&self) -> u16 {
-							1u16
+							1u16 // TODO: actually calculate this
 						}
 					}
 				}
@@ -182,7 +178,7 @@ impl Message {
 						}
 
 						fn length(&self) -> u32 {
-							0u32
+							0u32 // TODO: actually calculate this
 						}
 					}
 				}
