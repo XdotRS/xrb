@@ -22,6 +22,96 @@ pub enum Content {
 	Longhand(Longhand),
 }
 
+impl<'a> Content {
+	/// Gets the metabyte [`Item`] if one is declared.
+	pub fn metabyte(&'a self) -> Option<&'a Item> {
+		match self {
+			Self::Shorthand(shorthand) => shorthand
+				.item
+				.as_ref()
+				// Pattern match the pair of `Token![,]` and the item to get
+				// just the item.
+				.map(|(_, item)| item)
+				// If the item is not declared for the metabyte position, filter
+				// it out.
+				.filter(|item| item.is_metabyte()),
+
+			Self::Longhand(longhand) => longhand
+				.items
+				.iter()
+				// Find a metabyte item from the longhand definition's list of
+				// items, if there is any.
+				.find(|item| item.is_metabyte()),
+		}
+	}
+
+	/// Gets a [`Vec`] of the content's declared [`Item`]s without the metabyte
+	/// [`Item`].
+	pub fn items_sans_metabyte(&'a self) -> Vec<&'a Item> {
+		match self {
+			Self::Shorthand(shorthand) => shorthand
+				.item
+				.as_ref()
+				// If the item is declared for the metabyte position, filter it
+				// out.
+				.filter(|(_, item)| !item.is_metabyte())
+				// Return either an empty `Vec` if there is no non-metabyte
+				// item, or a `Vec` with the item if there is.
+				.map_or_else(std::vec::Vec::new, |(_, item)| vec![item]),
+
+			Self::Longhand(longhand) => longhand
+				.items
+				.iter()
+				// Filter out the metabyte item.
+				.filter(|item| !item.is_metabyte())
+				.collect(),
+		}
+	}
+
+	/// Gets a <code>Vec<&'a [Item]></code> of the declared items.
+	pub fn items(&'a self) -> Vec<&'a Item> {
+		match self {
+			Self::Shorthand(shorthand) => shorthand
+				.item
+				.as_ref()
+				// If there is an item declared, return a `Vec` containing that
+				// item, otherwise return an empty `Vec`.
+				.map_or_else(std::vec::Vec::new, |(_, item)| vec![item]),
+
+			Self::Longhand(longhand) => longhand.items.iter().collect(),
+		}
+	}
+
+	/// Filters the declared items to a `Vec` of just fields.
+	pub fn fields(&'a self) -> Vec<&'a Field> {
+		match self {
+			Self::Shorthand(shorthand) => {
+				shorthand
+					.item
+					.as_ref()
+					// If there is no item declaration, return an empty `Vec`,
+					// otherwise if there is, then if it is a field, return a
+					// `Vec` with that item, or, if it isn't a field, return an
+					// empty `Vec` too.
+					.map_or_else(std::vec::Vec::new, |(_, item)| match item {
+						Item::Field(field) => vec![field],
+						_ => vec![],
+					})
+			}
+
+			Self::Longhand(longhand) => longhand
+				.items
+				.iter()
+				// Filter the `Vec` of `Item`s to a `Vec` of `Field`s.
+				.filter_map(|item| match item {
+					Item::Field(field) => Some(field),
+					_ => None,
+				})
+				.collect(),
+		}
+	}
+}
+
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct Shorthand {
 	/// An optional item declaration preceded by a colon (`:`).
@@ -44,53 +134,12 @@ pub struct Shorthand {
 	pub semicolon_token: Token![;],
 }
 
-impl Shorthand {
-	/// If a [`Field`] is declared, returns `Some` of that [`Field`].
-	pub fn field(&self) -> Option<Field> {
-		self.item
-			.clone()
-			.and_then(|declaration| match declaration.1 {
-				Item::Field(field) => Some(field),
-				_ => None,
-			})
-	}
-}
-
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct Longhand {
 	/// The braces (`{` and `}`) that surround the declared `items`.
 	pub brace_token: token::Brace,
 	/// A list of [`Item`]s punctuated with commas. The final comma is optional.
 	pub items: Punctuated<Item, Token![,]>,
-}
-
-impl Longhand {
-	/// Returns a list of the [`Field`] items contained within `self.items`.
-	pub fn fields(&self) -> Vec<&Field> {
-		self.items
-			.iter()
-			.filter_map(|item| match item {
-				Item::Field(field) => Some(field),
-				_ => None,
-			})
-			.collect()
-	}
-
-	/// Returns the item within `self.items` that defines the metabyte position,
-	/// if any.
-	#[allow(dead_code)]
-	pub fn metabyte(&self) -> Option<&Item> {
-		self.items.iter().find(|item| item.is_metabyte())
-	}
-
-	/// Returns `self.items` with metabyte items removed.
-	#[allow(dead_code)]
-	pub fn items_sans_metabyte(self) -> Vec<Item> {
-		self.items
-			.into_iter()
-			.filter(|item| !item.is_metabyte())
-			.collect()
-	}
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]

@@ -57,14 +57,7 @@ pub fn serialize_request(
 		// `content`.
 		.map_or_else(|| metabyte(&content), |(_, minor)| quote!(#minor));
 
-	let items = match content {
-		Content::Shorthand(shorthand) => shorthand
-			.item
-			.filter(|(_, item)| !item.is_metabyte())
-			.map_or_else(std::vec::Vec::new, |(_, item)| vec![item]),
-
-		Content::Longhand(longhand) => longhand.items_sans_metabyte(),
-	};
+	let items = content.items_sans_metabyte();
 
 	quote! {
 		impl #impl_generics cornflakes::ToBytes for #name #ty_generics #where_clause {
@@ -137,19 +130,7 @@ pub fn serialize_reply(
 	let metabyte = metabyte(&content);
 
 	// Get a list of the non-metabyte items that are to be written in the body.
-	let items = match content {
-		Content::Shorthand(shorthand) => shorthand
-			.item
-			// Filter out the item if it is a metabyte item.
-			.filter(|(_, item)| !item.is_metabyte())
-			// If there was no item declared, or the declared item was in the
-			// metabyte position, create an empty `Vec` with `std::vec::Vec::new`,
-			// else create a `Vec` with the non-metabyte item.
-			.map_or_else(std::vec::Vec::new, |(_, item)| vec![item]),
-
-		// `Longhand` has its own method to get a list of non-metabyte items:
-		Content::Longhand(longhand) => longhand.items_sans_metabyte(),
-	};
+	let items = content.items_sans_metabyte();
 
 	quote! {
 		impl #impl_generics cornflakes::ToBytes for #name #ty_generics #where_clause {
