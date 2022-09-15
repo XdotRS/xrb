@@ -1,5 +1,5 @@
-use crate::rw::{ByteCount, Writable, WritableWithCount};
-use crate::util::reader::Reader;
+use crate::{ByteSize, Writable, WritableWithSize};
+use crate::reader::Reader;
 
 use std::error::Error;
 use thiserror::Error;
@@ -36,26 +36,97 @@ macro_rules! check_capacity_boxed {
 }
 
 #[doc(notable_trait)]
-pub trait Writer {
+pub unsafe trait Writer {
 	/// Writes a [`Writable`] type as bytes.
 	///
 	/// # Errors
 	/// This method returns a [`WriteError::CapacityTooLow`] error if
-	/// [`writable::byte_count()`] is greater than [`remaining()`].
+	/// [`writable::byte_size()`] is greater than [`remaining()`].
 	///
-	/// [`writable::byte_count()`]: ByteCount::byte_count()
+	/// # Examples
+	/// ```rust
+	/// use cornflakes::Writer;
+	///
+	/// let mut buffer1: Vec<u8> = vec![];
+	/// buffer.write(21u32)?;
+	/// buffer.write(b"hello, world!")?;
+	/// buffer.write([(); 22])?;
+	///
+	/// let mut buffer2: Vec<u8> = vec![];
+	/// 21u32.write_to(&mut buffer2)?;
+	/// b"hello, world!".write_to(&mut buffer2)?;
+	/// [(); 22].write_to(&mut buffer2)?;
+	///
+	/// assert_eq!(buffer1, buffer2);
+	/// ```
+	///
+	/// [`writable::byte_size()`]: ByteSize::byte_count()
 	fn write<T>(&mut self, writable: T) -> Result<(), WriteError>
 	where
-		T: Writable + ByteCount,
+		T: Writable + ByteSize,
 		Self: Sized,
 	{
 		writable.write_to(self)
 	}
 
-	/// Writes a [`WritableWithCount`] type as bytes with the given byte count.
-	fn write_with_count<T>(&mut self, writable: T, num_bytes: usize) -> Result<(), WriteError>
+	/// Writes the same [`Writable`] `count` many times.
+	///
+	/// # Examples
+	/// ```
+	/// use cornflakes::Writer;
+	///
+	/// let mut buffer1: Vec<u8> = vec![];
+	///
+	/// for _ in 0..10 {
+	///     buffer1.write_u8(0)?;
+	/// }
+	///
+	/// let mut buffer2: Vec<u8> = vec![];
+	/// buffer2.write_repeated(0u8, 10)?;
+	///
+	/// let mut buffer3: Vec<u8> = vec![];
+	/// buffer3.write_bytes(&[0; 10])?;
+	///
+	/// assert_eq!(buffer1, buffer2, buffer3);
+	/// ```
+	fn write_repeated<T>(&mut self, writable: T, count: usize) -> Result<(), WriteError>
 	where
-		T: WritableWithCount,
+		T: Writable + ByteSize,
+		Self: Sized,
+	{
+		for _ in 0..count {
+			writable.write_to(self)?;
+		}
+
+		Ok(())
+	}
+
+	/// Writes a [`WritableWithSize`] type as bytes with the given number of
+	/// bytes.
+	///
+	/// # Examples
+	/// ```
+	/// use cornflakes::Writer;
+	///
+	/// let mut buffer: Vec<u8> = vec![];
+	///
+	/// // Values {{{
+	///
+	/// let screen_x: u16 = 33;
+	/// let screen_y: u16 = 27;
+	///
+	/// buffer.write(1u32)?;
+	///
+	/// // Write the `u16` values as 4 bytes each, so that they can be included
+	/// // in a list of 'values' in X11.
+	/// buffer.write_with_size(screen_x, 4)?;
+	/// buffer.write_with_size(screen_y, 4)?;
+	///
+	/// // }}}
+	/// ```
+	fn write_with_size<T>(&mut self, writable: T, num_bytes: usize) -> Result<(), WriteError>
+	where
+		T: WritableWithSize,
 		Self: Sized,
 	{
 		writable.write_to_with_count(self, num_bytes)
@@ -351,6 +422,34 @@ pub trait Writer {
 		self.write_bytes(&val.to_ne_bytes())
 	}
 
+	/// Writes a 32-bit floating point number to `self` with the native
+	/// endianness.
+	///
+	/// Advances the internal cursor by `4` bytes.
+	///
+	/// # Errors
+	/// This method returns a [`WriteError::CapacityTooLow`] error if there are
+	/// less than `4` bytes [`remaining()`].
+	///
+	/// [`remaining()`]: Writer::remaining
+	fn write_f32_ne(&mut self, val: f32) -> Result<(), WriteError> {
+		self.write_bytes(&val.to_ne_bytes())
+	}
+
+	/// Writes a 64-bit floating point number to `self` with the native
+	/// endianness.
+	///
+	/// Advances the internal cursor by `8` bytes.
+	///
+	/// # Errors
+	/// This method returns a [`WriteError::CapacityTooLow`] error if there are
+	/// less than `8` bytes [`remaining()`].
+	///
+	/// [`remaining()`]: Writer::remaining
+	fn write_f64_ne(&mut self, val: f64) -> Result<(), WriteError> {
+		self.write_bytes(&val.to_ne_bytes())
+	}
+
 	// }}}
 
 	// Big-endian {{{
@@ -456,6 +555,32 @@ pub trait Writer {
 	///
 	/// [`remaining()`]: Writer::remaining
 	fn write_i128_be(&mut self, val: i128) -> Result<(), WriteError> {
+		self.write_bytes(&val.to_be_bytes())
+	}
+
+	/// Writes a 32-bit floating point number to `self` with big endianness.
+	///
+	/// Advances the internal cursor by `4` bytes.
+	///
+	/// # Errors
+	/// This method returns a [`WriteError::CapacityTooLow`] error if there are
+	/// less than `4` bytes [`remaining()`].
+	///
+	/// [`remaining()`]: Writer::remaining
+	fn write_f32_be(&mut self, val: f32) -> Result<(), WriteError> {
+		self.write_bytes(&val.to_be_bytes())
+	}
+
+	/// Writes a 64-bit floating point number to `self` with big endianness.
+	///
+	/// Advances the internal cursor by `8` bytes.
+	///
+	/// # Errors
+	/// This method returns a [`WriteError::CapacityTooLow`] error if there are
+	/// less than `8` bytes [`remaining()`].
+	///
+	/// [`remaining()`]: Writer::remaining
+	fn write_f64_be(&mut self, val: f64) -> Result<(), WriteError> {
 		self.write_bytes(&val.to_be_bytes())
 	}
 
@@ -567,7 +692,95 @@ pub trait Writer {
 		self.write_bytes(&val.to_le_bytes())
 	}
 
+	/// Writes a 32-bit floating point number to `self` with little endianness.
+	///
+	/// Advances the internal cursor by `4` bytes.
+	///
+	/// # Errors
+	/// This method returns a [`WriteError::CapacityTooLow`] error if there are
+	/// less than `4` bytes [`remaining()`].
+	///
+	/// [`remaining()`]: Writer::remaining
+	fn write_f32_le(&mut self, val: f32) -> Result<(), WriteError> {
+		self.write_bytes(&val.to_le_bytes())
+	}
+
+	/// Writes a 64-bit floating point number to `self` with little endianness.
+	///
+	/// Advances the internal cursor by `8` bytes.
+	///
+	/// # Errors
+	/// This method returns a [`WriteError::CapacityTooLow`] error if there are
+	/// less than `8` bytes [`remaining()`].
+	///
+	/// [`remaining()`]: Writer::remaining
+	fn write_f64_le(&mut self, val: f64) -> Result<(), WriteError> {
+		self.write_bytes(&val.to_le_bytes())
+	}
+
 	// }}}
+}
+
+unsafe impl Writer for &mut [u8] {
+	fn remaining(&self) -> usize {
+		self.len()
+	}
+
+	unsafe fn advance(&mut self, num_bytes: usize) -> Result<(), WriteError> {
+		// Stolen from `bytes`, which stole it from `Write`'s impl for
+		// `&mut [u8]`.
+		let (_, b) = core::mem::replace(self, &mut []).split_at_mut(num_bytes);
+		*self = b;
+
+		Ok(())
+	}
+
+	fn chunk(&mut self) -> &mut [u8] {
+		unsafe { &mut *(*self as *mut [u8] as *mut _) }
+	}
+
+	fn write_bytes(&mut self, bytes: &[u8]) -> Result<(), WriteError> {
+		self[..bytes.len()].copy_from_slice(bytes);
+
+		unsafe {
+			self.advance(bytes.len())?;
+		}
+
+		Ok(())
+	}
+}
+
+unsafe impl Writer for Vec<u8> {
+	fn remaining(&self) -> usize {
+		// The maximum size of a `Vec` is `isize::MAX`.
+		isize::MAX as usize - self.len()
+	}
+
+	unsafe fn advance(&mut self, num_bytes: usize) -> Result<(), WriteError> {
+		check_capacity!(self.capacity() - self.len(), num_bytes);
+
+		self.set_len(self.len() + num_bytes);
+
+		Ok(())
+	}
+
+	fn chunk(&mut self) -> &mut [u8] {
+		// If we've run out of space, reserve another 64 bytes.
+		if self.capacity() == self.len() {
+			self.reserve(64);
+		}
+
+		let length = self.len();
+		let capacity = self.capacity();
+
+		&mut self[length..(length + capacity)]
+	}
+
+	fn write_bytes(&mut self, bytes: &[u8]) -> Result<(), WriteError> {
+		self.extend_from_slice(bytes);
+
+		Ok(())
+	}
 }
 
 // This function is unused, but it asserts that `Writer` is object safe; that

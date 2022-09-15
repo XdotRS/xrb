@@ -26,11 +26,11 @@ mod writer;
 use reader::{ReadError, Reader};
 use writer::{WriteError, Writer};
 
-pub trait ByteCount {
+pub trait ByteSize {
 	/// Returns the number of bytes that `self` will be [written] as.
 	///
 	/// [written]: Writable::write_to
-	fn byte_count(&self) -> usize;
+	fn byte_size(&self) -> usize;
 }
 
 /// Reads a type from bytes.
@@ -43,7 +43,7 @@ pub trait Readable {
 }
 
 /// Reads a type from a specific number of bytes.
-pub trait ReadableWithCount {
+pub trait ReadableWithSize {
 	/// Reads [`Self`] from a [`Reader`] using the given number of bytes.
 	fn read_from_with_count(reader: &mut impl Reader, num_bytes: usize) -> Result<Self, ReadError>
 	where
@@ -70,7 +70,7 @@ pub trait Writable {
 }
 
 /// Writes a type as a specific number of bytes.
-pub trait WritableWithCount {
+pub trait WritableWithSize {
 	/// Writes `self` as the given number of bytes to a [`Writer`].
 	fn write_to_with_count(
 		&self,
@@ -86,11 +86,11 @@ pub trait WritableWithCount {
 // of these traits are accidentally made _object unsafe_, which means that they
 // cannot be used with the `dyn` keyword.
 fn _assert_object_safety(
-	_byte_count: &dyn ByteCount,
+	_byte_count: &dyn ByteSize,
 	_read_bytes: &dyn Readable,
-	_read_sized: &dyn ReadableWithCount,
+	_read_sized: &dyn ReadableWithSize,
 	_read_list: &dyn ReadableWithLength,
 	_write_bytes: &dyn Writable,
-	_write_sized: &dyn WritableWithCount,
+	_write_sized: &dyn WritableWithSize,
 ) {
 }

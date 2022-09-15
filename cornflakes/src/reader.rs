@@ -1,4 +1,4 @@
-use crate::rw::{Readable, ReadableWithCount, ReadableWithLength};
+use crate::{Readable, ReadableWithSize, ReadableWithLength};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -64,10 +64,10 @@ pub trait Reader {
 		T::read_from(self)
 	}
 
-	/// Reads a [`ReadableWithCount`] type with the given byte count.
-	fn read_with_count<T>(&mut self, num_bytes: usize) -> Result<T, ReadError>
+	/// Reads a [`ReadableWithSize`] type with the given number of bytes.
+	fn read_with_size<T>(&mut self, num_bytes: usize) -> Result<T, ReadError>
 	where
-		T: ReadableWithCount,
+		T: ReadableWithSize,
 		Self: Sized,
 	{
 		T::read_from_with_count(self, num_bytes)
@@ -390,6 +390,42 @@ pub trait Reader {
 		Ok(read_impl!(self, i128::from_ne_bytes))
 	}
 
+	/// Reads a 32-bit floating point number with the native endianness.
+	///
+	/// Advances the internal cursor by `4` bytes.
+	///
+	/// # Errors
+	/// This method returns a [`ReadError::NotEnoughRemaining`] error if
+	/// [`remaining()`] is less than `4` bytes.
+	///
+	/// [`remaining()`]: Reader::remaining
+	fn read_f32_ne(&mut self) -> Result<f32, ReadError> {
+		// If there are less than 4 bytes left in `self` then there are not
+		// enough bytes to read an `f32` value, so we return a
+		// `NotEnoughRemaining` error.
+		check_capacity!(self.remaining(), 4);
+
+		Ok(read_impl!(self, f32::from_ne_bytes))
+	}
+
+	/// Reads a 64-bit floating point number with the native endianness.
+	///
+	/// Advances the internal cursor by `8` bytes.
+	///
+	/// # Errors
+	/// This method returns a [`ReadError::NotEnoughRemaining`] error if
+	/// [`remaining()`] is less than `8` bytes.
+	///
+	/// [`remaining()`]: Reader::remaining
+	fn read_f64_ne(&mut self) -> Result<f64, ReadError> {
+		// If there are less than 8 bytes left in `self` then there are not
+		// enough bytes to read an `f64` value, so we return a
+		// `NotEnoughRemaining` error.
+		check_capacity!(self.remaining(), 8);
+
+		Ok(read_impl!(self, f64::from_ne_bytes))
+	}
+
 	// }}}
 
 	// Big-endian {{{
@@ -536,6 +572,42 @@ pub trait Reader {
 		check_capacity!(self.remaining(), 16);
 
 		Ok(read_impl!(self, i128::from_be_bytes))
+	}
+
+	/// Reads a 32-bit floating point number with big endianness.
+	///
+	/// Advances the internal cursor by `4` bytes.
+	///
+	/// # Errors
+	/// This method returns a [`ReadError::NotEnoughRemaining`] error if
+	/// [`remaining()`] is less than `4` bytes.
+	///
+	/// [`remaining()`]: Reader::remaining
+	fn read_f32_be(&mut self) -> Result<f32, ReadError> {
+		// If there are less than 4 bytes left in `self` then there are not
+		// enough bytes to read an `f32` value, so we return a
+		// `NotEnoughRemaining` error.
+		check_capacity!(self.remaining(), 4);
+
+		Ok(read_impl!(self, f32::from_be_bytes))
+	}
+
+	/// Reads a 64-bit floating point number with big endianness.
+	///
+	/// Advances the internal cursor by `8` bytes.
+	///
+	/// # Errors
+	/// This method returns a [`ReadError::NotEnoughRemaining`] error if
+	/// [`remaining()`] is less than `8` bytes.
+	///
+	/// [`remaining()`]: Reader::remaining
+	fn read_f64_be(&mut self) -> Result<f64, ReadError> {
+		// If there are less than 8 bytes left in `self` then there are not
+		// enough bytes to read an `f64` value, so we return a
+		// `NotEnoughRemaining` error.
+		check_capacity!(self.remaining(), 8);
+
+		Ok(read_impl!(self, f64::from_ne_bytes))
 	}
 
 	// }}}
@@ -686,7 +758,61 @@ pub trait Reader {
 		Ok(read_impl!(self, i128::from_le_bytes))
 	}
 
+	/// Reads a 32-bit floating point number with little endianness.
+	///
+	/// Advances the internal cursor by `4` bytes.
+	///
+	/// # Errors
+	/// This method returns a [`ReadError::NotEnoughRemaining`] error if
+	/// [`remaining()`] is less than `4` bytes.
+	///
+	/// [`remaining()`]: Reader::remaining
+	fn read_f32_le(&mut self) -> Result<f32, ReadError> {
+		// If there are less than 4 bytes left in `self` then there are not
+		// enough bytes to read an `f32` value, so we return a
+		// `NotEnoughRemaining` error.
+		check_capacity!(self.remaining(), 4);
+
+		Ok(read_impl!(self, f32::from_le_bytes))
+	}
+
+	/// Reads a 64-bit floating point number with little endianness.
+	///
+	/// Advances the internal cursor by `8` bytes.
+	///
+	/// # Errors
+	/// This method returns a [`ReadError::NotEnoughRemaining`] error if
+	/// [`remaining()`] is less than `8` bytes.
+	///
+	/// [`remaining()`]: Reader::remaining
+	fn read_f64_le(&mut self) -> Result<f64, ReadError> {
+		// If there are less than 8 bytes left in `self` then there are not
+		// enough bytes to read an `f64` value, so we return a
+		// `NotEnoughRemaining` error.
+		check_capacity!(self.remaining(), 8);
+
+		Ok(read_impl!(self, f64::from_le_bytes))
+	}
+
 	// }}}
+}
+
+impl Reader for &[u8] {
+	fn remaining(&self) -> usize {
+		self.len()
+	}
+
+	fn chunk(&self) -> &[u8] {
+		self
+	}
+
+	fn advance(&mut self, num_bytes: usize) -> Result<(), ReadError> {
+		// Since a slice is a reference to a slice of a list, we can advance by
+		// `num_bytes` by setting `self` to start `num_bytes` later:
+		*self = &self[num_bytes..];
+
+		Ok(())
+	}
 }
 
 // This function is unused, but it asserts that `Reader` is object safe; that
