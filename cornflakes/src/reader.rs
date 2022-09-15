@@ -1,4 +1,4 @@
-use crate::rw::{ReadBytes, ReadList, ReadSized};
+use crate::rw::{Readable, ReadableWithCount, ReadableWithLength};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -53,33 +53,33 @@ macro_rules! check_capacity {
 /// you may wish to use [bytes] instead.
 ///
 /// [bytes]: https://github.com/tokio-rs/bytes/
+#[doc(notable_trait)]
 pub trait Reader {
-	/// Reads a [`ReadBytes`]-implementing type.
+	/// Reads a [`Readable`] type.
 	fn read<T>(&mut self) -> Result<T, ReadError>
 	where
-		T: ReadBytes,
+		T: Readable,
 		Self: Sized,
 	{
-		T::read(self)
+		T::read_from(self)
 	}
 
-	/// Reads a [`ReadBytes`]-implementing type from the given number of bytes.
-	fn read_with_size<T>(&mut self, num_bytes: usize) -> Result<T, ReadError>
+	/// Reads a [`ReadableWithCount`] type with the given byte count.
+	fn read_with_count<T>(&mut self, num_bytes: usize) -> Result<T, ReadError>
 	where
-		T: ReadSized,
+		T: ReadableWithCount,
 		Self: Sized,
 	{
-		T::read_with_size(num_bytes, self)
+		T::read_from_with_count(self, num_bytes)
 	}
 
-	/// Reads a [`ReadList`]-implementing list of values with the given
-	/// `length`.
+	/// Reads a [`WritableWithLength`] list of values with the given `length`.
 	fn read_list<T>(&mut self, length: usize) -> Result<T, ReadError>
 	where
-		T: ReadList,
+		T: ReadableWithLength,
 		Self: Sized,
 	{
-		T::read(length, self)
+		T::read_from_with_length(self, length)
 	}
 
 	/// Returns a <code>[Vec]<[u8]></code> with a length of `num_bytes` bytes
@@ -97,9 +97,15 @@ pub trait Reader {
 		Ok(bytes)
 	}
 
-	/// Returns the number of bytes remaining from the current position 'til the
-	/// end of the `Reader`.
+	/// Returns the number of bytes remaining from the current position until
+	/// the end of the `Reader`.
 	fn remaining(&self) -> usize;
+
+	/// Returns whether the number of bytes [`remaining()`] in this `Reader` is
+	/// greater than zero.
+	fn has_remaining(&self) -> bool {
+		self.remaining() > 0
+	}
 
 	/// Returns a chunk of data starting at the current position and less than
 	/// or equal to the number of [`remaining()`] bytes.
@@ -187,17 +193,7 @@ pub trait Reader {
 	///
 	/// [`remaining()`]: Reader::remaining
 	fn read_bool(&mut self) -> Result<bool, ReadError> {
-		// If there is not at least 1 byte remaining, then we can't read a
-		// `bool` value, so we return a `NotEnoughRemaining` error.
-		check_capacity!(self.remaining(), 1);
-
-		// If a `bool` is `false` it is encoded as `0`, otherwise it isn't, so
-		// we can read a `bool` by reading a single byte and checking if it does
-		// not equal `0`.
-		let val = self.chunk()[0] != 0;
-		self.advance(1)?;
-
-		Ok(val)
+		Ok(self.read_u8()? != 0)
 	}
 
 	/// Reads an 8-bit unsigned integer.
