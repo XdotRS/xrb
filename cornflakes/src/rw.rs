@@ -10,6 +10,7 @@ pub trait Writer {}
 /// Reads a type from bytes.
 #[doc(notable_trait)]
 pub trait ReadBytes {
+	/// Reads [`Self`] from a [`Reader`].
 	fn read(reader: &mut impl Reader) -> Result<Self, ReadError>
 	where
 		Self: Sized;
@@ -17,7 +18,8 @@ pub trait ReadBytes {
 
 /// Reads a type from a specific number of bytes.
 pub trait ReadSized {
-	fn read_with_size(size: usize, reader: &mut impl Reader) -> Result<Self, ReadError>
+	/// Reads [`Self`] from a [`Reader`] using the given number of bytes.
+	fn read_with_size(num_bytes: usize, reader: &mut impl Reader) -> Result<Self, ReadError>
 	where
 		Self: Sized;
 }
@@ -25,6 +27,8 @@ pub trait ReadSized {
 /// Reads a list of elements from bytes.
 #[doc(notable_trait)]
 pub trait ReadList {
+	/// Reads a list of values from a [`Reader`] using the given length of the
+	/// list.
 	fn read(length: usize, reader: &mut impl Reader) -> Result<Self, ReadError>
 	where
 		Self: Sized;
@@ -33,6 +37,7 @@ pub trait ReadList {
 /// Writes a type as bytes.
 #[doc(notable_trait)]
 pub trait WriteBytes {
+	/// Writes `self` as bytes to a [`Writer`].
 	fn write(&self, writer: &mut impl Writer) -> Result<(), ReadError>
 	where
 		Self: Sized;
@@ -40,7 +45,8 @@ pub trait WriteBytes {
 
 /// Writes a type as a specific number of bytes.
 pub trait WriteSized {
-	fn write_with_size(&self, size: usize, writer: &mut impl Writer) -> Result<(), ReadError>
+	/// Writes `self` as the given number of bytes to a [`Writer`].
+	fn write_with_size(&self, num_bytes: usize, writer: &mut impl Writer) -> Result<(), ReadError>
 	where
 		Self: Sized;
 }
@@ -50,11 +56,9 @@ pub trait WriteSized {
 // of these traits are accidentally made _object unsafe_, which means that they
 // cannot be used with the `dyn` keyword.
 fn _assert_object_safety(
-	_reader: &dyn Reader,
 	_read_bytes: &dyn ReadBytes,
 	_read_sized: &dyn ReadSized,
 	_read_list: &dyn ReadList,
-	_writer: &dyn Writer,
 	_write_bytes: &dyn WriteBytes,
 	_write_sized: &dyn WriteSized,
 ) {
