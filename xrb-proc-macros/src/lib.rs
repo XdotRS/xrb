@@ -63,7 +63,7 @@ pub fn messages(input: TokenStream) -> TokenStream {
 	expanded.into()
 }
 
-/// Derives an implementation for `cornflakes::ByteSize` for an enum or struct.
+/// Derives an implementation of `cornflakes::ByteSize` for an enum or struct.
 #[proc_macro_derive(ByteSize)]
 pub fn derive_byte_size(input: TokenStream) -> TokenStream {
 	let input = parse_macro_input!(input as DeriveInput);
@@ -79,6 +79,57 @@ pub fn derive_byte_size(input: TokenStream) -> TokenStream {
 		impl #impl_generics cornflakes::ByteSize for #name #ty_generics #where_clause {
 			fn byte_size(&self) -> usize {
 				#sum
+			}
+		}
+	};
+
+	expanded.into()
+}
+
+/// Derives an implementation of `cornflakes::Writable` for an enum or struct.
+#[proc_macro_derive(Writable)]
+pub fn derive_writable(input: TokenStream) -> TokenStream {
+	let input = parse_macro_input!(input as DeriveInput);
+
+	let name = input.ident;
+
+	let generics = add_trait_bounds(input.generics, quote!(cornflakes::Writable));
+	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+	// let write = writable_write(&input.data);
+
+	let expanded = quote! {
+		impl #impl_generics cornflakes::Writable for #name #ty_generics #where_clause {
+			fn write_to(
+				&self,
+				writer: &mut impl cornflakes::Writer,
+			) -> Result<(), cornflakes::WriteError> {
+				// #write
+
+				Ok(())
+			}
+		}
+	};
+
+	expanded.into()
+}
+
+/// Derives an implementation of `cornflakes::Readable` for an enum or struct.
+#[proc_macro_derive(Readable)]
+pub fn derive_readable(input: TokenStream) -> TokenStream {
+	let input = parse_macro_input!(input as DeriveInput);
+
+	let name = input.ident;
+
+	let generics = add_trait_bounds(input.generics, quote!(cornflakes::Readable));
+	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+	// let read = readable_impl(&input.data);
+
+	let expanded = quote! {
+		impl #impl_generics cornflakes::Readable for #name #ty_generics #where_clause {
+			fn read_from(reader: &mut impl cornflakes::Reader) -> Result<Self, cornflakes::ReadError> {
+				// #read
 			}
 		}
 	};
