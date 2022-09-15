@@ -7,7 +7,7 @@ use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{format_ident, quote, quote_spanned};
 
 use syn::spanned::Spanned;
-use syn::{parse_quote, Data, Fields, GenericParam, Generics, Ident, Index, Type};
+use syn::{parse_quote, Data, Fields, GenericParam, Generics, Ident, Index};
 
 use crate::content::*;
 use crate::message::*;
@@ -18,29 +18,38 @@ use crate::message::*;
 /// This is used to generate the deserialization for metabyte items.
 pub fn deserialize_metabyte(metabyte: Option<&Item>) -> TokenStream2 {
 	metabyte.map_or_else(
-		|| quote!(__reader.skip(1);),
+		|| quote!(reader.skip(1);),
 		|item| match item {
 			// If the item is a field, read it into a variable with its own
 			// name.
 			Item::Field(field) => {
 				let name = &field.name;
+				// Add `__` on either side of the field's name, so that we know
+				// it isn't going to conflict with any of the variable names
+				// we use in the deserialization.
+				let ident = format_ident!("__{}__", name);
+
 				let ty = &field.ty;
 
-				quote!(let #name: #ty = __reader.limit(1).read()?;)
+				quote!(let #ident: #ty = reader.limit(1).read()?;)
 			}
 			// If the item is a field length, then we know the length must be of
 			// type `u8`, so we read that length as `u8` (and then cast to
 			// `usize`, as lengths in Rust are usually `usize`).
 			Item::FieldLength(field_len) => {
 				let field = &field_len.field_name;
+				// Add `__` to the start, but not the end, of the field's name,
+				// so that we know it isn't going to conflict with any of the
+				// variable names we use in the deserialization, nor with the
+				// name of any fields (which we add `__` to _both_ sides of).
 				let ident = format_ident!("__{}_len", field);
 
-				quote!(let #ident = __reader.read::<u8>()? as usize;)
+				quote!(let #ident = reader.read_u8()? as usize;)
 			}
 			// Since the metabyte is a single byte, we know that if this is an
 			// unused byte item, it is exactly one unused byte. So we just skip
 			// that byte.
-			Item::UnusedBytes(_) => quote!(__reader.skip(1);),
+			Item::UnusedBytes(_) => quote!(reader.skip(1);),
 		},
 	)
 }
@@ -53,14 +62,21 @@ pub fn deserialize_items(items: Vec<&Item>) -> Vec<TokenStream2> {
 		.into_iter()
 		.map(|item| match item {
 			// If the item is a field, read it into a variable with its own name.
-			//
-			// TODO: What if it is a list? How do we use the field lengths to read
-			// lists?
 			Item::Field(field) => {
 				let name = &field.name;
+				// Add `__` on either side of the field's name, so that we know
+				// it isn't going to conflict with any of the variable names
+				// we use in the deserialization.
+				let ident = format_ident!("__{}__", name);
+
 				let ty = &field.ty;
 
-				quote!(let #name: #ty = __reader.read()?;)
+				// TODO: We need to recognise field types that implement
+				// `cornflakes::ReadableWithLength` here so that we can read
+				// them separarately. We will also need to do the same with
+				// `cornflakes::ReadableWithSize`, once we have syntax for that.
+
+				quote!(let #ident: #ty = reader.read()?;)
 			}
 			// If the item is a field length, read it into a variable with the
 			// name `__fieldname_len`, where `fieldname` is the name of the
@@ -71,7 +87,7 @@ pub fn deserialize_items(items: Vec<&Item>) -> Vec<TokenStream2> {
 
 				let ty = &field_len.ty;
 
-				quote!(let #ident = __reader.read::<#ty>()?;)
+				quote!(let #ident: #ty = reader.read()?;)
 			}
 			// If the item is unused bytes, skip the correct number of unused
 			// bytes.
@@ -82,13 +98,13 @@ pub fn deserialize_items(items: Vec<&Item>) -> Vec<TokenStream2> {
 				UnusedBytes::FullySpecified(full) => match &full.definition {
 					// If it is a numerical definition, simply skip the given
 					// number of bytes.
-					UnusedBytesDefinition::Numerical(val) => quote!(__reader.skip(#val);),
+					UnusedBytesDefinition::Numerical(val) => quote!(reader.advance(#val);),
 
 					// Otherwise, if it pads a field, calculate the correct
 					// number of bytes requried to pad that field and skip that
 					// many bytes.
 					UnusedBytesDefinition::Padding((_, field)) => quote! {
-						__reader.skip((4 - (cornflakes::ByteSize::byte_size(#field) % 4)) % 4);
+						reader.advance((4 - (cornflakes::ByteSize::byte_size(#field) % 4)) % 4);
 					},
 				},
 			},
@@ -127,8 +143,8 @@ pub fn serialize_request(
 	let items = content.items_sans_metabyte();
 
 	quote! {
-		impl #impl_generics cornflakes::ToBytes for #name #ty_generics #where_clause {
-			fn write_to(&self, writer: &mut impl cornflakes::ByteWriter) -> Result<(), std::io::Error> {
+		impl #impl_generics cornflakes::Writable for #name #ty_generics #where_clause {
+			fn write_to(&self, writer: &mut impl cornflakes::Writer) -> Result<(), std::io::Error> {
 				// Header
 				writer.write_u8(#major_opcode);
 				writer.write_u8(#metabyte);
@@ -153,11 +169,11 @@ pub fn deserialize_request(
 ) -> TokenStream2 {
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-	// Punctuate the field names with commas, so that they can easily be
-	// inserted into the generated constructor invocation.
 	let fields = content.fields().into_iter().map(|field| {
 		let name = &field.name;
-		quote!(#name,)
+		let ident = format_ident!("__{}__", name);
+
+		quote!(#name: #ident,)
 	});
 
 	// Deserialization for the metabyte.
@@ -167,31 +183,26 @@ pub fn deserialize_request(
 	let items = deserialize_items(content.items_sans_metabyte());
 
 	quote! {
-		impl #impl_generics cornflakes::FromBytes for #name #ty_generics #where_clause {
-			fn read_from(__reader: &mut impl cornflakes::ByteReader) -> Result<Self, std::io::Error> {
+		impl #impl_generics cornflakes::Readable for #name #ty_generics #where_clause {
+			fn read_from(reader: &mut impl cornflakes::Reader) -> Result<Self, cornflakes::ReadError> {
 				// Don't need to read the major opcode since we already know
 				// which request we're deserializing.
-				__reader.skip(1);
+				reader.skip(1);
 				// Read the metabyte.
 				#metabyte
 
 				// Read the length of the request (which is in units of 4
 				// bytes), and multiply it by 4 to get the length of the request
 				// in bytes.
-				let __length = (__reader.read::<u16>() * 4) as usize;
+				let length = (reader.read_u16() * 4) as usize;
 				// Limit the `reader` to `length - 4`, as 4 bytes have already
 				// been read.
-				let __reader = __reader.limit(__length - 4);
+				let reader = reader.limit(length - 4);
 
 				// Read any and all non-metabyte items.
 				#(#items)*
 
 				Ok(Self {
-					// The names of every field, separated by commas; these
-					// fields will already have variables created in the
-					// generation of the deserialization code for their items,
-					// so we can put all the field names here to pass them to
-					// the constructor.
 					#(#fields)*
 				})
 			}
@@ -218,11 +229,11 @@ pub fn serialize_reply(
 	let items = content.items_sans_metabyte();
 
 	quote! {
-		impl #impl_generics cornflakes::ToBytes for #name #ty_generics #where_clause {
+		impl #impl_generics cornflakes::Writable for #name #ty_generics #where_clause {
 			fn write_to(
 				&self,
-				writer: &mut impl cornflakes::ByteWriter
-			) -> Result<(), std::io::Error> {
+				writer: &mut impl cornflakes::Writer
+			) -> Result<(), cornflakes::WriteError> {
 				// Header {{{
 
 				// A first byte of `1` indicates that this message is a reply.
@@ -257,11 +268,11 @@ pub fn deserialize_reply(
 ) -> TokenStream2 {
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-	// Punctuate the field names with commas, so that they can easily be
-	// inserted into the generated constructor invocation.
 	let fields = content.fields().into_iter().map(|field| {
 		let name = &field.name;
-		quote!(#name,)
+		let ident = format_ident!("__{}__", name);
+
+		quote!(#name: #ident,)
 	});
 
 	// Deserialization for the metabyte.
@@ -271,36 +282,35 @@ pub fn deserialize_reply(
 	let items = deserialize_items(content.items_sans_metabyte());
 
 	quote! {
-		impl #impl_generics cornflakes::FromBytes for #name #ty_generics #where_clause {
-			fn read_from(__reader: &mut impl cornflakes::ByteReader) -> Result<Self, std::io::Error> {
+		impl #impl_generics cornflakes::Readable for #name #ty_generics #where_clause {
+			fn read_from(
+				reader: &mut impl cornflakes::Reader,
+			) -> Result<Self, cornflakes::ReadError> {
 				// The first byte of a reply is always `1`: we already know this
 				// is a reply, so we can skip it.
-				__reader.skip(1);
+				reader.skip(1);
 				// Read the metabyte.
 				#metabyte
 
-				let __sequence_number = __reader.read_u16();
+				let sequence_number = reader.read_u16();
 
 				// Read the length of the request (which is in 4-byte units),
 				// convert it to bytes, and add 32 bytes (since the minimum
 				// reply length is 32 bytes, which gets subtracted from the
 				// length when it is recorded).
-				let __length = ((reader.read_u32() * 4) + 32) as usize;
+				let length = ((reader.read_u32() * 4) + 32) as usize;
 				// Limit the reader to that length (minus the 8 bytes already
 				// consumed), so no types read too many bytes and potentially
 				// mess things up. Of course, the reader provided should already
 				// do this...
-				let __reader = reader.limit(__length - 8);
+				let reader = reader.limit(length - 8);
 
 				// Read any and all non-metabyte items.
 				#(#items)*
 
 				// Construct `Self`.
 				Ok(Self {
-					__sequence_number,
-					// This is the names of all of the fields; variables with
-					// these names are generated while reading each respective
-					// field.
+					sequence_number,
 					#(#fields)*
 				})
 			}
@@ -319,90 +329,9 @@ pub fn add_trait_bounds(mut generics: Generics, r#trait: TokenStream2) -> Generi
 	generics
 }
 
-/// Expands to the `cornflakes::StaticByteSize` of the given type.
-pub fn static_byte_size_recurse(ty: &Type, span: Span) -> TokenStream2 {
-	quote_spanned!(span=> <#ty as cornflakes::StaticByteSize>::static_byte_size())
-}
-
 /// Expands to the `cornflakes::ByteSize` of the given type.
 pub fn byte_size_recurse(field: TokenStream2, span: Span) -> TokenStream2 {
 	quote_spanned!(span=> cornflakes::ByteSize::byte_size(&#field))
-}
-
-/// Sums the `cornflakes::StaticByteSize` of all the variants and/or fields in
-/// an enum or struct.
-pub fn static_byte_size_sum(data: &Data) -> TokenStream2 {
-	match *data {
-		Data::Struct(ref data) => match data.fields {
-			// Structs.
-			Fields::Named(ref fields) => {
-				// Named fields.
-
-				let recurse = fields
-					.named
-					.iter()
-					.map(|field| static_byte_size_recurse(&field.ty, field.span()));
-
-				// For every named field, add its size.
-				quote!(0 #(+ #recurse)*)
-			}
-			Fields::Unnamed(ref fields) => {
-				// Unnamed fields.
-
-				let recurse = fields
-					.unnamed
-					.iter()
-					.map(|field| static_byte_size_recurse(&field.ty, field.span()));
-
-				// For every unnamed field, add its size.
-				quote!(0 #(+ #recurse)*)
-			}
-			// How can a unit struct have a size? What would we write it as?
-			Fields::Unit => unimplemented!(),
-		},
-		Data::Enum(ref data) => {
-			// Enums.
-
-			let sum = data
-				.variants
-				.iter()
-				.map(|variant| match variant.fields {
-					// Enum variants.
-					Fields::Named(ref fields) => {
-						// Named fields in a variant.
-
-						let recurse = fields
-							.named
-							.iter()
-							.map(|field| static_byte_size_recurse(&field.ty, field.span()));
-
-						// For every named field, add its size.
-						quote!(0 #(+ #recurse)*)
-					}
-					Fields::Unnamed(ref fields) => {
-						// Unnamed fields in a variant
-
-						let recurse = fields
-							.unnamed
-							.iter()
-							.map(|field| static_byte_size_recurse(&field.ty, field.span()));
-
-						// For every unnamed field, add its size.
-						quote!(0 #(+ #recurse)*)
-					}
-					// If there are no fields, don't add any size.
-					Fields::Unit => quote!(0),
-				})
-				// Take the maximum size of any variant. The whole enum's size
-				// has to be large enough for the largest possible variant.
-				.reduce(|a, b| quote!(std::cmp::max(#a, #b)));
-
-			// Add 1 to the sum, because the sum is of the fields for the
-			// variants, not the variants themselves.
-			quote!(#sum + 1)
-		}
-		Data::Union(_) => unimplemented!(),
-	}
 }
 
 /// Sums the `cornflakes::ByteSize` of all of the variants and/or fields in an

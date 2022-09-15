@@ -63,30 +63,6 @@ pub fn messages(input: TokenStream) -> TokenStream {
 	expanded.into()
 }
 
-/// Derives an implementation for `cornflakes::StaticByteSize` for an enum or
-/// struct.
-#[proc_macro_derive(StaticByteSize)]
-pub fn derive_static_byte_size(input: TokenStream) -> TokenStream {
-	let input = parse_macro_input!(input as DeriveInput);
-
-	let name = input.ident;
-
-	let generics = add_trait_bounds(input.generics, quote!(cornflakes::StaticByteSize));
-	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
-
-	let sum = static_byte_size_sum(&input.data);
-
-	let expanded = quote! {
-		impl #impl_generics cornflakes::StaticByteSize for #name #ty_generics #where_clause {
-			fn static_byte_size() -> usize {
-				#sum
-			}
-		}
-	};
-
-	expanded.into()
-}
-
 /// Derives an implementation for `cornflakes::ByteSize` for an enum or struct.
 #[proc_macro_derive(ByteSize)]
 pub fn derive_byte_size(input: TokenStream) -> TokenStream {
