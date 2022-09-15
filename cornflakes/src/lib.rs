@@ -23,8 +23,10 @@
 mod reader;
 mod writer;
 
-use reader::{ReadError, Reader};
-use writer::{WriteError, Writer};
+mod impls;
+
+pub use reader::{ReadError, Reader};
+pub use writer::{WriteError, Writer};
 
 pub trait ByteSize {
 	/// Returns the number of bytes that `self` will be [written] as.
