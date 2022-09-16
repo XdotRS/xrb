@@ -31,12 +31,14 @@
 #![allow(clippy::module_name_repetitions)]
 
 //! # X Rust Bindings
-//! X Rust Bindings is a Rust library directly implementing the types and protocol messages of the
-//! [X11 protocol specification](https://x.org/releases/X11R7.7/doc/xproto/xprotocol.html/). XRB is
-//! _not_ a high-level API library, and it does not provide a direct connection to an X server, nor
-//! does it do anything else on its own. XRB's development purpose is to provide a foundation for
-//! higher-level Rust API wrapper libraries. It is used by [X.RS](https://crates.io/crates/xrs),
-//! the official accompanying API library for XRB.
+//! X Rust Bindings is a Rust library directly implementing the types and
+//! protocol messages of the
+//! [X11 protocol specification](https://x.org/releases/X11R7.7/doc/xproto/xprotocol.html/).
+//! XRB is _not_ a high-level API library, and it does not provide a direct
+//! connection to an X server, nor does it do anything else on its own. XRB's
+//! development purpose is to provide a foundation for higher-level Rust API
+//! wrapper libraries. It is used by [X.RS](https://crates.io/crates/xrs), the
+//! official accompanying API library for XRB.
 
 /// The major version of the X protocol used in XRB.
 ///

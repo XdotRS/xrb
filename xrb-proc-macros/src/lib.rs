@@ -22,6 +22,14 @@ struct Messages {
 	pub messages: Vec<Message>,
 }
 
+// TODO: Define `Definition` (in its own module). Used for simple enum and
+// struct definitions.
+struct Definition;
+
+struct Definitions {
+	pub definitions: Vec<Definition>,
+}
+
 impl Parse for Messages {
 	fn parse(input: ParseStream) -> Result<Self> {
 		let mut messages: Vec<Message> = vec![];
@@ -31,6 +39,15 @@ impl Parse for Messages {
 		}
 
 		Ok(Self { messages })
+	}
+}
+
+impl Parse for Definitions {
+	fn parse(_input: ParseStream) -> Result<Self> {
+		// TODO: Parse definitions.
+		Ok(Self {
+			definitions: vec![],
+		})
 	}
 }
 
@@ -58,6 +75,27 @@ pub fn messages(input: TokenStream) -> TokenStream {
 	let expanded = quote! {
 		#(#messages)*
 		#(#trait_impls)*
+	};
+
+	expanded.into()
+}
+
+/// Defines enums and structs with special syntax to generate their
+/// (de)serialization.
+///
+/// This uses the same syntax as [`messages!`].
+///
+/// [`messages!`]: messages
+#[proc_macro]
+pub fn define(input: TokenStream) -> TokenStream {
+	// Parse the input as a stream of [`Definitions`].
+	let input = parse_macro_input!(input as Definitions);
+
+	// The list of definitions.
+	let _definitions = input.definitions;
+
+	let expanded = quote! {
+		// TODO
 	};
 
 	expanded.into()
