@@ -68,7 +68,7 @@ where
 /// `cornflakes::ToBytes` and `cornflakes::FromBytes`, respectively.
 #[proc_macro]
 pub fn messages(input: TokenStream) -> TokenStream {
-	// Parse the input as a stream of [`Messages`].
+	// Parse the input as [Many] [`Message`]s.
 	let input = parse_macro_input!(input as Many<Message>);
 
 	// The list of messages.
@@ -99,7 +99,7 @@ pub fn messages(input: TokenStream) -> TokenStream {
 /// [`messages!`]: messages
 #[proc_macro]
 pub fn define(input: TokenStream) -> TokenStream {
-	// Parse the input as a stream of [`Definitions`].
+	// Parse the input as [Many] [`Definition`]s.
 	let input = parse_macro_input!(input as Many<Definition>);
 
 	// The list of definitions.
