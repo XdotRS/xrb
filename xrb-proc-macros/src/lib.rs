@@ -3,51 +3,59 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 mod content;
-mod message;
 mod util;
 
+mod definition;
+mod message;
+
+use definition::*;
+use message::*;
 use util::*;
 
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 
-use quote::quote;
+use quote::{quote, ToTokens};
 
 use syn::parse::{Parse, ParseStream};
 use syn::{parse_macro_input, DeriveInput, Result};
 
-use crate::message::*;
-
-struct Messages {
-	pub messages: Vec<Message>,
+/// A wrapper around <code>[Vec]<T></code> that implements [`Parse`] and
+/// [`ToTokens`].
+///
+/// This exists because we can't implement foreign traits on foreign types.
+struct Many<T>
+where
+	T: Parse + ToTokens,
+{
+	pub things: Vec<T>,
 }
 
-// TODO: Define `Definition` (in its own module). Used for simple enum and
-// struct definitions.
-struct Definition;
-
-struct Definitions {
-	pub definitions: Vec<Definition>,
-}
-
-impl Parse for Messages {
+impl<T> Parse for Many<T>
+where
+	T: Parse + ToTokens,
+{
 	fn parse(input: ParseStream) -> Result<Self> {
-		let mut messages: Vec<Message> = vec![];
+		let mut things = vec![];
 
+		// Parse `T` until the end of `input`.
 		while !input.is_empty() {
-			messages.push(input.parse()?);
+			things.push(input.parse()?);
 		}
 
-		Ok(Self { messages })
+		Ok(Self { things })
 	}
 }
 
-impl Parse for Definitions {
-	fn parse(_input: ParseStream) -> Result<Self> {
-		// TODO: Parse definitions.
-		Ok(Self {
-			definitions: vec![],
-		})
+impl<T> ToTokens for Many<T>
+where
+	T: Parse + ToTokens,
+{
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		// Write each `thing` in `&self.things` as tokens.
+		for thing in &self.things {
+			thing.to_tokens(tokens);
+		}
 	}
 }
 
@@ -61,10 +69,10 @@ impl Parse for Definitions {
 #[proc_macro]
 pub fn messages(input: TokenStream) -> TokenStream {
 	// Parse the input as a stream of [`Messages`].
-	let input = parse_macro_input!(input as Messages);
+	let input = parse_macro_input!(input as Many<Message>);
 
 	// The list of messages.
-	let messages = input.messages;
+	let messages = input.things;
 
 	// The trait implementations, not including serialization and deserialization.
 	let trait_impls: Vec<TokenStream2> = messages
@@ -72,6 +80,9 @@ pub fn messages(input: TokenStream) -> TokenStream {
 		.map(|message| message.message_trait_impl())
 		.collect();
 
+	// TODO: generate serialization and deserialization for messages.
+
+	// The actual code generated:
 	let expanded = quote! {
 		#(#messages)*
 		#(#trait_impls)*
@@ -89,13 +100,15 @@ pub fn messages(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn define(input: TokenStream) -> TokenStream {
 	// Parse the input as a stream of [`Definitions`].
-	let input = parse_macro_input!(input as Definitions);
+	let input = parse_macro_input!(input as Many<Definition>);
 
 	// The list of definitions.
-	let _definitions = input.definitions;
+	let definitions = input.things;
 
+	// The actual code generated:
 	let expanded = quote! {
-		// TODO
+		#(#definitions)*
+		// TODO: serialization & deserialization
 	};
 
 	expanded.into()
@@ -104,15 +117,25 @@ pub fn define(input: TokenStream) -> TokenStream {
 /// Derives an implementation of `cornflakes::ByteSize` for an enum or struct.
 #[proc_macro_derive(ByteSize)]
 pub fn derive_byte_size(input: TokenStream) -> TokenStream {
+	// Parse the input as derive macro input (`DeriveInput`).
 	let input = parse_macro_input!(input as DeriveInput);
 
+	// The name of the struct or enum deriving `ByteSize`.
 	let name = input.ident;
 
+	// The generics associated with the struct or enum deriving `ByteSize`.
 	let generics = add_trait_bounds(input.generics, quote!(cornflakes::ByteSize));
+	// Split the generics into forms that can be used after `impl` (e.g.
+	// `impl<T>`), after the name (e.g. `Name<T>`), and in the where clause
+	// (e.g. `where T: ByteSize`).
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
+	// If this is a
+	// - struct: sum the fields.
+	// - enum: take the highest byte size of the variants.
 	let sum = byte_size_sum(&input.data);
 
+	// The actual code generated:
 	let expanded = quote! {
 		impl #impl_generics cornflakes::ByteSize for #name #ty_generics #where_clause {
 			fn byte_size(&self) -> usize {
@@ -127,13 +150,20 @@ pub fn derive_byte_size(input: TokenStream) -> TokenStream {
 /// Derives an implementation of `cornflakes::Writable` for an enum or struct.
 #[proc_macro_derive(Writable)]
 pub fn derive_writable(input: TokenStream) -> TokenStream {
+	// Parse the input as derive macro input (`DeriveInput`).
 	let input = parse_macro_input!(input as DeriveInput);
 
+	// The name of the struct or enum deriving `Writable`.
 	let name = input.ident;
 
+	// The generics associated with the struct or enum deriving `Writable`.
 	let generics = add_trait_bounds(input.generics, quote!(cornflakes::Writable));
+	// Split the generics into forms that can be used after `impl` (e.g.
+	// `impl<T>`), after the name (e.g. `Name<T>`), and in the where clause
+	// (e.g. `where T: Writable`).
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
+	// TODO: Implementation of `write_to`.
 	// let write = writable_write(&input.data);
 
 	let expanded = quote! {
@@ -155,13 +185,20 @@ pub fn derive_writable(input: TokenStream) -> TokenStream {
 /// Derives an implementation of `cornflakes::Readable` for an enum or struct.
 #[proc_macro_derive(Readable)]
 pub fn derive_readable(input: TokenStream) -> TokenStream {
+	// Parse the input as derive macro input (`DeriveInput`).
 	let input = parse_macro_input!(input as DeriveInput);
 
+	// The name of the struct or enum deriving `Writable`.
 	let name = input.ident;
 
+	// The generics associated with the struct or enum deriving `Readable`.
 	let generics = add_trait_bounds(input.generics, quote!(cornflakes::Readable));
+	// Split the generics into forms that can be used after `impl` (e.g.
+	// `impl<T>`), after the name (e.g. `Name<T>`), and in the where clause
+	// (e.g. `where T: Readable`).
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
+	// TODO: Implementation of `read_from`.
 	// let read = readable_impl(&input.data);
 
 	let expanded = quote! {
