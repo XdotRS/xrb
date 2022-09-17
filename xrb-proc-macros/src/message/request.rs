@@ -3,16 +3,16 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use syn::parse::{Parse, ParseStream};
-use syn::{parenthesized, token, LitInt, Result, Token, Type};
+use syn::{parenthesized, token, Expr, Result, Token, Type};
 
 /// Information specifically associated with requests, not replies.
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct RequestMetadata {
 	pub paren_token: token::Paren,
 	/// The major opcode of this request.
-	pub major_opcode: u8,
+	pub major_opcode: Expr,
 	/// The minor opcode of this request, if any. Only used in extensions.
-	pub minor_opcode: Option<(Token![,], u8)>,
+	pub minor_opcode: Option<(Token![,], Expr)>,
 	/// The type of reply that is returned by this request, if any.
 	pub reply: Option<(Token![->], Type)>,
 }
@@ -28,17 +28,22 @@ impl Parse for RequestMetadata {
 			// `(` and `)`.
 			paren_token: parenthesized!(content in input),
 			// Major opcode.
-			major_opcode: content.parse::<LitInt>()?.base10_parse()?,
+			major_opcode: content.parse()?,
 			// Optional: `,` + minor opcode.
 			minor_opcode: content
-				.parse() // ,
-				.ok()
+				.parse() // `,`
 				.map(|comma| {
-					(
-						comma,
-						content.parse::<LitInt>().unwrap().base10_parse().unwrap(),
-					)
-				}),
+					// If there is no `Expr`, return an error: "expected minor
+					// opcode expression", otherwise return that expression:
+					let expr = content.parse::<Expr>().map_or_else(
+						|_| Err(content.error("expected minor opcode expression")),
+						|expr| Ok(expr),
+					);
+
+					// Pair the comma and the expression.
+					expr.map(|expr| (comma, expr))
+				})?
+				.ok(),
 			// Optional: `->` + reply type.
 			reply: input.parse().ok().zip(input.parse().ok()),
 		})

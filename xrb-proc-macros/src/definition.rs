@@ -23,6 +23,9 @@ pub struct Definition {
 	pub vis: Visibility,
 	/// The rest of the definition: either a [`Struct`] or an [`Enum`].
 	pub definition: DefinitionType,
+	/// The semicolon token, if the definition's items are not [`Items::Named`]:
+	/// `;`.
+	pub semicolon_token: Option<Token![;]>,
 }
 
 /// Either a [`Struct`] [`Definition`] or an [`Enum`] [`Definition`].
@@ -45,13 +48,13 @@ pub struct Struct {
 	///
 	/// This includes generic types and lifetimes.
 	pub generics: Generics,
-	/// The content defined within the struct.
+	/// Items defined for this struct.
 	///
 	/// This includes fields that you may usually define within a struct, but
 	/// also _field lengths_, to encode the lengths of collection fields (e.g.
 	/// a field with a `Vec` type), an _unused bytes_, to define bytes that will
 	/// be unused when serializing or deserializing the struct.
-	pub content: Content,
+	pub items: Items,
 }
 
 /// An enum [`Definition`] that can contain field lengths and unused bytes.
@@ -84,12 +87,8 @@ pub struct Variant {
 	pub attributes: Vec<Attribute>,
 	/// The name of the enum variant.
 	pub name: Ident,
-	/// The content defined within the enum variant, if any.
-	// TODO: `Content` was created with only structs in mind, so it will require
-	// a semicolon after shorthand definitions, which we don't want. It also
-	// doesn't support tuple structs, which are used a lot in enums (it should
-	// support them for structs anyway).
-	pub content: Option<Content>,
+	/// Items defined for this variant, if any.
+	pub items: Items,
 	/// The discriminant associated with the enum variant.
 	///
 	/// If specified, this is what the enum variant is encoded as, followed by
@@ -118,6 +117,8 @@ impl ToTokens for Definition {
 		self.vis.to_tokens(tokens);
 		// The rest of the definition of the struct or enum being defined.
 		self.definition.to_tokens(tokens);
+		// The semicolon token, if present.
+		self.semicolon_token.to_tokens(tokens);
 	}
 }
 
@@ -140,9 +141,8 @@ impl ToTokens for Struct {
 		self.name.to_tokens(tokens);
 		// Generics associated with the struct.
 		self.generics.to_tokens(tokens);
-
-		// TODO: `ToTokens` for `Content`.
-		// self.content.to_tokens(tokens);
+		// Items defined within the struct.
+		self.items.to_tokens(tokens);
 	}
 }
 
@@ -174,8 +174,7 @@ impl ToTokens for Variant {
 		// The name of the variant.
 		self.name.to_tokens(tokens);
 
-		// TODO: `ToTokens` for `Content`.
-		// self.content.to_tokens(tokens);
+		self.items.to_tokens(tokens);
 
 		// The variant's discriminant, if any.
 		self.discriminant.as_ref().map(|(eq, discrim)| {
@@ -194,12 +193,10 @@ impl ToTokens for Variant {
 impl Parse for Definition {
 	fn parse(input: ParseStream) -> Result<Self> {
 		Ok(Self {
-			// Attributes associated with the struct or enum being defined.
 			attributes: input.call(Attribute::parse_outer)?,
-			// The visibility of the struct or enum being defined (e.g. `pub`).
 			vis: input.parse()?,
-			// The definition itself: either a struct or enum definition.
 			definition: input.parse()?,
+			semicolon_token: input.parse().ok(),
 		})
 	}
 }
@@ -227,17 +224,39 @@ impl Parse for DefinitionType {
 
 impl Parse for Struct {
 	fn parse(input: ParseStream) -> Result<Self> {
+		// `struct`.
+		let struct_token: Token![struct] = input.parse()?;
+		// The name of the struct.
+		let name: Ident = input.parse()?;
+		// Generics associated with the struct, including generic types and
+		// lifetimes.
+		let generics: Generics = input.parse()?;
+		// Items defined within the struct.
+		let items: Items = input.parse()?;
+
+		match items {
+			Items::Named(_) => {
+				if input.peek(Token![;]) {
+					return Err(input.error("did not expect semicolon after named items"));
+				}
+			}
+			Items::Unnamed(_) => {
+				if !input.peek(Token![;]) {
+					return Err(input.error("expected semicolon after unnamed items"));
+				}
+			}
+			Items::Unit => {
+				if !input.peek(Token![;]) {
+					return Err(input.error("expected semicolon after unit struct"));
+				}
+			}
+		}
+
 		Ok(Self {
-			// `struct`.
-			struct_token: input.parse()?,
-			// The name of the struct.
-			name: input.parse()?,
-			// Generics associated with the struct, including generic types and
-			// lifetimes.
-			generics: input.parse()?,
-			// The content contained within the struct, including fields, field
-			// lengths, and unused bytes.
-			content: input.parse()?,
+			struct_token,
+			name,
+			generics,
+			items,
 		})
 	}
 }
@@ -269,9 +288,8 @@ impl Parse for Variant {
 			attributes: input.call(Attribute::parse_outer)?,
 			// Name of the enum variant.
 			name: input.parse()?,
-			// The content of the enum variant, if any (e.g. fields, unused
-			// bytes, field lengths).
-			content: input.parse().ok(),
+			// Items defined within the enum variant, if any.
+			items: input.parse()?,
 			// Optional: `(Token![=], Expr)`.
 			//
 			// The enum variant's discrimination, if any (e.g.

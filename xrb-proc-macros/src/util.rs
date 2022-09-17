@@ -16,13 +16,13 @@ use crate::message::*;
 /// byte.
 ///
 /// This is used to generate the deserialization for metabyte items.
-pub fn deserialize_metabyte(metabyte: Option<&Item>) -> TokenStream2 {
+pub fn deserialize_metabyte(metabyte: Option<&NamedItem>) -> TokenStream2 {
 	metabyte.map_or_else(
 		|| quote!(reader.skip(1);),
 		|item| match item {
 			// If the item is a field, read it into a variable with its own
 			// name.
-			Item::Field(field) => {
+			NamedItem::NamedField(field) => {
 				let name = &field.name;
 				// Add `__` on either side of the field's name, so that we know
 				// it isn't going to conflict with any of the variable names
@@ -36,8 +36,8 @@ pub fn deserialize_metabyte(metabyte: Option<&Item>) -> TokenStream2 {
 			// If the item is a field length, then we know the length must be of
 			// type `u8`, so we read that length as `u8` (and then cast to
 			// `usize`, as lengths in Rust are usually `usize`).
-			Item::FieldLength(field_len) => {
-				let field = &field_len.field_name;
+			NamedItem::FieldLength(field_len) => {
+				let field = &field_len.field_ident;
 				// Add `__` to the start, but not the end, of the field's name,
 				// so that we know it isn't going to conflict with any of the
 				// variable names we use in the deserialization, nor with the
@@ -49,7 +49,7 @@ pub fn deserialize_metabyte(metabyte: Option<&Item>) -> TokenStream2 {
 			// Since the metabyte is a single byte, we know that if this is an
 			// unused byte item, it is exactly one unused byte. So we just skip
 			// that byte.
-			Item::UnusedBytes(_) => quote!(reader.skip(1);),
+			NamedItem::UnusedBytes(_) => quote!(reader.skip(1);),
 		},
 	)
 }
@@ -57,12 +57,12 @@ pub fn deserialize_metabyte(metabyte: Option<&Item>) -> TokenStream2 {
 /// Deserialization for a <code>[Vec]<&[Item]></code>.
 ///
 /// This is used to generate the deserialization code for non-metabyte items.
-pub fn deserialize_items(items: Vec<&Item>) -> Vec<TokenStream2> {
+pub fn deserialize_items(items: Vec<&NamedItem>) -> Vec<TokenStream2> {
 	items
 		.into_iter()
 		.map(|item| match item {
 			// If the item is a field, read it into a variable with its own name.
-			Item::Field(field) => {
+			NamedItem::NamedField(field) => {
 				let name = &field.name;
 				// Add `__` on either side of the field's name, so that we know
 				// it isn't going to conflict with any of the variable names
@@ -81,8 +81,8 @@ pub fn deserialize_items(items: Vec<&Item>) -> Vec<TokenStream2> {
 			// If the item is a field length, read it into a variable with the
 			// name `__fieldname_len`, where `fieldname` is the name of the
 			// field it is for, with the numerical type that it is for.
-			Item::FieldLength(field_len) => {
-				let field = &field_len.field_name;
+			NamedItem::FieldLength(field_len) => {
+				let field = &field_len.field_ident;
 				let ident = format_ident!("__{}_len", field);
 
 				let ty = &field_len.ty;
@@ -91,19 +91,17 @@ pub fn deserialize_items(items: Vec<&Item>) -> Vec<TokenStream2> {
 			}
 			// If the item is unused bytes, skip the correct number of unused
 			// bytes.
-			Item::UnusedBytes(unused) => match unused {
+			NamedItem::UnusedBytes(unused) => match &unused.unused_bytes {
 				// If it is a single unused byte, skip a single byte.
-				UnusedBytes::Single(_) => quote!(__reader.skip(1);),
+				UnusedBytesDefinition::Unit(_) => quote!(__reader.skip(1);),
 
-				UnusedBytes::FullySpecified(full) => match &full.definition {
-					// If it is a numerical definition, simply skip the given
-					// number of bytes.
-					UnusedBytesDefinition::Numerical(val) => quote!(reader.advance(#val);),
+				UnusedBytesDefinition::Full(full) => match &full.count {
+					UnusedBytesCount::Expression(expr) => quote!(reader.advance(#expr);),
 
 					// Otherwise, if it pads a field, calculate the correct
 					// number of bytes requried to pad that field and skip that
 					// many bytes.
-					UnusedBytesDefinition::Padding((_, field)) => quote! {
+					UnusedBytesCount::Padding((_, field)) => quote! {
 						reader.advance((4 - (cornflakes::ByteSize::byte_size(#field) % 4)) % 4);
 					},
 				},
@@ -118,7 +116,7 @@ pub fn serialize_request(
 	name: Ident,
 	generics: Generics,
 	metadata: RequestMetadata,
-	content: Content,
+	items: Items,
 ) -> TokenStream2 {
 	// Split the provided generics to be placed in the generated code.
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
@@ -133,14 +131,24 @@ pub fn serialize_request(
 		// is declared, quote it, otherwise quote `0`.
 		.map_or_else(
 			|| {
-				content
-					.metabyte()
+				items
+					.named_items()
+					.map(|items| items.iter().find(|item| item.is_metabyte()))
 					.map_or_else(|| quote!(0), |metabyte| quote!(#metabyte))
 			},
 			|(_, minor)| quote!(#minor),
 		);
 
-	let items = content.items_sans_metabyte();
+	let sans_metabyte = items
+		.named_items()
+		.into_iter()
+		.map(|items| {
+			items
+				.iter()
+				.filter(|item| !item.is_metabyte())
+				.collect::<Vec<&NamedItem>>()
+		})
+		.flatten();
 
 	quote! {
 		impl #impl_generics cornflakes::Writable for #name #ty_generics #where_clause {
@@ -151,7 +159,7 @@ pub fn serialize_request(
 				writer.write_u16(crate::Request::length(self));
 
 				// Everything else
-				#(#items)*
+				#(#sans_metabyte)*
 
 				Ok(())
 			}
@@ -165,22 +173,43 @@ pub fn deserialize_request(
 	name: Ident,
 	generics: Generics,
 	_metadata: RequestMetadata,
-	content: Content,
+	items: Items,
 ) -> TokenStream2 {
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-	let fields = content.fields().into_iter().map(|field| {
-		let name = &field.name;
-		let ident = format_ident!("__{}__", name);
+	let fields = items
+		.named_fields()
+		.map(|fields| {
+			fields
+				.into_iter()
+				.map(|field| {
+					let name = &field.name;
+					let ident = format_ident!("__{}__", name);
 
-		quote!(#name: #ident,)
-	});
+					quote!(#name: #ident,)
+				})
+				.flatten()
+		})
+		.into_iter()
+		.flatten();
 
 	// Deserialization for the metabyte.
-	let metabyte = deserialize_metabyte(content.metabyte());
+	let metabyte = deserialize_metabyte(
+		items
+			.named_items()
+			.map(|items| items.iter().find(|item| item.is_metabyte()))
+			.flatten(),
+	);
 
 	// Deserialization for all other items.
-	let items = deserialize_items(content.items_sans_metabyte());
+	let sans_metabyte = deserialize_items(
+		items
+			.named_items()
+			.iter()
+			.map(|items| items.iter().filter(|item| !item.is_metabyte()))
+			.flatten()
+			.collect(),
+	);
 
 	quote! {
 		impl #impl_generics cornflakes::Readable for #name #ty_generics #where_clause {
@@ -200,7 +229,7 @@ pub fn deserialize_request(
 				let reader = reader.limit(length - 4);
 
 				// Read any and all non-metabyte items.
-				#(#items)*
+				#(#sans_metabyte)*
 
 				Ok(Self {
 					#(#fields)*
@@ -216,17 +245,23 @@ pub fn serialize_reply(
 	name: Ident,
 	generics: Generics,
 	_metadata: ReplyMetadata,
-	content: Content,
+	items: Items,
 ) -> TokenStream2 {
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
 	// If there is a metabyte declared, quote it, otherwise quote `0`.
-	let metabyte = content
-		.metabyte()
+	let metabyte = items
+		.named_items()
+		.map(|items| items.iter().find(|item| item.is_metabyte()))
 		.map_or_else(|| quote!(0), |item| quote!(#item));
 
 	// Get a list of the non-metabyte items that are to be written in the body.
-	let items = content.items_sans_metabyte();
+	let sans_metabyte = items
+		.named_items()
+		.iter()
+		.map(|items| items.iter().filter(|item| !item.is_metabyte()))
+		.flatten()
+		.collect::<Vec<&NamedItem>>();
 
 	quote! {
 		impl #impl_generics cornflakes::Writable for #name #ty_generics #where_clause {
@@ -250,7 +285,7 @@ pub fn serialize_reply(
 				// }}}
 
 				// Write any and all non-metabyte items.
-				#(#items)*
+				#(#sans_metabyte)*
 
 				Ok(())
 			}
@@ -264,22 +299,40 @@ pub fn deserialize_reply(
 	name: Ident,
 	generics: Generics,
 	_metadata: ReplyMetadata,
-	content: Content,
+	items: Items,
 ) -> TokenStream2 {
 	let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-	let fields = content.fields().into_iter().map(|field| {
-		let name = &field.name;
-		let ident = format_ident!("__{}__", name);
+	let fields = items
+		.named_fields()
+		.into_iter()
+		.map(|fields| {
+			fields.into_iter().map(|field| {
+				let name = &field.name;
+				let ident = format_ident!("__{}__", name);
 
-		quote!(#name: #ident,)
-	});
+				quote!(#name: #ident,)
+			})
+		})
+		.flatten();
 
 	// Deserialization for the metabyte.
-	let metabyte = deserialize_metabyte(content.metabyte());
+	let metabyte = deserialize_metabyte(
+		items
+			.named_items()
+			.map(|items| items.iter().find(|item| item.is_metabyte()))
+			.flatten(),
+	);
 
 	// Deserialization for all other items.
-	let items = deserialize_items(content.items_sans_metabyte());
+	let items = deserialize_items(
+		items
+			.named_items()
+			.iter()
+			.map(|items| items.iter().filter(|item| !item.is_metabyte()))
+			.flatten()
+			.collect(),
+	);
 
 	quote! {
 		impl #impl_generics cornflakes::Readable for #name #ty_generics #where_clause {

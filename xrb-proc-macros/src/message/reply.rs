@@ -6,7 +6,7 @@ use syn::parse::{Parse, ParseStream};
 use syn::{Result, Token, Type};
 
 /// Information specifically associated with replies, not requests.
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct ReplyMetadata {
 	/// The request which this reply is returned for.
 	pub request: (Token![for], Type),

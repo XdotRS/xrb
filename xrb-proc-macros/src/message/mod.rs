@@ -10,7 +10,7 @@ pub use request::*;
 
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
-use syn::{token, Attribute, Generics, Ident, Result, Token, Visibility};
+use syn::{token, Attribute, Error, Generics, Ident, Result, Token, Visibility};
 
 use proc_macro2::{Delimiter, Group, Span, TokenStream as TokenStream2};
 use quote::{quote, ToTokens, TokenStreamExt};
@@ -18,7 +18,7 @@ use quote::{quote, ToTokens, TokenStreamExt};
 use crate::content::*;
 
 /// A request or a reply generated from a request.
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct Message {
 	/// Attributes that will be associated with this message's `struct`.
 	///
@@ -35,15 +35,18 @@ pub struct Message {
 	///
 	/// Requests and replies have different metadata associated with them.
 	pub metadata: Metadata,
-	/// The content definition of this message.
+	/// Items defined in this message, if any.
 	///
 	/// This is used for the (de)serialization of the message and its `struct`
 	/// fields. Not all of the message content is fields: unused bytes and
 	/// lengths of list fields are only used for (de)serialization.
-	pub content: Content,
+	pub items: Items,
+	/// Semicolon token: `;`. Required for [`Items::Unnamed`].
+	pub semicolon_token: Option<Token![;]>,
 }
 
-#[derive(Clone)]
+/// Metadata associated with the type of message.
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Metadata {
 	Request(RequestMetadata),
 	Reply(ReplyMetadata),
@@ -71,8 +74,11 @@ impl ToTokens for Message {
 		// Generics
 		self.generics.to_tokens(tokens);
 
-		// Punctuate `self.content.fields()` with commas.
-		let fields: Punctuated<_, Token![,]> = self.content.fields().into_iter().collect();
+		// Punctuate any fields with commas.
+		let fields: Option<Punctuated<_, Token![,]>> = self
+			.items
+			.named_fields()
+			.map(|fields| fields.into_iter().collect());
 
 		let mut content = TokenStream2::new();
 
@@ -138,8 +144,8 @@ impl Message {
 			Metadata::Request(request) => {
 				let reply = request.reply.clone().map(|reply| reply.1);
 
-				let major = request.major_opcode;
-				let minor = match request.minor_opcode {
+				let major = &request.major_opcode;
+				let minor = match &request.minor_opcode {
 					Some((_, minor)) => quote!(Some(#minor)),
 					None => quote!(None),
 				};
@@ -193,18 +199,48 @@ impl Message {
 
 impl Parse for Message {
 	fn parse(input: ParseStream) -> Result<Self> {
+		let attributes = input.call(Attribute::parse_outer)?;
+		let vis = input.parse::<Visibility>()?;
+		let struct_token = input.parse::<Token![struct]>()?;
+		let name = input.parse::<Ident>()?;
+		let generics = input.parse::<Generics>()?;
+		let metadata = input.parse::<Metadata>()?;
+		let items = input.parse::<Items>()?;
+
+		let semicolon_token = (!items.is_named())
+			.then(|| input.parse::<Token![;]>().ok())
+			.flatten();
+
+		// If `items` is `Items::Unnamed`, return an error: unnamed items aren't
+		// allowed in messages.
+		match items {
+			Items::Unnamed(unnamed_items) => {
+				return Err(Error::new(
+					unnamed_items.paren_token.span,
+					"unnamed items are not allowed in `messages!`",
+				));
+			}
+			_ => (),
+		}
+
+		// If this is a unit message and there is no semicolon token, return an
+		// error.
+		if items.is_unit() && semicolon_token.is_none() {
+			return Err(Error::new(
+				Span::call_site(),
+				"expected semicolon after unit message",
+			));
+		}
+
 		Ok(Self {
-			attributes: input.call(Attribute::parse_outer)?,
-			vis: input.parse()?,
-			struct_token: input.parse()?,
-			// Parse the message's name.
-			name: input.parse()?,
-			// Parse any generic definitions, e.g. `'a` or `T`.
-			generics: input.parse()?,
-			// Parse the message's metadata (specific to the type of message).
-			metadata: input.parse()?,
-			// Parse the message's content. Includes fields, unused bytes, etc.
-			content: input.parse()?,
+			attributes,
+			vis,
+			struct_token,
+			name,
+			generics,
+			metadata,
+			items,
+			semicolon_token,
 		})
 	}
 }
