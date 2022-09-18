@@ -6,8 +6,11 @@ use proc_macro2::{Span, TokenStream as TokenStream2};
 
 use quote::{format_ident, quote, quote_spanned};
 
+use syn::parse::{ParseStream, Result};
 use syn::spanned::Spanned;
-use syn::{parse_quote, Data, Fields, GenericParam, Generics, Ident, Index};
+use syn::{
+	parse_quote, Data, Expr, ExprReference, Fields, GenericParam, Generics, Ident, Index, Token,
+};
 
 use crate::content::*;
 use crate::message::*;
@@ -16,13 +19,13 @@ use crate::message::*;
 /// byte.
 ///
 /// This is used to generate the deserialization for metabyte items.
-pub fn deserialize_metabyte(metabyte: Option<&NamedItem>) -> TokenStream2 {
+pub fn deserialize_metabyte(metabyte: Option<&Item>) -> TokenStream2 {
 	metabyte.map_or_else(
 		|| quote!(reader.skip(1);),
 		|item| match item {
 			// If the item is a field, read it into a variable with its own
 			// name.
-			NamedItem::NamedField(field) => {
+			Item::Field(field) => {
 				let name = &field.name;
 				// Add `__` on either side of the field's name, so that we know
 				// it isn't going to conflict with any of the variable names
@@ -36,7 +39,7 @@ pub fn deserialize_metabyte(metabyte: Option<&NamedItem>) -> TokenStream2 {
 			// If the item is a field length, then we know the length must be of
 			// type `u8`, so we read that length as `u8` (and then cast to
 			// `usize`, as lengths in Rust are usually `usize`).
-			NamedItem::FieldLength(field_len) => {
+			Item::FieldLength(field_len) => {
 				let field = &field_len.field_ident;
 				// Add `__` to the start, but not the end, of the field's name,
 				// so that we know it isn't going to conflict with any of the
@@ -49,7 +52,7 @@ pub fn deserialize_metabyte(metabyte: Option<&NamedItem>) -> TokenStream2 {
 			// Since the metabyte is a single byte, we know that if this is an
 			// unused byte item, it is exactly one unused byte. So we just skip
 			// that byte.
-			NamedItem::UnusedBytes(_) => quote!(reader.skip(1);),
+			Item::UnusedBytes(_) => quote!(reader.skip(1);),
 		},
 	)
 }
@@ -57,12 +60,12 @@ pub fn deserialize_metabyte(metabyte: Option<&NamedItem>) -> TokenStream2 {
 /// Deserialization for a <code>[Vec]<&[Item]></code>.
 ///
 /// This is used to generate the deserialization code for non-metabyte items.
-pub fn deserialize_items(items: Vec<&NamedItem>) -> Vec<TokenStream2> {
+pub fn deserialize_items(items: Vec<&Item>) -> Vec<TokenStream2> {
 	items
 		.into_iter()
 		.map(|item| match item {
 			// If the item is a field, read it into a variable with its own name.
-			NamedItem::NamedField(field) => {
+			Item::Field(field) => {
 				let name = &field.name;
 				// Add `__` on either side of the field's name, so that we know
 				// it isn't going to conflict with any of the variable names
@@ -81,7 +84,7 @@ pub fn deserialize_items(items: Vec<&NamedItem>) -> Vec<TokenStream2> {
 			// If the item is a field length, read it into a variable with the
 			// name `__fieldname_len`, where `fieldname` is the name of the
 			// field it is for, with the numerical type that it is for.
-			NamedItem::FieldLength(field_len) => {
+			Item::FieldLength(field_len) => {
 				let field = &field_len.field_ident;
 				let ident = format_ident!("__{}_len", field);
 
@@ -91,7 +94,7 @@ pub fn deserialize_items(items: Vec<&NamedItem>) -> Vec<TokenStream2> {
 			}
 			// If the item is unused bytes, skip the correct number of unused
 			// bytes.
-			NamedItem::UnusedBytes(unused) => match &unused.unused_bytes {
+			Item::UnusedBytes(unused) => match &unused.unused_bytes {
 				// If it is a single unused byte, skip a single byte.
 				UnusedBytesDefinition::Unit(_) => quote!(__reader.skip(1);),
 
@@ -146,7 +149,7 @@ pub fn serialize_request(
 			items
 				.iter()
 				.filter(|item| !item.is_metabyte())
-				.collect::<Vec<&NamedItem>>()
+				.collect::<Vec<&Item>>()
 		})
 		.flatten();
 
@@ -261,7 +264,7 @@ pub fn serialize_reply(
 		.iter()
 		.map(|items| items.iter().filter(|item| !item.is_metabyte()))
 		.flatten()
-		.collect::<Vec<&NamedItem>>();
+		.collect::<Vec<&Item>>();
 
 	quote! {
 		impl #impl_generics cornflakes::Writable for #name #ty_generics #where_clause {

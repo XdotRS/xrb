@@ -8,7 +8,7 @@ use quote::{ToTokens, TokenStreamExt};
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 use syn::{
-	braced, bracketed, parenthesized, token, Attribute, Expr, Ident, Result, Token, Type,
+	braced, bracketed, parenthesized, token, Attribute, Error, Expr, Ident, Result, Token, Type,
 	Visibility,
 };
 
@@ -35,42 +35,23 @@ pub enum Items {
 }
 
 impl<'a> Items {
-	/// If `self` is [`Items::Named`], returns
-	/// <code>[Some](&[NamedItems])</code>.
-	pub fn named_items(&self) -> Option<&NamedItems> {
+	/// An iterator over the defined [`Item`]s. May be empty.
+	pub fn iter(&self) -> syn::punctuated::Iter<Item> {
 		match self {
-			Self::Named(items) => Some(items),
-			_ => None,
+			Self::Named(items) => items.iter(),
+			Self::Unnamed(items) => items.iter(),
+			Self::Unit => Punctuated::<Item, Token![,]>::new().iter(),
 		}
 	}
 
-	/// If `self` is [`Items::Unnamed`], returns
-	/// <code>[Some](&[UnnamedItems])</code>.
-	pub fn unnamed_items(&self) -> Option<&UnnamedItems> {
-		match self {
-			Self::Unnamed(items) => Some(items),
-			_ => None,
-		}
-	}
-
-	/// If `self` is [`Items::Named`], returns
-	/// <code>[Some]([Vec]<&'a [NamedField]>)</code> with any [`NamedField`]s
-	/// contained.
-	pub fn named_fields(&'a self) -> Option<Vec<&'a NamedField>> {
-		match self {
-			Self::Named(items) => Some(items.fields()),
-			_ => None,
-		}
-	}
-
-	/// If `self` is [`Items::Unnamed`], returns
-	/// <code>[Some]([Vec]<&'a [UnnamedField]>)</code> with any
-	/// [`UnnamedField`]s contained.
-	pub fn unnamed_fields(&'a self) -> Option<Vec<&'a UnnamedField>> {
-		match self {
-			Self::Unnamed(items) => Some(items.fields()),
-			_ => None,
-		}
+	/// Returns a [`Vec`] of [`Field`]s defined within `self`.
+	pub fn fields(&self) -> Vec<&Field> {
+		self.iter()
+			.filter_map(|item| match item {
+				Item::Field(field) => Some(field),
+				_ => None,
+			})
+			.collect()
 	}
 
 	/// Returns whether `self` is [`Items::Named`].
@@ -97,21 +78,36 @@ impl<'a> Items {
 		}
 	}
 
-	/// Returns whether any item within `self` is defined for the 'metabyte
+	/// Gets the defined metabyte [`Item`], if there is any.
+	pub fn get_metabyte(&self) -> Option<&Item> {
+		match self {
+			Self::Named(items) => items.get_metabyte(),
+			Self::Unnamed(items) => items.get_metabyte(),
+			Self::Unit => None,
+		}
+	}
+
+	/// Returns the number of metabyte [`Item`]s defined within `self`.
+	pub fn metabyte_items_count(&self) -> usize {
+		self.iter().filter(|item| item.is_metabyte()).count()
+	}
+
+	/// Returns a [`Vec`] of [`Item`]s without any metabyte [`Item`]s.
+	pub fn sans_metabyte(&self) -> Vec<&Item> {
+		self.iter().filter(|item| !item.is_metabyte()).collect()
+	}
+
+	/// Returns whether any [`Item`] within `self` is defined for the 'metabyte
 	/// position'.
 	///
 	/// The 'metabyte position' is the second byte of the header in a message.
 	/// It does not exist for non-message structs and enums.
 	pub fn has_metabyte(&self) -> bool {
-		match self {
-			Self::Named(items) => items.has_metabyte(),
-			Self::Unnamed(items) => items.has_metabyte(),
-			Self::Unit => false,
-		}
+		self.get_metabyte().is_some()
 	}
 }
 
-/// A list of [`NamedItem`]s punctuated by commas and surrounded by curly
+/// A list of [`Item`] definitions punctuated by commas and surrounded by curly
 /// brackets.
 ///
 /// `NamedItems` can contain [`NamedField`]s, but not [`UnnamedField`]s.
@@ -119,100 +115,108 @@ impl<'a> Items {
 pub struct NamedItems {
 	/// Named items are surrounded by curly brackets (`{` and `}`).
 	pub brace_token: token::Brace,
-	/// A list of [`NamedItem`]s, punctuated by commas (`,`).
+	/// A list of [`Item`] definitions, punctuated by commas (`,`).
 	///
 	/// The final comma is optional.
-	pub items: Punctuated<NamedItem, Token![,]>,
+	pub items: Punctuated<Item, Token![,]>,
 }
 
 impl<'a> NamedItems {
-	/// An iterator over the [`NamedItem`]s.
-	pub fn iter(&self) -> syn::punctuated::Iter<NamedItem> {
+	/// An iterator over the contained [`Item`]s.
+	pub fn iter(&self) -> syn::punctuated::Iter<Item> {
 		self.items.iter()
 	}
 
-	/// Returns a <code>[Vec]<&'a [NamedField]></code> of any [`NamedField`]s
-	/// contained within `self`.
-	pub fn fields(&'a self) -> Vec<&'a NamedField> {
+	/// Returns a <code>[Vec]<&'a [Field]></code> of any [`Field`]s contained
+	/// within `self`.
+	pub fn fields(&'a self) -> Vec<&'a Field> {
 		self.iter()
 			.filter_map(|item| match item {
-				NamedItem::NamedField(field) => Some(field),
+				Item::Field(field) => Some(field),
 				_ => None,
 			})
 			.collect()
 	}
 
-	/// Returns whether any [`NamedItem`] within `self` is defined for the
-	/// 'metabyte position'.
+	/// Gets the contained metabyte [`Item`], if any.
+	pub fn get_metabyte(&self) -> Option<&Item> {
+		self.iter().find(|item| item.is_metabyte())
+	}
+
+	/// Returns whether any [`Item`] within `self` is defined for the 'metabyte
+	/// position'.
 	///
 	/// The 'metabyte position' is the second byte of the header in a message.
 	/// It does not exist for non-message structs and enums.
 	pub fn has_metabyte(&self) -> bool {
-		self.iter().find(|item| item.is_metabyte()).is_some()
+		self.get_metabyte().is_some()
 	}
 }
 
-/// A list of [`UnnamedItem`]s punctuated by commas and surrounded by normal
+/// A list of unnamed [`Item`]s punctuated by commas and surrounded by normal
 /// brackets.
 ///
-/// `UnnamedItems` can contain [`UnnamedField`]s, but not [`NamedField`]s. The
+/// `UnnamedItems` can contain unnamed [`Field`]s, but not named [`Field`]s. The
 /// syntax for `UnnamedItems` may be familiar to you under names such as 'tuple
 /// structs' and 'tuple variants'.
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct UnnamedItems {
 	/// Unnamed items are surrounded by normal brackets (`(` and `)`).
 	pub paren_token: token::Paren,
-	/// A list of [`UnnamedItem`]s, punctuated by commas (`,`).
+	/// A list of unnamed [`Item`]s, punctuated by commas (`,`).
 	///
 	/// The final comma is optional.
-	pub items: Punctuated<UnnamedItem, Token![,]>,
+	pub items: Punctuated<Item, Token![,]>,
 }
 
 impl<'a> UnnamedItems {
-	/// An iterator over the [`UnnamedItem`]s.
-	pub fn iter(&self) -> syn::punctuated::Iter<UnnamedItem> {
+	/// An iterator over the contained [`Item`]s.
+	pub fn iter(&self) -> syn::punctuated::Iter<Item> {
 		self.items.iter()
 	}
 
 	/// Returns a <code>[Vec]<&'a [UnnamedField]></code> of any
 	/// [`UnnamedField`]s contained within `self`.
-	pub fn fields(&'a self) -> Vec<&'a UnnamedField> {
+	pub fn fields(&'a self) -> Vec<&'a Field> {
 		self.iter()
 			.filter_map(|item| match item {
-				UnnamedItem::UnnamedField(field) => Some(field),
+				Item::Field(field) => Some(field),
 				_ => None,
 			})
 			.collect()
 	}
 
-	/// Returns whether any [`UnnamedItem`] within `self` is defined for the
-	/// 'metabyte position'.
+	/// Gets the metabyte defined within `self`, if any.
+	pub fn get_metabyte(&self) -> Option<&Item> {
+		self.iter().find(|item| item.is_metabyte())
+	}
+
+	/// Returns whether any [`Item`] within `self` is defined for the 'metabyte
+	/// position'.
 	///
 	/// The 'metabyte position' is the second byte of the header in a message.
 	/// It does not exist for non-message structs and enums.
 	pub fn has_metabyte(&self) -> bool {
-		self.iter().find(|item| item.is_metabyte()).is_some()
+		self.get_metabyte().is_some()
 	}
 }
 
 /// Either an [`UnusedBytes`] item, a [`FieldLength`] item, or a [`NamedField`].
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub enum NamedItem {
+pub enum Item {
 	/// An [`UnusedBytes`] item, representing bytes that are unused in
 	/// serialization and deserialization.
 	UnusedBytes(UnusedBytes),
 	/// A [`FieldLength`] item, representing the length of a field that is some
 	/// kind of list.
 	FieldLength(FieldLength),
-	/// A [`NamedField`].
-	///
-	/// This is equivalent to a [`syn::Field`] which has an `ident` and
-	/// `colon_token`.
-	NamedField(NamedField),
+	/// This is equivalent to a [`syn::Field`], but it can have a metabyte token
+	/// (`$`).
+	Field(Field),
 }
 
-impl NamedItem {
-	/// Returns whether this `NamedItem` is defined for the 'metabyte position'.
+impl Item {
+	/// Returns whether this `Item` is defined for the 'metabyte position'.
 	///
 	/// The 'metabyte position' is the second byte of the header in a message.
 	/// It does not exist for non-message structs and enums.
@@ -220,39 +224,7 @@ impl NamedItem {
 		match self {
 			Self::UnusedBytes(unused_bytes) => unused_bytes.is_metabyte(),
 			Self::FieldLength(field_length) => field_length.is_metabyte(),
-			Self::NamedField(field) => field.is_metabyte(),
-		}
-	}
-}
-
-/// Either an [`UnusedBytes`] item, a [`FieldLength`] item, or an
-/// [`UnnamedField`].
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub enum UnnamedItem {
-	/// An [`UnusedBytes`] item, representing bytes that are unused in
-	/// serialization and deserialization.
-	UnusedBytes(UnusedBytes),
-	/// A [`FieldLength`] item, representing the length of a field that is some
-	/// kind of list.
-	FieldLength(FieldLength),
-	/// An [`UnnamedField`].
-	///
-	/// This is equivalent to a [`syn::Field`] which doesn't have an `ident` or
-	/// `colon_token`.
-	UnnamedField(UnnamedField),
-}
-
-impl UnnamedItem {
-	/// Returns whether this `UnnamedItem` is defined for the 'metabyte
-	/// position'.
-	///
-	/// The 'metabyte position' is the second byte of the header in a message.
-	/// It does not exist for non-message structs and enums.
-	pub fn is_metabyte(&self) -> bool {
-		match self {
-			Self::UnusedBytes(item) => item.is_metabyte(),
-			Self::FieldLength(item) => item.is_metabyte(),
-			Self::UnnamedField(item) => item.is_metabyte(),
+			Self::Field(field) => field.is_metabyte(),
 		}
 	}
 }
@@ -261,12 +233,11 @@ impl UnnamedItem {
 
 // Fields {{{
 
-/// A field with a name.
+/// A field.
 ///
-/// This is equivalent to a [`syn::Field`] which has an `ident` and
-/// `colon_token`.
+/// This is like a [`syn::Field`], but it can have a `metabyte_token`.
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub struct NamedField {
+pub struct Field {
 	/// Attributes associated with the field.
 	pub attributes: Vec<Attribute>,
 	/// The visibility of the field.
@@ -274,69 +245,28 @@ pub struct NamedField {
 	/// A metabyte token used in [`messages!`] to indicate the second byte of
 	/// the message header.
 	///
-	/// If the `NamedField` is contained within the definition of a message, and
-	/// an item in that message has already been defined for the metabyte, or a
+	/// If the `Field` is contained within the definition of a message, and an
+	/// item in that message has already been defined for the metabyte, or a
 	/// minor opcode is defined for that message, then the presence of this
 	/// token will generate an error.
 	///
-	/// If the `NamedField` is not contained within the definition of a message
-	/// (i.e. if the [`define!`] macro is used), then the presence of this token
-	/// will also generate an error.
+	/// If the `Field` is not contained within the definition of a message (i.e.
+	/// if the [`define!`] macro is used), then the presence of this token will
+	/// also generate an error.
 	///
 	/// [`messages!`]: crate::messages
 	/// [`define!`]: crate::define
 	pub metabyte_token: Option<Token![$]>,
-	/// The name of the field.
-	pub name: Ident,
-	/// A colon token: `:`.
-	pub colon_token: Token![:],
+	/// The name of the field, if it is a named field.
+	pub name: Option<Ident>,
+	/// A colon token: `:`, if it is a named field.
+	pub colon_token: Option<Token![:]>,
 	/// The type of the field.
 	pub ty: Type,
 }
 
-impl NamedField {
-	/// Returns whether this `NamedField` is defined for the 'metabyte
-	/// position'.
-	///
-	/// The 'metabyte position' is the second byte of the header in a message.
-	/// It does not exisit for non-message structs and enums.
-	pub fn is_metabyte(&self) -> bool {
-		self.metabyte_token.is_some()
-	}
-}
-
-/// A field without a name.
-///
-/// This is equivalent to a [`syn::Field`] which doesn't have an `ident` or
-/// `colon_token`.
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub struct UnnamedField {
-	/// Attributes associated with the field.
-	pub attributes: Vec<Attribute>,
-	/// The visibility of the field.
-	pub vis: Visibility,
-	/// A metabyte token used in [`messages!`] to indicate the second byte of
-	/// the message header.
-	///
-	/// If the `UnamedField` is contained within the definition of a message,
-	/// and an item in that message has already been defined for the metabyte,
-	/// or a minor opcode is defined for that message, then the presence of this
-	/// token will generate an error.
-	///
-	/// If the `UnamedField` is not contained within the definition of a message
-	/// (i.e. if the [`define!`] macro is used), then the presence of this token
-	/// will also generate an error.
-	///
-	/// [`messages!`]: crate::messages
-	/// [`define!`]: crate::define
-	pub metabyte_token: Option<Token![$]>,
-	/// The type of the field.
-	pub ty: Type,
-}
-
-impl UnnamedField {
-	/// Returns whether this `UnnamedField` is defined for the 'metabyte
-	/// position'.
+impl Field {
+	/// Returns whether this `Field` is defined for the 'metabyte position'.
 	///
 	/// The 'metabyte position' is the second byte of the header in a message.
 	/// It does not exisit for non-message structs and enums.
@@ -373,8 +303,8 @@ pub struct FieldLength {
 	/// An identifier referring to the field which this `FieldLength` describes
 	/// the length of.
 	///
-	/// If the field is a [`NamedField`], this will be its name, otherwise, if
-	/// the field is an [`UnnamedField`], this will be its index.
+	/// If the field is a named field, this will be its name, otherwise, if the
+	/// field is an unnamed field, this will be its index.
 	///
 	/// # Examples
 	/// ```
@@ -395,7 +325,7 @@ pub struct FieldLength {
 	/// }
 	/// ```
 	pub field_ident: Ident,
-	/// A colon token; `:`.
+	/// A colon token: `:`.
 	pub colon_token: Token![:],
 	/// The type used to represent the length of the field.
 	///
@@ -476,44 +406,26 @@ pub struct UnusedBytesFull {
 	/// A semicolon token: `;`.
 	pub semicolon_token: Token![;],
 	/// Determines the number of unused bytes.
-	pub count: UnusedBytesCount,
+	// TODO: for padding, this means that the closure needs to be able to take
+	// an identifier as an input. That identifier should be surrounded by `__`
+	// when deserializing, so that it refers to the variable identifier
+	// generated  when deserializing, and prepended with `self.` when
+	// serializing, so that it accesses field.
+	pub count: Closure,
 }
 
-/// Determines the number of [`UnusedBytes`]. For use in serialization and
-/// deserialization.
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub enum UnusedBytesCount {
-	/// An expression representing a number of unused bytes.
-	Expression(Expr),
-	/// Indicates that zero to three unused bytes should be written to pad the
-	/// size of the given field to a multiple of four bytes.
-	///
-	/// Padding a field is indicated by surrounding the _field identifier_ with
-	/// curly brackets (`{` and `}`). If the field is a [`NamedField`], that
-	/// means its name, otherwise if the field is an [`UnnamedField`], that
-	/// means its index.
-	///
-	/// Unused padding bytes may need to be added for a particular field as the
-	/// total byte length of messages in X must be a multiple of four bytes.
-	/// This padding ensures that, for fields which have a dynamic byte size,
-	/// the length of the message is correct.
-	///
-	/// # Examples
-	/// ```
-	/// use xrb_proc_macros::define;
-	///
-	/// define! {
-	///     // Pad the bytes field:
-	///     pub struct NamedExample<'a> {
-	///         pub bytes: &'a [u8],
-	///         [(); {bytes}],
-	///     }
-	///
-	///     // Pad the first field:
-	///     pub struct UnnamedExample<'a>(&'a [u8], [(); {0}]);
-	/// }
-	/// ```
-	Padding((token::Brace, Ident)),
+pub struct Closure {
+	/// Attributes associated with the closure.
+	pub attributes: Vec<Attribute>,
+	/// An or token: `|`.
+	pub or_token1: Token![|],
+	/// Fields to be included in the closure.
+	pub field_idents: Punctuated<Ident, Token![,]>,
+	/// An or token: `|`.
+	pub or_token2: Token![|],
+	/// The body of the closure.
+	pub body: Box<Expr>,
 }
 
 // }}}
@@ -535,7 +447,7 @@ impl ToTokens for Items {
 
 impl ToTokens for NamedItems {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
-		// Write any and all `NamedField`s, surrounded by curly brackets (`{`
+		// Write any and all named `Field`s, surrounded by curly brackets (`{`
 		// and `}`).
 		tokens.append(Group::new(Delimiter::Brace, self.items.to_token_stream()))
 	}
@@ -543,8 +455,8 @@ impl ToTokens for NamedItems {
 
 impl ToTokens for UnnamedItems {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
-		// Write any and all `UnnamedField`s, surrounded by normal brackets (`(`
-		// and `)`).
+		// Write any and all unnamed `Field`s, surrounded by normal brackets
+		// (`(` and `)`).
 		tokens.append(Group::new(
 			Delimiter::Parenthesis,
 			self.items.to_token_stream(),
@@ -552,29 +464,18 @@ impl ToTokens for UnnamedItems {
 	}
 }
 
-impl ToTokens for NamedItem {
+impl ToTokens for Item {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		match self {
-			// If this item is a `NamedField`, write it.
-			Self::NamedField(field) => field.to_tokens(tokens),
-			// Otherwise, if it isn't a `NamedField`, don't write it.
+			// If this item is a `Field`, write it.
+			Self::Field(field) => field.to_tokens(tokens),
+			// Otherwise, if it isn't a `Field`, don't write it.
 			_ => (),
 		}
 	}
 }
 
-impl ToTokens for UnnamedItem {
-	fn to_tokens(&self, tokens: &mut TokenStream2) {
-		match self {
-			// If this item is an `UnnamedField`, write it.
-			Self::UnnamedField(field) => field.to_tokens(tokens),
-			// Otherwise, if it isn't an `UnnamedField`, don't write it.
-			_ => (),
-		}
-	}
-}
-
-impl ToTokens for NamedField {
+impl ToTokens for Field {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		// Attributes associated with the field.
 		for attribute in &self.attributes {
@@ -583,24 +484,10 @@ impl ToTokens for NamedField {
 
 		// The visibility of the field.
 		self.vis.to_tokens(tokens);
-		// The name of the field.
+		// The name of the field, if any.
 		self.name.to_tokens(tokens);
-		// The colon token: `:`.
+		// The colon token: `:`, if any.
 		self.colon_token.to_tokens(tokens);
-		// The type of the field.
-		self.ty.to_tokens(tokens);
-	}
-}
-
-impl ToTokens for UnnamedField {
-	fn to_tokens(&self, tokens: &mut TokenStream2) {
-		// Attributes associated with the field.
-		for attribute in &self.attributes {
-			attribute.to_tokens(tokens);
-		}
-
-		// The visibility of the field.
-		self.vis.to_tokens(tokens);
 		// The type of the field.
 		self.ty.to_tokens(tokens);
 	}
@@ -633,10 +520,35 @@ impl Parse for NamedItems {
 	fn parse(input: ParseStream) -> Result<Self> {
 		let content;
 
-		Ok(Self {
+		// Parse the `Item`s separated by commas and surrounded by curly
+		// brackets (`{` and `}`).
+		let this = Self {
 			brace_token: braced!(content in input),
-			items: input.parse_terminated(NamedItem::parse)?,
-		})
+			items: input.parse_terminated(Item::parse)?,
+		};
+
+		// Make sure every field is named.
+		for item in this.iter() {
+			match item {
+				// For each field:
+				Item::Field(field) => {
+					if field.name.is_none() {
+						// If no field name was found, return an error.
+						Err(Error::new(
+							field.name.expect("we checked for this already").span(),
+							"expected field name for named field",
+						))
+					} else {
+						// If a field name was found, it's `Ok`.
+						Ok(())
+					}
+				}
+				// If this is an unused bytes item or a field length, it's `Ok`.
+				_ => Ok(()),
+			}?
+		}
+
+		Ok(this)
 	}
 }
 
@@ -644,14 +556,47 @@ impl Parse for UnnamedItems {
 	fn parse(input: ParseStream) -> Result<Self> {
 		let content;
 
-		Ok(Self {
+		// Parse `Self`:
+		let this = Self {
+			// Normal brackets surrounding the items (`(` and `)`).
 			paren_token: parenthesized!(content in input),
-			items: input.parse_terminated(UnnamedItem::parse)?,
-		})
+			// The item definitions themselves, separated by commas.
+			items: input.parse_terminated(Item::parse)?,
+		};
+
+		// Make sure that there are no named fields.
+		for item in this.iter() {
+			match item {
+				// Check against every field:
+				Item::Field(field) => {
+					if field.name.is_some() {
+						// If a field name was found, return an error.
+						Err(Error::new(
+							field.name.expect("we already checked for this").span(),
+							"no name expected in unnamed field",
+						))
+					} else if field.colon_token.is_some() {
+						// If a colon token (`:`) was found, return an error.
+						Err(Error::new(
+							field.colon_token.expect("we already checked for this").span,
+							"no colon expected in unnamed field",
+						))
+					} else {
+						// Otherwise, if there was no name nor colon found, it's
+						// `Ok`.
+						Ok(())
+					}
+				}
+				// Unused bytes and field lengths are fine.
+				_ => Ok(()),
+			}?
+		}
+
+		Ok(this)
 	}
 }
 
-impl Parse for NamedItem {
+impl Parse for Item {
 	fn parse(input: ParseStream) -> Result<Self> {
 		Ok(if input.peek(Token![$]) {
 			// If the next token is `$`, then we need to look _two_ tokens in
@@ -669,7 +614,7 @@ impl Parse for NamedItem {
 				Self::UnusedBytes(input.parse()?)
 			} else {
 				// Otherwise, we assume this item is a field item.
-				Self::NamedField(input.parse()?)
+				Self::Field(input.parse()?)
 			}
 		} else {
 			// Otherwise, if the next token is not `$`, then we only need to
@@ -686,89 +631,46 @@ impl Parse for NamedItem {
 				Self::UnusedBytes(input.parse()?)
 			} else {
 				// Otherwise, we assume this item is a field item.
-				Self::NamedField(input.parse()?)
+				Self::Field(input.parse()?)
 			}
 		})
 	}
 }
 
-impl Parse for UnnamedItem {
-	fn parse(input: ParseStream) -> Result<Self> {
-		Ok(if input.peek(Token![$]) {
-			// If the next token is `$`, then we need to look _two_ tokens in
-			// advance to find out which type of item this is.
-			if input.peek2(Token![#]) && !input.peek3(token::Bracket) {
-				// If the token after the `$` is `#`, but the token after the
-				// `#` is not a square bracket (`[`), then this is a field
-				// length. We have to check that there is no square bracket
-				// because attributes, which we allow for fields, are started
-				// with `#[`.
-				Self::FieldLength(input.parse()?)
-			} else if input.peek2(token::Bracket) || input.peek2(token::Paren) {
-				// If the token after the `$` is a square bracket (`[`) or a
-				// normal bracket (`(`), then it is an unused bytes item.
-				Self::UnusedBytes(input.parse()?)
-			} else {
-				// Otherwise, we assume this item is a field item.
-				Self::UnnamedField(input.parse()?)
-			}
-		} else {
-			// Otherwise, if the next token is not `$`, then we only need to
-			// look at that next token to find the type of item.
-			if input.peek(Token![#]) && !input.peek2(token::Bracket) {
-				// If the next token is `#`, but the token after it is not a
-				// square bracket (`[`), then this is a field length. We have to
-				// check that there is no square bracket because attributes,
-				// which we allow for fields, are started with `#[`.
-				Self::FieldLength(input.parse()?)
-			} else if input.peek(token::Bracket) || input.peek(token::Paren) {
-				// If the next token is a square bracket (`[`) or a normal
-				// bracket (`(`), then it is an unused bytes item.
-				Self::UnusedBytes(input.parse()?)
-			} else {
-				// Otherwise, we assume this item is a field item.
-				Self::UnnamedField(input.parse()?)
-			}
-		})
-	}
-}
 //     }}}
 
-//     Fields {{{
-impl Parse for NamedField {
+//     Field {{{
+impl Parse for Field {
 	fn parse(input: ParseStream) -> Result<Self> {
-		Ok(Self {
-			// Attributes associated with the field.
-			attributes: input.call(Attribute::parse_outer)?,
-			// The visibility of the field.
-			vis: input.parse()?,
-			// A metabyte token (`$`) which, if present, declares this item as
-			// being intended for the second byte in a message header. Only for
-			// message definitions.
-			metabyte_token: input.parse().ok(),
-			// The name of the field.
-			name: input.parse()?,
-			// A colon token: `:`.
-			colon_token: input.parse()?,
-			// The type of the field.
-			ty: input.parse()?,
-		})
-	}
-}
+		// Attributes associated with the field.
+		let attributes = input.call(Attribute::parse_outer)?;
+		// The visibility of the field.
+		let vis: Visibility = input.parse()?;
+		// A metabyte token (`$`) which, if present, declares this item as
+		// being intended for the second byte in a message header. Only for
+		// message definitions.
+		let metabyte_token: Option<Token![$]> = input.parse().ok();
 
-impl Parse for UnnamedField {
-	fn parse(input: ParseStream) -> Result<Self> {
+		// Attempt to parse the field name.
+		let name: Option<Ident> = input.parse().ok();
+		// Only attempt to read a colon if a name was found.
+		let colon_token: Option<Token![:]> = name.map(|_| input.parse().ok()).flatten();
+
+		// If a field name was found but a colon was not, return an error.
+		if name.is_some() && !colon_token.is_some() {
+			return Err(input.error("expected colon after field name"));
+		}
+
+		//  The type of the field.
+		let ty = input.parse()?;
+
 		Ok(Self {
-			// Attributes associated with the field.
-			attributes: input.call(Attribute::parse_outer)?,
-			// The visibility of the field.
-			vis: input.parse()?,
-			// A metabyte token (`$`) which, if present, declares this item as
-			// being intended for the second byte in a message header. Only for
-			// message definitions.
-			metabyte_token: input.parse().ok(),
-			// The type of the field.
-			ty: input.parse()?,
+			attributes,
+			vis,
+			metabyte_token,
+			name,
+			colon_token,
+			ty,
 		})
 	}
 }
@@ -847,26 +749,84 @@ impl Parse for UnusedBytesFull {
 			paren_token: parenthesized!(paren in input),
 			// A semicolon: `;`.
 			semicolon_token: input.parse()?,
-			// An [`UnusedBytesCount`].
+			// A closure for the number of bytes.
 			count: input.parse()?,
 		})
 	}
 }
 
-impl Parse for UnusedBytesCount {
+impl Parse for Closure {
 	fn parse(input: ParseStream) -> Result<Self> {
-		// If the next token is a curly bracket (`{`), parse as `Padding`.
-		if input.peek(token::Brace) {
-			let content;
+		let attributes = input.call(Attribute::parse_outer)?;
 
-			Ok(Self::Padding((braced!(content in input), content.parse()?)))
-		} else {
-			// Otherwise, if the next token is not a curly bracket, parse as an
-			// `Expression`.
-			Ok(Self::Expression(input.parse()?))
+		// The first or token: `|`.
+		let or_token1: Token![|] = input.parse()?;
+
+		// Field name identifiers.
+		let mut field_idents = Punctuated::new();
+
+		loop {
+			// If the next token is `|`, then this is the end of the inputs, so
+			// we break from the loop.
+			if input.peek(Token![|]) {
+				break;
+			}
+
+			// Read a field identifier.
+			field_idents.push_value(input.parse::<Ident>()?);
+
+			// If the next token is _now_ `|`, then this is the end of the
+			// inputs, so we break.
+			if input.peek(Token![|]) {
+				break;
+			}
+
+			// Otherwise, the next token is required to be a comma. There may or
+			// may not be another field identifier after this comma (i.e., this
+			// might be the optional final comma), which is why the first check
+			// in the loop is also for an ending `|`, rather than for another
+			// field identifier.
+			field_idents.push_punct(input.parse::<Token![,]>()?);
 		}
+
+		// The second or token: `|`.
+		let or_token2: Token![|] = input.parse()?;
+
+		// The closure's expression.
+		let body: Box<Expr> = Box::new(input.parse()?);
+
+		Ok(Self {
+			attributes,
+			or_token1,
+			field_idents,
+			or_token2,
+			body,
+		})
 	}
 }
 //     }}}
+
+// }}}
+
+// Utility {{{
+
+fn replace_idents(expr: &mut Expr, idents: &[&Ident], f: fn(Ident) -> Ident) {
+	match expr {
+		Expr::Array(expr) => {
+			for expr in expr.elems {
+				replace_idents(&mut expr, idents, f);
+			}
+		}
+		Expr::Assign(expr) => {
+			replace_idents(&mut expr.left, idents, f);
+			replace_idents(&mut expr.right, idents, f);
+		}
+		Expr::AssignOp(expr) => {
+			replace_idents(&mut expr.left, idents, f);
+			replace_idents(&mut expr.right, idents, f);
+		}
+		_ => {}
+	}
+}
 
 // }}}
