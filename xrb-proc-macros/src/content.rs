@@ -406,27 +406,12 @@ pub struct UnusedBytesFull {
 	/// A semicolon token: `;`.
 	pub semicolon_token: Token![;],
 	/// Determines the number of unused bytes.
-	// TODO: for padding, this means that the closure needs to be able to take
-	// an identifier as an input. That identifier should be surrounded by `__`
-	// when deserializing, so that it refers to the variable identifier
-	// generated  when deserializing, and prepended with `self.` when
-	// serializing, so that it accesses field.
-	pub count: Closure,
+	pub count: UnusedBytesCount,
 }
 
+// TODO
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub struct Closure {
-	/// Attributes associated with the closure.
-	pub attributes: Vec<Attribute>,
-	/// An or token: `|`.
-	pub or_token1: Token![|],
-	/// Fields to be included in the closure.
-	pub field_idents: Punctuated<Ident, Token![,]>,
-	/// An or token: `|`.
-	pub or_token2: Token![|],
-	/// The body of the closure.
-	pub body: Box<Expr>,
-}
+pub struct UnusedBytesCount {}
 
 // }}}
 
@@ -748,85 +733,12 @@ impl Parse for UnusedBytesFull {
 			// A pair of brackets, in the form of a unit: `()`.
 			paren_token: parenthesized!(paren in input),
 			// A semicolon: `;`.
-			semicolon_token: input.parse()?,
-			// A closure for the number of bytes.
+			semicolon_token: input.parse()?
 			count: input.parse()?,
 		})
 	}
 }
 
-impl Parse for Closure {
-	fn parse(input: ParseStream) -> Result<Self> {
-		let attributes = input.call(Attribute::parse_outer)?;
-
-		// The first or token: `|`.
-		let or_token1: Token![|] = input.parse()?;
-
-		// Field name identifiers.
-		let mut field_idents = Punctuated::new();
-
-		loop {
-			// If the next token is `|`, then this is the end of the inputs, so
-			// we break from the loop.
-			if input.peek(Token![|]) {
-				break;
-			}
-
-			// Read a field identifier.
-			field_idents.push_value(input.parse::<Ident>()?);
-
-			// If the next token is _now_ `|`, then this is the end of the
-			// inputs, so we break.
-			if input.peek(Token![|]) {
-				break;
-			}
-
-			// Otherwise, the next token is required to be a comma. There may or
-			// may not be another field identifier after this comma (i.e., this
-			// might be the optional final comma), which is why the first check
-			// in the loop is also for an ending `|`, rather than for another
-			// field identifier.
-			field_idents.push_punct(input.parse::<Token![,]>()?);
-		}
-
-		// The second or token: `|`.
-		let or_token2: Token![|] = input.parse()?;
-
-		// The closure's expression.
-		let body: Box<Expr> = Box::new(input.parse()?);
-
-		Ok(Self {
-			attributes,
-			or_token1,
-			field_idents,
-			or_token2,
-			body,
-		})
-	}
-}
 //     }}}
-
-// }}}
-
-// Utility {{{
-
-fn replace_idents(expr: &mut Expr, idents: &[&Ident], f: fn(Ident) -> Ident) {
-	match expr {
-		Expr::Array(expr) => {
-			for expr in expr.elems {
-				replace_idents(&mut expr, idents, f);
-			}
-		}
-		Expr::Assign(expr) => {
-			replace_idents(&mut expr.left, idents, f);
-			replace_idents(&mut expr.right, idents, f);
-		}
-		Expr::AssignOp(expr) => {
-			replace_idents(&mut expr.left, idents, f);
-			replace_idents(&mut expr.right, idents, f);
-		}
-		_ => {}
-	}
-}
 
 // }}}
