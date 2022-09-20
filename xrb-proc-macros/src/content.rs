@@ -8,11 +8,11 @@ use quote::{ToTokens, TokenStreamExt};
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 use syn::{
-	braced, bracketed, parenthesized, token, Attribute, Error, Expr, Ident, Result, Token, Type,
+	braced, bracketed, parenthesized, token, Attribute, Error, Ident, Result, Token, Type,
 	Visibility,
 };
 
-use crate::closure::IdentClosure;
+use crate::closure::*;
 
 // Items {{{
 
@@ -20,7 +20,7 @@ use crate::closure::IdentClosure;
 ///
 /// [`Named`]: Items::Named
 /// [`Unnamed`]: Items::Unnamed
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+%[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Items {
 	/// [`NamedItems`], surrounded by `{` and `}`.
 	///
@@ -113,7 +113,7 @@ impl<'a> Items {
 /// brackets.
 ///
 /// `NamedItems` can contain [`NamedField`]s, but not [`UnnamedField`]s.
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+%[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct NamedItems {
 	/// Named items are surrounded by curly brackets (`{` and `}`).
 	pub brace_token: token::Brace,
@@ -161,7 +161,7 @@ impl<'a> NamedItems {
 /// `UnnamedItems` can contain unnamed [`Field`]s, but not named [`Field`]s. The
 /// syntax for `UnnamedItems` may be familiar to you under names such as 'tuple
 /// structs' and 'tuple variants'.
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+%[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct UnnamedItems {
 	/// Unnamed items are surrounded by normal brackets (`(` and `)`).
 	pub paren_token: token::Paren,
@@ -204,17 +204,15 @@ impl<'a> UnnamedItems {
 }
 
 /// Either an [`UnusedBytes`] item, a [`FieldLength`] item, or a [`NamedField`].
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+%[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Item {
+	/// This is equivalent to a [`syn::Field`], but it can have a metabyte token
+	/// (`%`).
+	Field(Field),
+	LetVar(LetVar),
 	/// An [`UnusedBytes`] item, representing bytes that are unused in
 	/// serialization and deserialization.
 	UnusedBytes(UnusedBytes),
-	/// A [`FieldLength`] item, representing the length of a field that is some
-	/// kind of list.
-	FieldLength(FieldLength),
-	/// This is equivalent to a [`syn::Field`], but it can have a metabyte token
-	/// (`$`).
-	Field(Field),
 }
 
 impl Item {
@@ -225,7 +223,7 @@ impl Item {
 	pub fn is_metabyte(&self) -> bool {
 		match self {
 			Self::UnusedBytes(unused_bytes) => unused_bytes.is_metabyte(),
-			Self::FieldLength(field_length) => field_length.is_metabyte(),
+			Self::LetVar(let_var) => let_var.is_metabyte(),
 			Self::Field(field) => field.is_metabyte(),
 		}
 	}
@@ -238,7 +236,7 @@ impl Item {
 /// A field.
 ///
 /// This is like a [`syn::Field`], but it can have a `metabyte_token`.
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+%[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct Field {
 	/// Attributes associated with the field.
 	pub attributes: Vec<Attribute>,
@@ -258,7 +256,7 @@ pub struct Field {
 	///
 	/// [`messages!`]: crate::messages
 	/// [`define!`]: crate::define
-	pub metabyte_token: Option<Token![$]>,
+	pub metabyte_token: Option<Token![%]>,
 	/// The name of the field, if it is a named field.
 	pub name: Option<Ident>,
 	/// A colon token: `:`, if it is a named field.
@@ -279,83 +277,11 @@ impl Field {
 
 // }}}
 
-// Field length {{{
-
-/// Encodes the length of some kind of list field in serialization and
-/// deserialization.
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub struct FieldLength {
-	/// A metabyte token used in [`messages!`] to indicate the second byte of
-	/// the message header.
-	///
-	/// If the `FieldLength` is contained within the definition of a message,
-	/// and an item in that message has already been defined for the metabyte,
-	/// or a minor opcode is defined for that message, then the presence of this
-	/// token will generate an error.
-	///
-	/// If the `FieldLength` is not contained within the definition of a message
-	/// (i.e. if the [`define!`] macro is used), then the presence of this token
-	/// will also generate an error.
-	///
-	/// [`messages!`]: crate::messages
-	/// [`define!`]: crate::define
-	pub metabyte_token: Option<Token![$]>,
-	/// A number sign token: `#`.
-	pub number_sign_token: Token![#],
-	/// An identifier referring to the field which this `FieldLength` describes
-	/// the length of.
-	///
-	/// If the field is a named field, this will be its name, otherwise, if the
-	/// field is an unnamed field, this will be its index.
-	///
-	/// # Examples
-	/// ```
-	/// use xrb_proc_macros::define;
-	///
-	/// define! {
-	///     pub struct NamedExample<'a> {
-	///         #bytes: u16, // the length of `bytes`
-	///         pub bytes: &'a [u8],
-	///         pub name: &'a str,
-	///         #name: u8, // the length of `name`
-	///     }
-	///
-	///     // Though the list of bytes here is the second position, it is the
-	///     // first _field_, so it has an index of `0`. `&'a str` field is the
-	///     // second field, so it has an index of `1`.
-	///     pub struct UnnamedExample<'a>(#0: u16, &'a [u8], &'a str, #1: u8);
-	/// }
-	/// ```
-	pub field_ident: Ident,
-	/// A colon token: `:`.
-	pub colon_token: Token![:],
-	/// The type used to represent the length of the field.
-	///
-	/// This type determines how many bytes the `FieldLength` is written as. It
-	/// must be an integer. For example, a `FieldLength` of type `u8` will be
-	/// written as one byte, and a `FieldLength` of type `u32` will be written
-	/// as four bytes.
-	pub ty: Type,
-}
-
-impl FieldLength {
-	/// Returns whether this `FieldLength` is defined for the 'metabyte
-	/// position'.
-	///
-	/// The 'metabyte position' is the second byte of the header in a message.
-	/// It does not exisit for non-message structs and enums.
-	pub fn is_metabyte(&self) -> bool {
-		self.metabyte_token.is_some()
-	}
-}
-
-// }}}
-
 // Unused bytes {{{
 
 /// Defines unused bytes for serializing or deserializing a message, struct, or
 /// enum.
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+%[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct UnusedBytes {
 	/// A metabyte token used in [`messages!`] to indicate the second byte of
 	/// the message header.
@@ -371,7 +297,7 @@ pub struct UnusedBytes {
 	///
 	/// [`messages!`]: crate::messages
 	/// [`define!`]: crate::define
-	pub metabyte_token: Option<Token![$]>,
+	pub metabyte_token: Option<Token![%]>,
 	/// The actual [`UnusedBytesDefinition`].
 	pub unused_bytes: UnusedBytesDefinition,
 }
@@ -388,16 +314,16 @@ impl UnusedBytes {
 }
 
 /// The definition of [`UnusedBytes`].
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+%[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum UnusedBytesDefinition {
-	/// A single unused byte with the unit syntax (`()` or `$()`).
+	/// A single unused byte with the unit syntax (`()` or `%()`).
 	Unit(token::Paren),
 	/// The full unused bytes syntax (`[(); count]`).
 	Full(UnusedBytesFull),
 }
 
 /// A full definition of [`UnusedBytes`].
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+%[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct UnusedBytesFull {
 	/// Square bracket tokens: `[` and `]`.
 	///
@@ -581,18 +507,13 @@ impl Parse for UnnamedItems {
 
 impl Parse for Item {
 	fn parse(input: ParseStream) -> Result<Self> {
-		Ok(if input.peek(Token![$]) {
-			// If the next token is `$`, then we need to look _two_ tokens in
-			// advance to find out which type of item this is.
-			if input.peek2(Token![#]) && !input.peek3(token::Bracket) {
-				// If the token after the `$` is `#`, but the token after the
-				// `#` is not a square bracket (`[`), then this is a field
-				// length. We have to check that there is no square bracket
-				// because attributes, which we allow for fields, are started
-				// with `#[`.
-				Self::FieldLength(input.parse()?)
-			} else if input.peek2(token::Bracket) || input.peek2(token::Paren) {
-				// If the token after the `$` is a square bracket (`[`) or a
+		Ok(if input.peek(Token![%]) {
+			// If the next token is `%`, then we need to look _two_ tokens in
+			// advance to find out which type of item this is. We also know it
+			// isn't a let-variable item: let-variable items always require the
+			// keyword `let` to come before the metabyte token (`%`).
+			if input.peek2(token::Bracket) || input.peek2(token::Paren) {
+				// If the token after the `%` is a square bracket (`[`) or a
 				// normal bracket (`(`), then it is an unused bytes item.
 				Self::UnusedBytes(input.parse()?)
 			} else {
@@ -600,14 +521,12 @@ impl Parse for Item {
 				Self::Field(input.parse()?)
 			}
 		} else {
-			// Otherwise, if the next token is not `$`, then we only need to
+			// Otherwise, if the next token is not `%`, then we only need to
 			// look at that next token to find the type of item.
-			if input.peek(Token![#]) && !input.peek2(token::Bracket) {
-				// If the next token is `#`, but the token after it is not a
-				// square bracket (`[`), then this is a field length. We have to
-				// check that there is no square bracket because attributes,
-				// which we allow for fields, are started with `#[`.
-				Self::FieldLength(input.parse()?)
+			if input.peek(Token![let]) {
+				// If the token after the `%` is `let`, then it is a
+				// let-variable item.
+				Self::LetVar(input.parse()?)
 			} else if input.peek(token::Bracket) || input.peek(token::Paren) {
 				// If the next token is a square bracket (`[`) or a normal
 				// bracket (`(`), then it is an unused bytes item.
@@ -629,10 +548,10 @@ impl Parse for Field {
 		let attributes = input.call(Attribute::parse_outer)?;
 		// The visibility of the field.
 		let vis: Visibility = input.parse()?;
-		// A metabyte token (`$`) which, if present, declares this item as
+		// A metabyte token (`%`) which, if present, declares this item as
 		// being intended for the second byte in a message header. Only for
 		// message definitions.
-		let metabyte_token: Option<Token![$]> = input.parse().ok();
+		let metabyte_token: Option<Token![%]> = input.parse().ok();
 
 		// Attempt to parse the field name.
 		let name: Option<Ident> = input.parse().ok();
@@ -663,11 +582,11 @@ impl Parse for Field {
 impl Parse for FieldLength {
 	fn parse(input: ParseStream) -> Result<Self> {
 		Ok(Self {
-			// A metabyte token (`$`) which, if present, declares this item as
+			// A metabyte token (`%`) which, if present, declares this item as
 			// being intended for the second byte in a message header. Only for
 			// message definitions.
 			metabyte_token: input.parse().ok(),
-			// A number sign token: `#`.
+			// A number sign token: `%`.
 			number_sign_token: input.parse()?,
 			// An identifier for a field. If it refers to a named field, that
 			// means the field's name, otherwise, if it refers to an unnamed
@@ -687,7 +606,7 @@ impl Parse for FieldLength {
 impl Parse for UnusedBytes {
 	fn parse(input: ParseStream) -> Result<Self> {
 		Ok(Self {
-			// A metabyte token (`$`) which, if present, declares this item as
+			// A metabyte token (`%`) which, if present, declares this item as
 			// being intended for the second byte in a message header. Only for
 			// message definitions.
 			metabyte_token: input.parse().ok(),

@@ -34,7 +34,7 @@ pub struct LetVar {
 /// ```
 /// define! {
 ///     pub struct ChangeProperty<'a, T>: Request<18> {
-///         pub #mode: ChangePropertyMode,
+///         pub %mode: ChangePropertyMode,
 ///         pub window: Window,
 ///         pub property: Atom,
 ///         pub property_type: Atom,
