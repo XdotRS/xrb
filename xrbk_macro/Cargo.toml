@@ -3,7 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 [package]
-name = "xrb-proc-macros" # Procedural macros for XRB
+name = "xrbk_macro" # Procedural macros for XRB
 version = "0.1.0-dev"
 readme = false
 repository = "https://github.com/XdotRS/xrb/tree/main/xrb-proc-macros"
