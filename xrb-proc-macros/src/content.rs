@@ -9,8 +9,10 @@ use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 use syn::{
 	braced, bracketed, parenthesized, token, Attribute, Error, Expr, Ident, Result, Token, Type,
-	Visibility, ReturnType,
+	Visibility,
 };
+
+use crate::closure::IdentClosure;
 
 // Items {{{
 
@@ -406,17 +408,8 @@ pub struct UnusedBytesFull {
 	/// A semicolon token: `;`.
 	pub semicolon_token: Token![;],
 	/// Determines the number of unused bytes.
-<<<<<<< HEAD
 	pub count: IdentClosure,
 }
-=======
-	pub count: UnusedBytesCount,
-}
-
-// TODO
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub struct UnusedBytesCount {}
->>>>>>> a3c0e58fd9221bcae79aa966c34ff601489e85b6
 
 // }}}
 
@@ -738,15 +731,11 @@ impl Parse for UnusedBytesFull {
 			// A pair of brackets, in the form of a unit: `()`.
 			paren_token: parenthesized!(paren in input),
 			// A semicolon: `;`.
-			semicolon_token: input.parse()?
+			semicolon_token: input.parse()?,
 			count: input.parse()?,
 		})
 	}
 }
-
-<<<<<<< HEAD
-=======
 //     }}}
 
->>>>>>> a3c0e58fd9221bcae79aa966c34ff601489e85b6
 // }}}
