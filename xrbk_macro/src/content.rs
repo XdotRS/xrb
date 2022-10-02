@@ -20,7 +20,7 @@ use crate::closure::*;
 ///
 /// [`Named`]: Items::Named
 /// [`Unnamed`]: Items::Unnamed
-%[derive(Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Items {
 	/// [`NamedItems`], surrounded by `{` and `}`.
 	///
@@ -113,7 +113,7 @@ impl<'a> Items {
 /// brackets.
 ///
 /// `NamedItems` can contain [`NamedField`]s, but not [`UnnamedField`]s.
-%[derive(Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct NamedItems {
 	/// Named items are surrounded by curly brackets (`{` and `}`).
 	pub brace_token: token::Brace,
@@ -161,7 +161,7 @@ impl<'a> NamedItems {
 /// `UnnamedItems` can contain unnamed [`Field`]s, but not named [`Field`]s. The
 /// syntax for `UnnamedItems` may be familiar to you under names such as 'tuple
 /// structs' and 'tuple variants'.
-%[derive(Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct UnnamedItems {
 	/// Unnamed items are surrounded by normal brackets (`(` and `)`).
 	pub paren_token: token::Paren,
@@ -204,7 +204,7 @@ impl<'a> UnnamedItems {
 }
 
 /// Either an [`UnusedBytes`] item, a [`FieldLength`] item, or a [`NamedField`].
-%[derive(Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Item {
 	/// This is equivalent to a [`syn::Field`], but it can have a metabyte token
 	/// (`%`).
@@ -236,7 +236,7 @@ impl Item {
 /// A field.
 ///
 /// This is like a [`syn::Field`], but it can have a `metabyte_token`.
-%[derive(Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct Field {
 	/// Attributes associated with the field.
 	pub attributes: Vec<Attribute>,
@@ -281,7 +281,7 @@ impl Field {
 
 /// Defines unused bytes for serializing or deserializing a message, struct, or
 /// enum.
-%[derive(Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct UnusedBytes {
 	/// A metabyte token used in [`messages!`] to indicate the second byte of
 	/// the message header.
@@ -314,7 +314,7 @@ impl UnusedBytes {
 }
 
 /// The definition of [`UnusedBytes`].
-%[derive(Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub enum UnusedBytesDefinition {
 	/// A single unused byte with the unit syntax (`()` or `%()`).
 	Unit(token::Paren),
@@ -323,7 +323,7 @@ pub enum UnusedBytesDefinition {
 }
 
 /// A full definition of [`UnusedBytes`].
-%[derive(Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct UnusedBytesFull {
 	/// Square bracket tokens: `[` and `]`.
 	///
@@ -334,7 +334,66 @@ pub struct UnusedBytesFull {
 	/// A semicolon token: `;`.
 	pub semicolon_token: Token![;],
 	/// Determines the number of unused bytes.
-	pub count: IdentClosure,
+	pub count: UnusedBytesCount,
+}
+
+/// Determines the number of unused bytes.
+///
+/// This can either infer the number of unused bytes using `..`, or it can use
+/// an [`IdentClosure`] to determine the number of unused bytes. See [`Infer`]
+/// and [`IdentClosure`](UnusedBytesCount::IdentClosure) for more information.
+///
+/// [`Infer`]: UnusedBytesCount::Infer
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+pub enum UnusedBytesCount {
+	/// Infers the number of unused bytes to use.
+	///
+	/// If this is a message which has a minimum size, this [`UnusedBytes`] item
+	/// is the final item in the message, and the minimum size of the message
+	/// has not yet been reached, this will use the number of bytes required to
+	/// reach the minimum size of the message.
+	///
+	/// Otherwise the number of unused bytes used will be calculated as the
+	/// number of bytes required to reach the next 4-byte boundary, or, if the
+	/// current position is already a 4-byte boundary, no unused bytes will be
+	/// used.
+	///
+	/// # Examples
+	/// For example, this is useful when the byte position at the start of the
+	/// unused bytes item is not known at compile time, such as if a list of
+	/// elements that aren't a multiple of 4 bytes is used:
+	/// ```
+	/// # use xrbk_macro::define;
+	/// #
+	/// define! {
+	///     pub struct Example {
+	///         // `bytes` could be a size that is not a multiple of 4 bytes,
+	///         // such as 1 byte, 2 bytes, 3 bytes, 5 bytes, etc.
+	///         pub bytes: Vec<u8>,
+	///         // We can infer the number of unused bytes required to meet the
+	///         // next 4-byte boundary (i.e. if `bytes` has 1 byte, then this
+	///         // would be `3`, and if `bytes` has 6 bytes, then this would be
+	///         // `2` to reach the 4-byte boundary at 8 bytes).
+	///         [(); ..],
+	///     }
+	/// }
+	/// ```
+	///
+	/// It is also useful when there is a minimum size of a message but the
+	/// message does not contain enough data to meet that minimum size. This is
+	/// often the case for events and replies:
+	/// ```
+	/// # use xrbk_macro::define;
+	/// #
+	/// define! {
+	///     pub struct InternAtomReply: Reply for InternAtom {
+	///         pub atom: Option<Atom>,
+	///         [(); ..], // fill in the remaining 20 bytes required
+	///     }
+	/// }
+	/// ```
+	Infer(Token![..]),
+	IdentClosure(IdentClosure),
 }
 
 // }}}
@@ -573,30 +632,6 @@ impl Parse for Field {
 			name,
 			colon_token,
 			ty,
-		})
-	}
-}
-//     }}}
-
-//     Field length {{{
-impl Parse for FieldLength {
-	fn parse(input: ParseStream) -> Result<Self> {
-		Ok(Self {
-			// A metabyte token (`%`) which, if present, declares this item as
-			// being intended for the second byte in a message header. Only for
-			// message definitions.
-			metabyte_token: input.parse().ok(),
-			// A number sign token: `%`.
-			number_sign_token: input.parse()?,
-			// An identifier for a field. If it refers to a named field, that
-			// means the field's name, otherwise, if it refers to an unnamed
-			// field, that means the field's index.
-			field_ident: input.parse()?,
-			// A colon token: `:`.
-			colon_token: input.parse()?,
-			// The type used for the `FieldLength`. This should be an unsigned
-			// integer type: `u8`, `u16`, `u32`, `u64`, or `u128`.
-			ty: input.parse()?,
 		})
 	}
 }
