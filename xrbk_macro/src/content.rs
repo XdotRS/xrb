@@ -690,6 +690,18 @@ impl Parse for UnusedBytesFull {
 		})
 	}
 }
+
+impl Parse for UnusedBytesCount {
+	fn parse(input: ParseStream) -> Result<Self> {
+		// If the next token is `..`, then this count is inferred, otherwise
+		// we parse an [`IdentClosure`] for the count.
+		Ok(if input.peek(Token![..]) {
+			Self::Infer(input.parse()?)
+		} else {
+			Self::IdentClosure(input.parse()?)
+		})
+	}
+}
 //     }}}
 
 // }}}
