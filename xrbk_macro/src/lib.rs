@@ -4,6 +4,7 @@
 
 mod closure;
 mod content;
+mod metadata;
 mod util;
 
 mod definition;
