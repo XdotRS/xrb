@@ -2,8 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use syn::parse::{Parse, ParseStream};
-use syn::{token, Attribute, Error, Expr, Generics, Ident, Result, Token, Type, Visibility};
+use syn::{
+	parse::{Parse, ParseStream},
+	Attribute, Error, Expr, Generics, Ident, Result, Token, Type, Visibility,
+};
+
+use proc_macro2::TokenStream as TokenStream2;
+use quote::ToTokens;
 
 use crate::content::Items;
 
@@ -18,8 +23,6 @@ pub struct Definition {
 	/// that definition (`enum`, `struct`, the name, generics, the major opcode
 	/// of a request, etc.).
 	pub metadata: Metadata,
-	/// A pair of curly brackets: `{` and `}`.
-	pub brace_token: token::Brace,
 	/// The items defined within the definition.
 	///
 	/// This is the main feature of the [`define!`] macro: it's what allows
@@ -149,6 +152,81 @@ pub struct Reply {
 	/// The type of request that generates this reply.
 	pub request_ty: Type,
 }
+
+// Expansion {{{
+
+impl ToTokens for Definition {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		self.metadata.to_tokens(tokens);
+		self.items.to_tokens(tokens);
+	}
+}
+
+impl ToTokens for Metadata {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		match self {
+			Self::Enum(meta) => meta.to_tokens(tokens),
+			Self::Struct(meta) => meta.to_tokens(tokens),
+			Self::Event(meta) => meta.to_tokens(tokens),
+			Self::Request(meta) => meta.to_tokens(tokens),
+			Self::Reply(meta) => meta.to_tokens(tokens),
+		}
+	}
+}
+
+/// Implements [`ToTokens`] for metadata.
+///
+/// This is simply to avoid repetitive code. We can generate the same
+/// implementation for every type of metadata, because what differentiates the
+/// types of metadata is information that is not used to define the struct or
+/// enum with normal Rust syntax.
+///
+/// # Examples
+/// Basic [`Enum`] and [`Struct`]:
+/// ```ignore
+/// pub enum MyEnum<'a, T>
+///
+/// pub struct MyStruct<'a, T>
+/// ```
+/// Events, requests, and replies:
+/// ```ignore
+/// pub struct MyEvent<'a, T>
+///
+/// pub struct MyRequest<'a, T>
+///
+/// pub struct MyReply<'a, T>
+/// ```
+macro_rules! tokens {
+	(for $Type:ty: $token:ident) => {
+		impl ToTokens for $Type {
+			fn to_tokens(&self, tokens: &mut TokenStream2) {
+				// Attributes.
+				for attribute in &self.attributes {
+					attribute.to_tokens(tokens);
+				}
+
+				// Visibility.
+				self.vis.to_tokens(tokens);
+				// `enum` or `struct`.
+				self.$token.to_tokens(tokens);
+				// The name of the enum or struct.
+				self.name.to_tokens(tokens);
+				// The generics associated with the enum or struct.
+				self.generics.to_tokens(tokens);
+			}
+		}
+	};
+}
+
+// Enum metadata
+tokens!(for Enum: enum_token);
+// Struct metadatas
+tokens!(for Struct: struct_token);
+tokens!(for Event: struct_token);
+tokens!(for Request: struct_token);
+tokens!(for Reply: struct_token);
+
+// }}}
 
 // Parsing {{{
 
