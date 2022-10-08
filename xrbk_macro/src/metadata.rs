@@ -230,6 +230,15 @@ tokens!(for Reply: struct_token);
 
 // Parsing {{{
 
+impl Parse for Definition {
+	fn parse(input: ParseStream) -> Result<Self> {
+		Ok(Self {
+			metadata: input.parse()?,
+			items: input.parse()?,
+		})
+	}
+}
+
 impl Parse for Metadata {
 	fn parse(input: ParseStream) -> Result<Self> {
 		// Parse attributes and visibility first, since every metadata
