@@ -6,13 +6,52 @@ use syn::{
 	braced, bracketed, parenthesized,
 	parse::{discouraged::Speculative, Parse, ParseStream, Result},
 	punctuated::Punctuated,
-	token, Attribute, Expr, Ident, Token, Type, Visibility,
+	spanned::Spanned,
+	token, Attribute, Error, Expr, Ident, Token, Type, Visibility,
 };
+
+use quote::{ToTokens, TokenStreamExt};
+
+use proc_macro2::{Delimiter, Group, Span, TokenStream as TokenStream2};
 
 pub struct Variant {
 	pub attributes: Vec<Attribute>,
 	pub name: Ident,
-	pub items: Option<(token::Paren, Punctuated<Item, Token![,]>)>,
+	pub items: Items,
+}
+
+impl ToTokens for Variant {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		for attribute in &self.attributes {
+			attribute.to_tokens(tokens);
+		}
+
+		self.name.to_tokens(tokens);
+		self.items.to_tokens(tokens);
+	}
+}
+
+pub enum Items {
+	Named(Punctuated<Item, Token![,]>),
+	Unnamed(Punctuated<Item, Token![,]>),
+	Unit,
+}
+
+impl ToTokens for Items {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		match self {
+			// If these are named items, surround them with curly brackets.
+			Self::Named(items) => {
+				tokens.append(Group::new(Delimiter::Brace, items.to_token_stream()));
+			}
+			// If these are unnamed items, surround them with normal brackets.
+			Self::Unnamed(items) => {
+				tokens.append(Group::new(Delimiter::Parenthesis, items.to_token_stream()));
+			}
+			// If there are no items, append no tokens.
+			Self::Unit => (),
+		}
+	}
 }
 
 pub enum Item {
@@ -21,11 +60,39 @@ pub enum Item {
 	Let(LetItem),
 }
 
+impl ToTokens for Item {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		// If `self` is a field, convert the field to tokens. Other items won't
+		// be converted to tokens because they are not normal Rust syntax.
+		match self {
+			Self::Field(field) => field.to_tokens(tokens),
+			_ => (),
+		}
+	}
+}
+
 pub struct Field {
 	pub attributes: Vec<Attribute>,
 	pub vis: Visibility,
 	pub named: Option<(Ident, Token![:])>,
 	pub r#type: Ty,
+}
+
+impl ToTokens for Field {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		// Convert each attribute to tokens:
+		for attribute in &self.attributes {
+			attribute.to_tokens(tokens);
+		}
+
+		self.vis.to_tokens(tokens);
+		// If there is a name (and colon), convert them to tokens:
+		self.named.as_ref().map(|(name, colon)| {
+			name.to_tokens(tokens);
+			colon.to_tokens(tokens);
+		});
+		self.r#type.to_tokens(tokens);
+	}
 }
 
 pub enum Unused {
@@ -56,6 +123,31 @@ pub struct LetItem {
 pub enum Ty {
 	Type(Type),
 	ContextualType(ContextualType),
+}
+
+impl Ty {
+	fn span(&self) -> Span {
+		match self {
+			Self::Type(r#type) => r#type.span(),
+			Self::ContextualType(r#type) => r#type.r#type.span(),
+		}
+	}
+}
+
+impl ToTokens for Ty {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		match self {
+			Ty::Type(r#type) => {
+				// If `self` is a normal type, just convert it to tokens.
+				r#type.to_tokens(tokens);
+			}
+			Ty::ContextualType(ctx_type) => {
+				// If `self is a contextual type (context for how to deserialize
+				// it), just convert the actual type itself to tokens.
+				ctx_type.r#type.to_tokens(tokens);
+			}
+		}
+	}
 }
 
 // Ex.
@@ -110,15 +202,133 @@ pub enum Source {
 
 // Parsing {{{
 
+impl Parse for Variant {
+	fn parse(input: ParseStream) -> Result<Self> {
+		Ok(Self {
+			attributes: input.call(Attribute::parse_outer)?,
+			name: input.parse()?,
+			items: input.parse()?,
+		})
+	}
+}
+
+impl Parse for Items {
+	fn parse(input: ParseStream) -> Result<Self> {
+		Ok(if input.peek(token::Brace) {
+			// If the next token is a curly bracket, then these items are meant
+			// to have named fields.
+			Self::Named(input.parse_terminated(Item::parse_named)?)
+		} else if input.peek(token::Paren) {
+			// Otherwise, if the next token is a normal bracket, then these
+			// items are meant to have unnamed fields.
+			Self::Unnamed(input.parse_terminated(Item::parse_unnamed)?)
+		} else {
+			// Otherwise, if there is no curly bracket or normal bracket, then
+			// there are no items expected; this state is known as _unit_ (like
+			// `()`).
+			Self::Unit
+		})
+	}
+}
+
 impl Parse for Item {
 	fn parse(input: ParseStream) -> Result<Self> {
 		Ok(if input.peek(Token![let]) {
+			// If the next token is `let`, then this is a let item.
 			Self::Let(input.parse()?)
 		} else if input.peek(token::Bracket) || input.peek(token::Paren) {
+			// If the next token is a square bracket or a normal bracket, then
+			// this is an unused bytes item.
 			Self::Unused(input.parse()?)
 		} else {
+			// Otherwise, this is a field.
 			Self::Field(input.parse()?)
 		})
+	}
+}
+
+impl Item {
+	/// Parses an item, but generates an error if it was a field without a name.
+	#[allow(dead_code)]
+	fn parse_named(input: ParseStream) -> Result<Self> {
+		let this = Self::parse(input)?;
+
+		match &this {
+			// If `this` is a field...
+			Self::Field(field) => {
+				// Check if it has no name.
+				if field.named.is_none() {
+					// If so, generate this error with the span of the field
+					// type (which is where the name is meant to go).
+					return Err(Error::new(field.r#type.span(), "expected field name"));
+				}
+			}
+			_ => {}
+		}
+
+		Ok(this)
+	}
+
+	/// Parses an item, but generates an error if it was a field with a name.
+	#[allow(dead_code)]
+	fn parse_unnamed(input: ParseStream) -> Result<Self> {
+		let this = Self::parse(input)?;
+
+		match &this {
+			// If `this` is a field...
+			Self::Field(field) => {
+				// Check if it has a name.
+				if field.named.is_some() {
+					// If so, reference the name (the `Ident`)...
+					let (name, _) = field.named.as_ref().expect("we already checked for this");
+
+					// ...so we can use its span to generate this error:
+					return Err(Error::new(
+						name.span(),
+						"no field name expected, this is a tuple body",
+					));
+				}
+			}
+			_ => {}
+		};
+
+		Ok(this)
+	}
+
+	/// Whether `self` is either not a field, or is a field with a name.
+	#[allow(dead_code)]
+	fn is_named(&self) -> bool {
+		match self {
+			Self::Field(field) => field.named.is_some(),
+			_ => true,
+		}
+	}
+
+	/// Whether `self` is a [`Field`].
+	#[allow(dead_code)]
+	fn is_field(&self) -> bool {
+		match self {
+			Self::Field(_) => true,
+			_ => false,
+		}
+	}
+
+	/// Whether `self` is an [`Unused`] item.
+	#[allow(dead_code)]
+	fn is_unused(&self) -> bool {
+		match self {
+			Self::Unused(_) => true,
+			_ => false,
+		}
+	}
+
+	/// Whether `self` is a [`LetItem`].
+	#[allow(dead_code)]
+	fn is_let(&self) -> bool {
+		match self {
+			Self::Let(_) => true,
+			_ => false,
+		}
 	}
 }
 
@@ -138,18 +348,18 @@ impl Parse for Field {
 impl Parse for Unused {
 	fn parse(input: ParseStream) -> Result<Self> {
 		let look = input.lookahead1();
-		let unit;
+		let _unit;
 
 		if look.peek(token::Paren) {
-			Ok(Self::Single(parenthesized!(unit in input)))
+			Ok(Self::Single(parenthesized!(_unit in input)))
 		} else if look.peek(token::Bracket) {
 			let content;
 
 			Ok(Self::Full(FullUnused {
 				bracket_token: bracketed!(content in input),
-				unit_token: parenthesized!(unit in input),
-				semicolon_token: input.parse()?,
-				count: input.parse()?,
+				unit_token: parenthesized!(_unit in content),
+				semicolon_token: content.parse()?,
+				count: content.parse()?,
 			}))
 		} else {
 			Err(look.error())
@@ -159,13 +369,13 @@ impl Parse for Unused {
 
 impl Parse for FullUnused {
 	fn parse(input: ParseStream) -> Result<Self> {
-		let (content, unit);
+		let (content, _unit);
 
 		Ok(Self {
 			bracket_token: bracketed!(content in input),
-			unit_token: parenthesized!(unit in input),
-			semicolon_token: input.parse()?,
-			count: input.parse()?,
+			unit_token: parenthesized!(_unit in content),
+			semicolon_token: content.parse()?,
+			count: content.parse()?,
 		})
 	}
 }
