@@ -12,29 +12,30 @@ use quote::ToTokens;
 
 use crate::content::Items;
 
-/// A definition, as defined with the [`define!`] macro.
+/// A definition, as defined with the [`define!`] macro, for ordinary structs
+/// and messages.
 ///
 /// [`define!`]: crate::define
-pub struct Definition {
+pub struct StructDefinition {
 	/// The metadata associated with the definition.
 	///
 	/// This defines the type of definition (i.e. enum, struct, event, request,
 	/// or reply), as well as the additional information and tokens that starts
 	/// that definition (`enum`, `struct`, the name, generics, the major opcode
 	/// of a request, etc.).
-	pub metadata: Metadata,
+	pub metadata: StructMetadata,
 	/// The items defined within the definition.
 	///
 	/// This is the main feature of the [`define!`] macro: it's what allows
 	/// additional serialization and deserialization code to be generated in a
 	/// more concise way than could be achieved with a derive macro.
 	pub items: Items,
+	/// A semicolon token if `items` is [`Items::Unit`] or [`Items::Unnamed`].
+	pub semicolon_token: Option<Token![;]>,
 }
 
 /// The type of definition and metadata associated with it.
-pub enum Metadata {
-	/// An ordinary enum definition.
-	Enum(Enum),
+pub enum StructMetadata {
 	/// An ordinary struct definition.
 	Struct(Struct),
 	/// An event message struct.
@@ -155,17 +156,16 @@ pub struct Reply {
 
 // Expansion {{{
 
-impl ToTokens for Definition {
+impl ToTokens for StructDefinition {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		self.metadata.to_tokens(tokens);
 		self.items.to_tokens(tokens);
 	}
 }
 
-impl ToTokens for Metadata {
+impl ToTokens for StructMetadata {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		match self {
-			Self::Enum(meta) => meta.to_tokens(tokens),
 			Self::Struct(meta) => meta.to_tokens(tokens),
 			Self::Event(meta) => meta.to_tokens(tokens),
 			Self::Request(meta) => meta.to_tokens(tokens),
@@ -230,193 +230,176 @@ tokens!(for Reply: struct_token);
 
 // Parsing {{{
 
-impl Parse for Definition {
+impl Parse for StructDefinition {
 	fn parse(input: ParseStream) -> Result<Self> {
+		let metadata: StructMetadata = input.parse()?;
+		let items: Items = input.parse()?;
+
+		let semicolon_token: Option<Token![;]> = match items {
+			Items::Unit => Some(input.parse()?),
+			Items::Unnamed(_) => Some(input.parse()?),
+			Items::Named(_) => None,
+		};
+
 		Ok(Self {
-			metadata: input.parse()?,
-			items: input.parse()?,
+			metadata,
+			items,
+			semicolon_token,
 		})
 	}
 }
 
-impl Parse for Metadata {
+impl Parse for StructMetadata {
 	fn parse(input: ParseStream) -> Result<Self> {
 		// Parse attributes and visibility first, since every metadata
 		// definition may start with them.
 		let attributes = input.call(Attribute::parse_outer)?;
 		let vis: Visibility = input.parse()?;
 
-		let look = input.lookahead1();
+		// All 'struct-based' definitions start with `struct`, a name, and
+		// optional generics, so we can parse those straight away.
+		let struct_token: Token![struct] = input.parse()?;
+		let name: Ident = input.parse()?;
+		let generics: Generics = input.parse()?;
 
-		// If the next token is `enum`, then this is an enum definition; we can
-		// easily parse its metadata and be done with it!
-		if look.peek(Token![enum]) {
-			Ok(Self::Enum(Enum {
+		if !input.peek(Token![:]) {
+			// If the next token is _not_ a colon, then this is just a
+			// simple struct definition - requests, replies, and events have
+			// a colon followed by which type of message they are.
+			Ok(Self::Struct(Struct {
 				// Attributes.
 				attributes,
 				// Visibility.
 				vis,
-				// `enum`.
-				enum_token: input.parse()?,
-				// The name of the enum.
-				name: input.parse()?,
-				// Generics associated with the enum.
-				generics: input.parse()?,
+				// `struct`.
+				struct_token,
+				// The name of the struct.
+				name,
+				// Generics associated with the struct.
+				generics,
 			}))
-		} else if look.peek(Token![struct]) {
-			// If the next token is `struct`, then this could either be a\
-			// 'basic' struct definition, or it could be an Event, a Request, or
-			// a Reply definition.
+		} else {
+			// All 'message' definitions (requests, replies, events) have a
+			// colon, followed by an identifier which specifies which type
+			// of message it is, so we read those at the start.
+			let colon_token: Token![:] = input.parse()?;
+			let message_ty_ident: Ident = input.parse()?;
 
-			// All 'struct-based' definitions start with `struct`, a name, and
-			// optional generics, so we can parse those straight away.
-			let struct_token: Token![struct] = input.parse()?;
-			let name: Ident = input.parse()?;
-			let generics: Generics = input.parse()?;
-
-			if !input.peek(Token![:]) {
-				// If the next token is _not_ a colon, then this is just a
-				// simple struct definition - requests, replies, and events have
-				// a colon followed by which type of message they are.
-				Ok(Self::Struct(Struct {
+			match message_ty_ident.to_string().as_str() {
+				// "Event" => parse event metadata
+				"Event" => Ok(Self::Event(Event {
 					// Attributes.
 					attributes,
 					// Visibility.
 					vis,
 					// `struct`.
 					struct_token,
-					// The name of the struct.
+					// The name of the event.
 					name,
-					// Generics associated with the struct.
+					// Generics associated with the event struct.
 					generics,
-				}))
-			} else {
-				// All 'message' definitions (requests, replies, events) have a
-				// colon, followed by an identifier which specifies which type
-				// of message it is, so we read those at the start.
-				let colon_token: Token![:] = input.parse()?;
-				let message_ty_ident: Ident = input.parse()?;
+					// `:`.
+					colon_token,
+					// `Event`.
+					event_ident: message_ty_ident,
+					// `<`.
+					lt_token: input.parse()?,
+					// An expression that evaluates to the event's code.
+					event_code_expr: input.parse()?,
+					// `>`.
+					gt_token: input.parse()?,
+				})),
+				// "Request" => parse request metadata
+				"Request" => Ok(Self::Request(Request {
+					// Attributes.
+					attributes,
+					// Visibility.
+					vis,
+					// `struct`.
+					struct_token,
+					// The name of the request.
+					name,
+					// Generics associated with the request struct.
+					generics,
+					// `:`.
+					colon_token,
+					// `Request`.
+					request_ident: message_ty_ident,
+					// `<`.
+					lt_token: input.parse()?,
+					// An expression that evaluates to the request's major
+					// opcode.
+					major_opcode_expr: input.parse()?,
+					// An optional expression (preceded by a comma) that
+					// evaluates to the request's minor opcode.
+					minor_opcode: input
+						// If the next token is a comma, then we assume
+						// there is a minor opcode and parse it.
+						.peek(Token![,])
+						.then(|| {
+							// Parse the comma token.
+							let comma_token: Token![,] = input
+								.parse()
+								.expect("we have already checked for this comma");
+							// Parse the expression for the minor opcode.
+							// TODO: This should generate an error if
+							//       `None`.
+							let expr: Option<Expr> = input.parse().ok();
 
-				match message_ty_ident.to_string().as_str() {
-					// "Event" => parse event metadata
-					"Event" => Ok(Self::Event(Event {
-						// Attributes.
-						attributes,
-						// Visibility.
-						vis,
-						// `struct`.
-						struct_token,
-						// The name of the event.
-						name,
-						// Generics associated with the event struct.
-						generics,
-						// `:`.
-						colon_token,
-						// `Event`.
-						event_ident: message_ty_ident,
-						// `<`.
-						lt_token: input.parse()?,
-						// An expression that evaluates to the event's code.
-						event_code_expr: input.parse()?,
-						// `>`.
-						gt_token: input.parse()?,
-					})),
-					// "Request" => parse request metadata
-					"Request" => Ok(Self::Request(Request {
-						// Attributes.
-						attributes,
-						// Visibility.
-						vis,
-						// `struct`.
-						struct_token,
-						// The name of the request.
-						name,
-						// Generics associated with the request struct.
-						generics,
-						// `:`.
-						colon_token,
-						// `Request`.
-						request_ident: message_ty_ident,
-						// `<`.
-						lt_token: input.parse()?,
-						// An expression that evaluates to the request's major
-						// opcode.
-						major_opcode_expr: input.parse()?,
-						// An optional expression (preceded by a comma) that
-						// evaluates to the request's minor opcode.
-						minor_opcode: input
-							// If the next token is a comma, then we assume
-							// there is a minor opcode and parse it.
-							.peek(Token![,])
-							.then(|| {
-								// Parse the comma token.
-								let comma_token: Token![,] = input
-									.parse()
-									.expect("we have already checked for this comma");
-								// Parse the expression for the minor opcode.
-								// TODO: This should generate an error if
-								//       `None`.
-								let expr: Option<Expr> = input.parse().ok();
+							expr.map(|expr| (comma_token, expr))
+						})
+						.flatten(),
+					// `>`.
+					gt_token: input.parse()?,
+					// Optional: `->` followed by a type that specifies a
+					// type of reply generated by this request.
+					reply_ty: input
+						// If the next token is an arrow, then we assume
+						// there is a reply type and parse it.
+						.peek(Token![->])
+						.then(|| {
+							// Parse the arrow token.
+							let arrow_token: Token![->] = input
+								.parse()
+								.expect("we have already checked for this comma");
+							// Parse the reply type.
+							// TODO: This should generate an error if
+							//       `None`.
+							let ty: Option<Type> = input.parse().ok();
 
-								expr.map(|expr| (comma_token, expr))
-							})
-							.flatten(),
-						// `>`.
-						gt_token: input.parse()?,
-						// Optional: `->` followed by a type that specifies a
-						// type of reply generated by this request.
-						reply_ty: input
-							// If the next token is an arrow, then we assume
-							// there is a reply type and parse it.
-							.peek(Token![->])
-							.then(|| {
-								// Parse the arrow token.
-								let arrow_token: Token![->] = input
-									.parse()
-									.expect("we have already checked for this comma");
-								// Parse the reply type.
-								// TODO: This should generate an error if
-								//       `None`.
-								let ty: Option<Type> = input.parse().ok();
-
-								ty.map(|ty| (arrow_token, ty))
-							})
-							.flatten(),
-					})),
-					// "Reply" => parse reply metdata
-					"Reply" => Ok(Self::Reply(Reply {
-						// Attributes.
-						attributes,
-						// Visibility.
-						vis,
-						// `struct`.
-						struct_token,
-						// The name of the reply struct.
-						name,
-						// Generics associated with the reply struct.
-						generics,
-						// `:`.
-						colon_token,
-						// `Reply`.
-						reply_ident: message_ty_ident,
-						// `for`.
-						for_token: input.parse()?,
-						// The type of the request.
-						request_ty: input.parse()?,
-					})),
-					// Otherwise, if the identifier following the colon is not
-					// `Event`, `Request`, nor `Reply`, then we generate an
-					// error over the identifier.
-					_ => Err(Error::new(
-						message_ty_ident.span(),
-						"expected a message type of `Event`, `Request`, or `Reply`",
-					)),
-				}
+							ty.map(|ty| (arrow_token, ty))
+						})
+						.flatten(),
+				})),
+				// "Reply" => parse reply metdata
+				"Reply" => Ok(Self::Reply(Reply {
+					// Attributes.
+					attributes,
+					// Visibility.
+					vis,
+					// `struct`.
+					struct_token,
+					// The name of the reply struct.
+					name,
+					// Generics associated with the reply struct.
+					generics,
+					// `:`.
+					colon_token,
+					// `Reply`.
+					reply_ident: message_ty_ident,
+					// `for`.
+					for_token: input.parse()?,
+					// The type of the request.
+					request_ty: input.parse()?,
+				})),
+				// Otherwise, if the identifier following the colon is not
+				// `Event`, `Request`, nor `Reply`, then we generate an
+				// error over the identifier.
+				_ => Err(Error::new(
+					message_ty_ident.span(),
+					"expected a message type of `Event`, `Request`, or `Reply`",
+				)),
 			}
-		} else {
-			// If neither `enum` nor `struct` is found, generate an appropriate
-			// error message.
-			Err(look.error())
 		}
 	}
 }

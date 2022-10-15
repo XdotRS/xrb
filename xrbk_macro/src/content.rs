@@ -3,17 +3,56 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use syn::{
-	bracketed, parenthesized,
+	braced, bracketed, parenthesized,
 	parse::{discouraged::Speculative, Parse, ParseStream, Result},
 	punctuated::{Pair, Punctuated},
 	spanned::Spanned,
-	token, Attribute, Error, Expr, Ident, Token, Type, Visibility,
+	token, Error, Expr, Ident, Path, Token, Type, Visibility,
 };
 
 use quote::{ToTokens, TokenStreamExt};
 
 use proc_macro2::{Delimiter, Group, Span, TokenStream as TokenStream2};
 
+enum Params {
+	None(Token![_]),
+	Some(Punctuated<Ident, Token![,]>),
+}
+
+pub struct Attribute {
+	pub hash_token: Token![#],
+	pub bracket_token: token::Bracket,
+	pub path: Path,
+	pub tokens: TokenStream2,
+}
+
+impl Attribute {
+	pub fn is_context(&self) -> bool {
+		self.path.is_ident("context")
+	}
+}
+
+impl ToTokens for Attribute {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		// Since the context attribute isn't actually going to replace the item,
+		// it isn't a real attribute, so we don't want to actually write it as
+		// one.
+		if !self.is_context() {
+			// `#`.
+			self.hash_token.to_tokens(tokens);
+
+			// e.g. `[derive(Debug)]`.
+			self.bracket_token.surround(tokens, |tokens| {
+				// e.g. `derive`.
+				self.path.to_tokens(tokens);
+				// e.g. `(Debug)`.
+				self.tokens.to_tokens(tokens);
+			});
+		}
+	}
+}
+
+/// An enum variant that uses [`Items`].
 pub struct Variant {
 	/// Attributes associated with the enum variant.
 	pub attributes: Vec<Attribute>,
@@ -44,11 +83,11 @@ pub enum Items {
 	/// [`Item`]s, but no unnamed fields are allowed.
 	///
 	/// Surrounded by curly brackets (`{` and `}`).
-	Named(Punctuated<Item, Token![,]>),
+	Named((token::Brace, Punctuated<Item, Token![,]>)),
 	/// [`Item`]s, but no named fields are allowed.
 	///
 	/// Surrounded by normal brackets (`(` and `)`).
-	Unnamed(Punctuated<Item, Token![,]>),
+	Unnamed((token::Paren, Punctuated<Item, Token![,]>)),
 	/// Neither items nor delimiters (`{}` nor `()`).
 	Unit,
 }
@@ -57,13 +96,13 @@ impl ToTokens for Items {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		match self {
 			// If these are named items, surround them with curly brackets.
-			Self::Named(items) => {
-				tokens.append(Group::new(Delimiter::Brace, items.to_token_stream()));
+			Self::Named((brace, items)) => {
+				brace.surround(tokens, |tokens| items.to_tokens(tokens));
 			}
 
 			// If these are unnamed items, surround them with normal brackets.
-			Self::Unnamed(items) => {
-				tokens.append(Group::new(Delimiter::Parenthesis, items.to_token_stream()));
+			Self::Unnamed((paren, items)) => {
+				paren.surround(tokens, |tokens| items.to_tokens(tokens));
 			}
 
 			// If there are no items, append no tokens.
@@ -317,6 +356,60 @@ pub enum Source {
 
 // Parsing {{{
 
+impl Parse for Params {
+	fn parse(input: ParseStream) -> Result<Self> {
+		if input.peek(Token![_]) {
+			Ok(Self::None(input.parse()?))
+		} else {
+			Ok(Self::Some(input.parse_terminated(Ident::parse)?))
+		}
+	}
+}
+
+impl Attribute {
+	#[allow(dead_code)]
+	fn parse_context(self) -> Result<Context> {
+		if !self.is_context() {
+			return Err(Error::new(self.path.span(), "expected `context` attribute"));
+		}
+
+		Ok(syn::parse2(self.tokens)?)
+	}
+}
+
+struct Context(Params, Token![->], Expr);
+
+impl Parse for Context {
+	fn parse(input: ParseStream) -> Result<Self> {
+		Ok(Context(input.parse()?, input.parse()?, input.parse()?))
+	}
+}
+
+impl Parse for Attribute {
+	fn parse(input: ParseStream) -> Result<Self> {
+		let content;
+
+		Ok(Self {
+			hash_token: input.parse()?,
+			bracket_token: bracketed!(content in input),
+			path: input.parse()?,
+			tokens: content.parse()?,
+		})
+	}
+}
+
+impl Attribute {
+	fn parse_outer(input: ParseStream) -> Result<Vec<Self>> {
+		let mut attributes = vec![];
+
+		while input.peek(Token![#]) && input.peek2(token::Bracket) {
+			attributes.push(input.parse()?);
+		}
+
+		Ok(attributes)
+	}
+}
+
 impl Parse for Variant {
 	fn parse(input: ParseStream) -> Result<Self> {
 		Ok(Self {
@@ -332,14 +425,22 @@ impl Parse for Variant {
 
 impl Parse for Items {
 	fn parse(input: ParseStream) -> Result<Self> {
+		let content;
+
 		Ok(if input.peek(token::Brace) {
 			// If the next token is a curly bracket, then these items are meant
 			// to have named fields.
-			Self::Named(input.parse_terminated(Item::parse_named)?)
+			Self::Named((
+				braced!(content in input),
+				content.parse_terminated(Item::parse_named)?,
+			))
 		} else if input.peek(token::Paren) {
 			// Otherwise, if the next token is a normal bracket, then these
 			// items are meant to have unnamed fields.
-			Self::Unnamed(input.parse_terminated(Item::parse_unnamed)?)
+			Self::Unnamed((
+				parenthesized!(content in input),
+				content.parse_terminated(Item::parse_unnamed)?,
+			))
 		} else {
 			// Otherwise, if there is no curly bracket or normal bracket, then
 			// there are no items expected; this state is known as _unit_ (like
@@ -420,28 +521,19 @@ impl Item {
 	/// Whether `self` is a [`Field`].
 	#[allow(dead_code)]
 	fn is_field(&self) -> bool {
-		match self {
-			Self::Field(_) => true,
-			_ => false,
-		}
+		matches!(self, Self::Field(_))
 	}
 
 	/// Whether `self` is an [`Unused`] item.
 	#[allow(dead_code)]
 	fn is_unused(&self) -> bool {
-		match self {
-			Self::Unused(_) => true,
-			_ => false,
-		}
+		matches!(self, Self::Unused(_))
 	}
 
 	/// Whether `self` is a [`LetItem`].
 	#[allow(dead_code)]
 	fn is_let(&self) -> bool {
-		match self {
-			Self::Let(_) => true,
-			_ => false,
-		}
+		matches!(self, Self::Let(_))
 	}
 }
 
@@ -579,6 +671,8 @@ impl Parse for Ty {
 				// Since we know there is a comma token next, we can parse that
 				// too.
 				let comma_token: Token![,] = content.parse()?;
+
+				let type2: Result<Type> = content.parse();
 				// Next, we attempt to parse an expression. We know that if this
 				// parses correctly, it is a [`ContextualType`]*.
 				//
@@ -586,7 +680,7 @@ impl Parse for Ty {
 				// expressions... TODO
 				let expr: Result<Expr> = content.parse();
 
-				if expr.is_ok() || content.peek(Token![fn]) {
+				if !type2.is_ok() && expr.is_ok() || content.peek(Token![fn]) {
 					// If the expression was parsed correctly, or the next token
 					// is `fn`, then this is a [`ContextualType`] with a
 					// [`Source`].
