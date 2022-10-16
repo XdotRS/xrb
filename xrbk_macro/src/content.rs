@@ -4,12 +4,10 @@
 
 mod attributes;
 mod field;
-mod general;
 mod r#let;
 mod unused;
 
 pub use attributes::*;
 pub use field::*;
-pub use general::*;
 pub use r#let::*;
 pub use unused::*;
