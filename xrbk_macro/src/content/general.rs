@@ -4,12 +4,12 @@
 
 use syn::{
 	parse::{Parse, ParseStream},
-	punctuated::Punctuated,
+	punctuated::{Punctuated, Pair},
 	Expr, Ident, Token, Type,
 };
 
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{quote, ToTokens};
+use quote::{quote, ToTokens, format_ident};
 
 pub struct Param {
 	pub ident: Ident,
@@ -55,9 +55,14 @@ impl Params {
 			Self::None(_) => (),
 			Self::One(Param { ident, .. }) => ident.to_tokens(tokens),
 			Self::Some(params) => {
-				for Param { ident, .. } in params {
-					ident.to_tokens(tokens);
-					quote!(,).to_tokens(tokens);
+				for pair in params.pairs() {
+					let (Param { ident, .. }, comma) = match pair {
+						Pair::Punctuated(param, comma) => (param, Some(comma)),
+						Pair::End(param) => (param, None),
+					};
+
+					format_ident!("__{}__", ident).to_tokens(tokens);
+					comma.to_tokens(tokens);
 				}
 			}
 		}
