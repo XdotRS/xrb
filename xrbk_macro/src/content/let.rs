@@ -49,6 +49,7 @@ impl Let {
 
 	pub fn to_write_tokens(&self, tokens: &mut TokenStream2) {
 		let ident = self.ident;
+		// e.g. `x: i32, y: i32` is turned into `__x__, __y__`.
 		let params = self.source.params.to_call_token_stream();
 
 		quote! {
