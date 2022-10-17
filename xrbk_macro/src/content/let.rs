@@ -57,7 +57,7 @@ impl ToTokens for Let {
 
 impl Let {
 	pub fn to_fn_tokens(&self, tokens: &mut TokenStream2) {
-		let name = self.ident;
+		let name = format_ident!("__{}__", self.ident);
 		let ty = self.r#type;
 		let expr = self.expr;
 
@@ -70,7 +70,7 @@ impl Let {
 	}
 
 	pub fn to_write_tokens(&self, tokens: &mut TokenStream2) {
-		let name = self.ident;
+		let name = format_ident!("__{}__", self.ident);
 
 		quote! {
 			writer.write(self.#name());
