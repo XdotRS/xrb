@@ -42,7 +42,7 @@ pub enum Context {
 
 impl ToTokens for Attribute {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
-		if let AttrContent::Other(path, content) = self.content {
+		if let AttrContent::Other(path, content) = &self.content {
 			self.hash_token.to_tokens(tokens);
 			self.style.to_tokens(tokens);
 

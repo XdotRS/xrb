@@ -10,8 +10,6 @@ use syn::{
 use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
 
-use crate::content::Items;
-
 /// A definition, as defined with the [`define!`] macro, for ordinary structs
 /// and messages.
 ///
