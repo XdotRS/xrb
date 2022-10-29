@@ -4,43 +4,43 @@
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
+use std::collections::HashMap;
 use syn::{
-	braced, bracketed, parenthesized,
-	parse::{Parse, ParseStream},
-	token, Error, Path, Result, Token,
+	braced, bracketed, parenthesized, parse::ParseStream, token, Error, Ident, Path, Result, Token,
+	Type,
 };
 
-use super::general::Source;
+use super::source::Source;
 
-pub struct Attribute {
+pub struct Attribute<'a> {
 	pub hash_token: Token![#],
 	pub style: Option<Token![!]>,
 	pub bracket_token: token::Bracket,
-	pub content: AttrContent,
+	pub content: AttrContent<'a>,
 }
 
-impl Attribute {
+impl Attribute<'_> {
 	pub const fn is_context(&self) -> bool {
 		matches!(self.content, AttrContent::Context(..))
 	}
 }
 
-pub enum AttrContent {
-	Context(Path, Context),
+pub enum AttrContent<'a> {
+	Context(Path, Context<'a>),
 	Other(Path, TokenStream2),
 }
 
-pub enum Context {
-	Equals(Token![=], Source),
-	Colon(Token![:], Source),
-	Paren(token::Paren, Source),
-	Bracket(token::Bracket, Source),
-	Brace(token::Brace, Source),
+pub enum Context<'a> {
+	Equals(Token![=], Source<'a>),
+	Colon(Token![:], Source<'a>),
+	Paren(token::Paren, Source<'a>),
+	Bracket(token::Bracket, Source<'a>),
+	Brace(token::Brace, Source<'a>),
 }
 
 // Expansion {{{
 
-impl ToTokens for Attribute {
+impl ToTokens for Attribute<'_> {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		if let AttrContent::Other(path, content) = &self.content {
 			self.hash_token.to_tokens(tokens);
@@ -58,14 +58,14 @@ impl ToTokens for Attribute {
 
 // Parsing {{{
 
-impl Parse for Attribute {
-	fn parse(input: ParseStream) -> Result<Self> {
+impl Attribute<'_> {
+	fn parse(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Self> {
 		let content;
 
 		let hash_token = input.parse()?;
 		let style: Option<Token![!]> = input.parse().ok();
 		let bracket_token = bracketed!(content in input);
-		let content = content.parse()?;
+		let content = AttrContent::parse(input, map)?;
 
 		if style.is_some() {
 			if let AttrContent::Context(..) = content {
@@ -83,14 +83,12 @@ impl Parse for Attribute {
 			content,
 		})
 	}
-}
 
-impl Attribute {
-	pub fn parse_outer(input: ParseStream) -> Result<Vec<Self>> {
+	pub fn parse_outer(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Vec<Self>> {
 		let mut attributes = vec![];
 
 		while input.peek(Token![#]) && input.peek2(token::Bracket) {
-			let attribute: Attribute = input.parse()?;
+			let attribute: Attribute = Self::parse(input, map)?;
 
 			if attribute.style.is_some() {
 				return Err(Error::new(
@@ -105,11 +103,11 @@ impl Attribute {
 		Ok(attributes)
 	}
 
-	pub fn parse_inner(input: ParseStream) -> Result<Vec<Self>> {
+	pub fn parse_inner(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Vec<Self>> {
 		let mut attributes = vec![];
 
 		while input.peek(Token![#]) && input.peek2(token::Bracket) {
-			let attribute: Attribute = input.parse()?;
+			let attribute: Attribute = Self::parse(input, map)?;
 
 			if attribute.style.is_none() {
 				return Err(Error::new(
@@ -125,39 +123,38 @@ impl Attribute {
 	}
 }
 
-impl Parse for AttrContent {
-	fn parse(input: ParseStream) -> Result<Self> {
+impl AttrContent<'_> {
+	fn parse(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Self> {
 		let path: Path = input.parse()?;
 
 		Ok(if path.is_ident("context") {
-			Self::Context(path, input.parse()?)
+			Self::Context(path, Context::parse(input, map)?)
 		} else {
 			Self::Other(path, input.parse()?)
 		})
 	}
 }
 
-impl Parse for Context {
-	fn parse(input: ParseStream) -> Result<Self> {
+impl Context<'_> {
+	fn parse(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Self> {
 		let content;
 		let look = input.lookahead1();
 
+		let parse_source = || Source::parse_without_receiver(input, map);
+
 		if look.peek(Token![=]) {
-			Ok(Self::Equals(input.parse()?, input.parse()?))
+			Ok(Self::Equals(input.parse()?, parse_source()?))
 		} else if look.peek(Token![:]) {
-			Ok(Self::Colon(input.parse()?, input.parse()?))
+			Ok(Self::Colon(input.parse()?, parse_source()?))
 		} else if look.peek(token::Paren) {
 			Ok(Self::Paren(
 				parenthesized!(content in input),
-				content.parse()?,
+				parse_source()?,
 			))
 		} else if look.peek(token::Bracket) {
-			Ok(Self::Bracket(
-				bracketed!(content in input),
-				content.parse()?,
-			))
+			Ok(Self::Bracket(bracketed!(content in input), parse_source()?))
 		} else if look.peek(token::Brace) {
-			Ok(Self::Brace(braced!(content in input), content.parse()?))
+			Ok(Self::Brace(braced!(content in input), parse_source()?))
 		} else {
 			Err(look.error())
 		}
