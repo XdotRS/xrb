@@ -26,8 +26,8 @@ pub struct Source<'a> {
 // Parsing {{{
 
 impl Source<'_> {
-	/// Parse a `Source` that can have zero or more [`Arg`s](Arg).
-	pub fn parse_with_args(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Self> {
+	/// Parse a `Source` that can have zero or more [`Arg`s](Arg) and a receiver.
+	pub fn parse(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Self> {
 		let fork = &input.fork();
 
 		// Parse a receiver (e.g. `self`, `&self`).
@@ -36,7 +36,7 @@ impl Source<'_> {
 
 		// If there is EITHER:
 		// - no receiver; or
-		// - a receiver _and_ a comma following it
+		// - a receiver _and_ a comma following it,
 		// parse additional `Arg`s.
 		let args = if receiver.is_none() || comma_token.is_some() {
 			Some(Arg::parse_args(fork, map)?)
@@ -73,7 +73,7 @@ impl Source<'_> {
 
 	/// Parse a `Source` that can have zero or more [`Arg`s](Arg) but no receiver.
 	pub fn parse_without_receiver(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Self> {
-		let source = Self::parse_with_args(input, map)?;
+		let source = Self::parse(input, map)?;
 
 		source.receiver.map_or_else(
 			// If there is no receiver, return the source.
@@ -84,7 +84,7 @@ impl Source<'_> {
 	}
 
 	/// Parse a `Source` without the option for any [`Arg`s](Arg).
-	pub fn parse_receiver(input: ParseStream) -> Result<Self> {
+	pub fn parse_without_args(input: ParseStream) -> Result<Self> {
 		let fork = input.fork();
 
 		// Parse a receiver (e.g. `self`, `&self`).
