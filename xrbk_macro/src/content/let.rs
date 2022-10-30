@@ -4,13 +4,15 @@
 
 use syn::{
 	parse::{Parse, ParseStream},
-	Expr, Ident, Result, Token, Type,
+	Ident, Result, Token, Type,
 };
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
 
-pub struct Let {
+use super::Source;
+
+pub struct Let<'a> {
 	/// The let token: `let`.
 	pub let_token: Token![let],
 
@@ -26,13 +28,13 @@ pub struct Let {
 	/// The equals token preceding the `expr`: `=`.
 	pub eq_token: Token![=],
 
-	/// The [`Expr`] used in the generated function for this `let` item.
-	pub expr: Expr,
+	/// The [`Source`] used in the generated function for this `let` item.
+	pub source: Source<'a>,
 }
 
 // Expansion {{{
 
-impl ToTokens for Let {
+impl ToTokens for Let<'_> {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		// `let`
 		self.let_token.to_tokens(tokens);
@@ -55,15 +57,15 @@ impl ToTokens for Let {
 	}
 }
 
-impl Let {
+impl Let<'_> {
 	pub fn to_fn_tokens(&self, tokens: &mut TokenStream2) {
 		let name = format_ident!("__{}__", self.ident);
 		let ty = self.r#type;
-		let expr = self.expr;
+		let source = self.source;
 
 		quote! {
 			fn #name(&self) -> #ty {
-				#expr
+				// #source (TODO)
 			}
 		}
 		.to_tokens(tokens);
@@ -83,7 +85,7 @@ impl Let {
 
 // Parsing {{{
 
-impl Parse for Let {
+impl Parse for Let<'_> {
 	fn parse(input: ParseStream) -> Result<Self> {
 		Ok(Self {
 			let_token: input.parse()?,
@@ -94,7 +96,7 @@ impl Parse for Let {
 
 			eq_token: input.parse()?,
 
-			expr: input.parse()?,
+			source: Source::parse_without_args(input)?,
 		})
 	}
 }
