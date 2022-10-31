@@ -37,7 +37,17 @@ impl<'a> Unused<'a> {
 }
 
 // Expansion {{
-//     TODO
+
+impl Unused<'_> {
+	pub fn to_write_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+		// writer.unused(#unused#num(__data__))
+	}
+
+	pub fn to_read_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+		// reader.advance(#unused#num(__data__))
+	}
+}
+
 // }}}
 
 // Parsing {{{
