@@ -9,16 +9,17 @@ use syn::{parse::ParseStream, Error, Ident, Result, Token, Type, Visibility};
 
 use super::{AttrContent, Attribute, Context};
 
-pub struct Field<'a> {
-	pub attributes: Vec<Attribute<'a>>,
+pub struct Field {
+	pub attributes: Vec<Attribute>,
 	pub vis: Visibility,
 	pub ident: Option<Ident>,
 	pub colon_token: Option<Token![:]>,
 	pub r#type: Type,
 }
 
-impl<'a> Field<'a> {
+impl Field {
 	/// Returns whether this field has a name.
+	#[allow(dead_code)]
 	pub const fn is_named(&self) -> bool {
 		self.ident.is_some() && self.colon_token.is_some()
 	}
@@ -29,16 +30,17 @@ impl<'a> Field<'a> {
 	}
 
 	/// Returns whether this field as a context attribute.
-	pub const fn has_context(&self) -> bool {
+	#[allow(dead_code)]
+	pub fn has_context(&self) -> bool {
 		self.attributes
 			.iter()
-			.find(|attr| attr.is_context())
-			.is_some()
+			.any(|attr| attr.is_context())
 	}
 
 	/// Gets the context of this field if it has a context attribute.
-	pub const fn context(&self) -> Option<Context<'a>> {
-		self.attributes.iter().find_map(|attr| match attr.content {
+	#[allow(dead_code, clippy::borrowed_box)]
+	pub fn context(&self) -> Option<&Box<Context>> {
+		self.attributes.iter().find_map(|attr| match &attr.content {
 			AttrContent::Context(_, context) => Some(context),
 			_ => None,
 		})
@@ -47,7 +49,7 @@ impl<'a> Field<'a> {
 
 // Expansion {{{
 
-impl ToTokens for Field<'_> {
+impl ToTokens for Field {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		// Convert every attribute (other than context attributes) on this field
 		// to tokens.
@@ -55,7 +57,7 @@ impl ToTokens for Field<'_> {
 			attribute.to_tokens(tokens);
 		}
 
-		// Convert the field's visibiltiy to tokens.
+		// Convert the field's visibility to tokens.
 		self.vis.to_tokens(tokens);
 		// Convert the field's name to tokens.
 		self.ident.to_tokens(tokens);
@@ -71,12 +73,12 @@ impl ToTokens for Field<'_> {
 
 // Parsing {{{
 
-impl Field<'_> {
-	fn parse(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Self> {
+impl Field {
+	fn parse(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
 		let attributes = Attribute::parse_outer(input, map)?;
 		let vis = input.parse()?;
 		let ident = input.parse().ok();
-		let colon_token = ident.map(|_| input.parse().ok()).flatten();
+		let colon_token = ident.as_ref().and_then(|_| input.parse().ok());
 		let r#type = input.parse()?;
 
 		Ok(Self {
@@ -88,7 +90,7 @@ impl Field<'_> {
 		})
 	}
 
-	pub fn parse_named(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Self> {
+	pub fn parse_named(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
 		let field = Self::parse(input, map)?;
 
 		// If this field does not have a name, generate an error:
@@ -99,7 +101,7 @@ impl Field<'_> {
 		Ok(field)
 	}
 
-	pub fn parse_unnamed(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Self> {
+	pub fn parse_unnamed(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
 		let field = Self::parse(input, map)?;
 
 		// If this field has a name, generate an error:

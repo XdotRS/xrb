@@ -12,7 +12,7 @@ use quote::{format_ident, quote, ToTokens};
 
 use super::Source;
 
-pub struct Let<'a> {
+pub struct Let {
 	/// The let token: `let`.
 	pub let_token: Token![let],
 
@@ -29,12 +29,12 @@ pub struct Let<'a> {
 	pub eq_token: Token![=],
 
 	/// The [`Source`] used in the generated function for this `let` item.
-	pub source: Source<'a>,
+	pub source: Source,
 }
 
 // Expansion {{{
 
-impl ToTokens for Let<'_> {
+impl ToTokens for Let {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		// `let`
 		self.let_token.to_tokens(tokens);
@@ -50,33 +50,33 @@ impl ToTokens for Let<'_> {
 		self.eq_token.to_tokens(tokens);
 
 		// TODO: Allow context for `Let` items?
-		quote! {
+		quote! (
 			reader.read()?;
-		}
+		)
 		.to_tokens(tokens);
 	}
 }
 
-impl Let<'_> {
+impl Let {
 	pub fn to_fn_tokens(&self, tokens: &mut TokenStream2) {
 		let name = format_ident!("__{}__", self.ident);
-		let ty = self.r#type;
-		let source = self.source;
+		let ty = &self.r#type;
+		// let source = &self.source;
 
-		quote! {
+		quote! (
 			fn #name(&self) -> #ty {
 				// #source (TODO)
 			}
-		}
+		)
 		.to_tokens(tokens);
 	}
 
 	pub fn to_write_tokens(&self, tokens: &mut TokenStream2) {
 		let name = format_ident!("__{}__", self.ident);
 
-		quote! {
+		quote! (
 			writer.write(self.#name());
-		}
+		)
 		.to_tokens(tokens);
 	}
 }
@@ -85,7 +85,7 @@ impl Let<'_> {
 
 // Parsing {{{
 
-impl Parse for Let<'_> {
+impl Parse for Let {
 	fn parse(input: ParseStream) -> Result<Self> {
 		Ok(Self {
 			let_token: input.parse()?,
@@ -96,7 +96,7 @@ impl Parse for Let<'_> {
 
 			eq_token: input.parse()?,
 
-			source: Source::parse_without_args(input)?,
+			source: Source::parse_without_args(&input)?,
 		})
 	}
 }

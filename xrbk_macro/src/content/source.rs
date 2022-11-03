@@ -10,13 +10,13 @@ use syn::{
 	Error, Expr, Ident, Receiver, Token, Type,
 };
 
-pub struct Arg<'a>(Ident, &'a Type);
+pub struct Arg(Ident, Type);
 
-pub struct Source<'a> {
+pub struct Source {
 	pub receiver: Option<Receiver>,
 	pub comma_token: Option<Token![,]>,
 	/// Arguments to the `Source`, if any.
-	pub args: Option<Punctuated<Arg<'a>, Token![,]>>,
+	pub args: Option<Punctuated<Arg, Token![,]>>,
 	/// An arrow token that denotes this as a function with arguments: `=>`.
 	pub arrow_token: Option<Token![=>]>,
 	/// The `Source` function's body.
@@ -25,21 +25,21 @@ pub struct Source<'a> {
 
 // Parsing {{{
 
-impl Source<'_> {
+impl Source {
 	/// Parse a `Source` that can have zero or more [`Arg`s](Arg) and a receiver.
-	pub fn parse(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Self> {
+	pub fn parse(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
 		let fork = &input.fork();
 
 		// Parse a receiver (e.g. `self`, `&self`).
 		let receiver: Option<Receiver> = fork.parse().ok();
-		let comma_token: Option<Token![,]> = receiver.map(|_| fork.parse().ok()).flatten();
+		let comma_token: Option<Token![,]> = receiver.as_ref().and_then(|_| fork.parse().ok());
 
 		// If there is EITHER:
 		// - no receiver; or
 		// - a receiver _and_ a comma following it,
 		// parse additional `Arg`s.
 		let args = if receiver.is_none() || comma_token.is_some() {
-			Some(Arg::parse_args(fork, map)?)
+			Some(Arg::parse_args(&fork, map)?)
 		} else {
 			None
 		};
@@ -72,15 +72,16 @@ impl Source<'_> {
 	}
 
 	/// Parse a `Source` that can have zero or more [`Arg`s](Arg) but no receiver.
-	pub fn parse_without_receiver(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Self> {
+	pub fn parse_without_receiver(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
 		let source = Self::parse(input, map)?;
 
-		source.receiver.map_or_else(
+		if let Some(receiver) = source.receiver {
+			// If there is a receiver, generate an error:
+			Err(Error::new(receiver.self_token.span, "no receiver allowed"))
+		} else {
 			// If there is no receiver, return the source.
-			|| Ok(source),
-			// But if there is a receiver, generate an error:
-			|receiver| Err(Error::new(receiver.self_token.span, "no receiver allowed")),
-		)
+			Ok(source)
+		}
 	}
 
 	/// Parse a `Source` without the option for any [`Arg`s](Arg).
@@ -89,7 +90,7 @@ impl Source<'_> {
 
 		// Parse a receiver (e.g. `self`, `&self`).
 		let receiver: Option<Receiver> = fork.parse().ok();
-		let comma_token: Option<Token![,]> = receiver.map(|_| fork.parse().ok()).flatten();
+		let comma_token: Option<Token![,]> = receiver.as_ref().and_then(|_| fork.parse().ok());
 
 		// If the next token is `=>`, then this is actually a `Source` with
 		// a receiver, so we can advance `input` to the position of our `fork`
@@ -119,20 +120,19 @@ impl Source<'_> {
 	}
 }
 
-impl Arg<'_> {
+impl Arg {
 	/// Parses a single `Arg`: an `Ident` that is contained in the `map`.
-	pub fn parse(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Self> {
+	pub fn parse(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
 		// Parse an identifier.
 		let ident = input.parse()?;
 
 		// Attempt to get the type of the identifier from the map of known
 		// identifiers...
-		map.get(&ident).map_or_else(
-			// If no type was found, generate an error:
-			|| Err(Error::new(ident.span(), "unrecognized identifier")),
-			// Otherwise, return `Self(ident, r#type)`.
-			|r#type| Ok(Self(ident, r#type)),
-		)
+		if let Some(r#type) = map.get(&ident) {
+			Ok(Self(ident, r#type.to_owned()))
+		} else {
+			Err(Error::new(ident.span(), "unrecognized identifier"))
+		}
 	}
 
 	/// Parse a [`Punctuated`] (by commas) list of `Arg`s.
@@ -140,7 +140,7 @@ impl Arg<'_> {
 	/// See also: [Self::parse]
 	pub fn parse_args(
 		input: ParseStream,
-		map: HashMap<Ident, Type>,
+		map: &HashMap<Ident, Type>,
 	) -> Result<Punctuated<Self, Token![,]>> {
 		let mut args = Punctuated::new();
 

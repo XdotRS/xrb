@@ -3,53 +3,38 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 mod content;
-//mod metadata;
+mod metadata;
 
 use proc_macro::TokenStream;
-use proc_macro2::Span;
-use syn::{parse_macro_input, Ident, Type};
+use quote::ToTokens;
+use syn::{parse_macro_input, parse::{Parse, ParseStream, Result}};
 
-use quote::quote;
+use content::*;
+use metadata::*;
 
-use content::Source;
+struct Definitions(Vec<StructDefinition>);
+
+impl Parse for Definitions {
+	fn parse(input: ParseStream) -> Result<Self> {
+		let mut definitions = vec![];
+
+		while !input.is_empty() {
+			definitions.push(input.parse()?);
+		}
+
+		Ok(Self(definitions))
+	}
+}
+
+impl ToTokens for Definitions {
+	fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+		for definition in &self.0 {
+			definition.to_tokens(tokens);
+		}
+	}
+}
 
 #[proc_macro]
 pub fn define(input: TokenStream) -> TokenStream {
-	let input = parse_macro_input!(input as Source);
-
-	let mut tokens = proc_macro2::TokenStream::new();
-	input.to_tokens(
-		&mut tokens,
-		Ident::new("test", Span::call_site()),
-		Type::Verbatim(quote!(u32)).into(),
-	);
-
-	tokens.into()
-}
-
-// TODO: Attribute macros are simply allowed to replace (or modify) the `item`
-// `TokenStream` they are given. I _think_ they would alaso be expanded _after_
-// the function-like macro? Unless there's a way to change that. But in that
-// case: what code do you generate? Is there a way to access the content of the
-// context macro attribute in code?
-//
-// Of course, the other approach would be to 'intercept' the context attribute;
-// it wouldn't, in actual fact, be an attribute at all. You could parse _either_
-// `#[context(...)]` _or_ another attribute when parsing attributes.
-
-//#[proc_macro_attribute]
-//pub fn context(attr: TokenStream, item: TokenStream) -> TokenStream {
-//	let attr = parse_macro_input!(attr as Source);
-//
-//	item
-//}
-
-macro_rules! ignore {
-	($($tt:tt)*) => {};
-}
-
-ignore! {
-	#[context(fn(comma_token) comma_token)]
-	#[derive(Debug)]
-	pub x: i32,
+	parse_macro_input!(input as Definitions).into_token_stream().into()
 }

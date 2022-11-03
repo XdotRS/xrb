@@ -13,7 +13,7 @@ use syn::{
 use super::source::Source;
 
 /// An attribute, reimplemented to allow for [`Context`].
-pub struct Attribute<'a> {
+pub struct Attribute {
 	/// A hash token: `#`.
 	pub hash_token: Token![#],
 	/// The style of attribute (outer or inner, the latter denoted by `!`).
@@ -21,61 +21,64 @@ pub struct Attribute<'a> {
 	/// A pair of square bracket tokens (`[` and `]`).
 	pub bracket_token: token::Bracket,
 	/// The content of the attribute.
-	pub content: AttrContent<'a>,
+	pub content: AttrContent,
 }
 
-impl Attribute<'_> {
+impl Attribute {
 	/// Whether this is a [`AttrContent::Context`] attribute.
+	#[allow(dead_code)]
 	pub const fn is_context(&self) -> bool {
 		matches!(self.content, AttrContent::Context(..))
 	}
 
 	/// Whether this is an inner style attribute.
+	#[allow(dead_code)]
 	pub const fn is_inner(&self) -> bool {
 		self.style.is_some()
 	}
 
 	/// Whether this is an outer style attribute.
+	#[allow(dead_code)]
 	pub const fn is_outer(&self) -> bool {
 		self.style.is_none()
 	}
 }
 
 /// The content of an [`Attribute`] (what is between the square brackets).
-pub enum AttrContent<'a> {
-	Context(Path, Context<'a>),
+pub enum AttrContent {
+	Context(Path, Box<Context>),
 	Other(Path, TokenStream2),
 }
 
 /// An attribute that provides context for the deserialization of an `Item`.
-pub enum Context<'a> {
-	/// ```
+pub enum Context {
+	/// ```ignore
 	/// #[context = data_len => data_len]
 	/// ```
-	Equals(Token![=], Source<'a>),
-	/// ```
+	Equals(Token![=], Source),
+	/// ```ignore
 	/// #[context: data_len => data_len]
 	/// ```
-	Colon(Token![:], Source<'a>),
-	/// ```
+	Colon(Token![:], Source),
+	/// ```ignore
 	/// #[context(data_len => data_len)]
 	/// ```
-	Paren(token::Paren, Source<'a>),
-	/// ```
+	Paren(token::Paren, Source),
+	/// ```ignore
 	/// #[context[data_len => data_len]]
 	/// ```
-	Bracket(token::Bracket, Source<'a>),
-	/// ```
+	Bracket(token::Bracket, Source),
+	/// ```ignore
 	/// #[context {
 	///     data_len => data_len
 	/// }]
 	/// ```
-	Brace(token::Brace, Source<'a>),
+	Brace(token::Brace, Source),
 }
 
 // Expansion {{{
 
-impl ToTokens for Attribute<'_> {
+impl ToTokens for Attribute {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		// If this is `AttrContent::Other`, convert it to tokens. Otherwise, in
 		// the case of `AttrContent::Context`, it simply provides context when
@@ -100,20 +103,20 @@ impl ToTokens for Attribute<'_> {
 
 // Parsing {{{
 
-impl Attribute<'_> {
-	fn parse(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Self> {
+impl Attribute {
+	pub(self) fn parse(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
 		let content;
 
 		let hash_token = input.parse()?;
 		let style: Option<Token![!]> = input.parse().ok();
 		let bracket_token = bracketed!(content in input);
-		let content = AttrContent::parse(input, map)?;
+		let attr_content = AttrContent::parse(&content, map)?;
 
 		// If this is an inner context attribute, generate an error:
-		if style.is_some() {
-			if let AttrContent::Context(..) = content {
+		if let Some(style) = style {
+			if let AttrContent::Context(..) = attr_content {
 				return Err(Error::new(
-					style.unwrap().span,
+					style.span,
 					"inner context attributes are not allowed",
 				));
 			}
@@ -123,11 +126,11 @@ impl Attribute<'_> {
 			hash_token,
 			style,
 			bracket_token,
-			content,
+			content: attr_content,
 		})
 	}
 
-	pub fn parse_outer(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Vec<Self>> {
+	pub fn parse_outer(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Vec<Self>> {
 		let mut attributes = vec![];
 
 		while input.peek(Token![#]) && input.peek2(token::Bracket) {
@@ -147,7 +150,8 @@ impl Attribute<'_> {
 		Ok(attributes)
 	}
 
-	pub fn parse_inner(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Vec<Self>> {
+	#[allow(dead_code)]
+	pub fn parse_inner(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Vec<Self>> {
 		let mut attributes = vec![];
 
 		while input.peek(Token![#]) && input.peek2(token::Bracket) {
@@ -168,24 +172,24 @@ impl Attribute<'_> {
 	}
 }
 
-impl AttrContent<'_> {
-	fn parse(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Self> {
+impl AttrContent {
+	fn parse(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
 		let path: Path = input.parse()?;
 
 		Ok(if path.is_ident("context") {
-			Self::Context(path, Context::parse(input, map)?)
+			Self::Context(path, Box::new(Context::parse(input, map)?))
 		} else {
 			Self::Other(path, input.parse()?)
 		})
 	}
 }
 
-impl Context<'_> {
-	fn parse(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Self> {
+impl Context {
+	fn parse(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
 		let content;
 		let look = input.lookahead1();
 
-		let parse_source = || Source::parse_without_receiver(input, map);
+		let parse_source = || Source::parse_without_receiver(&input, map);
 
 		if look.peek(Token![=]) {
 			// Equals sign context (`=`)

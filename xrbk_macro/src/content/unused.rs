@@ -7,30 +7,33 @@ use syn::{bracketed, parenthesized, parse::ParseStream, token, Ident, Result, To
 
 use super::Source;
 
-pub enum Unused<'a> {
+pub enum Unused {
 	Unit(token::Paren),
-	Array(Array<'a>),
+	Array(Box<Array>),
 }
 
-pub struct Array<'a> {
+pub struct Array {
 	pub bracket_token: token::Bracket,
 	pub unit_token: token::Paren,
 	pub semicolon_token: Token![;],
-	pub source: Source<'a>,
+	pub source: Source,
 }
 
-impl<'a> Unused<'a> {
+impl Unused {
+	#[allow(dead_code)]
 	pub const fn is_unit(&self) -> bool {
 		matches!(self, Self::Unit(_))
 	}
 
+	#[allow(dead_code)]
 	pub const fn is_array(&self) -> bool {
 		matches!(self, Self::Array(_))
 	}
 
-	pub const fn source(&self) -> Option<&Source<'a>> {
+	#[allow(dead_code)]
+	pub const fn source(&self) -> Option<&Source> {
 		match self {
-			Self::Array(Array { source, .. }) => Some(source),
+			Self::Array(array) => Some(&array.source),
 			Self::Unit(_) => None,
 		}
 	}
@@ -38,12 +41,14 @@ impl<'a> Unused<'a> {
 
 // Expansion {{
 
-impl Unused<'_> {
-	pub fn to_write_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+impl Unused {
+	#[allow(dead_code)]
+	pub fn to_write_tokens(&self, _tokens: &mut proc_macro2::TokenStream) {
 		// writer.unused(#unused#num(__data__))
 	}
 
-	pub fn to_read_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+	#[allow(dead_code)]
+	pub fn to_read_tokens(&self, _tokens: &mut proc_macro2::TokenStream) {
 		// reader.advance(#unused#num(__data__))
 	}
 }
@@ -52,24 +57,24 @@ impl Unused<'_> {
 
 // Parsing {{{
 
-impl Unused<'_> {
-	pub fn parse(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Self> {
+impl Unused {
+	pub fn parse(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
 		let look = input.lookahead1();
 
 		if look.peek(token::Paren) {
-			let content;
+			let _unit;
 
-			Ok(Self::Unit(parenthesized!(content in input)))
+			Ok(Self::Unit(parenthesized!(_unit in input)))
 		} else if look.peek(token::Bracket) {
-			Ok(Self::Array(Array::parse(input, map)?))
+			Ok(Self::Array(Box::new(Array::parse(input, map)?)))
 		} else {
 			Err(look.error())
 		}
 	}
 }
 
-impl Array<'_> {
-	pub fn parse(input: ParseStream, map: HashMap<Ident, Type>) -> Result<Self> {
+impl Array {
+	pub fn parse(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
 		let (content, _unit);
 
 		Ok(Self {

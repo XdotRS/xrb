@@ -2,13 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use syn::{
-	parse::{Parse, ParseStream},
-	Attribute, Error, Expr, Generics, Ident, Result, Token, Type, Visibility,
-};
+use syn::{parse::{Parse, ParseStream}, Attribute, Error, Expr, Generics, Ident, Result, Token, Type, Visibility};
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
+
+use crate::Items;
 
 /// A definition, as defined with the [`define!`] macro, for ordinary structs
 /// and messages.
@@ -39,7 +38,7 @@ pub enum StructMetadata {
 	/// An event message struct.
 	Event(Event),
 	/// A request message struct.
-	Request(Request),
+	Request(Box<Request>),
 	/// A reply message struct.
 	Reply(Reply),
 }
@@ -235,8 +234,8 @@ impl Parse for StructDefinition {
 
 		let semicolon_token: Option<Token![;]> = match items {
 			Items::Unit => Some(input.parse()?),
-			Items::Unnamed(_) => Some(input.parse()?),
-			Items::Named(_) => None,
+			Items::Unnamed(..) => Some(input.parse()?),
+			Items::Named(..) => None,
 		};
 
 		Ok(Self {
@@ -308,7 +307,7 @@ impl Parse for StructMetadata {
 					gt_token: input.parse()?,
 				})),
 				// "Request" => parse request metadata
-				"Request" => Ok(Self::Request(Request {
+				"Request" => Ok(Self::Request(Box::new(Request {
 					// Attributes.
 					attributes,
 					// Visibility.
@@ -368,8 +367,8 @@ impl Parse for StructMetadata {
 							ty.map(|ty| (arrow_token, ty))
 						})
 						.flatten(),
-				})),
-				// "Reply" => parse reply metdata
+				}))),
+				// "Reply" => parse reply metadata
 				"Reply" => Ok(Self::Reply(Reply {
 					// Attributes.
 					attributes,
