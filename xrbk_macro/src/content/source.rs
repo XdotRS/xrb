@@ -39,7 +39,7 @@ impl Source {
 		// - a receiver _and_ a comma following it,
 		// parse additional `Arg`s.
 		let args = if receiver.is_none() || comma_token.is_some() {
-			Some(Arg::parse_args(&fork, map)?)
+			Some(Arg::parse_args(fork, map)?)
 		} else {
 			None
 		};

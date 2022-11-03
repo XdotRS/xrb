@@ -353,12 +353,12 @@ impl Parse for Definitions {
 
 impl Parse for Definition {
 	fn parse(input: ParseStream) -> Result<Self> {
-		let look = input.lookahead1();
-
 		// Since all definitions start with attributes and a visibility, we
 		// parse those here.
 		let attributes = input.call(Attribute::parse_outer)?;
 		let vis = input.parse()?;
+
+		let look = input.lookahead1();
 
 		if look.peek(Token![enum]) {
 			// If the next token is `enum`, parse this as an `Enum`.

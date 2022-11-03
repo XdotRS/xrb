@@ -24,6 +24,7 @@ use syn::{
 	punctuated::Punctuated,
 	token, Token,
 };
+use syn::punctuated::Pair;
 
 pub enum Item {
 	Field(Box<Field>),
@@ -59,15 +60,37 @@ impl ToTokens for Item {
 
 impl ToTokens for Items {
 	fn to_tokens(&self, tokens: &mut TokenStream) {
+		/// An internal-use function within `to_tokens` to reduce repeated
+		/// code. This ensures that commas are only converted to tokens if
+		/// their respective item is.
+		fn items_to_tokens(items: &Punctuated<Item, Token![,]>, tokens: &mut TokenStream) {
+			// For every pair of item and a possible comma...
+			for pair in items.pairs() {
+				// Unwrap the item and comma (which will be `None` if it is the
+				// final item and there is no trailing comma).
+				let (item, comma) = match pair {
+					Pair::Punctuated(item, comma) => (item, Some(comma)),
+					Pair::End(item) => (item, None),
+				};
+
+				// If this is a field, convert the  field and the comma to
+				// tokens, otherwise... don't.
+				if let Item::Field(field) = item {
+					field.to_tokens(tokens);
+					comma.to_tokens(tokens);
+				}
+			}
+		}
+
 		match self {
 			// Surround named items with their curly brackets.
 			Self::Named(brace_token, items) => {
-				brace_token.surround(tokens, |tokens| items.to_tokens(tokens));
+				brace_token.surround(tokens, |tokens| items_to_tokens(items, tokens));
 			}
 
 			// Surround unnamed items with their normal brackets.
 			Self::Unnamed(paren_token, items) => {
-				paren_token.surround(tokens, |tokens| items.to_tokens(tokens));
+				paren_token.surround(tokens, |tokens| items_to_tokens(items, tokens));
 			}
 
 			// Don't convert `Self::Unit` to any tokens at all.

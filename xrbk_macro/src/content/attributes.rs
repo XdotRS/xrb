@@ -189,26 +189,36 @@ impl Context {
 		let content;
 		let look = input.lookahead1();
 
-		let parse_source = || Source::parse_without_receiver(&input, map);
-
 		if look.peek(Token![=]) {
 			// Equals sign context (`=`)
-			Ok(Self::Equals(input.parse()?, parse_source()?))
+			Ok(Self::Equals(
+				input.parse()?,
+				Source::parse_without_receiver(input, map)?,
+			))
 		} else if look.peek(Token![:]) {
 			// Colon context (`:`)
-			Ok(Self::Colon(input.parse()?, parse_source()?))
+			Ok(Self::Colon(
+				input.parse()?,
+				Source::parse_without_receiver(input, map)?,
+			))
 		} else if look.peek(token::Paren) {
 			// Normal bracket context (`(...)`)
 			Ok(Self::Paren(
 				parenthesized!(content in input),
-				parse_source()?,
+				Source::parse_without_receiver(&content, map)?,
 			))
 		} else if look.peek(token::Bracket) {
 			// Square bracket context (`[...]`)
-			Ok(Self::Bracket(bracketed!(content in input), parse_source()?))
+			Ok(Self::Bracket(
+				bracketed!(content in input),
+				Source::parse_without_receiver(&content, map)?,
+			))
 		} else if look.peek(token::Brace) {
 			// Curly bracket context (`{...}`)
-			Ok(Self::Brace(braced!(content in input), parse_source()?))
+			Ok(Self::Brace(
+				braced!(content in input),
+				Source::parse_without_receiver(&content, map)?,
+			))
 		} else {
 			// Otherwise, if the next token after `context` is none of those,
 			// generate an error.

@@ -96,7 +96,7 @@ impl Parse for Let {
 
 			eq_token: input.parse()?,
 
-			source: Source::parse_without_args(&input)?,
+			source: Source::parse_without_args(input)?,
 		})
 	}
 }
