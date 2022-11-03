@@ -14,11 +14,16 @@ pub use r#let::*;
 pub use source::*;
 pub use unused::*;
 
-use std::collections::HashMap;
 use proc_macro2::TokenStream;
-use syn::{braced, parenthesized, parse::{ParseStream, Result}, punctuated::Punctuated, token, Token};
 use quote::ToTokens;
+use std::collections::HashMap;
 use syn::parse::Parse;
+use syn::{
+	braced, parenthesized,
+	parse::{ParseStream, Result},
+	punctuated::Punctuated,
+	token, Token,
+};
 
 pub enum Item {
 	Field(Box<Field>),
@@ -37,18 +42,6 @@ pub enum Items {
 
 	/// No [`Item`]s at all.
 	Unit,
-}
-
-impl Items {
-	/// Returns the [`Punctuated`] list of [`Item`s](Item) contained if this is
-	/// [`Items::Named`] or [`Items::Unnamed`].
-	pub fn items(&self) -> Option<&Punctuated<Item, Token![,]>> {
-		match self {
-			Self::Named(_, items) => Some(items),
-			Self::Unnamed(_, items) => Some(items),
-			Self::Unit => None,
-		}
-	}
 }
 
 // Expansion {{{
@@ -88,7 +81,10 @@ impl ToTokens for Items {
 // Parsing {{{
 
 impl Items {
-	pub(self) fn parse_items(input:ParseStream, named: bool) -> Result<Punctuated<Item, Token![,]>> {
+	pub(self) fn parse_items(
+		input: ParseStream,
+		named: bool,
+	) -> Result<Punctuated<Item, Token![,]>> {
 		let mut items = Punctuated::new();
 		// Keep track of the identifiers defined thus far and which types they
 		// correspond to. This is used to parse `Source`s.
@@ -101,7 +97,7 @@ impl Items {
 				// If the next token (i.e. the start of a new item) is a square
 				// bracket or a normal bracket, then this must be an unused
 				// bytes item (either in the form `[(); source]`, or just `()`).
-				items.push_value(Item::Unused(Unused::parse(&input, &map)?));
+				items.push_value(Item::Unused(Unused::parse(input, &map)?));
 			} else if input.peek(Token![let]) {
 				// Otherwise, if the next token is `Let`, then this must be a
 				// `Let` item. Note that this won't work if support for
@@ -124,10 +120,10 @@ impl Items {
 				let field = if named {
 					// If we are to parse the items as `named`, then we parse
 					// the `field` as as named:
-					Field::parse_named(&input, &map)?
+					Field::parse_named(input, &map)?
 				} else {
 					// Otherwise, we parse the field as unnamed:
-					Field::parse_unnamed(&input, &map)?
+					Field::parse_unnamed(input, &map)?
 				};
 
 				// If the field is `named`, then we want to add its name to the

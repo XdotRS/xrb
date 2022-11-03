@@ -32,9 +32,7 @@ impl Field {
 	/// Returns whether this field as a context attribute.
 	#[allow(dead_code)]
 	pub fn has_context(&self) -> bool {
-		self.attributes
-			.iter()
-			.any(|attr| attr.is_context())
+		self.attributes.iter().any(|attr| attr.is_context())
 	}
 
 	/// Gets the context of this field if it has a context attribute.
