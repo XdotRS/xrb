@@ -4,13 +4,15 @@
 
 use std::collections::HashMap;
 
+use proc_macro2::TokenStream as TokenStream2;
+use quote::{quote, ToTokens};
 use syn::{
 	parse::{discouraged::Speculative, ParseStream, Result},
 	punctuated::Punctuated,
 	Error, Expr, Ident, Receiver, Token, Type,
 };
 
-pub struct Arg(Ident, Type);
+pub struct Arg(pub Ident, pub Type);
 
 pub struct Source {
 	pub receiver: Option<Receiver>,
@@ -22,6 +24,34 @@ pub struct Source {
 	/// The `Source` function's body.
 	pub expr: Expr,
 }
+
+// Expansion {{{
+
+impl Source {
+	// TODO
+	pub fn fn_to_tokens(&self, tokens: &mut TokenStream2, ident: &Ident, r#type: &Type) {
+		let receiver = &self.receiver;
+		let comma = &self.comma_token;
+		let arg: &Vec<_> = &self.args.iter().flatten().collect();
+		let expr = &self.expr;
+
+		quote!(
+			fn #ident(#receiver #comma #(#arg)*) -> #r#type {
+				#expr
+			}
+		).to_tokens(tokens)
+	}
+}
+
+impl ToTokens for Arg {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		self.0.to_tokens(tokens);
+		quote!(:).to_tokens(tokens);
+		self.1.to_tokens(tokens);
+	}
+}
+
+// }}}
 
 // Parsing {{{
 

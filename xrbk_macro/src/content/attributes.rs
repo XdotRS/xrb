@@ -76,6 +76,18 @@ pub enum Context {
 	Brace(token::Brace, Source),
 }
 
+impl Context {
+	pub fn source(&self) -> &Source {
+		match self {
+			Self::Equals(_, source) => source,
+			Self::Colon(_, source) => source,
+			Self::Paren(_, source) => source,
+			Self::Bracket(_, source) => source,
+			Self::Brace(_, source) => source,
+		}
+	}
+}
+
 // Expansion {{{
 
 impl ToTokens for Attribute {

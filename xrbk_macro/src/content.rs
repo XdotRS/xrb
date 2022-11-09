@@ -15,15 +15,16 @@ pub use source::*;
 pub use unused::*;
 
 use proc_macro2::TokenStream;
-use quote::ToTokens;
+use quote::{format_ident, ToTokens, quote};
 use std::collections::HashMap;
 use syn::parse::Parse;
 use syn::{
 	braced, parenthesized,
 	parse::{ParseStream, Result},
 	punctuated::Punctuated,
-	token, Token,
+	token, Token, Ident,
 };
+use syn::__private::TokenStream2;
 use syn::punctuated::Pair;
 
 pub enum Item {
@@ -45,6 +46,33 @@ pub enum Items {
 	Unit,
 }
 
+impl Items {
+	pub fn iter(&self) -> syn::punctuated::Iter<Item> {
+		match self {
+			Self::Named(_, items) => items.iter(),
+			Self::Unnamed(_, items) => items.iter(),
+
+			Self::Unit => <Punctuated<Item, Token![,]>>::default().iter(),
+		}
+	}
+}
+
+impl IntoIterator for Items {
+	type Item = Item;
+	type IntoIter = syn::punctuated::IntoIter<Self::Item>;
+
+	fn into_iter(self) -> Self::IntoIter {
+		match self {
+			Self::Named(_, items) => items.into_iter(),
+			Self::Unnamed(_, items) => items.into_iter(),
+
+			// If there are no items, create an empty iterator from
+			// `Punctuated::default()`.
+			Self::Unit => <Punctuated<Item, Token![,]>>::default().into_iter(),
+		}
+	}
+}
+
 // Expansion {{{
 
 impl ToTokens for Item {
@@ -54,6 +82,76 @@ impl ToTokens for Item {
 		// deserialization code.
 		if let Self::Field(field) = self {
 			field.to_tokens(tokens);
+		}
+	}
+}
+
+impl Item {
+	pub fn identifier(&self, item_index: usize) -> Option<Ident> {
+		/// An internal-use function within [`Item::identifier`] to format a
+		/// named field's `Ident`.
+		fn fmt_named_ident(ident: &Ident) -> Ident {
+			format_ident!("__{}__", ident)
+		}
+
+		/// An internal-use function within [`Item::Identifier`] to format an
+		/// identifier for an item based on the item's index.
+		fn fmt_ident(i: usize) -> Ident {
+			format_ident!("_item_{}_", i)
+		}
+
+		match self {
+			Self::Field(field) => Some(
+				if let Some(ident) = &field.ident {
+					// If this is a named field, format the field's identifier
+					// with `fmt_named_ident` to avoid any possible name
+					// conflicts.
+					fmt_named_ident(ident)
+				} else {
+					// Otherwise, if this is an unnamed field, format an item
+					// identifier with `fmt_ident`.
+					fmt_ident(item_index)
+				}
+			),
+
+			// If this is a let item, format the let item's identifier with
+			// `fmt_named_ident`.
+			Self::Let(r#let) => Some(fmt_named_ident(&r#let.ident)),
+
+			Self::Unused(unused) => {
+				if unused.is_array() {
+					// If this is an 'array-type' unused item (meaning it has a
+					// source function), format its identifier with `fmt_ident`.
+					Some(fmt_ident(item_index))
+				} else {
+					// Otherwise, if this is a 'unit-type' unused item (meaning
+					// it is always read and written as a single byte), there
+					// is no source function, and therefore no identifier.
+					None
+				}
+			},
+		}
+	}
+
+	pub fn serialize_tokens(&self, tokens: &mut TokenStream, i: usize) {
+		match self {
+			Self::Field(field) => {
+				let name = (field.ident.as_ref())
+					.map_or_else(
+						|| format_ident!("item{}", i),
+						|ident| ident.to_owned(),
+					);
+
+				quote!(#name.write_to(writer)?;).to_tokens(tokens);
+			}
+
+			Self::Let(r#let) => {
+
+			}
+
+			Self::Unused(unused) => {
+
+			}
 		}
 	}
 }
@@ -96,6 +194,67 @@ impl ToTokens for Items {
 			// Don't convert `Self::Unit` to any tokens at all.
 			Self::Unit => (),
 		}
+	}
+}
+
+impl Items {
+	/// Generates the pattern required to pattern-match against these items
+	/// (e.g. in a `match` expression), returning a new [`TokenStream`].
+	pub fn pattern_to_tokenstream(&self) -> TokenStream {
+		let mut tokens = TokenStream::new();
+		self.pattern_to_tokens(&mut tokens);
+
+		tokens
+	}
+
+	/// Generates the pattern required to pattern-match against these items
+	/// (e.g. in a `match` expression).
+	pub fn pattern_to_tokens(&self, tokens: &mut TokenStream) {
+		/// An internal-use function within `patterns_to_tokens` to reduce
+		/// repeated code. This generates the pattern to match against the
+		/// items.
+		fn pattern(tokens: &mut TokenStream, items: &Punctuated<Item, Token![,]>) {
+			// Enumerate every pair of item and a possible comma with an
+			// index...
+			for (i, pair) in items.pairs().enumerate() {
+				// Unwrap the item and comma (which will be `None` if it is the
+				// final item and there is no trailing comma).
+				let (item, comma) = match pair {
+					Pair::Punctuated(item, comma) => (item, Some(comma)),
+					Pair::End(item) => (item, None),
+				};
+
+				// Only generate the pattern for fields.
+				if let Item::Field(_) = item {
+					// Use an appropriate identifier for the field (see
+					// [`Item::identifier`] for more information).
+					item.identifier(i).to_tokens(tokens);
+
+					// Convert the comma after the field to tokens too.
+					comma.to_tokens(tokens);
+				}
+			}
+		}
+
+		match self {
+			// Surround named item patterns with their curly brackets.
+			Self::Named(brace_token, items) => {
+				brace_token.surround(tokens, |tokens| pattern(tokens, items));
+			}
+
+			// Surround unnamed items with their normal brackets.
+			Self::Unnamed(paren_token, items) => {
+				paren_token.surround(tokens, |tokens| pattern(tokens, items))
+			}
+
+			// Don't generate a pattern for `Self::Unit` at all.
+			Self::Unit => {}
+		}
+	}
+
+	pub fn destructure_tokens(&self, tokens: &mut TokenStream2) {
+		let pat = self.pattern_to_tokenstream();
+		quote!(let Self #pat = self;).to_tokens(tokens);
 	}
 }
 

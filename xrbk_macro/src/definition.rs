@@ -15,7 +15,7 @@ use syn::punctuated::Punctuated;
 use crate::Items;
 
 /// A list of [`Definition`]s.
-pub struct Definitions(Vec<Definition>);
+pub struct Definitions(pub Vec<Definition>);
 
 /// An [`Enum`] or [`Struct`] definition.
 pub enum Definition {
@@ -23,6 +23,15 @@ pub enum Definition {
 	Enum(Box<Enum>),
 	/// A [`Struct`] `Definition`.
 	Struct(Box<Struct>),
+}
+
+impl Definition {
+	pub fn name(&self) -> &Ident {
+		match self {
+			Self::Enum(r#enum) => &r#enum.name,
+			Self::Struct(r#struct) => r#struct.name(),
+		}
+	}
 }
 
 /// A definition, as defined with the [`define!`] macro, for ordinary structs
@@ -47,6 +56,12 @@ pub struct Struct {
 	pub semicolon_token: Option<Token![;]>,
 }
 
+impl Struct {
+	pub fn name(&self) -> &Ident {
+		self.metadata.name()
+	}
+}
+
 /// The type of definition and metadata associated with it.
 pub enum StructMetadata {
 	/// An ordinary struct definition.
@@ -60,6 +75,17 @@ pub enum StructMetadata {
 
 	/// A reply message struct.
 	Reply(Reply),
+}
+
+impl StructMetadata {
+	pub fn name(&self) -> &Ident {
+		match self {
+			Self::Struct(BasicStructMetadata { name, .. }) => name,
+			Self::Event(Event { name, .. }) => name,
+			Self::Request(request) => &request.name,
+			Self::Reply(Reply { name, .. }) => name,
+		}
+	}
 }
 
 /// The definition of an enum.
