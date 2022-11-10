@@ -3,23 +3,35 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use proc_macro2::TokenStream as TokenStream2;
+use quote::ToTokens;
 
 pub trait TsExt {
-    fn with_tokens<F>(f: F) -> Self
-    where
-        F: FnMut(&mut Self);
+	fn with_tokens<F>(f: F) -> Self
+	where
+		F: FnMut(&mut Self);
+
+	fn append_tokens<F>(&mut self, f: F)
+	where
+		F: Fn() -> Self;
 }
 
 impl TsExt for TokenStream2 {
-    fn with_tokens<F>(f: F) -> Self
-    where
-        F: FnMut(&mut Self),
-    {
-        let mut tokens = Self::new();
-        f(&mut tokens);
+	fn with_tokens<F>(f: F) -> Self
+	where
+		F: FnMut(&mut Self),
+	{
+		let mut tokens = Self::new();
+		f(&mut tokens);
 
-        tokens
-    }
+		tokens
+	}
+
+	fn append_tokens<F>(&mut self, f: F)
+	where
+		F: Fn() -> Self,
+	{
+		f().to_tokens(self);
+	}
 }
 
 macro_rules! with_braces {

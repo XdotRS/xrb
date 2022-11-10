@@ -17,19 +17,33 @@ pub use unused::*;
 use crate::ts_ext::TsExt;
 
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{format_ident, ToTokens, quote};
+use quote::{format_ident, quote, ToTokens};
 use std::collections::HashMap;
 use syn::parse::Parse;
+use syn::punctuated::Pair;
 use syn::{
 	braced, parenthesized,
 	parse::{ParseStream, Result},
 	punctuated::Punctuated,
-	token, Token, Ident,
+	token, Ident, Token,
 };
-use syn::punctuated::Pair;
 
 pub trait FmtIdent {
 	fn fmt_ident(&self) -> Ident;
+}
+
+pub trait FmtIndexedIdent {
+	fn fmt_indexed_ident(&self, index: usize) -> Ident {
+		format_ident!("_item{}_", index)
+	}
+}
+
+pub trait SerializeTokens {
+	fn serialize_tokens(&self, tokens: &mut TokenStream2);
+}
+
+pub trait DeserializeTokens {
+	fn deserialize_tokens(&self, tokens: &mut TokenStream2);
 }
 
 pub enum Item {
@@ -41,40 +55,19 @@ pub enum Item {
 pub enum Items {
 	/// [`Item`]s surrounded by curly brackets (`{` and `}`), with names for
 	/// [`Field`]s.
-	Named(token::Brace, Punctuated<Item, Token![,]>),
+	Named(token::Brace, Punctuated<(usize, Item), Token![,]>),
 
 	/// [`Item`]s surrounded by normal brackets (`(` and `)`), without names
 	/// for [`Field`]s.
-	Unnamed(token::Paren, Punctuated<Item, Token![,]>),
+	Unnamed(token::Paren, Punctuated<(usize, Item), Token![,]>),
 
 	/// No [`Item`]s at all.
 	Unit,
 }
 
 impl Items {
-	pub fn iter(&self) -> syn::punctuated::Iter<Item> {
-		match self {
-			Self::Named(_, items) => items.iter(),
-			Self::Unnamed(_, items) => items.iter(),
-
-			Self::Unit => <Punctuated<Item, Token![,]>>::default().iter(),
-		}
-	}
-}
-
-impl IntoIterator for Items {
-	type Item = Item;
-	type IntoIter = syn::punctuated::IntoIter<Self::Item>;
-
-	fn into_iter(self) -> Self::IntoIter {
-		match self {
-			Self::Named(_, items) => items.into_iter(),
-			Self::Unnamed(_, items) => items.into_iter(),
-
-			// If there are no items, create an empty iterator from
-			// `Punctuated::default()`.
-			Self::Unit => <Punctuated<Item, Token![,]>>::default().into_iter(),
-		}
+	pub fn iter(&self) -> syn::punctuated::Iter<(usize, Item)> {
+		// TODO
 	}
 }
 
@@ -106,18 +99,16 @@ impl Item {
 		}
 
 		match self {
-			Self::Field(field) => Some(
-				if let Some(ident) = &field.ident {
-					// If this is a named field, format the field's identifier
-					// with `fmt_named_ident` to avoid any possible name
-					// conflicts.
-					fmt_named_ident(ident)
-				} else {
-					// Otherwise, if this is an unnamed field, format an item
-					// identifier with `fmt_ident`.
-					fmt_ident(item_index)
-				}
-			),
+			Self::Field(field) => Some(if let Some(ident) = &field.ident {
+				// If this is a named field, format the field's identifier
+				// with `fmt_named_ident` to avoid any possible name
+				// conflicts.
+				fmt_named_ident(ident)
+			} else {
+				// Otherwise, if this is an unnamed field, format an item
+				// identifier with `fmt_ident`.
+				fmt_ident(item_index)
+			}),
 
 			// If this is a let item, format the let item's identifier with
 			// `fmt_named_ident`.
@@ -134,12 +125,8 @@ impl Item {
 					// is no source function, and therefore no identifier.
 					None
 				}
-			},
+			}
 		}
-	}
-
-	pub fn serialize_tokens(&self, tokens: &mut TokenStream2, i: usize) {
-		// TODO
 	}
 }
 
@@ -148,12 +135,15 @@ impl ToTokens for Items {
 		/// An internal-use function within `to_tokens` to reduce repeated
 		/// code. This ensures that commas are only converted to tokens if
 		/// their respective item is.
-		fn items_to_tokens(items: &Punctuated<Item, Token![,]>, tokens: &mut TokenStream2) {
+		fn items_to_tokens(
+			items: &Punctuated<(usize, Item), Token![,]>,
+			tokens: &mut TokenStream2,
+		) {
 			// For every pair of item and a possible comma...
 			for pair in items.pairs() {
 				// Unwrap the item and comma (which will be `None` if it is the
 				// final item and there is no trailing comma).
-				let (item, comma) = match pair {
+				let ((_, item), comma) = match pair {
 					Pair::Punctuated(item, comma) => (item, Some(comma)),
 					Pair::End(item) => (item, None),
 				};
@@ -191,13 +181,13 @@ impl Items {
 		/// An internal-use function within `patterns_to_tokens` to reduce
 		/// repeated code. This generates the pattern to match against the
 		/// items.
-		fn pattern(tokens: &mut TokenStream2, items: &Punctuated<Item, Token![,]>) {
+		fn pattern(tokens: &mut TokenStream2, items: &Punctuated<(usize, Item), Token![,]>) {
 			// Enumerate every pair of item and a possible comma with an
 			// index...
-			for (i, pair) in items.pairs().enumerate() {
+			for pair in items.pairs() {
 				// Unwrap the item and comma (which will be `None` if it is the
 				// final item and there is no trailing comma).
-				let (item, comma) = match pair {
+				let ((i, item), comma) = match pair {
 					Pair::Punctuated(item, comma) => (item, Some(comma)),
 					Pair::End(item) => (item, None),
 				};
@@ -206,7 +196,7 @@ impl Items {
 				if let Item::Field(_) = item {
 					// Use an appropriate identifier for the field (see
 					// [`Item::identifier`] for more information).
-					item.identifier(i).to_tokens(tokens);
+					item.identifier(*i).to_tokens(tokens);
 
 					// Convert the comma after the field to tokens too.
 					comma.to_tokens(tokens);
@@ -239,7 +229,7 @@ impl Items {
 	///
 	/// impl A {
 	///     fn a(&self) {
- 	///         let Self = self;
+	///         let Self = self;
 	///     }
 	/// }
 	/// ```
@@ -281,7 +271,8 @@ impl Items {
 	pub(self) fn parse_items(
 		input: ParseStream,
 		named: bool,
-	) -> Result<Punctuated<Item, Token![,]>> {
+	) -> Result<Punctuated<(usize, Item), Token![,]>> {
+		let mut index: usize = 0;
 		let mut items = Punctuated::new();
 		// Keep track of the identifiers defined thus far and which types they
 		// correspond to. This is used to parse `Source`s.
@@ -294,7 +285,7 @@ impl Items {
 				// If the next token (i.e. the start of a new item) is a square
 				// bracket or a normal bracket, then this must be an unused
 				// bytes item (either in the form `[(); source]`, or just `()`).
-				items.push_value(Item::Unused(Unused::parse(input, &map)?));
+				items.push_value((index.clone(), Item::Unused(Unused::parse(input, &map)?)));
 			} else if input.peek(Token![let]) {
 				// Otherwise, if the next token is `Let`, then this must be a
 				// `Let` item. Note that this won't work if support for
@@ -309,7 +300,7 @@ impl Items {
 				map.insert(r#let.ident.to_owned(), r#let.r#type.to_owned());
 
 				// Push the new `Item::Let` to the list of `items`.
-				items.push_value(Item::Let(Box::new(r#let)));
+				items.push_value((index.clone(), Item::Let(Box::new(r#let))));
 			} else {
 				// Otherwise, if this is not an unused bytes item, nor a `Let`
 				// item, we assume it is a `Field` and parse it accordingly.
@@ -338,18 +329,20 @@ impl Items {
 				}
 
 				// Then we push the `Item::Field` to the list of `items`.
-				items.push_value(Item::Field(Box::new(field)));
+				items.push_value((index.clone(), Item::Field(Box::new(field))));
 			}
 
 			// If the token following the item is not a comma, then it must be
 			// the end of the list, so we break from the loop.
 			if !input.peek(Token![,]) {
 				break;
-			}
+			} else {
+				index += 1;
 
-			// Otherwise, if the next token is a comma, then the list can
-			// continue: we add the comma to the list.
-			items.push_punct(input.parse()?);
+				// Otherwise, if the next token is a comma, then the list can
+				// continue: we add the comma to the list.
+				items.push_punct(input.parse()?);
+			}
 		}
 
 		Ok(items)

@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use crate::content::FmtIndexedIdent;
+use quote::format_ident;
 use std::collections::HashMap;
 use syn::{bracketed, parenthesized, parse::ParseStream, token, Ident, Result, Token, Type};
 
@@ -17,6 +19,12 @@ pub struct Array {
 	pub unit_token: token::Paren,
 	pub semicolon_token: Token![;],
 	pub source: Source,
+}
+
+impl FmtIndexedIdent for Array {
+	fn fmt_indexed_ident(&self, index: usize) -> Ident {
+		format_ident!("_item{}_", index)
+	}
 }
 
 impl Unused {

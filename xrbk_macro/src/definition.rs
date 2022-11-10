@@ -12,7 +12,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
 use syn::punctuated::Punctuated;
 
-use crate::Items;
+use crate::{ts_ext::TsExt, Items};
 
 /// A list of [`Definition`]s.
 pub struct Definitions(pub Vec<Definition>);
@@ -28,7 +28,7 @@ pub enum Definition {
 impl Definition {
 	pub fn name(&self) -> &Ident {
 		match self {
-			Self::Enum(r#enum) => &r#enum.name,
+			Self::Enum(r#enum) => &r#enum.ident,
 			Self::Struct(r#struct) => r#struct.name(),
 		}
 	}
@@ -98,7 +98,7 @@ pub struct Enum {
 	/// The enum token: `enum`.
 	pub enum_token: Token![enum],
 	/// The name of the enum.
-	pub name: Ident,
+	pub ident: Ident,
 	/// Generics (lifetimes and/or generic types) associated with the enum.
 	pub generics: Generics,
 
@@ -114,7 +114,7 @@ pub struct Variant {
 	pub attributes: Vec<Attribute>,
 
 	/// The name of the enum variant.
-	pub name: Ident,
+	pub ident: Ident,
 	/// [`Items`] defined within the enum variant, if any.
 	pub items: Items,
 
@@ -265,7 +265,7 @@ impl ToTokens for Enum {
 		// `enum`
 		self.enum_token.to_tokens(tokens);
 		// The name of the enum.
-		self.name.to_tokens(tokens);
+		self.ident.to_tokens(tokens);
 		// Generics associated with the enum.
 		self.generics.to_tokens(tokens);
 
@@ -286,7 +286,7 @@ impl ToTokens for Variant {
 		}
 
 		// The name of the enum variant.
-		self.name.to_tokens(tokens);
+		self.ident.to_tokens(tokens);
 		// The `Items` defined within the enum variant, if any.
 		self.items.to_tokens(tokens);
 
@@ -455,7 +455,7 @@ impl Enum {
 			// The enum token: `enum`.
 			enum_token: input.parse()?,
 			// The name of the enum.
-			name: input.parse()?,
+			ident: input.parse()?,
 			// Generics associated with the enum.
 			generics: input.parse()?,
 
@@ -502,7 +502,7 @@ impl Parse for Variant {
 			// Parse attributes associated with the enum variant.
 			attributes: input.call(Attribute::parse_outer)?,
 
-			name: input.parse()?,
+			ident: input.parse()?,
 			// Items associated with the enum variant.
 			items: input.parse()?,
 

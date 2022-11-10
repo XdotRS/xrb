@@ -4,6 +4,7 @@
 
 use std::collections::HashMap;
 
+use crate::content::FmtIdent;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
 use syn::{
@@ -11,7 +12,6 @@ use syn::{
 	punctuated::Punctuated,
 	Error, Expr, Ident, Receiver, Token, Type,
 };
-use crate::content::FmtIdent;
 
 pub struct Arg(pub Ident, pub Type);
 
@@ -33,8 +33,12 @@ pub struct Source {
 }
 
 impl Source {
-	pub fn format_args(&self) -> Vec<Ident> {
-		self.args.iter().flatten().map(|arg| arg.fmt_ident()).collect()
+	pub fn fmt_args(&self) -> Vec<Ident> {
+		self.args
+			.iter()
+			.flatten()
+			.map(|arg| arg.fmt_ident())
+			.collect()
 	}
 }
 
@@ -51,7 +55,8 @@ impl Source {
 			fn #ident(#receiver #comma #(#arg)*) -> #r#type {
 				#expr
 			}
-		).to_tokens(tokens)
+		)
+		.to_tokens(tokens)
 	}
 }
 
