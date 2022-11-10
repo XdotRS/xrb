@@ -12,7 +12,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
 use syn::punctuated::Punctuated;
 
-use crate::{ts_ext::TsExt, Items};
+use crate::Items;
 
 /// A list of [`Definition`]s.
 pub struct Definitions(pub Vec<Definition>);
@@ -432,8 +432,8 @@ impl Struct {
 		// ```
 		let semicolon_token: Option<Token![;]> = match items {
 			Items::Unit => Some(input.parse()?),
-			Items::Unnamed(..) => Some(input.parse()?),
-			Items::Named(..) => None,
+			Items::Unnamed { .. } => Some(input.parse()?),
+			Items::Named { .. } => None,
 		};
 
 		Ok(Self {

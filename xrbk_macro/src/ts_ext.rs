@@ -12,7 +12,7 @@ pub trait TsExt {
 
 	fn append_tokens<F>(&mut self, f: F)
 	where
-		F: Fn() -> Self;
+		F: FnOnce() -> Self;
 }
 
 impl TsExt for TokenStream2 {
@@ -28,35 +28,8 @@ impl TsExt for TokenStream2 {
 
 	fn append_tokens<F>(&mut self, f: F)
 	where
-		F: Fn() -> Self,
+		F: FnOnce() -> Self,
 	{
 		f().to_tokens(self);
 	}
-}
-
-macro_rules! with_braces {
-    ($expr:expr) => {
-        {
-            let tokens = <proc_macro2::TokenStream as crate::ts_ext::TsExt>::with_tokens($expr);
-            quote!({ #tokens })
-        }
-    };
-}
-
-macro_rules! with_parens {
-    ($expr:expr) => {
-        {
-            let tokens = <proc_macro2::TokenStream as crate::ts_ext::TsExt>::with_tokens($expr);
-            quote!(( #tokens ))
-        }
-    }
-}
-
-macro_rules! with_brackets {
-    ($expr:expr) => {
-        {
-            let tokens = <proc_macro2::TokenStream as crate::ts_ext::TsExt>::with_tokens($expr);
-            quote!([ #tokens ])
-        }
-    }
 }

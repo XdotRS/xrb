@@ -18,16 +18,16 @@ impl Definitions {
 	}
 }
 
-impl Field {
-	fn serialize_tokens(&self, tokens: &mut TokenStream2, i: usize) {
-		let name = self.fmt_indexed_ident(i);
-		quote!(#name.write_to(writer)?;).to_tokens(tokens);
+impl SerializeTokens for Field {
+	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
+		let name = id.formatted().expect("field identifier must exist");
+		tokens.append_tokens(|| quote!(#name.write_to(writer)?;));
 	}
 }
 
 impl SerializeTokens for Let {
-	fn serialize_tokens(&self, tokens: &mut TokenStream2) {
-		let name = self.fmt_ident();
+	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
+		let name = id.formatted().expect("let item identifier must exist");
 		let args = self.source.fmt_args();
 
 		quote!(
@@ -39,24 +39,23 @@ impl SerializeTokens for Let {
 	}
 }
 
-impl Unused {
-	fn serialize_tokens(&self, tokens: &mut TokenStream2, i: usize) {
+impl SerializeTokens for Unused {
+	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
 		match self {
 			Self::Unit(_) => {
 				tokens.append_tokens(|| quote!(0u8.write_to(writer)?;));
 			}
 
 			Self::Array(array) => {
-				let name = array.fmt_indexed_ident(i);
+				let name = id.formatted()
+					.expect("array-type unused bytes item must have identifier");
 				let args = array.source.fmt_args();
 
 				tokens.append_tokens(|| {
 					quote!(
 						writer.put_many(
 							0u8,
-							#name(
-								#(#args,)*
-							)
+							#name( #(#args,)* )
 						);
 					)
 				});
@@ -65,29 +64,27 @@ impl Unused {
 	}
 }
 
-impl Item {
-	fn serialize_tokens(&self, tokens: &mut TokenStream2, i: usize) {
+impl SerializeTokens for Item {
+	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
 		match self {
-			Item::Field(field) => field.serialize_tokens(tokens, i),
+			Item::Field(field) => field.serialize_tokens(tokens, id),
 
-			Item::Let(r#let) => r#let.serialize_tokens(tokens),
+			Item::Let(r#let) => r#let.serialize_tokens(tokens, id),
 
-			Item::Unused(unused) => unused.serialize_tokens(tokens, i),
+			Item::Unused(unused) => unused.serialize_tokens(tokens, id),
 		}
 	}
 }
 
-impl SerializeTokens for Definition {
-	fn serialize_tokens(&self, tokens: &mut TokenStream2) {
+impl Definition {
+	pub fn serialize_tokens(&self, tokens: &mut TokenStream2) {
 		match self {
 			Self::Enum(r#enum) => r#enum.serialize_tokens(tokens),
 			Self::Struct(r#struct) => r#struct.serialize_tokens(tokens),
 		}
 	}
-}
 
-impl DeserializeTokens for Definition {
-	fn deserialize_tokens(&self, tokens: &mut TokenStream2) {
+	pub fn deserialize_tokens(&self, tokens: &mut TokenStream2) {
 		match self {
 			Self::Enum(r#enum) => r#enum.deserialize_tokens(tokens),
 			Self::Struct(r#struct) => r#struct.deserialize_tokens(tokens),
@@ -95,8 +92,8 @@ impl DeserializeTokens for Definition {
 	}
 }
 
-impl SerializeTokens for Enum {
-	fn serialize_tokens(&self, tokens: &mut TokenStream2) {
+impl Enum {
+	pub fn serialize_tokens(&self, tokens: &mut TokenStream2) {
 		let name = &self.ident;
 
 		let arms = TokenStream2::with_tokens(|tokens| {
@@ -107,8 +104,8 @@ impl SerializeTokens for Enum {
 				});
 
 				let inner = TokenStream2::with_tokens(|tokens| {
-					for (i, item) in variant.items.iter() {
-						item.serialize_tokens(tokens, i);
+					for (id, item) in variant.items.iter() {
+						item.serialize_tokens(tokens, id);
 					}
 				});
 
@@ -137,10 +134,12 @@ impl SerializeTokens for Enum {
 			)
 		});
 	}
+
+	pub fn deserialize_tokens(&self, tokens: &mut TokenStream2) {}
 }
 
-impl SerializeTokens for Struct {
-	fn serialize_tokens(&self, tokens: &mut TokenStream2) {
+impl Struct {
+	pub fn serialize_tokens(&self, tokens: &mut TokenStream2) {
 		let name = self.metadata.name();
 
 		let pat = TokenStream2::with_tokens(|tokens| {
@@ -148,8 +147,8 @@ impl SerializeTokens for Struct {
 		});
 
 		let inner = TokenStream2::with_tokens(|tokens| {
-			for (i, item) in self.items.iter() {
-				item.serialize_tokens(tokens, *i);
+			for (id, item) in self.items.iter() {
+				item.serialize_tokens(tokens, id);
 			}
 		});
 
@@ -168,10 +167,8 @@ impl SerializeTokens for Struct {
 			)
 		});
 	}
-}
 
-impl DeserializeTokens for Struct {
-	fn deserialize_tokens(&self, _tokens: &mut TokenStream2) {
+	pub fn deserialize_tokens(&self, _tokens: &mut TokenStream2) {
 		// TODO
 	}
 }

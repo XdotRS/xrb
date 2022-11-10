@@ -10,21 +10,22 @@ mod impls;
 mod ts_ext;
 
 use proc_macro::TokenStream;
+use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
-use syn::__private::TokenStream2;
 use syn::parse_macro_input;
 
-use content::*;
-use definition::*;
+pub(crate) use content::*;
+pub(crate) use definition::*;
+pub(crate) use ts_ext::*;
 
 #[proc_macro]
 pub fn define(input: TokenStream) -> TokenStream {
 	let input = parse_macro_input!(input as Definitions);
 
-	let mut expanded = TokenStream2::new();
-
-	input.to_tokens(&mut expanded);
-	//input.impl_tokens(&mut expanded);
+	let expanded = TokenStream2::with_tokens(|tokens| {
+		input.to_tokens(tokens);
+		input.impl_tokens(tokens);
+	});
 
 	expanded.into()
 }

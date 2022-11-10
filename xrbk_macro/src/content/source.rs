@@ -2,9 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use crate::TsExt;
+
 use std::collections::HashMap;
 
-use crate::content::FmtIdent;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
 use syn::{
@@ -14,12 +15,6 @@ use syn::{
 };
 
 pub struct Arg(pub Ident, pub Type);
-
-impl FmtIdent for Arg {
-	fn fmt_ident(&self) -> Ident {
-		format_ident!("__{}__", self.0)
-	}
-}
 
 pub struct Source {
 	pub receiver: Option<Receiver>,
@@ -37,7 +32,7 @@ impl Source {
 		self.args
 			.iter()
 			.flatten()
-			.map(|arg| arg.fmt_ident())
+			.map(|Arg(ident, _)| format_ident!("__{}__", ident))
 			.collect()
 	}
 }
@@ -51,12 +46,13 @@ impl Source {
 		let arg: &Vec<_> = &self.args.iter().flatten().collect();
 		let expr = &self.expr;
 
-		quote!(
-			fn #ident(#receiver #comma #(#arg)*) -> #r#type {
-				#expr
-			}
-		)
-		.to_tokens(tokens)
+		tokens.append_tokens(|| {
+			quote!(
+				fn #ident(#receiver #comma #(#arg)*) -> #r#type {
+					#expr
+				}
+			)
+		});
 	}
 }
 

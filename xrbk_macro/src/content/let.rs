@@ -7,7 +7,6 @@ use syn::{
 	Ident, Result, Token, Type,
 };
 
-use crate::content::FmtIdent;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
 
@@ -31,12 +30,6 @@ pub struct Let {
 
 	/// The [`Source`] used in the generated function for this `let` item.
 	pub source: Source,
-}
-
-impl FmtIdent for Let {
-	fn fmt_ident(&self) -> Ident {
-		format_ident!("__{}__", self.ident)
-	}
 }
 
 // Expansion {{{

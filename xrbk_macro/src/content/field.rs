@@ -2,9 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::content::FmtIndexedIdent;
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{format_ident, ToTokens};
+use quote::ToTokens;
 use std::collections::HashMap;
 use syn::{parse::ParseStream, Error, Ident, Result, Token, Type, Visibility};
 
@@ -43,16 +42,6 @@ impl Field {
 			AttrContent::Context(_, context) => Some(context),
 			_ => None,
 		})
-	}
-}
-
-impl FmtIndexedIdent for Field {
-	fn fmt_indexed_ident(&self, index: usize) -> Ident {
-		if let Some(ident) = &self.ident {
-			format_ident!("__{}__", ident)
-		} else {
-			format_ident!("_item{}_", index)
-		}
 	}
 }
 

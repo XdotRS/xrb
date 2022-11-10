@@ -26,19 +26,16 @@ pub struct Attribute {
 
 impl Attribute {
 	/// Whether this is a [`AttrContent::Context`] attribute.
-	#[allow(dead_code)]
 	pub const fn is_context(&self) -> bool {
 		matches!(self.content, AttrContent::Context(..))
 	}
 
 	/// Whether this is an inner style attribute.
-	#[allow(dead_code)]
 	pub const fn is_inner(&self) -> bool {
 		self.style.is_some()
 	}
 
 	/// Whether this is an outer style attribute.
-	#[allow(dead_code)]
 	pub const fn is_outer(&self) -> bool {
 		self.style.is_none()
 	}
