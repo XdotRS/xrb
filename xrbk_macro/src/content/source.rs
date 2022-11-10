@@ -5,14 +5,21 @@
 use std::collections::HashMap;
 
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{quote, ToTokens};
+use quote::{format_ident, quote, ToTokens};
 use syn::{
 	parse::{discouraged::Speculative, ParseStream, Result},
 	punctuated::Punctuated,
 	Error, Expr, Ident, Receiver, Token, Type,
 };
+use crate::content::FmtIdent;
 
 pub struct Arg(pub Ident, pub Type);
+
+impl FmtIdent for Arg {
+	fn fmt_ident(&self) -> Ident {
+		format_ident!("__{}__", self.0)
+	}
+}
 
 pub struct Source {
 	pub receiver: Option<Receiver>,
@@ -25,10 +32,15 @@ pub struct Source {
 	pub expr: Expr,
 }
 
+impl Source {
+	pub fn format_args(&self) -> Vec<Ident> {
+		self.args.iter().flatten().map(|arg| arg.fmt_ident()).collect()
+	}
+}
+
 // Expansion {{{
 
 impl Source {
-	// TODO
 	pub fn fn_to_tokens(&self, tokens: &mut TokenStream2, ident: &Ident, r#type: &Type) {
 		let receiver = &self.receiver;
 		let comma = &self.comma_token;
@@ -45,9 +57,11 @@ impl Source {
 
 impl ToTokens for Arg {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
-		self.0.to_tokens(tokens);
+		let Self(ident, r#type) = self;
+
+		ident.to_tokens(tokens);
 		quote!(:).to_tokens(tokens);
-		self.1.to_tokens(tokens);
+		r#type.to_tokens(tokens);
 	}
 }
 

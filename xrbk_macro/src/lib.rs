@@ -7,6 +7,7 @@
 mod content;
 mod definition;
 mod impls;
+mod ts_ext;
 
 use proc_macro::TokenStream;
 use quote::ToTokens;

@@ -2,15 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use proc_macro2::{Ident, TokenStream as TokenStream2};
+use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
-use syn::{Type, token};
+use syn::{Type, Ident};
 
-use crate::*;
+use crate::{*, ts_ext::TsExt};
 
 impl Definitions {
     pub fn impl_tokens(&self, tokens: &mut TokenStream2) {
-        for definition in &self.0 {
+        let Self(definitions) = self;
+
+        for definition in definitions {
             definition.serialize_tokens(tokens);
             definition.deserialize_tokens(tokens);
         }
@@ -90,7 +92,9 @@ impl Definition {
             Self::Enum(r#enum) => {
                 for variant in &r#enum.variants {
                     let name = &variant.name;
-                    let pat = variant.items.pattern_to_tokenstream();
+                    let pat = TokenStream2::with_tokens(|tokens| {
+                        variant.items.pattern_to_tokens(tokens)
+                    });
 
                     let mut writes = TokenStream2::new();
 
@@ -98,15 +102,7 @@ impl Definition {
                         match item {
                             Item::Let(r#let) => {
                                 let name = &r#let.ident;
-                                let arg: Vec<_> = r#let
-                                    .source
-                                    .args
-                                    .iter()
-                                    .flatten()
-                                    .map(|Arg(ident, _)| {
-                                        format_ident!("__{}__", ident)
-                                    })
-                                    .collect();
+                                let arg = r#let.source.format_args();
 
                                 quote!(#name(#(#arg,)*).write_to(writer)?;).to_tokens(&mut writes);
                             }
@@ -120,15 +116,7 @@ impl Definition {
                             Item::Unused(unused) => {
                                 if let Unused::Array(array) = unused {
                                     let name = format_ident(i);
-                                    let arg: Vec<_> = array
-                                        .source
-                                        .args
-                                        .iter()
-                                        .flatten()
-                                        .map(|Arg(ident, _)| {
-                                            format_ident!("__{}__", ident)
-                                        })
-                                        .collect();
+                                    let arg = array.source.format_args();
 
                                     quote!(writer.put_many(0u8, #name(#(#arg,)*));)
                                         .to_tokens(&mut writes);
@@ -177,7 +165,7 @@ impl Definition {
                     &self,
                     writer: &mut impl bytes::BufMut,
                 ) -> Result<(), Box<dyn std::error::Error>> {
-                    // ...
+                    #inner
                 }
             }
         ).to_tokens(tokens);

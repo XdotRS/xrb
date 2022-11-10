@@ -14,7 +14,9 @@ pub use r#let::*;
 pub use source::*;
 pub use unused::*;
 
-use proc_macro2::TokenStream;
+use crate::ts_ext::TsExt;
+
+use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, ToTokens, quote};
 use std::collections::HashMap;
 use syn::parse::Parse;
@@ -24,8 +26,11 @@ use syn::{
 	punctuated::Punctuated,
 	token, Token, Ident,
 };
-use syn::__private::TokenStream2;
 use syn::punctuated::Pair;
+
+pub trait FmtIdent {
+	fn fmt_ident(&self) -> Ident;
+}
 
 pub enum Item {
 	Field(Box<Field>),
@@ -76,7 +81,7 @@ impl IntoIterator for Items {
 // Expansion {{{
 
 impl ToTokens for Item {
-	fn to_tokens(&self, tokens: &mut TokenStream) {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		// If `self` is a `Field`, convert it to tokens, otherwise don't - the
 		// other items are used for generating the serialization and
 		// deserialization code.
@@ -133,35 +138,17 @@ impl Item {
 		}
 	}
 
-	pub fn serialize_tokens(&self, tokens: &mut TokenStream, i: usize) {
-		match self {
-			Self::Field(field) => {
-				let name = (field.ident.as_ref())
-					.map_or_else(
-						|| format_ident!("item{}", i),
-						|ident| ident.to_owned(),
-					);
-
-				quote!(#name.write_to(writer)?;).to_tokens(tokens);
-			}
-
-			Self::Let(r#let) => {
-
-			}
-
-			Self::Unused(unused) => {
-
-			}
-		}
+	pub fn serialize_tokens(&self, tokens: &mut TokenStream2, i: usize) {
+		// TODO
 	}
 }
 
 impl ToTokens for Items {
-	fn to_tokens(&self, tokens: &mut TokenStream) {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		/// An internal-use function within `to_tokens` to reduce repeated
 		/// code. This ensures that commas are only converted to tokens if
 		/// their respective item is.
-		fn items_to_tokens(items: &Punctuated<Item, Token![,]>, tokens: &mut TokenStream) {
+		fn items_to_tokens(items: &Punctuated<Item, Token![,]>, tokens: &mut TokenStream2) {
 			// For every pair of item and a possible comma...
 			for pair in items.pairs() {
 				// Unwrap the item and comma (which will be `None` if it is the
@@ -199,21 +186,12 @@ impl ToTokens for Items {
 
 impl Items {
 	/// Generates the pattern required to pattern-match against these items
-	/// (e.g. in a `match` expression), returning a new [`TokenStream`].
-	pub fn pattern_to_tokenstream(&self) -> TokenStream {
-		let mut tokens = TokenStream::new();
-		self.pattern_to_tokens(&mut tokens);
-
-		tokens
-	}
-
-	/// Generates the pattern required to pattern-match against these items
 	/// (e.g. in a `match` expression).
-	pub fn pattern_to_tokens(&self, tokens: &mut TokenStream) {
+	pub fn pattern_to_tokens(&self, tokens: &mut TokenStream2) {
 		/// An internal-use function within `patterns_to_tokens` to reduce
 		/// repeated code. This generates the pattern to match against the
 		/// items.
-		fn pattern(tokens: &mut TokenStream, items: &Punctuated<Item, Token![,]>) {
+		fn pattern(tokens: &mut TokenStream2, items: &Punctuated<Item, Token![,]>) {
 			// Enumerate every pair of item and a possible comma with an
 			// index...
 			for (i, pair) in items.pairs().enumerate() {
@@ -252,8 +230,45 @@ impl Items {
 		}
 	}
 
+	/// Expands the tokens required to destructure `self`'s fields in a struct.
+	///
+	/// # Examples
+	/// For a unit struct:
+	/// ```
+	/// struct A;
+	///
+	/// impl A {
+	///     fn a(&self) {
+ 	///         let Self = self;
+	///     }
+	/// }
+	/// ```
+	/// For a tuple struct:
+	/// ```
+	/// struct B(i32, i32);
+	///
+	/// impl B {
+	///     fn b(&self) {
+	///         let Self(_item0_, _item1_) = self;
+	///     }
+	/// }
+	/// ```
+	/// For a struct with named fields:
+	/// ```
+	/// struct C {
+	///     x: i32,
+	///     y: i32,
+	/// }
+	///
+	/// impl C {
+	///     fn c(&self) {
+	///         let Self { x: __x__, y: __y__ } = self;
+	///     }
+	/// }
+	/// ```
 	pub fn destructure_tokens(&self, tokens: &mut TokenStream2) {
-		let pat = self.pattern_to_tokenstream();
+		let pat = TokenStream2::with_tokens(|tokens| self.pattern_to_tokens(tokens));
+
 		quote!(let Self #pat = self;).to_tokens(tokens);
 	}
 }
