@@ -4,17 +4,17 @@
 
 mod attributes;
 mod field;
+mod items;
 mod r#let;
 mod source;
 mod unused;
-mod items;
 
 pub use attributes::*;
 pub use field::*;
+pub use items::*;
 pub use r#let::*;
 pub use source::*;
 pub use unused::*;
-pub use items::*;
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;

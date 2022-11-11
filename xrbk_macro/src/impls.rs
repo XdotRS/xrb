@@ -47,7 +47,8 @@ impl SerializeTokens for Unused {
 			}
 
 			Self::Array(array) => {
-				let name = id.formatted()
+				let name = id
+					.formatted()
 					.expect("array-type unused bytes item must have identifier");
 				let args = array.source.fmt_args();
 
@@ -104,7 +105,7 @@ impl Enum {
 				});
 
 				let inner = TokenStream2::with_tokens(|tokens| {
-					for (id, item) in variant.items.iter() {
+					for (id, item) in variant.items.pairs() {
 						item.serialize_tokens(tokens, id);
 					}
 				});
@@ -135,7 +136,7 @@ impl Enum {
 		});
 	}
 
-	pub fn deserialize_tokens(&self, tokens: &mut TokenStream2) {}
+	pub fn deserialize_tokens(&self, _tokens: &mut TokenStream2) {}
 }
 
 impl Struct {
@@ -147,7 +148,7 @@ impl Struct {
 		});
 
 		let inner = TokenStream2::with_tokens(|tokens| {
-			for (id, item) in self.items.iter() {
+			for (id, item) in self.items.pairs() {
 				item.serialize_tokens(tokens, id);
 			}
 		});

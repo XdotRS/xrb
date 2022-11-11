@@ -8,7 +8,7 @@ use quote::ToTokens;
 pub trait TsExt {
 	fn with_tokens<F>(f: F) -> Self
 	where
-		F: FnMut(&mut Self);
+		F: FnOnce(&mut Self);
 
 	fn append_tokens<F>(&mut self, f: F)
 	where
@@ -18,7 +18,7 @@ pub trait TsExt {
 impl TsExt for TokenStream2 {
 	fn with_tokens<F>(f: F) -> Self
 	where
-		F: FnMut(&mut Self),
+		F: FnOnce(&mut Self),
 	{
 		let mut tokens = Self::new();
 		f(&mut tokens);
