@@ -12,7 +12,7 @@ use syn::{
 
 use super::source::Source;
 
-/// An attribute, reimplemented to allow for [`Context`].
+/// An attribute, reimplemented to allow for [`Context`] and metabyte attributes.
 pub struct Attribute {
 	/// A hash token: `#`.
 	pub hash_token: Token![#],
@@ -25,9 +25,14 @@ pub struct Attribute {
 }
 
 impl Attribute {
-	/// Whether this is a [`AttrContent::Context`] attribute.
+	/// Whether this is an [`AttrContent::Context`] attribute.
 	pub const fn is_context(&self) -> bool {
 		matches!(self.content, AttrContent::Context(..))
+	}
+
+	/// Whether this is an [`AttrContent::Metabyte`] attribute.
+	pub const fn is_metabyte(&self) -> bool {
+		matches!(self.content, AttrContent::Metabyte(..))
 	}
 
 	/// Whether this is an inner style attribute.
@@ -44,6 +49,8 @@ impl Attribute {
 /// The content of an [`Attribute`] (what is between the square brackets).
 pub enum AttrContent {
 	Context(Path, Box<Context>),
+	Metabyte(Path),
+
 	Other(Path, TokenStream2),
 }
 
@@ -89,10 +96,7 @@ impl Context {
 
 impl ToTokens for Attribute {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
-		// If this is `AttrContent::Other`, convert it to tokens. Otherwise, in
-		// the case of `AttrContent::Context`, it simply provides context when
-		// expanding the deserialization code, and so won't actually exist as
-		// an attribute on the item.
+		// If this is `AttrContent::Other`, convert it to tokens.
 		if let AttrContent::Other(path, content) = &self.content {
 			// `#`
 			self.hash_token.to_tokens(tokens);
@@ -187,6 +191,8 @@ impl AttrContent {
 
 		Ok(if path.is_ident("context") {
 			Self::Context(path, Box::new(Context::parse(input, map)?))
+		} else if path.is_ident("metabyte") {
+			Self::Metabyte(path)
 		} else {
 			Self::Other(path, input.parse()?)
 		})
