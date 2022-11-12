@@ -9,7 +9,7 @@ use crate::*;
 use std::collections::HashMap;
 
 use proc_macro2::{Span, TokenStream as TokenStream2};
-use quote::{format_ident, ToTokens};
+use quote::{format_ident, ToTokens, quote};
 use syn::{
 	braced, parenthesized,
 	parse::{Parse, ParseStream, Result},
@@ -164,6 +164,40 @@ impl Items {
 
 			// Don't generate a pattern for `Self::Unit` at all.
 			Self::Unit => {}
+		}
+	}
+
+	/// Generates the tokens required to construct the struct or enum variant
+	/// using these `Items`.
+	pub fn constructor_to_tokens(&self, tokens: &mut TokenStream2) {
+		match self {
+			Self::Unit => {}
+
+			Self::Named { brace_token, .. } => {
+				brace_token.surround(tokens, |tokens| {
+					for (id, _) in self.pairs() {
+						if let ItemId::Field(FieldId::Ident(name)) = id {
+							let val = id.formatted();
+
+							tokens.append_tokens(|| {
+								quote!(#name: #val,)
+							});
+						}
+					}
+				});
+			}
+
+			Self::Unnamed { paren_token, .. } => {
+				paren_token.surround(tokens, |tokens| {
+					for (id, _) in self.pairs() {
+						let val = id.formatted();
+
+						tokens.append_tokens(|| {
+							quote!(#val,)
+						});
+					}
+				});
+			}
 		}
 	}
 }

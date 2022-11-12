@@ -244,16 +244,17 @@ impl Enum {
 
 			for variant in &self.variants {
 				let name = &variant.ident;
-				// Tokens to destructure the variant's fields.
-				let pat = TokenStream2::with_tokens(|tokens| {
-					variant.items.pattern_to_tokens(tokens);
-				});
 
 				// If the variant explicitly specifies its discriminant, reset
 				// the `discrim` tokens to that discriminant expression.
 				if let Some((_, expr)) = &variant.discriminant {
 					discrim = expr.to_token_stream();
 				}
+
+				// Tokens to destructure the variant's fields.
+				let pat = TokenStream2::with_tokens(|tokens| {
+					variant.items.pattern_to_tokens(tokens);
+				});
 
 				// Generate the tokens to serialize each of the variant's items.
 				let inner = TokenStream2::with_tokens(|tokens| {
@@ -317,6 +318,8 @@ impl Enum {
 			let mut discrim = quote!(0);
 
 			for variant in &self.variants {
+				let name = &variant.ident;
+
 				if let Some((_, expr)) = &variant.discriminant {
 					discrim = expr.to_token_stream();
 				}
@@ -328,37 +331,7 @@ impl Enum {
 				});
 
 				let cons = TokenStream2::with_tokens(|tokens| {
-					match &variant.items {
-						Items::Named { brace_token, .. } => {
-							brace_token.surround(tokens, |tokens| {
-								for (id, _) in variant.items.pairs() {
-									if let ItemId::Field(FieldId::Ident(field)) = id {
-										let ident = id.formatted();
-
-										tokens.append_tokens(|| {
-											quote!(#field: #ident,)
-										});
-									}
-								}
-							});
-						}
-
-						Items::Unnamed { paren_token, .. } => {
-							paren_token.surround(tokens, |tokens| {
-								for (id, _) in variant.items.pairs() {
-									if let ItemId::Field(_) = id {
-										let ident = id.formatted();
-
-										tokens.append_tokens(|| {
-											quote!(#ident,)
-										});
-									}
-								}
-							});
-						}
-
-						Items::Unit => (),
-					}
+					variant.items.constructor_to_tokens(tokens);
 				});
 
 				tokens.append_tokens(|| {
@@ -370,6 +343,8 @@ impl Enum {
 						}
 					)
 				});
+
+				discrim.append_tokens(|| quote!(/* discrim */ + 1));
 			}
 		});
 
@@ -423,7 +398,7 @@ impl Struct {
 	}
 
 	pub fn deserialize_tokens(&self, tokens: &mut TokenStream2) {
-		let name = &self.metadata.name();
+		let name = self.metadata.name();
 
 		let inner = TokenStream2::with_tokens(|tokens| {
 			for (id, item) in self.items.pairs() {
@@ -432,35 +407,7 @@ impl Struct {
 		});
 
 		let cons = TokenStream2::with_tokens(|tokens| {
-			match &self.items {
-				Items::Named { brace_token, .. } => {
-					brace_token.surround(tokens, |tokens| {
-						for (id, _) in self.items.pairs() {
-							if let ItemId::Field(FieldId::Ident(field)) = id {
-								let ident = id.formatted();
-
-								tokens.append_tokens(|| {
-									quote!(#field: #ident,)
-								});
-							}
-						}
-					});
-				}
-
-				Items::Unnamed { paren_token, .. } => {
-					paren_token.surround(tokens, |tokens| {
-						for (id, _) in self.items.pairs() {
-							let ident = id.formatted();
-
-							tokens.append_tokens(|| {
-								quote!(#ident,)
-							});
-						}
-					});
-				}
-
-				Items::Unit => {}
-			}
+			self.items.constructor_to_tokens(tokens);
 		});
 
 		tokens.append_tokens(|| {
