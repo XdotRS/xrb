@@ -22,11 +22,19 @@ impl Definitions {
 	pub fn impl_tokens(&self, tokens: &mut TokenStream2) {
 		let Self(definitions) = self;
 
+		// For each definition...
 		for definition in definitions {
-			definition.serialize_tokens(tokens);
-			definition.deserialize_tokens(tokens);
-
 			match definition {
+				// If it's an enum, append the serialization and
+				// deserialization tokens for that enum.
+				Definition::Enum(_enum) => {
+					definition.serialize_tokens(tokens);
+					definition.deserialize_tokens(tokens);
+				}
+
+				// Otherwise, if it's a struct, it's a little more complicated:
+				// X11 messages are structs and they have a specific way to
+				// serializing and deserializing them.
 				Definition::Struct(r#struct) => {
 					match &r#struct.metadata {
 						StructMetadata::Request(_request) => {
@@ -56,16 +64,12 @@ impl Definitions {
 							// reply.impl_tokens(tokens);
 						}
 
+						// Just your basic, ordinary struct.
 						StructMetadata::Struct(_struct) => {
 							definition.serialize_tokens(tokens);
 							definition.deserialize_tokens(tokens);
 						}
 					}
-				}
-
-				Definition::Enum(_enum) => {
-					definition.serialize_tokens(tokens);
-					definition.deserialize_tokens(tokens);
 				}
 			}
 		}
@@ -73,6 +77,7 @@ impl Definitions {
 }
 
 impl SerializeTokens for Field {
+	// Tokens to serialize a field.
 	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
 		let name = id.formatted();
 		tokens.append_tokens(|| quote!(#name.write_to(writer)?;));
@@ -80,15 +85,21 @@ impl SerializeTokens for Field {
 }
 
 impl DeserializeTokens for Field {
+	// Tokens to deserialize a field.
 	fn deserialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
 		let name = id.formatted();
 		let r#type = &self.r#type;
 
 		tokens.append_tokens(|| {
+			// If this is a contextual field, that context must be provided.
 			if let Some(context) = self.context() {
 				let args = context.source().fmt_args();
 
 				quote!(
+					// let __my_field__ = <Vec<u8>>::read_with(
+					//     reader,
+					//     __my_field__(__my_len__),
+					// )?;
 					let #name = <#r#type as cornflakes::ContextualReadable>
 						::read_with(
 							reader,
@@ -97,6 +108,7 @@ impl DeserializeTokens for Field {
 				)
 			} else {
 				quote!(
+					// let __my_field2__ = u8::read_from(reader)?;
 					let #name = <r#type as cornflakes::Readable>::read_from(reader)?;
 				)
 			}
@@ -110,9 +122,8 @@ impl SerializeTokens for Let {
 		let args = self.source.fmt_args();
 
 		quote!(
-			#name(
-				#(#args,)*
-			).write_to(writer)?;
+			// __data_len__(&__data__).write_to(writer)?;
+			#name( #( &#args, )* ).write_to(writer)?;
 		)
 		.to_tokens(tokens);
 	}
@@ -124,6 +135,7 @@ impl DeserializeTokens for Let {
 		let r#type = &self.r#type;
 
 		tokens.append_tokens(|| {
+			// let __data_len__: u32 = reader.read()?;
 			quote!(let #name: #r#type = reader.read()?;)
 		});
 	}
@@ -133,6 +145,7 @@ impl SerializeTokens for Unused {
 	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
 		match self {
 			Self::Unit(_) => {
+				// 0u8.write_to(writer)?;
 				tokens.append_tokens(|| quote!(0u8.write_to(writer)?;));
 			}
 
@@ -142,6 +155,7 @@ impl SerializeTokens for Unused {
 
 				tokens.append_tokens(|| {
 					quote!(
+						// writer.put_many(0u8, _unused_1_(&__data__));
 						writer.put_many(
 							0u8,
 							#name( #(#args,)* )
@@ -162,13 +176,15 @@ impl DeserializeTokens for Unused {
 					let args = array.source.fmt_args();
 
 					quote!(
+						// reader.advance(_unused_1_(&__data__) as usize);
 						reader.advance(
-							#name( #(#args,)* ),
+							#name( #(#args,)* ) as usize,
 						);
 					)
 				}
 
 				Self::Unit(_) => {
+					// reader.advance(1);
 					quote!(reader.advance(1);)
 				}
 			}
@@ -268,6 +284,18 @@ impl Enum {
 
 		tokens.append_tokens(|| {
 			quote!(
+				// impl Writable for MyEnum {
+				//     fn write_to(
+				//         &self,
+				//         writer: &mut impl bytes::BufMut,
+				//     ) -> Result<(), Box<dyn Error>> {
+				//         match self {
+				//             Self::Variant => {
+				//                 (0 as u8).write_to(writer)?;
+				//             }
+				//         }
+				//     }
+				// }
 				impl cornflakes::Writable for #name {
 					fn write_to(
 						&self,
@@ -394,7 +422,59 @@ impl Struct {
 		});
 	}
 
-	pub fn deserialize_tokens(&self, _tokens: &mut TokenStream2) {
-		// TODO
+	pub fn deserialize_tokens(&self, tokens: &mut TokenStream2) {
+		let name = &self.metadata.name();
+
+		let inner = TokenStream2::with_tokens(|tokens| {
+			for (id, item) in self.items.pairs() {
+				item.deserialize_tokens(tokens, id);
+			}
+		});
+
+		let cons = TokenStream2::with_tokens(|tokens| {
+			match &self.items {
+				Items::Named { brace_token, .. } => {
+					brace_token.surround(tokens, |tokens| {
+						for (id, _) in self.items.pairs() {
+							if let ItemId::Field(FieldId::Ident(field)) = id {
+								let ident = id.formatted();
+
+								tokens.append_tokens(|| {
+									quote!(#field: #ident,)
+								});
+							}
+						}
+					});
+				}
+
+				Items::Unnamed { paren_token, .. } => {
+					paren_token.surround(tokens, |tokens| {
+						for (id, _) in self.items.pairs() {
+							let ident = id.formatted();
+
+							tokens.append_tokens(|| {
+								quote!(#ident,)
+							});
+						}
+					});
+				}
+
+				Items::Unit => {}
+			}
+		});
+
+		tokens.append_tokens(|| {
+			quote!(
+				impl cornflakes::Readable for #name {
+					fn read_from(
+						reader: &mut impl bytes::Buf,
+					) -> Result<Self, Box<dyn std::error::Error>> {
+						#inner
+
+						Self #cons
+					}
+				}
+			)
+		});
 	}
 }
