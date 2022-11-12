@@ -19,14 +19,6 @@ pub use unused::*;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
 
-pub trait SerializeTokens {
-	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId);
-}
-
-pub trait DeserializeTokens {
-	fn deserialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId);
-}
-
 pub enum Item {
 	Field(Box<Field>),
 	Let(Box<Let>),

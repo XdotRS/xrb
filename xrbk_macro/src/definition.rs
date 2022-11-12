@@ -25,15 +25,6 @@ pub enum Definition {
 	Struct(Box<Struct>),
 }
 
-impl Definition {
-	pub fn name(&self) -> &Ident {
-		match self {
-			Self::Enum(r#enum) => &r#enum.ident,
-			Self::Struct(r#struct) => r#struct.name(),
-		}
-	}
-}
-
 /// A definition, as defined with the [`define!`] macro, for ordinary structs
 /// and messages.
 ///
@@ -54,12 +45,6 @@ pub struct Struct {
 	pub items: Items,
 	/// A semicolon token if `items` is [`Items::Unit`] or [`Items::Unnamed`].
 	pub semicolon_token: Option<Token![;]>,
-}
-
-impl Struct {
-	pub fn name(&self) -> &Ident {
-		self.metadata.name()
-	}
 }
 
 /// The type of definition and metadata associated with it.
