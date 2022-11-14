@@ -288,7 +288,7 @@ impl Enum {
 				// impl Writable for MyEnum {
 				//     fn write_to(
 				//         &self,
-				//         writer: &mut impl bytes::BufMut,
+				//         writer: &mut impl BufMut,
 				//     ) -> Result<(), Box<dyn Error>> {
 				//         match self {
 				//             Self::Variant => {
@@ -315,45 +315,67 @@ impl Enum {
 		let name = &self.ident;
 
 		let arms = TokenStream2::with_tokens(|tokens| {
+			// Start the variants' discriminant tokens at `0`. We add `1` each
+			// iteration, unless a variant explicitly specifies its
+			// discriminant.
 			let mut discrim = quote!(0);
 
 			for variant in &self.variants {
 				let name = &variant.ident;
 
+				// If the variant explicitly specifies its discriminant, reset
+				// the `discrim` tokens to that discriminant expression.
 				if let Some((_, expr)) = &variant.discriminant {
 					discrim = expr.to_token_stream();
 				}
 
+				// Tokens to fill in the fields for the variant's constructor.
+				let cons = TokenStream2::with_tokens(|tokens| {
+					variant.items.constructor_to_tokens(tokens);
+				});
+
+				// Generate the tokens to deserialize each of the variant's items.
 				let inner = TokenStream2::with_tokens(|tokens| {
 					for (id, item) in variant.items.pairs() {
 						item.deserialize_tokens(tokens, id);
 					}
 				});
 
-				let cons = TokenStream2::with_tokens(|tokens| {
-					variant.items.constructor_to_tokens(tokens);
-				});
-
+				// Append the variant's match arm.
 				tokens.append_tokens(|| {
 					quote!(
+						// Match against the discriminant...
 						#discrim => {
+							// Deserialize the items.
 							#inner
 
+							// Construct the variant.
 							Self::#name #cons
 						}
 					)
 				});
 
+				// Add `1` for the next variant's discriminant.
 				discrim.append_tokens(|| quote!(/* discrim */ + 1));
 			}
 		});
 
 		tokens.append_tokens(|| {
 			quote!(
+				// impl Readable for MyEnum {
+				//     fn read_from(reader: &mut impl Buf) -> Result<Self, Box<dyn Error>> {
+				//         match reader.read::<u8>() {
+				//             (0 as u8) => {
+				//                 Self::Variant
+				//             }
+				//         }
+				//     }
+				// }
 				impl cornflakes::Readable for #name {
 					fn read_from(
 						reader: &mut impl bytes::Buf,
 					) -> Result<Self, Box<dyn std::error::Error>> {
+						// Match against the discriminant...
 						match reader.read::<u8>()? {
 							#arms
 
@@ -371,10 +393,12 @@ impl Struct {
 	pub fn serialize_tokens(&self, tokens: &mut TokenStream2) {
 		let name = self.metadata.name();
 
+		// Tokens to destructure the struct's fields.
 		let pat = TokenStream2::with_tokens(|tokens| {
 			self.items.pattern_to_tokens(tokens);
 		});
 
+		// Generate the tokens to serialize each of the struct's items.
 		let inner = TokenStream2::with_tokens(|tokens| {
 			for (id, item) in self.items.pairs() {
 				item.serialize_tokens(tokens, id);
@@ -383,6 +407,17 @@ impl Struct {
 
 		tokens.append_tokens(|| {
 			quote!(
+				// impl Writable for MyStruct {
+				//     fn write_to(
+				//         &self,
+				//         writer: &mut impl BufMut,
+				//     ) -> Result<(), Box<dyn Error>> {
+				//         let Self(__0__, __1__) = self;
+				//
+				//         __0__.write_to(writer)?;
+				//         __1__.write_to(writer)?;
+				//     }
+				// }
 				impl cornflakes::Writable for #name {
 					fn write_to(
 						&self,
@@ -400,18 +435,28 @@ impl Struct {
 	pub fn deserialize_tokens(&self, tokens: &mut TokenStream2) {
 		let name = self.metadata.name();
 
+		// Tokens to fill in the fields for the struct's constructor.
+		let cons = TokenStream2::with_tokens(|tokens| {
+			self.items.constructor_to_tokens(tokens);
+		});
+
+		// Generate the tokens to deserialize each of the struct's items.
 		let inner = TokenStream2::with_tokens(|tokens| {
 			for (id, item) in self.items.pairs() {
 				item.deserialize_tokens(tokens, id);
 			}
 		});
 
-		let cons = TokenStream2::with_tokens(|tokens| {
-			self.items.constructor_to_tokens(tokens);
-		});
-
 		tokens.append_tokens(|| {
 			quote!(
+				// impl Readable for MyStruct {
+				//     fn read_from(reader: &mut impl Buf) -> Result<Self, Box<dyn Error>> {
+				//         let __0__: i32 = reader.read();
+				//         let __1__: i32 = reader.read();
+				//
+				//         Self(__0__, __1__)
+				//     }
+				// }
 				impl cornflakes::Readable for #name {
 					fn read_from(
 						reader: &mut impl bytes::Buf,
