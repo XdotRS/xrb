@@ -61,3 +61,9 @@ pub mod queries {}
 pub mod events {}
 
 pub mod replies {}
+
+use xrbk_macro::define;
+
+define! {
+	data_len => data_len
+}

@@ -5,9 +5,9 @@
 /// A request is a message sent from an X client to the X server.
 ///
 /// A request may have a specific reply associated with it. That reply is
-/// indicated by `T`.
+/// indicated by `Reply`.
 #[doc(notable_trait)]
-pub trait Request<T = ()> {
+pub trait Request<Reply = ()> {
 	/// The major opcode that uniquely identifies this request or extension.
 	///
 	/// X core protocol requests have unique major opcodes, but each extension
@@ -32,7 +32,7 @@ pub trait Request<T = ()> {
 
 	/// The length of this request, including the header, in 4-byte units.
 	///
-	/// Every request contains a header whcih is 4 bytes long. This header is
+	/// Every request contains a header which is 4 bytes long. This header is
 	/// included in the length, so the minimum length is 1 unit (4 bytes). The
 	/// length represents the _exact_ length of the request: padding bytes may
 	/// need to be added to the end of the request to ensure its length is
@@ -43,11 +43,11 @@ pub trait Request<T = ()> {
 /// A reply is a message sent from the X server to an X client in response to a
 /// request.
 ///
-/// The request associated with a reply is indicated by `T`.
+/// The request associated with a reply is indicated by `Request`.
 #[doc(notable_trait)]
-pub trait Reply<T>
+pub trait Reply<Request>
 where
-	T: Request<Self>,
+	Request: Request<Self>,
 	Self: Sized,
 {
 	/// The sequence number associated with the request that this reply is for.
@@ -77,4 +77,17 @@ where
 	/// |...                     |...       |
 	/// |`32 + 4n`               |`n`       |
 	fn length(&self) -> u32;
+}
+
+// An event is sent in a SendEvent request. It is 32 bytes long.
+//
+// TODO: docs!
+#[doc(notable_trait)]
+pub trait Event where Self: Sized {
+	// The code that uniquely identifies the event.
+	fn code() -> u8;
+
+	// The sequence number associated with the last request sent by the X
+	// server that relates to the event.
+	fn sequence(&self) -> Option<u16>;
 }
