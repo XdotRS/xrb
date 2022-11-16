@@ -31,8 +31,7 @@ impl Item {
 			Self::Field(field) => field
 				.attributes
 				.iter()
-				.find(|Attribute { content, .. }| matches!(content, AttrContent::Metabyte(_)))
-				.is_some(),
+				.any(|Attribute { content, .. }| matches!(content, AttrContent::Metabyte(_))),
 
 			Self::Let(_let) => {
 				todo!("let items must be able to have metabyte attributes")

@@ -21,6 +21,7 @@ pub struct Definitions(pub Vec<Definition>);
 pub enum Definition {
 	/// An [`Enum`] `Definition`.
 	Enum(Box<Enum>),
+
 	/// A [`Struct`] `Definition`.
 	Struct(Box<Struct>),
 }
@@ -37,12 +38,14 @@ pub struct Struct {
 	/// that definition (`enum`, `struct`, the name, generics, the major opcode
 	/// of a request, etc.).
 	pub metadata: StructMetadata,
+
 	/// The items defined within the definition.
 	///
 	/// This is the main feature of the [`define!`] macro: it's what allows
 	/// additional serialization and deserialization code to be generated in a
 	/// more concise way than could be achieved with a derive macro.
 	pub items: Items,
+
 	/// A semicolon token if `items` is [`Items::Unit`] or [`Items::Unnamed`].
 	pub semicolon_token: Option<Token![;]>,
 }

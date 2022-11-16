@@ -7,12 +7,16 @@ use syn::{
 	Ident, Result, Token, Type,
 };
 
+use crate::{Attribute, TsExt};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
 
 use super::Source;
 
 pub struct Let {
+	/// Attributes associated with the `Let` item.
+	pub attributes: Vec<Attribute>,
+
 	/// The let token: `let`.
 	pub let_token: Token![let],
 
@@ -28,7 +32,7 @@ pub struct Let {
 	/// The equals token preceding the `expr`: `=`.
 	pub eq_token: Token![=],
 
-	/// The [`Source`] used in the generated function for this `let` item.
+	/// The [`Source`] used in the generated function for this `Let` item.
 	pub source: Source,
 }
 
@@ -59,25 +63,18 @@ impl ToTokens for Let {
 
 impl Let {
 	pub fn to_fn_tokens(&self, tokens: &mut TokenStream2) {
-		let name = format_ident!("__{}__", self.ident);
-		let ty = &self.r#type;
-		// let source = &self.source;
-
-		quote! (
-			fn #name(&self) -> #ty {
-				// #source (TODO)
-			}
-		)
-		.to_tokens(tokens);
+		self.source
+			.fn_to_tokens(tokens, &format_ident!("__{}__", self.ident), &self.r#type);
 	}
 
 	pub fn to_write_tokens(&self, tokens: &mut TokenStream2) {
 		let name = format_ident!("__{}__", self.ident);
 
-		quote! (
-			writer.write(self.#name());
-		)
-		.to_tokens(tokens);
+		tokens.append_tokens(|| {
+			quote!(
+				writer.write(self.#name());
+			)
+		});
 	}
 }
 
@@ -88,6 +85,13 @@ impl Let {
 impl Parse for Let {
 	fn parse(input: ParseStream) -> Result<Self> {
 		Ok(Self {
+			attributes: {
+				todo!(
+					"need to allow context attributes, metabyte attribute.\
+					does it make sense for normal attributes to be allowed?",
+				)
+			},
+
 			let_token: input.parse()?,
 
 			ident: input.parse()?,

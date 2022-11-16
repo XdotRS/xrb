@@ -2,13 +2,21 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use crate::content::Attribute;
 use std::collections::HashMap;
 use syn::{bracketed, parenthesized, parse::ParseStream, token, Ident, Result, Token, Type};
 
 use super::Source;
 
 pub enum Unused {
-	Unit(token::Paren),
+	Unit {
+		// TODO: metabyte attribute
+		attribute: Option<Attribute>,
+		unit_token: token::Paren,
+	},
+
+	// There is no guarantee the number of unused bytes returned by the
+	// expression is `1`... so don't allow metabyte.
 	Array(Box<Array>),
 }
 
@@ -21,36 +29,20 @@ pub struct Array {
 
 impl Unused {
 	pub const fn is_unit(&self) -> bool {
-		matches!(self, Self::Unit(_))
+		matches!(self, Self::Unit { .. })
 	}
 
 	pub const fn is_array(&self) -> bool {
-		matches!(self, Self::Array(_))
+		matches!(self, Self::Array { .. })
 	}
 
 	pub const fn source(&self) -> Option<&Source> {
 		match self {
 			Self::Array(array) => Some(&array.source),
-			Self::Unit(_) => None,
+			Self::Unit { .. } => None,
 		}
 	}
 }
-
-// Expansion {{
-
-impl Unused {
-	#[allow(dead_code)]
-	pub fn to_write_tokens(&self, _tokens: &mut proc_macro2::TokenStream) {
-		// writer.unused(#unused#num(__data__))
-	}
-
-	#[allow(dead_code)]
-	pub fn to_read_tokens(&self, _tokens: &mut proc_macro2::TokenStream) {
-		// reader.advance(#unused#num(__data__))
-	}
-}
-
-// }}}
 
 // Parsing {{{
 
@@ -61,7 +53,10 @@ impl Unused {
 		if look.peek(token::Paren) {
 			let _unit;
 
-			Ok(Self::Unit(parenthesized!(_unit in input)))
+			Ok(Self::Unit {
+				attribute: todo!(),
+				unit_token: parenthesized!(_unit in input),
+			})
 		} else if look.peek(token::Bracket) {
 			Ok(Self::Array(Box::new(Array::parse(input, map)?)))
 		} else {
