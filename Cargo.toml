@@ -21,7 +21,7 @@ categories = [ "data-structures", "api-bindings", "encoding" ]
 
 [dependencies]
 bytes = "1" # serialization
-cornflakes = "0.0.0-dev" # serialization
+cornflakes = "0.0.0" # serialization
 bitflags = "1.3" # bit masks - representations of masks
 thiserror = "1" # error handling
 xrbk_macro = { path = "./xrbk_macro" } # generation of XRB structures

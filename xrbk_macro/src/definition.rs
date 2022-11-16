@@ -625,36 +625,48 @@ impl StructMetadata {
 				"Reply" => Ok({
 					let content;
 
-					// TODO: clean this mess up! this mess came about from
-					//       requiring that `content` is initialized, but that
-					//       doesn't mean it has to be this bad at all :p
-					let (paren_token, (question_token, sequence_token)) =
+					let (paren_token, (question_token, sequence_token)) = {
+						// If there is a normal bracket after the message type
+						// identifier...
 						if input.peek(token::Paren) {
-							(
-								Some(parenthesized!(content in input)),
-								if let Ok(question) = content.parse() {
-									(
-										Some(question),
-										Some({
-											let ident: Ident = content.parse()?;
+							// Parse the normal bracket pair (`(` and `)`) to
+							// `paren_token`.
+							let paren_token = Some(parenthesized!(content in input));
 
-											if ident.to_string() != "sequence" {
-												return Err(Error::new(
-												ident.span(),
-												"expected `sequence` to opt out of the sequence field",
-											));
-											}
+							// Attempt to parse a question mark token.
+							let question_token = content.parse().ok();
+							// If there is a question mark token, require
+							// `sequence` to follow it in order to opt out of
+							// the `sequence` field.
+							let sequence_token = if question_token.is_some() {
+								let ident: Ident = content.parse()?;
 
-											ident
-										}),
-									)
-								} else {
-									(None, None)
-								},
-							)
+								// If the identifier following the question
+								// mark token is not `sequence`, return an
+								// error.
+								if ident != "sequence" {
+									return Err(Error::new(
+										ident.span(),
+										"expected `sequence` after `?` to opt out of the `sequence` field",
+									));
+								}
+
+								Some(ident)
+							} else {
+								// Otherwise, if there is no question mark
+								// token, then don't parse the `sequence`
+								// identifier either.
+								None
+							};
+
+							(paren_token, (question_token, sequence_token))
 						} else {
+							// Otherwise, if there is no pair of normal
+							// brackets, then do not parse `paren_token`,
+							// `question_token`, nor `sequence_token`.
 							(None, (None, None))
-						};
+						}
+					};
 
 					Self::Reply(Reply {
 						// Attributes.
@@ -675,8 +687,11 @@ impl StructMetadata {
 						// `Reply`.
 						reply_ident: message_ty_ident,
 
+						// `(` and `)`.
 						paren_token,
+						// Optional: `?`.
 						question_token,
+						// Following `question_token` if Some: `sequence`.
 						sequence_token,
 
 						// `for`.
