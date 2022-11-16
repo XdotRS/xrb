@@ -9,7 +9,7 @@ use crate::*;
 use std::collections::HashMap;
 
 use proc_macro2::{Span, TokenStream as TokenStream2};
-use quote::{format_ident, ToTokens, quote};
+use quote::{format_ident, quote, ToTokens};
 use syn::{
 	braced, parenthesized,
 	parse::{Parse, ParseStream, Result},
@@ -124,42 +124,59 @@ impl ToTokens for Items {
 	}
 }
 
+pub enum ExpandMode {
+	Normal,
+	Request,
+
+	Reply { has_sequence: bool },
+	Event,
+}
+
 impl Items {
 	/// Generates the pattern required to pattern-match against these items
 	/// (e.g. in a `match` expression).
-	pub fn pattern_to_tokens(&self, tokens: &mut TokenStream2) {
+	pub fn pattern_to_tokens(&self, tokens: &mut TokenStream2, mode: ExpandMode) {
 		/// An internal-use function within `patterns_to_tokens` to reduce
 		/// repeated code. This generates the pattern to match against the
 		/// items.
-		fn pattern(tokens: &mut TokenStream2, items: &Punctuated<ItemWithId, Token![,]>) {
-			for pair in items.pairs() {
-				// Unwrap the item ID, item, and comma (which will be `None`
-				// if it is the final item and there is no trailing comma).
-				let ((id, item), comma) = match pair {
-					Pair::Punctuated((id, item), comma) => ((id, item), Some(comma)),
-					Pair::End((id, item)) => ((id, item), None),
-				};
+		fn pattern(tokens: &mut TokenStream2, items: &Items, mode: ExpandMode) {
+			match mode {
+				ExpandMode::Normal => {}
+				ExpandMode::Request => {}
 
+				ExpandMode::Reply { has_sequence } => {
+					if has_sequence {
+						tokens.append_tokens(|| quote!(_sequence_,));
+					}
+				}
+				ExpandMode::Event => tokens.append_tokens(|| quote!(_sequence_,)),
+			}
+
+			for (id, _) in items.pairs() {
 				// Only generate the pattern for fields.
-				if let Item::Field(_) = item {
+				if let ItemId::Field(field_id) = id {
+					if let FieldId::Ident(ident) = field_id {
+						tokens.append_tokens(|| quote!(#ident: ));
+					}
+
 					// Convert the field's formatted identifier to tokens.
 					id.formatted().to_tokens(tokens);
 
-					// Convert the comma after the field to tokens too.
-					comma.to_tokens(tokens);
+					// Append a comma too.
+					tokens.append_tokens(|| quote!(,));
 				}
 			}
 		}
 
 		match self {
 			// Surround named item patterns with their curly brackets.
-			Self::Named { brace_token, items } => {
-				brace_token.surround(tokens, |tokens| pattern(tokens, items));
+			Self::Named { brace_token, .. } => {
+				brace_token.surround(tokens, |tokens| pattern(tokens, &self, mode));
 			}
 
 			// Surround unnamed items with their normal brackets.
-			Self::Unnamed { paren_token, items } => {
-				paren_token.surround(tokens, |tokens| pattern(tokens, items))
+			Self::Unnamed { paren_token, .. } => {
+				paren_token.surround(tokens, |tokens| pattern(tokens, &self, mode))
 			}
 
 			// Don't generate a pattern for `Self::Unit` at all.
@@ -179,9 +196,7 @@ impl Items {
 						if let ItemId::Field(FieldId::Ident(name)) = id {
 							let val = id.formatted();
 
-							tokens.append_tokens(|| {
-								quote!(#name: #val,)
-							});
+							tokens.append_tokens(|| quote!(#name: #val,));
 						}
 					}
 				});
@@ -192,9 +207,7 @@ impl Items {
 					for (id, _) in self.pairs() {
 						let val = id.formatted();
 
-						tokens.append_tokens(|| {
-							quote!(#val,)
-						});
+						tokens.append_tokens(|| quote!(#val,));
 					}
 				});
 			}

@@ -24,7 +24,7 @@ pub fn define(input: TokenStream) -> TokenStream {
 
 	let expanded = TokenStream2::with_tokens(|tokens| {
 		input.to_tokens(tokens);
-		input.impl_tokens(tokens);
+		//input.impl_tokens(tokens);
 	});
 
 	expanded.into()

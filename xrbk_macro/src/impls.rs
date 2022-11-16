@@ -17,14 +17,12 @@ trait ItemDeserializeTokens {
 	fn deserialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId);
 }
 
-trait SerializeTokens {
-	/// Generates the tokens to serialize something.
-	fn serialize_tokens(&self, tokens: &mut TokenStream2);
+trait SerializeMessageTokens {
+	fn serialize_tokens(&self, tokens: &mut TokenStream2, items: &Items);
 }
 
-trait DeserializeTokens {
-	/// Generates the tokens to deserialize something.
-	fn deserialize_tokens(&self, tokens: &mut TokenStream2);
+trait DeserializeMessageTokens {
+	fn deserialize_tokens(&self, tokens: &mut TokenStream2, items: &Items);
 }
 
 impl Definitions {
@@ -32,54 +30,16 @@ impl Definitions {
 	pub fn impl_tokens(&self, tokens: &mut TokenStream2) {
 		let Self(definitions) = self;
 
-		// For each definition...
 		for definition in definitions {
 			match definition {
-				// If it's an enum, append the serialization and
-				// deserialization tokens for that enum.
-				Definition::Enum(_enum) => {
-					definition.serialize_tokens(tokens);
-					definition.deserialize_tokens(tokens);
+				Definition::Enum(r#enum) => {
+					r#enum.serialize_tokens(tokens);
+					r#enum.deserialize_tokens(tokens);
 				}
 
-				// Otherwise, if it's a struct, it's a little more complicated:
-				// X11 messages are structs and they have a specific way to
-				// serializing and deserializing them.
 				Definition::Struct(r#struct) => {
-					match &r#struct.metadata {
-						StructMetadata::Request(_request) => {
-							// TODO: (de)serialization for requests
-							// request.serialize_tokens(tokens);
-							// request.deserialize_tokens(tokens);
-
-							// TODO: implement Request
-							// request.impl_tokens(tokens);
-						}
-
-						StructMetadata::Reply(_reply) => {
-							// TODO: (de)serialization for replies
-							// reply.serialize_tokens(tokens);
-							// reply.deserialize_tokens(tokens);
-
-							// TODO: implement Reply
-							// reply.impl_tokens(tokens);
-						}
-
-						StructMetadata::Event(_event) => {
-							// TODO: (de)serialization for events
-							// event.serialize_tokens(tokens);
-							// event.deserialize_tokens(tokens);
-
-							// TODO: implement Event
-							// reply.impl_tokens(tokens);
-						}
-
-						// Just your basic, ordinary struct.
-						StructMetadata::Struct(_struct) => {
-							definition.serialize_tokens(tokens);
-							definition.deserialize_tokens(tokens);
-						}
-					}
+					r#struct.serialize_tokens(tokens);
+					r#struct.deserialize_tokens(tokens);
 				}
 			}
 		}
@@ -226,25 +186,7 @@ impl ItemDeserializeTokens for Item {
 	}
 }
 
-impl SerializeTokens for Definition {
-	fn serialize_tokens(&self, tokens: &mut TokenStream2) {
-		match self {
-			Self::Enum(r#enum) => r#enum.serialize_tokens(tokens),
-			Self::Struct(r#struct) => r#struct.serialize_tokens(tokens),
-		}
-	}
-}
-
-impl DeserializeTokens for Definition {
-	fn deserialize_tokens(&self, tokens: &mut TokenStream2) {
-		match self {
-			Self::Enum(r#enum) => r#enum.deserialize_tokens(tokens),
-			Self::Struct(r#struct) => r#struct.deserialize_tokens(tokens),
-		}
-	}
-}
-
-impl SerializeTokens for Enum {
+impl Enum {
 	fn serialize_tokens(&self, tokens: &mut TokenStream2) {
 		let name = &self.ident;
 
@@ -265,7 +207,7 @@ impl SerializeTokens for Enum {
 
 				// Tokens to destructure the variant's fields.
 				let pat = TokenStream2::with_tokens(|tokens| {
-					variant.items.pattern_to_tokens(tokens);
+					variant.items.pattern_to_tokens(tokens, ExpandMode::Normal);
 				});
 
 				// Generate the tokens to serialize each of the variant's items.
@@ -324,7 +266,7 @@ impl SerializeTokens for Enum {
 	}
 }
 
-impl DeserializeTokens for Enum {
+impl Enum {
 	fn deserialize_tokens(&self, tokens: &mut TokenStream2) {
 		let name = &self.ident;
 
@@ -404,18 +346,43 @@ impl DeserializeTokens for Enum {
 	}
 }
 
-impl SerializeTokens for Struct {
+impl Struct {
 	fn serialize_tokens(&self, tokens: &mut TokenStream2) {
-		let name = self.metadata.name();
+		match &self.metadata {
+			StructMetadata::Struct(r#struct) => r#struct.serialize_tokens(tokens, &self.items),
+
+			StructMetadata::Request(request) => request.serialize_tokens(tokens, &self.items),
+			StructMetadata::Reply(reply) => reply.serialize_tokens(tokens, &self.items),
+
+			StructMetadata::Event(event) => event.serialize_tokens(tokens, &self.items),
+		}
+	}
+}
+
+impl Struct {
+	fn deserialize_tokens(&self, tokens: &mut TokenStream2) {
+		match &self.metadata {
+			StructMetadata::Struct(r#struct) => r#struct.deserialize_tokens(tokens, &self.items),
+
+			StructMetadata::Request(request) => request.deserialize_tokens(tokens, &self.items),
+			StructMetadata::Reply(reply) => reply.deserialize_tokens(tokens, &self.items),
+
+			StructMetadata::Event(event) => event.deserialize_tokens(tokens, &self.items),
+		}
+	}
+}
+
+impl SerializeMessageTokens for BasicStructMetadata {
+	fn serialize_tokens(&self, tokens: &mut TokenStream2, items: &Items) {
+		let name = &self.name;
 
 		// Tokens to destructure the struct's fields.
 		let pat = TokenStream2::with_tokens(|tokens| {
-			self.items.pattern_to_tokens(tokens);
+			items.pattern_to_tokens(tokens, ExpandMode::Normal);
 		});
 
-		// Generate the tokens to serialize each of the struct's items.
 		let inner = TokenStream2::with_tokens(|tokens| {
-			for (id, item) in self.items.pairs() {
+			for (id, item) in items.pairs() {
 				item.serialize_tokens(tokens, id);
 			}
 		});
@@ -449,18 +416,18 @@ impl SerializeTokens for Struct {
 	}
 }
 
-impl DeserializeTokens for Struct {
-	fn deserialize_tokens(&self, tokens: &mut TokenStream2) {
-		let name = self.metadata.name();
+impl DeserializeMessageTokens for BasicStructMetadata {
+	fn deserialize_tokens(&self, tokens: &mut TokenStream2, items: &Items) {
+		let name = &self.name;
 
 		// Tokens to fill in the fields for the struct's constructor.
 		let cons = TokenStream2::with_tokens(|tokens| {
-			self.items.constructor_to_tokens(tokens);
+			items.constructor_to_tokens(tokens);
 		});
 
 		// Generate the tokens to deserialize each of the struct's items.
 		let inner = TokenStream2::with_tokens(|tokens| {
-			for (id, item) in self.items.pairs() {
+			for (id, item) in items.pairs() {
 				item.deserialize_tokens(tokens, id);
 			}
 		});
@@ -486,5 +453,251 @@ impl DeserializeTokens for Struct {
 				}
 			)
 		});
+	}
+}
+
+impl SerializeMessageTokens for Request {
+	fn serialize_tokens(&self, tokens: &mut TokenStream2, items: &Items) {
+		// Request
+		// =======
+		// u8	opcode
+		// u8	metabyte
+		// u16	length
+		// ...
+
+		let name = &self.name;
+
+		// Tokens required to destructure the request's fields.
+		let pat = TokenStream2::with_tokens(|tokens| {
+			items.pattern_to_tokens(tokens, ExpandMode::Request);
+		});
+
+		// If there is a metabyte item, generate its serialization tokens first.
+		let metabyte = TokenStream2::with_tokens(|tokens| {
+			if self.minor_opcode.is_some() {
+				// If this request has a minor opcode, then that is to be
+				// written in the metabyte position.
+				tokens.append_tokens(|| {
+					quote!(
+						writer.put_u16(<Self as crate::x11::traits::Request>::minor_opcode());
+					)
+				});
+			} else if let Some((id, item)) = items.pairs().find(|(_, item)| item.is_metabyte()) {
+				// Otherwise, if this request has a metabyte item, then that
+				// is to be written in the metabyte position.
+				item.serialize_tokens(tokens, id);
+			} else {
+				// Otherwise, if this request has neither a minor opcode nor a
+				// metabyte item, then simply write 0.
+				tokens.append_tokens(|| {
+					quote!(
+						writer.put_u8(0);
+					)
+				});
+			}
+		});
+
+		let inner = TokenStream2::with_tokens(|tokens| {
+			// Generate the serialization tokens for all non-metabyte items.
+			for (id, item) in items.pairs().filter(|(_, item)| !item.is_metabyte()) {
+				item.serialize_tokens(tokens, id);
+			}
+		});
+
+		tokens.append_tokens(|| {
+			quote!(
+				impl cornflakes::Writable for #name {
+					fn write_to(
+						&self,
+						writer: &mut impl bytes::BufMut,
+					) -> Result<(), Box<dyn std::error::Error>> {
+						// Destructure the struct.
+						let Self #pat = self;
+
+						// Major opcode.
+						writer.put_u8(<Self as crate::x11::traits::Request>::major_opcode());
+						// Metabyte (minor opcode, metabyte item, or nothing).
+						#metabyte
+						// Request length.
+						writer.put_u16(<Self as crate::x11::traits::Request>::length(&self));
+
+						// Rest of the items.
+						#inner
+					}
+				}
+			)
+		});
+	}
+}
+
+impl DeserializeMessageTokens for Request {
+	fn deserialize_tokens(&self, tokens: &mut TokenStream2, items: &Items) {
+		// Request
+		// =======
+		// u8	opcode
+		// u8	metabyte
+		// u16	length
+		// ...
+
+		let name = &self.name;
+
+		let metabyte = TokenStream2::with_tokens(|tokens| {
+			// If the request has a minor opcode, then it must have already
+			// been read to know to deserialize this request, so we only write
+			// tokens for the second byte if there is no minor opcode.
+			if self.minor_opcode.is_none() {
+				if let Some((id, item)) = items.pairs().find(|(_, item)| item.is_metabyte()) {
+					// If this request has a metabyte item, then that is to be
+					// read from the metabyte position.
+					item.deserialize_tokens(tokens, id);
+				} else {
+					// Otherwise, if this request has no minor opcode and no
+					// metabyte item, then simply skip this byte.
+					tokens.append_tokens(|| {
+						quote!(
+							reader.advance(1);
+						)
+					});
+				}
+			}
+		});
+
+		let inner = TokenStream2::with_tokens(|tokens| {
+			for (id, item) in items.pairs().filter(|(_, item)| !item.is_metabyte()) {
+				item.deserialize_tokens(tokens, id);
+			}
+		});
+
+		// Tokens required to use the request's struct's constructor.
+		let cons = TokenStream2::with_tokens(|tokens| {
+			items.constructor_to_tokens(tokens);
+		});
+
+		tokens.append_tokens(|| {
+			quote!(
+				impl cornflakes::Readable for #name {
+					fn read_from(
+						reader: &mut impl bytes::Buf,
+					) -> Result<Self, Box<dyn std::error::Error>> {
+						// Read the metabyte item, if any.
+						#metabyte
+						// Read the length of the request.
+						let _length_ = reader.get_u16();
+
+						// Read the rest of the items.
+						#inner
+
+						// Call the constructor.
+						Self #cons
+					}
+				}
+			)
+		});
+	}
+}
+
+impl SerializeMessageTokens for Reply {
+	fn serialize_tokens(&self, tokens: &mut TokenStream2, items: &Items) {
+		// Reply
+		// =====
+		// u8	1 (reply)
+		// u8	metabyte
+		// u16	sequence (optional...)
+		// u32	length
+		// ...
+
+		let name = &self.name;
+
+		// Tokens required to destructure the reply's fields.
+		let pat = TokenStream2::with_tokens(|tokens| {
+			items.pattern_to_tokens(
+				tokens,
+				ExpandMode::Reply {
+					has_sequence: self.sequence_token.is_none(),
+				},
+			);
+		});
+
+		let metabyte = TokenStream2::with_tokens(|tokens| {
+			if let Some((id, item)) = items.pairs().find(|(_, item)| item.is_metabyte()) {
+				item.deserialize_tokens(tokens, id);
+			} else {
+				tokens.append_tokens(|| {
+					quote!(
+						reader.advance(1);
+					)
+				});
+			}
+		});
+
+		let sequence = TokenStream2::with_tokens(|tokens| {
+			if self.sequence_token.is_none() {
+				tokens.append_tokens(|| {
+					quote!(
+						writer.put_u16(_sequence_);
+					)
+				});
+			}
+		});
+
+		let inner = TokenStream2::with_tokens(|tokens| {
+			for (id, item) in items.pairs().filter(|(_, item)| !item.is_metabyte()) {
+				item.deserialize_tokens(tokens, id);
+			}
+		});
+
+		tokens.append_tokens(|| {
+			quote!(
+				impl cornflakes::Writable for #name {
+					fn write_to(
+						&self,
+						writer: &mut impl bytes::BufMut,
+					) -> Result<(), Box<dyn std::error::Error>> {
+						let Self #pat = self;
+
+						writer.put_u8(1);
+						#metabyte
+						#sequence
+						writer.put_u16(<Self as crate::x11::traits::Reply>::length(&self));
+
+						#inner
+					}
+				}
+			)
+		});
+	}
+}
+
+impl DeserializeMessageTokens for Reply {
+	fn deserialize_tokens(&self, tokens: &mut TokenStream2, items: &Items) {
+		// Reply
+		// =====
+		// u8	1 (reply)
+		// u8	metabyte
+		// u16	sequence (optional...)
+		// u32	length
+		// ...
+	}
+}
+
+impl SerializeMessageTokens for Event {
+	fn serialize_tokens(&self, tokens: &mut TokenStream2, items: &Items) {
+		// Event
+		// =====
+		// u8	code
+		// u8	metabyte
+		// u16	sequence
+		// ...
+	}
+}
+
+impl DeserializeMessageTokens for Event {
+	fn deserialize_tokens(&self, tokens: &mut TokenStream2, items: &Items) {
+		// Event
+		// =====
+		// u8	code
+		// u8	metabyte
+		// u16	sequence
+		// ...
 	}
 }

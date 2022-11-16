@@ -25,6 +25,26 @@ pub enum Item {
 	Unused(Unused),
 }
 
+impl Item {
+	pub fn is_metabyte(&self) -> bool {
+		match self {
+			Self::Field(field) => field
+				.attributes
+				.iter()
+				.find(|Attribute { content, .. }| matches!(content, AttrContent::Metabyte(_)))
+				.is_some(),
+
+			Self::Let(_let) => {
+				todo!("let items must be able to have metabyte attributes")
+			}
+
+			Self::Unused(_unused) => {
+				todo!("unused items must be able to have metabyte attributes")
+			}
+		}
+	}
+}
+
 // Expansion {{{
 
 impl ToTokens for Item {
