@@ -83,7 +83,10 @@ where
 //
 // TODO: docs!
 #[doc(notable_trait)]
-pub trait Event where Self: Sized {
+pub trait Event
+where
+	Self: Sized,
+{
 	// The code that uniquely identifies the event.
 	fn code() -> u8;
 

@@ -2,20 +2,21 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-mod iter;
-
-use crate::*;
-
 use std::collections::HashMap;
 
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{format_ident, quote, ToTokens};
 use syn::{
-	braced, parenthesized,
+	braced, bracketed, parenthesized,
 	parse::{Parse, ParseStream, Result},
 	punctuated::{Pair, Punctuated},
-	token, Ident, Token,
+	spanned::Spanned,
+	token, Error, Ident, Token,
 };
+
+use crate::*;
+
+mod iter;
 
 pub enum Items {
 	/// [`Item`]s surrounded by curly brackets (`{` and `}`), with names for
@@ -171,12 +172,12 @@ impl Items {
 		match self {
 			// Surround named item patterns with their curly brackets.
 			Self::Named { brace_token, .. } => {
-				brace_token.surround(tokens, |tokens| pattern(tokens, &self, mode));
+				brace_token.surround(tokens, |tokens| pattern(tokens, self, mode));
 			}
 
 			// Surround unnamed items with their normal brackets.
 			Self::Unnamed { paren_token, .. } => {
-				paren_token.surround(tokens, |tokens| pattern(tokens, &self, mode))
+				paren_token.surround(tokens, |tokens| pattern(tokens, self, mode))
 			}
 
 			// Don't generate a pattern for `Self::Unit` at all.
@@ -235,6 +236,90 @@ impl Items {
 		// While there are still tokens left in the `input` stream, we continue
 		// to parse items.
 		while !input.is_empty() {
+			if input.peek(Token![#]) {
+				let mut attributes = Attribute::parse_outer(input, &map)?;
+
+				if input.peek(token::Bracket) || input.peek(token::Paren) {
+					// Unused bytes item.
+
+					if let Some(attr) = attributes.first() {
+						if !attr.is_metabyte() {
+							return Err(Error::new(
+								attr.span(),
+								"only a metabyte attribute is allowed for unused items",
+							));
+						}
+					} else if let Some(attr) = attributes.get(1) {
+						return Err(Error::new(
+							attr.span(),
+							"only zero or one (metabyte) attributes are allowed for unused items",
+						));
+					}
+
+					let _unit;
+					let (id, unused) = {
+						if !attributes.is_empty() {
+							// Unit with attribute.
+
+							(
+								ItemId::Unused(None),
+								Unused::Unit {
+									attribute: Some(attributes.remove(0)),
+									unit_token: parenthesized!(_unit in input),
+								},
+							)
+						} else if input.peek(token::Paren) {
+							// Unit, no attribute.
+
+							(
+								ItemId::Unused(None),
+								Unused::Unit {
+									attribute: None,
+									unit_token: parenthesized!(_unit in input),
+								},
+							)
+						} else {
+							// Array.
+
+							let content;
+
+							let index = unused_index;
+							unused_index += 1;
+
+							(
+								ItemId::Unused(Some(index)),
+								Unused::Array(Box::new(Array {
+									bracket_token: bracketed!(content in input),
+									unit_token: parenthesized!(_unit in content),
+									semicolon_token: content.parse()?,
+									source: Source::parse(input, &map)?,
+								})),
+							)
+						}
+					};
+
+					items.push_value((id, Item::Unused(unused)));
+				} else if input.peek(Token![let]) {
+					// Let item.
+
+					if let Some(attr) = attributes.first() {
+						if !attr.is_metabyte() {
+							return Err(Error::new(
+								attr.span(),
+								"only a metabyte attribute is allowed for let items",
+							));
+						}
+					} else if let Some(attr) = attributes.get(1) {
+						return Err(Error::new(
+							attr.span(),
+							"only zero or one (metabyte) attributes are allowed for let items",
+						));
+					}
+				} else {
+					// Field item.
+				}
+			}
+
 			if input.peek(token::Bracket) || input.peek(token::Paren) {
 				// If the next token (i.e. the start of a new item) is a square
 				// bracket or a normal bracket, then this must be an unused
@@ -257,7 +342,7 @@ impl Items {
 
 					// `Unused::Unit` uses no index because it does not
 					// generate a source function that is to be referred to.
-					Unused::Unit(_) => None,
+					Unused::Unit { .. } => None,
 				};
 
 				items.push_value((ItemId::Unused(id), Item::Unused(unused)));

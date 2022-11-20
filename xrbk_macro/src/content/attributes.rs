@@ -2,12 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use std::collections::HashMap;
+
 use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
-use std::collections::HashMap;
 use syn::{
-	braced, bracketed, parenthesized, parse::ParseStream, token, Error, Ident, Path, Result, Token,
-	Type,
+	braced, bracketed, parenthesized, parse::ParseStream, spanned::Spanned, token, Error, Ident,
+	Path, Result, Token, Type,
 };
 
 use super::source::Source;
@@ -143,6 +144,17 @@ impl Attribute {
 		})
 	}
 
+	pub fn parse_metabyte(input: ParseStream) -> Result<Self> {
+		let content;
+
+		Ok(Self {
+			hash_token: input.parse()?,
+			style: None,
+			bracket_token: bracketed!(content in input),
+			content: AttrContent::parse_metabyte(&content)?,
+		})
+	}
+
 	pub fn parse_outer(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Vec<Self>> {
 		let mut attributes = vec![];
 
@@ -196,6 +208,19 @@ impl AttrContent {
 		} else {
 			Self::Other(path, input.parse()?)
 		})
+	}
+
+	fn parse_metabyte(input: ParseStream) -> Result<Self> {
+		let path: Path = input.parse()?;
+
+		if !path.is_ident("metabyte") {
+			return Err(Error::new(
+				path.span(),
+				"only metabyte attribute is allowed in this position",
+			));
+		}
+
+		Ok(Self::Metabyte(path))
 	}
 }
 

@@ -114,7 +114,7 @@ impl ItemDeserializeTokens for Let {
 impl ItemSerializeTokens for Unused {
 	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
 		match self {
-			Self::Unit(_) => {
+			Self::Unit { .. } => {
 				// 0u8.write_to(writer)?;
 				tokens.append_tokens(|| quote!(0u8.write_to(writer)?;));
 			}
@@ -153,7 +153,7 @@ impl ItemDeserializeTokens for Unused {
 					)
 				}
 
-				Self::Unit(_) => {
+				Self::Unit { .. } => {
 					// reader.advance(1);
 					quote!(reader.advance(1);)
 				}

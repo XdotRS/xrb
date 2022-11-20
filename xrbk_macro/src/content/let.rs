@@ -2,20 +2,20 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use proc_macro2::TokenStream as TokenStream2;
+use quote::{format_ident, quote, ToTokens};
 use syn::{
 	parse::{Parse, ParseStream},
 	Ident, Result, Token, Type,
 };
 
 use crate::{Attribute, TsExt};
-use proc_macro2::TokenStream as TokenStream2;
-use quote::{format_ident, quote, ToTokens};
 
 use super::Source;
 
 pub struct Let {
-	/// Attributes associated with the `Let` item.
-	pub attributes: Vec<Attribute>,
+	/// An optional metabyte attribute associated with the `Let` item.
+	pub attribute: Option<Attribute>,
 
 	/// The let token: `let`.
 	pub let_token: Token![let],
@@ -53,7 +53,6 @@ impl ToTokens for Let {
 		// `=`
 		self.eq_token.to_tokens(tokens);
 
-		// TODO: Allow context for `Let` items?
 		quote! (
 			reader.read()?;
 		)
@@ -85,11 +84,12 @@ impl Let {
 impl Parse for Let {
 	fn parse(input: ParseStream) -> Result<Self> {
 		Ok(Self {
-			attributes: {
-				todo!(
-					"need to allow context attributes, metabyte attribute.\
-					does it make sense for normal attributes to be allowed?",
-				)
+			attribute: {
+				if input.peek(Token![#]) {
+					Some(Attribute::parse_metabyte(input)?)
+				} else {
+					None
+				}
 			},
 
 			let_token: input.parse()?,

@@ -2,15 +2,16 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::content::Attribute;
 use std::collections::HashMap;
+
 use syn::{bracketed, parenthesized, parse::ParseStream, token, Ident, Result, Token, Type};
+
+use crate::content::Attribute;
 
 use super::Source;
 
 pub enum Unused {
 	Unit {
-		// TODO: metabyte attribute
 		attribute: Option<Attribute>,
 		unit_token: token::Paren,
 	},
@@ -54,7 +55,14 @@ impl Unused {
 			let _unit;
 
 			Ok(Self::Unit {
-				attribute: todo!(),
+				attribute: {
+					if input.peek(Token![#]) {
+						Some(Attribute::parse_metabyte(input)?)
+					} else {
+						None
+					}
+				},
+
 				unit_token: parenthesized!(_unit in input),
 			})
 		} else if look.peek(token::Bracket) {
