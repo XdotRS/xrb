@@ -11,7 +11,7 @@ use syn::{
 	parse::{Parse, ParseStream, Result},
 	punctuated::{Pair, Punctuated},
 	spanned::Spanned,
-	token, Error, Ident, Token,
+	token, Error, Ident, Token, Type,
 };
 
 use crate::*;
@@ -324,93 +324,94 @@ impl Items {
 						));
 					}
 
-					if !attributes.is_empty() {
-						let r#let = Let {
-							attribute: Some(attributes.remove(0)),
+					let r#let = Let {
+						attribute: if !attributes.is_empty() {
+							Some(attributes.remove(0))
+						} else {
+							None
+						},
 
-							let_token: input.parse()?,
+						let_token: input.parse()?,
 
-							ident: input.parse()?,
-							colon_token: input.parse()?,
-							r#type: input.parse()?,
+						ident: input.parse()?,
+						colon_token: input.parse()?,
+						r#type: input.parse()?,
 
-							eq_token: input.parse()?,
+						eq_token: input.parse()?,
 
-							source: Source::parse_without_args(input)?,
-						};
+						source: Source::parse_without_args(input)?,
+					};
 
-						map.insert(r#let.ident.to_string(), r#let.r#type.to_owned());
+					// Insert the let item's `ident` and `type` to the `map` of
+					// known `Ident`s.
+					map.insert(r#let.ident.to_string(), r#let.r#type.to_owned());
 
-						items.push_value((
-							ItemId::Let(r#let.ident.to_owned()),
-							Item::Let(Box::new(r#let)),
-						));
-					} else {
-						let r#let = Let {
-							attribute: None,
-
-							let_token: input.parse()?,
-
-							ident: input.parse()?,
-							colon_token: input.parse()?,
-							r#type: input.parse()?,
-
-							eq_token: input.parse()?,
-
-							source: Source::parse_without_args(input)?,
-						};
-
-						map.insert(r#let.ident.to_string(), r#let.r#type.to_owned());
-
-						items.push_value((
-							ItemId::Let(r#let.ident.to_owned()),
-							Item::Let(Box::new(r#let)),
-						));
-					}
+					// Push the let item's ID and the let item itself to the
+					// list of parsed items.
+					items.push_value((
+						ItemId::Let(r#let.ident.to_owned()),
+						Item::Let(Box::new(r#let)),
+					));
 				} else {
 					// Field item.
 
 					if named {
-						let field = Field {
-							attributes,
+						// If this is a named field, parse it with an `ident`
+						// and a `colon_token`.
 
-							vis: input.parse()?,
+						let vis = input.parse()?;
 
-							ident: Some(input.parse()?),
-							colon_token: Some(input.parse()?),
+						let ident: Ident = input.parse()?;
+						let colon_token = input.parse()?;
 
-							r#type: input.parse()?,
-						};
+						let r#type: Type = input.parse()?;
 
-						map.insert(
-							field.ident.as_ref().unwrap().to_string(),
-							field.r#type.to_owned(),
-						);
+						// Insert the field's `ident` and `type` to the `map`
+						// of known `Ident`s.
+						map.insert(ident.to_string(), r#type.to_owned());
 
+						// Push the field's ID and the field itself to the
+						// list of parsed items.
 						items.push_value((
-							ItemId::Field(FieldId::Ident(field.ident.as_ref().unwrap().to_owned())),
-							Item::Field(Box::new(field)),
+							ItemId::Field(FieldId::Ident(ident.to_owned())),
+							Item::Field(Box::new(Field {
+								attributes,
+
+								vis,
+
+								ident: Some(ident),
+								colon_token: Some(colon_token),
+
+								r#type,
+							})),
 						));
 					} else {
-						let field = Field {
-							attributes,
-
-							vis: input.parse()?,
-
-							ident: None,
-							colon_token: None,
-
-							r#type: input.parse()?,
-						};
-
+						// Copy the current `field_index`.
 						let index = field_index;
+						// Increase the `field_index` by `1` without affecting
+						// `index`.
 						field_index += 1;
 
-						map.insert(index.to_string(), field.r#type.to_owned());
+						let vis = input.parse()?;
+						let r#type: Type = input.parse()?;
 
+						// Insert the field's `index` and `type` to the `map`
+						// of known `Ident`s.
+						map.insert(index.to_string(), r#type.to_owned());
+
+						// Push the field's ID and the field itself to the list of parsed items.
 						items.push_value((
 							ItemId::Field(FieldId::Id(index)),
-							Item::Field(Box::new(field)),
+							Item::Field(Box::new(Field {
+								attributes,
+
+								vis,
+
+								ident: None,
+								colon_token: None,
+
+								r#type,
+							})),
 						));
 					}
 				}
