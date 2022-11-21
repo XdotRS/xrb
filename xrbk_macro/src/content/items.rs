@@ -4,17 +4,21 @@
 
 use std::collections::HashMap;
 
-use proc_macro2::{Span, TokenStream as TokenStream2};
+use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
 use syn::{
 	braced, bracketed, parenthesized,
 	parse::{Parse, ParseStream, Result},
 	punctuated::{Pair, Punctuated},
 	spanned::Spanned,
-	token, Error, Ident, Token,
+	token, Error, Ident, Token, Type,
 };
 
 use crate::*;
+
+pub mod field;
+pub mod r#let;
+pub mod unused;
 
 mod iter;
 
@@ -302,7 +306,7 @@ impl Items {
 				} else if input.peek(Token![let]) {
 					// Let item.
 
-					if let Some(attr) = attributes.first() {
+					if let Some(attr) = attributes.get(0) {
 						if !attr.is_metabyte() {
 							return Err(Error::new(
 								attr.span(),
@@ -315,92 +319,97 @@ impl Items {
 							"only zero or one (metabyte) attributes are allowed for let items",
 						));
 					}
+
+					if !attributes.is_empty() {
+						let r#let = Let {
+							attribute: Some(attributes.remove(0)),
+
+							let_token: input.parse()?,
+
+							ident: input.parse()?,
+							colon_token: input.parse()?,
+							r#type: input.parse()?,
+
+							eq_token: input.parse()?,
+
+							source: Source::parse_without_args(input)?,
+						};
+
+						map.insert(r#let.ident.to_string(), r#let.r#type.to_owned());
+
+						items.push_value((
+							ItemId::Let(r#let.ident.to_owned()),
+							Item::Let(Box::new(r#let)),
+						));
+					} else {
+						let r#let = Let {
+							attribute: None,
+
+							let_token: input.parse()?,
+
+							ident: input.parse()?,
+							colon_token: input.parse()?,
+							r#type: input.parse()?,
+
+							eq_token: input.parse()?,
+
+							source: Source::parse_without_args(input)?,
+						};
+
+						map.insert(r#let.ident.to_string(), r#let.r#type.to_owned());
+
+						items.push_value((
+							ItemId::Let(r#let.ident.to_owned()),
+							Item::Let(Box::new(r#let)),
+						));
+					}
 				} else {
 					// Field item.
-				}
-			}
 
-			if input.peek(token::Bracket) || input.peek(token::Paren) {
-				// If the next token (i.e. the start of a new item) is a square
-				// bracket or a normal bracket, then this must be an unused
-				// bytes item (either in the form `[(); source]`, or just `()`).
+					if named {
+						let field = Field {
+							attributes,
 
-				let unused = Unused::parse(input, &map)?;
+							vis: input.parse()?,
 
-				let id = match unused {
-					Unused::Array(_) => {
-						// 'Save' the current `unused_index` to return it.
-						let index = unused_index;
+							ident: Some(input.parse()?),
+							colon_token: Some(input.parse()?),
 
-						// If this is an `Unused::Array`, it will use the
-						// `unused_index`, which must therefore be incremented
-						// by one:
-						unused_index += 1;
+							r#type: input.parse()?,
+						};
 
-						Some(index)
-					}
-
-					// `Unused::Unit` uses no index because it does not
-					// generate a source function that is to be referred to.
-					Unused::Unit { .. } => None,
-				};
-
-				items.push_value((ItemId::Unused(id), Item::Unused(unused)));
-			} else if input.peek(Token![let]) {
-				// Otherwise, if the next token is `Let`, then this must be a
-				// `Let` item. Note that this won't work if support for
-				// attributes is added to `Let` items: in that case we would
-				// have to parse all of the attributes before we could work out
-				// if it was a `Field` item or a `Let` item.
-				let r#let: Let = input.parse()?;
-
-				// We insert the name of the `Let` item into the `map`, since
-				// it will be able to be referred to by name in `Source`s, and
-				// we'll want to know its type.
-				map.insert(r#let.ident.to_owned(), r#let.r#type.to_owned());
-
-				// Push the new `Item::Let` to the list of `items`.
-				items.push_value((
-					ItemId::Let(r#let.ident.to_owned()),
-					Item::Let(Box::new(r#let)),
-				));
-			} else {
-				// Otherwise, if this is not an unused bytes item, nor a `Let`
-				// item, we assume it is a `Field` and parse it accordingly.
-
-				let field = if named {
-					// If we are to parse the items as `named`, then we parse
-					// the `field` as as named:
-					Field::parse_named(input, &map)?
-				} else {
-					// Otherwise, we parse the field as unnamed:
-					Field::parse_unnamed(input, &map)?
-				};
-
-				let id = if let Some(ident) = &field.ident {
-					FieldId::Ident(ident.to_owned())
-				} else {
-					let index = field_index;
-					field_index += 1;
-
-					FieldId::Id(index)
-				};
-
-				match &id {
-					FieldId::Ident(ident) => {
-						map.insert(ident.to_owned(), field.r#type.to_owned());
-					}
-
-					FieldId::Id(id) => {
 						map.insert(
-							Ident::new(&id.to_string(), Span::call_site()),
+							field.ident.as_ref().unwrap().to_string(),
 							field.r#type.to_owned(),
 						);
+
+						items.push_value((
+							ItemId::Field(FieldId::Ident(field.ident.as_ref().unwrap().to_owned())),
+							Item::Field(Box::new(field)),
+						));
+					} else {
+						let field = Field {
+							attributes,
+
+							vis: input.parse()?,
+
+							ident: None,
+							colon_token: None,
+
+							r#type: input.parse()?,
+						};
+
+						let index = field_index;
+						field_index += 1;
+
+						map.insert(index.to_string(), field.r#type.to_owned());
+
+						items.push_value((
+							ItemId::Field(FieldId::Id(index)),
+							Item::Field(Box::new(field)),
+						));
 					}
 				}
-
-				// Then we push the `Item::Field` to the list of `items`.
-				items.push_value((ItemId::Field(id), Item::Field(Box::new(field))));
 			}
 
 			// If the token following the item is not a comma, then it must be

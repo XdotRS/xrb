@@ -13,11 +13,8 @@ pub use source::*;
 pub use unused::*;
 
 mod attributes;
-mod field;
 mod items;
-mod r#let;
 mod source;
-mod unused;
 
 pub enum Item {
 	Field(Box<Field>),

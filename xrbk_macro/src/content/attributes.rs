@@ -7,8 +7,8 @@ use std::collections::HashMap;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
 use syn::{
-	braced, bracketed, parenthesized, parse::ParseStream, spanned::Spanned, token, Error, Ident,
-	Path, Result, Token, Type,
+	braced, bracketed, parenthesized, parse::ParseStream, spanned::Spanned, token, Error, Path,
+	Result, Token, Type,
 };
 
 use super::source::Source;
@@ -118,7 +118,7 @@ impl ToTokens for Attribute {
 // Parsing {{{
 
 impl Attribute {
-	pub(self) fn parse(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
+	pub(self) fn parse(input: ParseStream, map: &HashMap<String, Type>) -> Result<Self> {
 		let content;
 
 		let hash_token = input.parse()?;
@@ -155,7 +155,7 @@ impl Attribute {
 		})
 	}
 
-	pub fn parse_outer(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Vec<Self>> {
+	pub fn parse_outer(input: ParseStream, map: &HashMap<String, Type>) -> Result<Vec<Self>> {
 		let mut attributes = vec![];
 
 		while input.peek(Token![#]) && input.peek2(token::Bracket) {
@@ -176,7 +176,7 @@ impl Attribute {
 	}
 
 	#[allow(dead_code)]
-	pub fn parse_inner(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Vec<Self>> {
+	pub fn parse_inner(input: ParseStream, map: &HashMap<String, Type>) -> Result<Vec<Self>> {
 		let mut attributes = vec![];
 
 		while input.peek(Token![#]) && input.peek2(token::Bracket) {
@@ -198,7 +198,7 @@ impl Attribute {
 }
 
 impl AttrContent {
-	fn parse(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
+	fn parse(input: ParseStream, map: &HashMap<String, Type>) -> Result<Self> {
 		let path: Path = input.parse()?;
 
 		Ok(if path.is_ident("context") {
@@ -225,7 +225,7 @@ impl AttrContent {
 }
 
 impl Context {
-	fn parse(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
+	fn parse(input: ParseStream, map: &HashMap<String, Type>) -> Result<Self> {
 		let content;
 		let look = input.lookahead1();
 

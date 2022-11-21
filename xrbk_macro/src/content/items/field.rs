@@ -72,7 +72,7 @@ impl ToTokens for Field {
 // Parsing {{{
 
 impl Field {
-	fn parse(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
+	fn parse(input: ParseStream, map: &HashMap<String, Type>) -> Result<Self> {
 		let attributes = Attribute::parse_outer(input, map)?;
 		let vis = input.parse()?;
 		let ident = input.parse().ok();
@@ -88,7 +88,7 @@ impl Field {
 		})
 	}
 
-	pub fn parse_named(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
+	pub fn parse_named(input: ParseStream, map: &HashMap<String, Type>) -> Result<Self> {
 		let field = Self::parse(input, map)?;
 
 		// If this field does not have a name, generate an error:
@@ -99,7 +99,7 @@ impl Field {
 		Ok(field)
 	}
 
-	pub fn parse_unnamed(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
+	pub fn parse_unnamed(input: ParseStream, map: &HashMap<String, Type>) -> Result<Self> {
 		let field = Self::parse(input, map)?;
 
 		// If this field has a name, generate an error:

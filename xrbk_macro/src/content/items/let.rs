@@ -4,10 +4,7 @@
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
-use syn::{
-	parse::{Parse, ParseStream},
-	Ident, Result, Token, Type,
-};
+use syn::{Ident, Token, Type};
 
 use crate::{Attribute, TsExt};
 
@@ -74,34 +71,6 @@ impl Let {
 				writer.write(self.#name());
 			)
 		});
-	}
-}
-
-// }}}
-
-// Parsing {{{
-
-impl Parse for Let {
-	fn parse(input: ParseStream) -> Result<Self> {
-		Ok(Self {
-			attribute: {
-				if input.peek(Token![#]) {
-					Some(Attribute::parse_metabyte(input)?)
-				} else {
-					None
-				}
-			},
-
-			let_token: input.parse()?,
-
-			ident: input.parse()?,
-			colon_token: input.parse()?,
-			r#type: input.parse()?,
-
-			eq_token: input.parse()?,
-
-			source: Source::parse_without_args(input)?,
-		})
 	}
 }
 

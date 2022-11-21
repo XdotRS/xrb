@@ -14,7 +14,7 @@ use syn::{
 	Error, Expr, Ident, Receiver, Token, Type,
 };
 
-pub struct Arg(pub Ident, pub Type);
+pub struct Arg(pub String, pub Type);
 
 pub struct Source {
 	pub receiver: Option<Receiver>,
@@ -32,7 +32,7 @@ impl Source {
 		self.args
 			.iter()
 			.flatten()
-			.map(|Arg(ident, _)| format_ident!("__{}__", ident))
+			.map(|Arg(string, _)| format_ident!("__{}__", string))
 			.collect()
 	}
 }
@@ -72,7 +72,7 @@ impl ToTokens for Arg {
 
 impl Source {
 	/// Parse a `Source` that can have zero or more [`Arg`s](Arg) and a receiver.
-	pub fn parse(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
+	pub fn parse(input: ParseStream, map: &HashMap<String, Type>) -> Result<Self> {
 		let fork = &input.fork();
 
 		// Parse a receiver (e.g. `self`, `&self`).
@@ -117,7 +117,7 @@ impl Source {
 	}
 
 	/// Parse a `Source` that can have zero or more [`Arg`s](Arg) but no receiver.
-	pub fn parse_without_receiver(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
+	pub fn parse_without_receiver(input: ParseStream, map: &HashMap<String, Type>) -> Result<Self> {
 		let source = Self::parse(input, map)?;
 
 		if let Some(receiver) = source.receiver {
@@ -167,14 +167,14 @@ impl Source {
 
 impl Arg {
 	/// Parses a single `Arg`: an `Ident` that is contained in the `map`.
-	pub fn parse(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
+	pub fn parse(input: ParseStream, map: &HashMap<String, Type>) -> Result<Self> {
 		// Parse an identifier.
-		let ident = input.parse()?;
+		let ident: Ident = input.parse()?;
 
 		// Attempt to get the type of the identifier from the map of known
 		// identifiers...
-		if let Some(r#type) = map.get(&ident) {
-			Ok(Self(ident, r#type.to_owned()))
+		if let Some(r#type) = map.get(&ident.to_string()) {
+			Ok(Self(ident.to_string(), r#type.to_owned()))
 		} else {
 			Err(Error::new(ident.span(), "unrecognized identifier"))
 		}
@@ -185,7 +185,7 @@ impl Arg {
 	/// See also: [Self::parse]
 	pub fn parse_args(
 		input: ParseStream,
-		map: &HashMap<Ident, Type>,
+		map: &HashMap<String, Type>,
 	) -> Result<Punctuated<Self, Token![,]>> {
 		let mut args = Punctuated::new();
 

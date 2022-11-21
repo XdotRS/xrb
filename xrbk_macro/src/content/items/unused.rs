@@ -4,7 +4,7 @@
 
 use std::collections::HashMap;
 
-use syn::{bracketed, parenthesized, parse::ParseStream, token, Ident, Result, Token, Type};
+use syn::{bracketed, parenthesized, parse::ParseStream, token, Result, Token, Type};
 
 use crate::content::Attribute;
 
@@ -48,7 +48,7 @@ impl Unused {
 // Parsing {{{
 
 impl Unused {
-	pub fn parse(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
+	pub fn parse(input: ParseStream, map: &HashMap<String, Type>) -> Result<Self> {
 		let look = input.lookahead1();
 
 		if look.peek(token::Paren) {
@@ -74,7 +74,7 @@ impl Unused {
 }
 
 impl Array {
-	pub fn parse(input: ParseStream, map: &HashMap<Ident, Type>) -> Result<Self> {
+	pub fn parse(input: ParseStream, map: &HashMap<String, Type>) -> Result<Self> {
 		let (content, _unit);
 
 		Ok(Self {
