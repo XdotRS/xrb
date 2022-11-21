@@ -14,7 +14,7 @@ use syn::{
 	Error, Expr, Ident, Receiver, Token, Type,
 };
 
-pub struct Arg(pub String, pub Type);
+pub struct Arg(pub Ident, pub Type);
 
 pub struct Source {
 	pub receiver: Option<Receiver>,
@@ -32,7 +32,7 @@ impl Source {
 		self.args
 			.iter()
 			.flatten()
-			.map(|Arg(string, _)| format_ident!("__{}__", string))
+			.map(|Arg(ident, _)| format_ident!("__{}__", ident))
 			.collect()
 	}
 }
@@ -174,7 +174,7 @@ impl Arg {
 		// Attempt to get the type of the identifier from the map of known
 		// identifiers...
 		if let Some(r#type) = map.get(&ident.to_string()) {
-			Ok(Self(ident.to_string(), r#type.to_owned()))
+			Ok(Self(ident, r#type.to_owned()))
 		} else {
 			Err(Error::new(ident.span(), "unrecognized identifier"))
 		}
