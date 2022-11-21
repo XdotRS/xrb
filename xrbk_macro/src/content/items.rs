@@ -11,10 +11,14 @@ use syn::{
 	parse::{Parse, ParseStream, Result},
 	punctuated::{Pair, Punctuated},
 	spanned::Spanned,
-	token, Error, Ident, Token, Type,
+	token, Error, Ident, Token,
 };
 
 use crate::*;
+
+pub use field::*;
+pub use r#let::*;
+pub use unused::*;
 
 pub mod field;
 pub mod r#let;
