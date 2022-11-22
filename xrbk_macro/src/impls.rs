@@ -386,6 +386,7 @@ impl SerializeMessageTokens for BasicStructMetadata {
 			items.pattern_to_tokens(tokens, ExpandMode::Normal);
 		});
 
+		// Tokens to serialize each of the struct's items.
 		let inner = TokenStream2::with_tokens(|tokens| {
 			for (id, item) in items.pairs() {
 				item.serialize_tokens(tokens, id);
@@ -488,6 +489,8 @@ impl SerializeMessageTokens for Request {
 					)
 				});
 			} else {
+				// Otherwise, if there is no minor opcode, serialize the
+				// metabyte item (or a blank byte if there is none).
 				items.metabyte_serialize_tokens(tokens);
 			}
 		});
@@ -546,6 +549,7 @@ impl DeserializeMessageTokens for Request {
 		});
 
 		let inner = TokenStream2::with_tokens(|tokens| {
+			// Deserialize every non-metabyte item.
 			for (id, item) in items.pairs().filter(|(_, item)| !item.is_metabyte()) {
 				item.deserialize_tokens(tokens, id);
 			}
@@ -618,6 +622,7 @@ impl SerializeMessageTokens for Reply {
 		});
 
 		let inner = TokenStream2::with_tokens(|tokens| {
+			// Serialize every non-metabyte item.
 			for (id, item) in items.pairs().filter(|(_, item)| !item.is_metabyte()) {
 				item.serialize_tokens(tokens, id);
 			}
@@ -632,9 +637,13 @@ impl SerializeMessageTokens for Reply {
 					) -> Result<(), cornflakes::WriteError> {
 						let Self #pat = self;
 
+						// `1` indicates this is a reply.
 						writer.put_u8(1);
+						// Metabyte item, or a blank byte if none.
 						#metabyte
+						// The sequence field, if there is one.
 						#sequence
+						// The length of the reply.
 						writer.put_u16(<Self as crate::x11::traits::Reply>::length(&self));
 
 						#inner
@@ -657,12 +666,15 @@ impl DeserializeMessageTokens for Reply {
 
 		let name = &self.name;
 
+		// Deserialization tokens for the metabyte item.
 		let metabyte = TokenStream2::with_tokens(|tokens| {
 			items.metabyte_deserialize_tokens(tokens);
 		});
 
 		let sequence = TokenStream2::with_tokens(|tokens| {
+			// If the sequence field hasn't been opted out of...
 			if self.sequence_token.is_none() {
+				// Deserialize the sequence field.
 				tokens.append_tokens(|| {
 					quote!(
 						let _sequence_ = reader.get_u16();
@@ -672,11 +684,13 @@ impl DeserializeMessageTokens for Reply {
 		});
 
 		let inner = TokenStream2::with_tokens(|tokens| {
+			// Deserialization tokens for every non-metabyte item.
 			for (id, item) in items.pairs().filter(|(_, item)| !item.is_metabyte()) {
 				item.deserialize_tokens(tokens, id);
 			}
 		});
 
+		// Tokens to use the constructor for the struct.
 		let cons = TokenStream2::with_tokens(|tokens| {
 			items.constructor_to_tokens(tokens);
 		});
@@ -687,8 +701,11 @@ impl DeserializeMessageTokens for Reply {
 					fn read_from(
 						reader: &mut impl bytes::Buf,
 					) -> Result<Self, cornflakes::ReadError> {
+						// Deserialize the metabyte item.
 						#metabyte
+						// Deserialize the sequence field.
 						#sequence
+						// Deserialize the reply field.
 						let _length_ = reader.get_u32();
 
 						#inner
@@ -712,15 +729,18 @@ impl SerializeMessageTokens for Event {
 
 		let name = &self.name;
 
+		// Pattern to destructure the event struct.
 		let pat = TokenStream2::with_tokens(|tokens| {
 			items.pattern_to_tokens(tokens, ExpandMode::Event);
 		});
 
+		// Tokens to serialize the metabyte item, if any.
 		let metabyte = TokenStream2::with_tokens(|tokens| {
 			items.metabyte_serialize_tokens(tokens);
 		});
 
 		let inner = TokenStream2::with_tokens(|tokens| {
+			// Serialization tokens for every non-metabyte item.
 			for (id, item) in items.pairs().filter(|(_, item)| !item.is_metabyte()) {
 				item.serialize_tokens(tokens, id);
 			}
@@ -735,8 +755,11 @@ impl SerializeMessageTokens for Event {
 					) -> Result<(), cornflakes::WriteError> {
 						let Self #pat = self;
 
+						// Event code.
 						writer.put_u8(<Self as crate::x11::traits::Event>::code());
+						// Serialize the metabyte item.
 						#metabyte
+						// Serialize the sequence field.
 						writer.put_u16(_sequence_);
 
 						#inner
@@ -758,16 +781,19 @@ impl DeserializeMessageTokens for Event {
 
 		let name = &self.name;
 
+		// Deserialize the metabyte item, if any (otherwise skip the byte).
 		let metabyte = TokenStream2::with_tokens(|tokens| {
 			items.metabyte_deserialize_tokens(tokens);
 		});
 
 		let inner = TokenStream2::with_tokens(|tokens| {
+			// Deserialize every non-metabyte item.
 			for (id, item) in items.pairs().filter(|(_, item)| !item.is_metabyte()) {
 				item.deserialize_tokens(tokens, id);
 			}
 		});
 
+		// Tokens for the event struct constructor.
 		let cons = TokenStream2::with_tokens(|tokens| {
 			items.constructor_to_tokens(tokens);
 		});
@@ -778,7 +804,9 @@ impl DeserializeMessageTokens for Event {
 					fn read_from(
 						reader: &mut impl bytes::Buf,
 					) -> Result<Self, cornflakes::ReadError> {
+						// Deserialize the metabyte item.
 						#metabyte
+						// Deserialize the sequence field.
 						let _sequence_ = reader.get_u16();
 
 						#inner
