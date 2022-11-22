@@ -134,42 +134,64 @@ impl ToTokens for Items {
 	}
 }
 
+/// The expansion mode for [`Items::fields_to_tokens`].
+///
+/// The purpose of this mode is to prepend the `_sequence_` field if
+/// appropriate.
 pub enum ExpandMode {
-	Normal,
-	Request,
-
-	Reply { has_sequence: bool },
+	/// Prepends a `_sequence_` field during expansion if `has_sequence` is
+	/// `true`.
+	Reply {
+		/// Whether this [`Reply`] has a `_sequence_` field.
+		///
+		/// [`Reply`]: crate::definition::Reply
+		has_sequence: bool,
+	},
+	/// Prepends a `_sequence_` field during expansion.
 	Event,
+
+	/// Has no effect on expansion; all the fields are expanded as usual.
+	Normal,
+	/// Has no effect on expansion; all the fields are expanded as usual.
+	///
+	/// This is the same behavior has [`Normal`].
+	///
+	/// [`Normal`]: ExpandMode::Normal
+	Request,
 }
 
 impl Items {
-	/// Generates the pattern required to pattern-match against these items
-	/// (e.g. in a `match` expression).
-	pub fn pattern_to_tokens(&self, tokens: &mut TokenStream2, mode: ExpandMode) {
-		/// An internal-use function within `patterns_to_tokens` to reduce
-		/// repeated code. This generates the pattern to match against the
-		/// items.
-		fn pattern(tokens: &mut TokenStream2, items: &Items, mode: ExpandMode) {
+	/// Expands the tokens required either to pattern-match against these
+	/// `Items`, or to use these `Items`' constructor.
+	pub fn fields_to_tokens(&self, tokens: &mut TokenStream2, mode: ExpandMode) {
+		/// An internal-use function within `fields_to_tokens` to reduce
+		/// repeated code. This expands the tokens for the fields of some
+		/// [`Items`], without the delimiters (`{` and `}` or `(` and `)`)
+		/// surrounding them.
+		fn fields(tokens: &mut TokenStream2, items: &Items, mode: ExpandMode) {
 			match mode {
-				ExpandMode::Normal => {}
-				ExpandMode::Request => {}
-
 				ExpandMode::Reply { has_sequence } => {
 					if has_sequence {
 						tokens.append_tokens(|| quote!(_sequence_,));
 					}
 				}
+
 				ExpandMode::Event => tokens.append_tokens(|| quote!(_sequence_,)),
+
+				_ => {}
 			}
 
 			for (id, _) in items.pairs() {
-				// Only generate the pattern for fields.
+				// Only expand fields.
 				if let ItemId::Field(field_id) = id {
+					// If this is a named field, prepend its 'raw' name, since
+					// we want to use a formatted one for our purposes (to
+					// avoid name conflicts in expanded code).
 					if let FieldId::Ident(ident) = field_id {
 						tokens.append_tokens(|| quote!(#ident: ));
 					}
 
-					// Convert the field's formatted identifier to tokens.
+					// Expand the field's formatted identifier.
 					id.formatted().to_tokens(tokens);
 
 					// Append a comma too.
@@ -179,48 +201,18 @@ impl Items {
 		}
 
 		match self {
-			// Surround named item patterns with their curly brackets.
+			// Surround named fields with the curly brackets.
 			Self::Named { brace_token, .. } => {
-				brace_token.surround(tokens, |tokens| pattern(tokens, self, mode));
+				brace_token.surround(tokens, |tokens| fields(tokens, self, mode));
 			}
 
-			// Surround unnamed items with their normal brackets.
+			// Surround unnamed fields with the normal brackets.
 			Self::Unnamed { paren_token, .. } => {
-				paren_token.surround(tokens, |tokens| pattern(tokens, self, mode))
+				paren_token.surround(tokens, |tokens| fields(tokens, self, mode))
 			}
 
-			// Don't generate a pattern for `Self::Unit` at all.
+			// Don't expand anything for `Self::Unit`.
 			Self::Unit => {}
-		}
-	}
-
-	/// Generates the tokens required to construct the struct or enum variant
-	/// using these `Items`.
-	pub fn constructor_to_tokens(&self, tokens: &mut TokenStream2) {
-		match self {
-			Self::Unit => {}
-
-			Self::Named { brace_token, .. } => {
-				brace_token.surround(tokens, |tokens| {
-					for (id, _) in self.pairs() {
-						if let ItemId::Field(FieldId::Ident(name)) = id {
-							let val = id.formatted();
-
-							tokens.append_tokens(|| quote!(#name: #val,));
-						}
-					}
-				});
-			}
-
-			Self::Unnamed { paren_token, .. } => {
-				paren_token.surround(tokens, |tokens| {
-					for (id, _) in self.pairs() {
-						let val = id.formatted();
-
-						tokens.append_tokens(|| quote!(#val,));
-					}
-				});
-			}
 		}
 	}
 

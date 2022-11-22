@@ -211,7 +211,7 @@ impl Enum {
 
 				// Tokens to destructure the variant's fields.
 				let pat = TokenStream2::with_tokens(|tokens| {
-					variant.items.pattern_to_tokens(tokens, ExpandMode::Normal);
+					variant.items.fields_to_tokens(tokens, ExpandMode::Normal);
 				});
 
 				// Generate the tokens to serialize each of the variant's items.
@@ -291,7 +291,7 @@ impl Enum {
 
 				// Tokens to fill in the fields for the variant's constructor.
 				let cons = TokenStream2::with_tokens(|tokens| {
-					variant.items.constructor_to_tokens(tokens);
+					variant.items.fields_to_tokens(tokens, ExpandMode::Normal);
 				});
 
 				// Generate the tokens to deserialize each of the variant's items.
@@ -383,7 +383,7 @@ impl SerializeMessageTokens for BasicStructMetadata {
 
 		// Tokens to destructure the struct's fields.
 		let pat = TokenStream2::with_tokens(|tokens| {
-			items.pattern_to_tokens(tokens, ExpandMode::Normal);
+			items.fields_to_tokens(tokens, ExpandMode::Normal);
 		});
 
 		// Tokens to serialize each of the struct's items.
@@ -428,7 +428,7 @@ impl DeserializeMessageTokens for BasicStructMetadata {
 
 		// Tokens to fill in the fields for the struct's constructor.
 		let cons = TokenStream2::with_tokens(|tokens| {
-			items.constructor_to_tokens(tokens);
+			items.fields_to_tokens(tokens, ExpandMode::Normal);
 		});
 
 		// Generate the tokens to deserialize each of the struct's items.
@@ -475,7 +475,7 @@ impl SerializeMessageTokens for Request {
 
 		// Tokens required to destructure the request's fields.
 		let pat = TokenStream2::with_tokens(|tokens| {
-			items.pattern_to_tokens(tokens, ExpandMode::Request);
+			items.fields_to_tokens(tokens, ExpandMode::Request);
 		});
 
 		// If there is a metabyte item, generate its serialization tokens first.
@@ -557,7 +557,7 @@ impl DeserializeMessageTokens for Request {
 
 		// Tokens required to use the request's struct's constructor.
 		let cons = TokenStream2::with_tokens(|tokens| {
-			items.constructor_to_tokens(tokens);
+			items.fields_to_tokens(tokens, ExpandMode::Request);
 		});
 
 		tokens.append_tokens(|| {
@@ -597,7 +597,7 @@ impl SerializeMessageTokens for Reply {
 
 		// Tokens required to destructure the reply's fields.
 		let pat = TokenStream2::with_tokens(|tokens| {
-			items.pattern_to_tokens(
+			items.fields_to_tokens(
 				tokens,
 				ExpandMode::Reply {
 					has_sequence: self.sequence_token.is_none(),
@@ -692,7 +692,12 @@ impl DeserializeMessageTokens for Reply {
 
 		// Tokens to use the constructor for the struct.
 		let cons = TokenStream2::with_tokens(|tokens| {
-			items.constructor_to_tokens(tokens);
+			items.fields_to_tokens(
+				tokens,
+				ExpandMode::Reply {
+					has_sequence: self.sequence_token.is_none(),
+				},
+			);
 		});
 
 		tokens.append_tokens(|| {
@@ -731,7 +736,7 @@ impl SerializeMessageTokens for Event {
 
 		// Pattern to destructure the event struct.
 		let pat = TokenStream2::with_tokens(|tokens| {
-			items.pattern_to_tokens(tokens, ExpandMode::Event);
+			items.fields_to_tokens(tokens, ExpandMode::Event);
 		});
 
 		// Tokens to serialize the metabyte item, if any.
@@ -795,7 +800,7 @@ impl DeserializeMessageTokens for Event {
 
 		// Tokens for the event struct constructor.
 		let cons = TokenStream2::with_tokens(|tokens| {
-			items.constructor_to_tokens(tokens);
+			items.fields_to_tokens(tokens, ExpandMode::Event);
 		});
 
 		tokens.append_tokens(|| {
