@@ -7,21 +7,21 @@ use quote::quote;
 
 use crate::{ts_ext::TsExt, *};
 
-trait ItemSerializeTokens {
+pub trait ItemSerializeTokens {
 	/// Generates the tokens to serialize a given item.
 	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId);
 }
 
-trait ItemDeserializeTokens {
+pub trait ItemDeserializeTokens {
 	/// Generates the tokens to deserialize a given item.
 	fn deserialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId);
 }
 
-trait SerializeMessageTokens {
+pub trait SerializeMessageTokens {
 	fn serialize_tokens(&self, tokens: &mut TokenStream2, items: &Items);
 }
 
-trait DeserializeMessageTokens {
+pub trait DeserializeMessageTokens {
 	fn deserialize_tokens(&self, tokens: &mut TokenStream2, items: &Items);
 }
 
@@ -116,7 +116,11 @@ impl ItemSerializeTokens for Unused {
 		match self {
 			Self::Unit { .. } => {
 				// 0u8.write_to(writer)?;
-				tokens.append_tokens(|| quote!(0u8.write_to(writer)?;));
+				tokens.append_tokens(|| {
+					quote!(
+						writer.put_u8(0);
+					)
+				});
 			}
 
 			Self::Array(array) => {
@@ -333,12 +337,13 @@ impl Enum {
 						reader: &mut impl bytes::Buf,
 					) -> Result<Self, Box<dyn std::error::Error>> {
 						// Match against the discriminant...
-						match reader.read::<u8>()? {
+						Ok(match reader.read::<u8>()? {
 							#arms
 
-							// TODO: replace with actual error
-							_ => panic!("unrecognized enum variant discriminant"),
-						}
+							other_discrim => return Err(
+								cornflakes::ReadError::UnrecognizedDiscriminant(other_discrim)
+							),
+						})
 					}
 				}
 			)
@@ -482,18 +487,8 @@ impl SerializeMessageTokens for Request {
 						writer.put_u16(<Self as crate::x11::traits::Request>::minor_opcode());
 					)
 				});
-			} else if let Some((id, item)) = items.pairs().find(|(_, item)| item.is_metabyte()) {
-				// Otherwise, if this request has a metabyte item, then that
-				// is to be written in the metabyte position.
-				item.serialize_tokens(tokens, id);
 			} else {
-				// Otherwise, if this request has neither a minor opcode nor a
-				// metabyte item, then simply write 0.
-				tokens.append_tokens(|| {
-					quote!(
-						writer.put_u8(0);
-					)
-				});
+				items.metabyte_serialize_tokens(tokens);
 			}
 		});
 
@@ -546,19 +541,7 @@ impl DeserializeMessageTokens for Request {
 			// been read to know to deserialize this request, so we only write
 			// tokens for the second byte if there is no minor opcode.
 			if self.minor_opcode.is_none() {
-				if let Some((id, item)) = items.pairs().find(|(_, item)| item.is_metabyte()) {
-					// If this request has a metabyte item, then that is to be
-					// read from the metabyte position.
-					item.deserialize_tokens(tokens, id);
-				} else {
-					// Otherwise, if this request has no minor opcode and no
-					// metabyte item, then simply skip this byte.
-					tokens.append_tokens(|| {
-						quote!(
-							reader.advance(1);
-						)
-					});
-				}
+				items.metabyte_deserialize_tokens(tokens);
 			}
 		});
 
@@ -578,7 +561,7 @@ impl DeserializeMessageTokens for Request {
 				impl cornflakes::Readable for #name {
 					fn read_from(
 						reader: &mut impl bytes::Buf,
-					) -> Result<Self, Box<dyn std::error::Error>> {
+					) -> Result<Self, cornflakes::ReadError> {
 						// Read the metabyte item, if any.
 						#metabyte
 						// Read the length of the request.
@@ -618,18 +601,12 @@ impl SerializeMessageTokens for Reply {
 			);
 		});
 
+		// Tokens required to serialize the metabyte position.
 		let metabyte = TokenStream2::with_tokens(|tokens| {
-			if let Some((id, item)) = items.pairs().find(|(_, item)| item.is_metabyte()) {
-				item.deserialize_tokens(tokens, id);
-			} else {
-				tokens.append_tokens(|| {
-					quote!(
-						reader.advance(1);
-					)
-				});
-			}
+			items.metabyte_serialize_tokens(tokens);
 		});
 
+		// Tokens required to serialize the sequence field, unless opted out.
 		let sequence = TokenStream2::with_tokens(|tokens| {
 			if self.sequence_token.is_none() {
 				tokens.append_tokens(|| {
@@ -642,7 +619,7 @@ impl SerializeMessageTokens for Reply {
 
 		let inner = TokenStream2::with_tokens(|tokens| {
 			for (id, item) in items.pairs().filter(|(_, item)| !item.is_metabyte()) {
-				item.deserialize_tokens(tokens, id);
+				item.serialize_tokens(tokens, id);
 			}
 		});
 
@@ -652,7 +629,7 @@ impl SerializeMessageTokens for Reply {
 					fn write_to(
 						&self,
 						writer: &mut impl bytes::BufMut,
-					) -> Result<(), Box<dyn std::error::Error>> {
+					) -> Result<(), cornflakes::WriteError> {
 						let Self #pat = self;
 
 						writer.put_u8(1);
@@ -677,6 +654,50 @@ impl DeserializeMessageTokens for Reply {
 		// u16	sequence (optional...)
 		// u32	length
 		// ...
+
+		let name = &self.name;
+
+		let metabyte = TokenStream2::with_tokens(|tokens| {
+			items.metabyte_deserialize_tokens(tokens);
+		});
+
+		let sequence = TokenStream2::with_tokens(|tokens| {
+			if self.sequence_token.is_none() {
+				tokens.append_tokens(|| {
+					quote!(
+						let _sequence_ = reader.get_u16();
+					)
+				});
+			}
+		});
+
+		let inner = TokenStream2::with_tokens(|tokens| {
+			for (id, item) in items.pairs().filter(|(_, item)| !item.is_metabyte()) {
+				item.deserialize_tokens(tokens, id);
+			}
+		});
+
+		let cons = TokenStream2::with_tokens(|tokens| {
+			items.constructor_to_tokens(tokens);
+		});
+
+		tokens.append_tokens(|| {
+			quote!(
+				impl cornflakes::Readable for #name {
+					fn read_from(
+						reader: &mut impl bytes::Buf,
+					) -> Result<Self, cornflakes::ReadError> {
+						#metabyte
+						#sequence
+						let _length_ = reader.get_u32();
+
+						#inner
+
+						Self #cons
+					}
+				}
+			)
+		});
 	}
 }
 
@@ -688,6 +709,41 @@ impl SerializeMessageTokens for Event {
 		// u8	metabyte
 		// u16	sequence
 		// ...
+
+		let name = &self.name;
+
+		let pat = TokenStream2::with_tokens(|tokens| {
+			items.pattern_to_tokens(tokens, ExpandMode::Event);
+		});
+
+		let metabyte = TokenStream2::with_tokens(|tokens| {
+			items.metabyte_serialize_tokens(tokens);
+		});
+
+		let inner = TokenStream2::with_tokens(|tokens| {
+			for (id, item) in items.pairs().filter(|(_, item)| !item.is_metabyte()) {
+				item.serialize_tokens(tokens, id);
+			}
+		});
+
+		tokens.append_tokens(|| {
+			quote!(
+				impl cornflakes::Writable for #name {
+					fn write_to(
+						&self,
+						writer: &mut impl bytes::BufMut,
+					) -> Result<(), cornflakes::WriteError> {
+						let Self #pat = self;
+
+						writer.put_u8(<Self as crate::x11::traits::Event>::code());
+						#metabyte
+						writer.put_u16(_sequence_);
+
+						#inner
+					}
+				}
+			)
+		});
 	}
 }
 
@@ -699,5 +755,38 @@ impl DeserializeMessageTokens for Event {
 		// u8	metabyte
 		// u16	sequence
 		// ...
+
+		let name = &self.name;
+
+		let metabyte = TokenStream2::with_tokens(|tokens| {
+			items.metabyte_deserialize_tokens(tokens);
+		});
+
+		let inner = TokenStream2::with_tokens(|tokens| {
+			for (id, item) in items.pairs().filter(|(_, item)| !item.is_metabyte()) {
+				item.deserialize_tokens(tokens, id);
+			}
+		});
+
+		let cons = TokenStream2::with_tokens(|tokens| {
+			items.constructor_to_tokens(tokens);
+		});
+
+		tokens.append_tokens(|| {
+			quote!(
+				impl cornflakes::Readable for #name {
+					fn read_from(
+						reader: &mut impl bytes::Buf,
+					) -> Result<Self, cornflakes::ReadError> {
+						#metabyte
+						let _sequence_ = reader.get_u16();
+
+						#inner
+
+						Self #cons
+					}
+				}
+			)
+		});
 	}
 }

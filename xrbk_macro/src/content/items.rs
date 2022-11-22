@@ -16,6 +16,7 @@ use syn::{
 
 use crate::*;
 
+use crate::impls::{ItemDeserializeTokens, ItemSerializeTokens};
 pub use field::*;
 pub use r#let::*;
 pub use unused::*;
@@ -222,6 +223,34 @@ impl Items {
 			}
 		}
 	}
+
+	/// Generates the tokens required to serialize the metabyte item, if there
+	/// is one.
+	pub fn metabyte_serialize_tokens(&self, tokens: &mut TokenStream2) {
+		if let Some((id, metabyte)) = self.pairs().find(|(_, item)| item.is_metabyte()) {
+			metabyte.serialize_tokens(tokens, id);
+		} else {
+			// Otherwise, skip.
+			tokens.append_tokens(|| {
+				quote!(
+					writer.put_u8(0);
+				)
+			});
+		}
+	}
+
+	pub fn metabyte_deserialize_tokens(&self, tokens: &mut TokenStream2) {
+		if let Some((id, metabyte)) = self.pairs().find(|(_, item)| item.is_metabyte()) {
+			metabyte.deserialize_tokens(tokens, id);
+		} else {
+			// Otherwise, skip.
+			tokens.append_tokens(|| {
+				quote!(
+					reader.advance(1);
+				)
+			});
+		}
+	}
 }
 
 // }}}
@@ -265,48 +294,45 @@ impl Items {
 					}
 
 					let _unit;
-					let (id, unused) = {
-						if !attributes.is_empty() {
-							// Unit with attribute.
 
-							(
-								ItemId::Unused(None),
-								Unused::Unit {
-									attribute: Some(attributes.remove(0)),
-									unit_token: parenthesized!(_unit in input),
-								},
-							)
-						} else if input.peek(token::Paren) {
-							// Unit, no attribute.
+					if !attributes.is_empty() {
+						// Unit with attribute.
 
-							(
-								ItemId::Unused(None),
-								Unused::Unit {
-									attribute: None,
-									unit_token: parenthesized!(_unit in input),
-								},
-							)
-						} else {
-							// Array.
+						items.push_value((
+							ItemId::Unused(None),
+							Item::Unused(Unused::Unit {
+								attribute: Some(attributes.remove(0)),
+								unit_token: parenthesized!(_unit in input),
+							}),
+						));
+					} else if input.peek(token::Paren) {
+						// Unit, no attribute.
 
-							let content;
+						items.push_value((
+							ItemId::Unused(None),
+							Item::Unused(Unused::Unit {
+								attribute: None,
+								unit_token: parenthesized!(_unit in input),
+							}),
+						));
+					} else {
+						// Array.
 
-							let index = unused_index;
-							unused_index += 1;
+						let content;
 
-							(
-								ItemId::Unused(Some(index)),
-								Unused::Array(Box::new(Array {
-									bracket_token: bracketed!(content in input),
-									unit_token: parenthesized!(_unit in content),
-									semicolon_token: content.parse()?,
-									source: Source::parse(input, &map)?,
-								})),
-							)
-						}
-					};
+						let index = unused_index;
+						unused_index += 1;
 
-					items.push_value((id, Item::Unused(unused)));
+						items.push_value((
+							ItemId::Unused(Some(index)),
+							Item::Unused(Unused::Array(Box::new(Array {
+								bracket_token: bracketed!(content in input),
+								unit_token: parenthesized!(_unit in content),
+								semicolon_token: content.parse()?,
+								source: Source::parse(input, &map)?,
+							}))),
+						));
+					}
 				} else if input.peek(Token![let]) {
 					// Let item.
 
