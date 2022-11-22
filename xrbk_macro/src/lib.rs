@@ -20,11 +20,11 @@ pub(crate) use ts_ext::*;
 
 #[proc_macro]
 pub fn define(input: TokenStream) -> TokenStream {
-	let input = parse_macro_input!(input as Definitions);
+	let definitions = parse_macro_input!(input as Definitions);
 
 	let expanded = TokenStream2::with_tokens(|tokens| {
-		input.to_tokens(tokens);
-		//input.impl_tokens(tokens);
+		definitions.to_tokens(tokens);
+		definitions.impl_tokens(tokens);
 	});
 
 	expanded.into()

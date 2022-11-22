@@ -4,8 +4,7 @@
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
-use std::collections::HashMap;
-use syn::{parse::ParseStream, Error, Ident, Result, Token, Type, Visibility};
+use syn::{Ident, Token, Type, Visibility};
 
 use super::{AttrContent, Attribute, Context};
 
@@ -64,53 +63,6 @@ impl ToTokens for Field {
 		self.colon_token.to_tokens(tokens);
 		// Convert the field's type to tokens.
 		self.r#type.to_tokens(tokens);
-	}
-}
-
-// }}}
-
-// Parsing {{{
-
-impl Field {
-	fn parse(input: ParseStream, map: &HashMap<String, Type>) -> Result<Self> {
-		let attributes = Attribute::parse_outer(input, map)?;
-		let vis = input.parse()?;
-		let ident = input.parse().ok();
-		let colon_token = ident.as_ref().and_then(|_| input.parse().ok());
-		let r#type = input.parse()?;
-
-		Ok(Self {
-			attributes,
-			vis,
-			ident,
-			colon_token,
-			r#type,
-		})
-	}
-
-	pub fn parse_named(input: ParseStream, map: &HashMap<String, Type>) -> Result<Self> {
-		let field = Self::parse(input, map)?;
-
-		// If this field does not have a name, generate an error:
-		if field.is_unnamed() {
-			return Err(input.error("expected named field"));
-		}
-
-		Ok(field)
-	}
-
-	pub fn parse_unnamed(input: ParseStream, map: &HashMap<String, Type>) -> Result<Self> {
-		let field = Self::parse(input, map)?;
-
-		// If this field has a name, generate an error:
-		if field.is_named() {
-			return Err(Error::new(
-				field.ident.unwrap().span(),
-				"expected unnamed field",
-			));
-		}
-
-		Ok(field)
 	}
 }
 
