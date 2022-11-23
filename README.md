@@ -3,6 +3,8 @@
    - file, You can obtain one at https://mozilla.org/MPL/2.0/. -->
 
 # X Rust Bindings
+[![Tests](https://github.com/XdotRS/xrb/actions/workflows/ci.yml/badge.svg)](https://github.com/XdotRS/xrb/actions/workflows/ci.yml)
+
 X Rust Bindings (a.k.a. XRB) is an implementation of the X Window System protocol version
 11, more commonly known as X11, in Rust. It provides types and data structures
 for X11, as well as serialization and deserialization for them.
