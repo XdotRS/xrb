@@ -40,6 +40,22 @@ impl Definitions {
 				Definition::Struct(r#struct) => {
 					r#struct.serialize_tokens(tokens);
 					r#struct.deserialize_tokens(tokens);
+
+					match &r#struct.metadata {
+						StructMetadata::Request(request) => {
+							request.impl_request_tokens(tokens);
+						}
+
+						StructMetadata::Reply(reply) => {
+							reply.impl_reply_tokens(tokens);
+						}
+
+						StructMetadata::Event(event) => {
+							event.impl_event_tokens(tokens);
+						}
+
+						_ => {}
+					}
 				}
 			}
 		}
@@ -817,6 +833,106 @@ impl DeserializeMessageTokens for Event {
 						#inner
 
 						Self #cons
+					}
+				}
+			)
+		});
+	}
+}
+
+impl Request {
+	pub fn impl_request_tokens(&self, tokens: &mut TokenStream2) {
+		let name = &self.name;
+		let reply = self.reply_ty.as_ref().map(|(_, reply_ty)| reply_ty);
+
+		let major = &self.major_opcode_expr;
+		let minor = TokenStream2::with_tokens(|tokens| {
+			if let Some((_, minor)) = &self.minor_opcode {
+				tokens.append_tokens(|| quote!(Some(#minor)));
+			} else {
+				tokens.append_tokens(|| quote!(None));
+			};
+		});
+
+		tokens.append_tokens(|| {
+			quote!(
+				// TODO: if the crate is `xrb`, use `crate`, otherwise use `xrb`
+				impl crate::Request<#reply> for #name {
+					fn major_opcode() -> u8 {
+						(#major) as u8
+					}
+
+					fn minor_opcode() -> Option<u8> {
+						#minor
+					}
+
+					fn length(&self) -> u16 {
+						// TODO: calculate length by summing item lengths, plus
+						//       minimum length from header etc.
+						0
+					}
+				}
+			)
+		});
+	}
+}
+
+impl Reply {
+	pub fn impl_reply_tokens(&self, tokens: &mut TokenStream2) {
+		let name = &self.name;
+		let request = &self.request_ty;
+
+		let sequence = {
+			if self.sequence_token.is_none() {
+				quote!(Some(self._sequence_))
+			} else {
+				quote!(None)
+			}
+		};
+
+		tokens.append_tokens(|| {
+			quote!(
+				// TODO: if the crate is `xrb`, use `crate`, otherwise use `xrb`
+				impl crate::Reply<#request> for #name {
+					fn sequence(&self) -> Option<u16> {
+						#sequence
+					}
+
+					fn major_opcode(&self) -> Option<u8> {
+						// TODO: implement major opcode??
+						None
+					}
+
+					fn minor_opcode(&self) -> Option<u8> {
+						// TODO: implement minor opcode??
+						None
+					}
+
+					fn length(&self) -> u32 {
+						// TODO: implement length
+						0
+					}
+				}
+			)
+		});
+	}
+}
+
+impl Event {
+	pub fn impl_event_tokens(&self, tokens: &mut TokenStream2) {
+		let name = &self.name;
+		let code = &self.event_code_expr;
+
+		tokens.append_tokens(|| {
+			quote!(
+				// TODO: if the crate is `xrb`, use `crate`, otherwise use `xrb`
+				impl crate::Event for #name {
+					fn code() -> u8 {
+						(#code) as u8
+					}
+
+					fn sequence(&self) -> u16 {
+						self._sequence_
 					}
 				}
 			)
