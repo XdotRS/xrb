@@ -51,19 +51,5 @@ pub const PROTOCOL_MAJOR_VERSION: u16 = 11;
 /// protocol; seeing as this has not happened since the 80s, it's probably safe to assume it won't.
 pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 
-/// Implementations for the core X11 protocol.
-mod x11;
-
-pub use x11::traits::{Reply, Request};
-pub use x11::*;
-
-pub mod queries {}
-pub mod events {}
-
-pub mod replies {}
-
-use xrbk_macro::define;
-
-define! {
-	data_len => data_len
-}
+// /// Implementations for the core X11 protocol.
+// mod x11;
