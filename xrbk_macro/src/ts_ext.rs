@@ -10,11 +10,11 @@ pub trait TsExt {
 	/// empty [`TokenStream`].
 	///
 	/// # Examples
-	/// ```
-	/// use proc_macro2::TokenStream;
-	/// use syn::Token;
-	///
-	/// use crate::ts_ext::TsExt;
+	/// ```ignore
+	/// # use proc_macro2::TokenStream;
+	/// # use syn::Token;
+	/// #
+	/// use crate::TsExt;
 	///
 	/// let let_token = Token![let];
 	///
@@ -31,11 +31,11 @@ pub trait TsExt {
 	/// Appends a [`TokenStream`] given by the given function `f`.
 	///
 	/// # Examples
-	/// ```
-	/// use proc_macro2::TokenStream;
-	/// use quote::quote;
-	///
-	/// use crate::ts_ext::TsExt;
+	/// ```ignore
+	/// # use proc_macro2::TokenStream;
+	/// # use quote::quote;
+	/// #
+	/// use crate::TsExt;
 	///
 	/// let mut tokens = TokenStream::new();
 	///

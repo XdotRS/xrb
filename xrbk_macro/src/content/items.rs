@@ -16,7 +16,6 @@ use syn::{
 
 use crate::*;
 
-use crate::impls::{ItemDeserializeTokens, ItemSerializeTokens};
 pub use field::*;
 pub use r#let::*;
 pub use unused::*;

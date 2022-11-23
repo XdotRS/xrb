@@ -16,6 +16,7 @@ use syn::parse_macro_input;
 
 pub(crate) use content::*;
 pub(crate) use definition::*;
+pub(crate) use impls::*;
 pub(crate) use ts_ext::*;
 
 #[proc_macro]
