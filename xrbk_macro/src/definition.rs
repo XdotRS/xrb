@@ -451,18 +451,18 @@ impl Enum {
 				// brackets, continue to parse enum variants.
 				while !content.is_empty() {
 					// Parse a variant and push it to the list.
-					variants.push_value(input.parse()?);
+					variants.push_value(content.parse()?);
 
 					// If the token after the enum variant is not a comma,
 					// then there should be no more variants left, so we break
 					// from the loop.
-					if !input.peek(Token![,]) {
+					if !content.peek(Token![,]) {
 						break;
 					}
 
 					// Otherwise, if the next token is a comma, we parse it and
 					// add it to the punctuated list of variants.
-					variants.push_punct(input.parse()?);
+					variants.push_punct(content.parse()?);
 				}
 
 				variants
