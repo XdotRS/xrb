@@ -50,18 +50,6 @@ where
 	Request: Request<Self>,
 	Self: Sized,
 {
-	/// The sequence number associated with the request that this reply is for.
-	///
-	/// Every request on a given connection is assigned a sequence number when
-	/// it is sent, starting with one. This sequence number can therefore be
-	/// used to keep track of exactly which request generated this reply.
-	fn sequence(&self) -> Option<u16>;
-	/// The major opcode, if any, associated with the request that generated
-	/// this reply.
-	fn major_opcode(&self) -> Option<u8>;
-	/// The minor opcode, if any, associated with the request that generated
-	/// this reply.
-	fn minor_opcode(&self) -> Option<u8>;
 	/// The length of this reply in 4-byte units minus 8.
 	///
 	/// Every reply always consists of 32 bytes followed by zero or more
@@ -77,6 +65,13 @@ where
 	/// |...                     |...       |
 	/// |`32 + 4n`               |`n`       |
 	fn length(&self) -> u32;
+
+	/// The sequence number associated with the request that this reply is for.
+	///
+	/// Every request on a given connection is assigned a sequence number when
+	/// it is sent, starting with one. This sequence number can therefore be
+	/// used to keep track of exactly which request generated this reply.
+	fn sequence(&self) -> Option<u16>;
 }
 
 // An event is sent in a SendEvent request. It is 32 bytes long.

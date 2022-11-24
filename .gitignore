@@ -3,3 +3,10 @@
 
 /*/target
 /*/Cargo.lock
+
+.idea
+.fleet
+
+/*/.idea
+/*/.fleet
+
