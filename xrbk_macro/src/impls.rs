@@ -842,30 +842,41 @@ impl DeserializeMessageTokens for Event {
 
 impl Request {
 	pub fn impl_request_tokens(&self, tokens: &mut TokenStream2) {
+		// Request name.
 		let name = &self.name;
+		// Type of reply generated, if any.
 		let reply = self.reply_ty.as_ref().map(|(_, reply_ty)| reply_ty);
 
+		// The expression evaluating to the request's major opcode.
 		let major = &self.major_opcode_expr;
-		let minor = TokenStream2::with_tokens(|tokens| {
-			if let Some((_, minor)) = &self.minor_opcode {
-				tokens.append_tokens(|| quote!(Some(#minor)));
-			} else {
-				tokens.append_tokens(|| quote!(None));
-			};
-		});
+
+		// The expression evaluating to the request's major opcode, if any.
+		let minor = if let Some((_, minor)) = &self.minor_opcode {
+			quote!(Some((#minor) as u8))
+		} else {
+			quote!(None)
+		};
 
 		tokens.append_tokens(|| {
 			quote!(
-				// TODO: if the crate is `xrb`, use `crate`, otherwise use `xrb`
-				impl crate::Request<#reply> for #name {
+				// NOTE: in `xrb`, `extern crate self as xrb;` will have to be
+				//       used so that the trait path works.
+				impl xrb::Request<#reply> for #name {
+					// The major opcode uniquely identifying the request.
 					fn major_opcode() -> u8 {
 						(#major) as u8
 					}
 
+					// The minor opcode uniquely identifying the request
+					// within a particular extension (if this is a request from
+					// an extension, that extension has multiple requests, and
+					// that extension chooses to make use of the minor opcode
+					// field).
 					fn minor_opcode() -> Option<u8> {
 						#minor
 					}
 
+					// The length of the request, measured in multiples of 4 bytes.
 					fn length(&self) -> u16 {
 						// TODO: calculate length by summing item lengths, plus
 						//       minimum length from header etc.
@@ -879,35 +890,32 @@ impl Request {
 
 impl Reply {
 	pub fn impl_reply_tokens(&self, tokens: &mut TokenStream2) {
+		//  The name of the reply.
 		let name = &self.name;
+		// The type of request associated with this reply.
 		let request = &self.request_ty;
 
-		let sequence = {
-			if self.sequence_token.is_none() {
-				quote!(Some(self._sequence_))
-			} else {
-				quote!(None)
-			}
+		// The sequence number associated with the request that generated this
+		// reply, if any.
+		let sequence = if self.sequence_token.is_none() {
+			quote!(Some(self._sequence_))
+		} else {
+			quote!(None)
 		};
 
 		tokens.append_tokens(|| {
 			quote!(
-				// TODO: if the crate is `xrb`, use `crate`, otherwise use `xrb`
-				impl crate::Reply<#request> for #name {
+				// NOTE: in `xrb`, `extern crate self as xrb;` will have to be
+				//       used so that the trait path works.
+				impl xrb::Reply<#request> for #name {
+					// The sequence number associated with the request that
+					// generated this reply, if any.
 					fn sequence(&self) -> Option<u16> {
 						#sequence
 					}
 
-					fn major_opcode(&self) -> Option<u8> {
-						// TODO: implement major opcode??
-						None
-					}
-
-					fn minor_opcode(&self) -> Option<u8> {
-						// TODO: implement minor opcode??
-						None
-					}
-
+					// The number of 4-byte units greater than the minimum
+					// length of 32 bytes.
 					fn length(&self) -> u32 {
 						// TODO: implement length
 						0
@@ -920,17 +928,23 @@ impl Reply {
 
 impl Event {
 	pub fn impl_event_tokens(&self, tokens: &mut TokenStream2) {
+		// Name of the event.
 		let name = &self.name;
+		// The expression evaluating to the event's event code.
 		let code = &self.event_code_expr;
 
 		tokens.append_tokens(|| {
 			quote!(
-				// TODO: if the crate is `xrb`, use `crate`, otherwise use `xrb`
-				impl crate::Event for #name {
+				// NOTE: in `xrb`, `extern crate self as xrb;` will have to be
+				//       used so that the trait path works.
+				impl xrb::Event for #name {
+					// The code uniquely identifying this event.
 					fn code() -> u8 {
 						(#code) as u8
 					}
 
+					// The sequence number associated with the last relevant
+					// request sent to the X server prior to this event.
 					fn sequence(&self) -> u16 {
 						self._sequence_
 					}
