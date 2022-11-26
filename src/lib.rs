@@ -53,3 +53,37 @@ pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 
 // /// Implementations for the core X11 protocol.
 // mod x11;
+
+extern crate self as xrb;
+
+use xrbk_macro::define;
+
+define! {
+	pub struct Unit;
+
+	pub struct Tuple(i32, i32);
+
+	pub struct Struct {
+		x: i32,
+		y: i32,
+	}
+
+	pub enum Enum<T> {
+		Unit,
+		Tuple(T),
+		Struct {
+			x: i32,
+			y: i32,
+		},
+	}
+
+	pub struct MyRequest: Request<7> {
+		// TODO: why does this highlight the `=>` for an error expecting a semicolon??
+		let data_len = &self => self.data.len() as u32,
+
+		#[context(data_len => data_len as usize)]
+		pub data: Vec<u8>,
+
+		[(); ..],
+	}
+}

@@ -3,6 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 #![feature(anonymous_lifetime_in_impl_trait)]
+#![feature(let_chains)]
 
 mod content;
 mod definition;

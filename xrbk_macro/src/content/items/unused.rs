@@ -76,7 +76,7 @@ impl Array {
 			bracket_token: bracketed!(content in input),
 			unit_token: parenthesized!(_unit in content),
 			semicolon_token: content.parse()?,
-			source: Source::parse_without_receiver(&content, map)?,
+			source: Source::parse_with_idents(&content, map)?,
 		})
 	}
 }

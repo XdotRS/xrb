@@ -59,7 +59,7 @@ pub enum Defaultable<T> {
 	///
 	/// *This is not the same as [`Default`] in [`std`].*
 	///
-	/// [`Default`]: std::default::Default
+	/// [`Default`]: Default
 	Default,
 	/// Provides a specific value, rather than initializing as the default.
 	Specific(T),

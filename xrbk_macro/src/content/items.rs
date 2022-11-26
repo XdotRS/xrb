@@ -143,7 +143,7 @@ pub enum ExpandMode {
 	Reply {
 		/// Whether this [`Reply`] has a `_sequence_` field.
 		///
-		/// [`Reply`]: crate::definition::Reply
+		/// [`Reply`]: Reply
 		has_sequence: bool,
 	},
 	/// Prepends a `_sequence_` field during expansion.
@@ -356,7 +356,7 @@ impl Items {
 
 						eq_token: input.parse()?,
 
-						source: Source::parse_without_args(input)?,
+						source: Source::parse_with_receivers(input)?,
 					};
 
 					// Insert the let item's `ident` and `type` to the `map` of

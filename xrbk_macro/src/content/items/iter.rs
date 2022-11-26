@@ -8,21 +8,21 @@ use syn::punctuated::{IntoIter as PuncIntoIter, Iter as PuncIter};
 /// An iterator over borrowed values of type `(`[`ItemId`]`, `[`Item`]`)`.
 ///
 /// [`ItemId`]: super::ItemId
-/// [`Item`]: super::Item
+/// [`Item`]: Item
 pub struct Pairs<'a>(Option<PuncIter<'a, ItemWithId>>);
 /// An iterator over owned values of type `(`[`ItemId`]`, `[`Item`]`)`.
 ///
 /// [`ItemId`]: super::ItemId
-/// [`Item`]: super::Item
+/// [`Item`]: Item
 pub struct IntoPairs(Option<PuncIntoIter<ItemWithId>>);
 
 /// An iterator over borrowed values of type [`Item`].
 ///
-/// [`Item`]: super::Item
+/// [`Item`]: Item
 pub struct Iter<'a>(Pairs<'a>);
 /// An iterator over owned values of type [`Item`].
 ///
-/// [`Item`]: super::Item
+/// [`Item`]: Item
 pub struct IntoIter(IntoPairs);
 
 impl<'a> Iterator for Pairs<'a> {
@@ -92,7 +92,7 @@ impl IntoPairs {
 impl<'a> Iter<'a> {
 	/// Creates a new borrowing iterator of [`Item`]s.
 	///
-	/// [`Item`]: super::Item
+	/// [`Item`]: Item
 	fn new(iter: Option<PuncIter<'a, ItemWithId>>) -> Self {
 		Self(Pairs::new(iter))
 	}
@@ -101,7 +101,7 @@ impl<'a> Iter<'a> {
 impl IntoIter {
 	/// Creates a new owning iterator of [`Item`]s.
 	///
-	/// [`Item`]: super::Item
+	/// [`Item`]: Item
 	fn new(into_iter: Option<PuncIntoIter<ItemWithId>>) -> Self {
 		Self(IntoPairs::new(into_iter))
 	}
@@ -138,7 +138,7 @@ impl IntoIterator for Items {
 impl Items {
 	/// Creates a borrowing iterator over values of type [`Item`].
 	///
-	/// [`Item`]: super::Item
+	/// [`Item`]: Item
 	pub fn iter(&self) -> Iter {
 		self.into_iter()
 	}
@@ -146,7 +146,7 @@ impl Items {
 	/// Creates a borrowing iterator over values of type `(`[`ItemId`]`, `[`Item`]`)`.
 	///
 	/// [`ItemId`]: super::ItemId
-	/// [`Item`]: super::Item
+	/// [`Item`]: Item
 	pub fn pairs(&self) -> Pairs {
 		Pairs::new(match self {
 			Items::Named { items, .. } => Some(items.iter()),
@@ -158,7 +158,7 @@ impl Items {
 	/// Creates an owning iterator over values of type `(`[`ItemId`]`, `[`Item`]`)`.
 	///
 	/// [`ItemId`]: super::ItemId
-	/// [`Item`]: super::Item
+	/// [`Item`]: Item
 	pub fn into_pairs(self) -> IntoPairs {
 		IntoPairs::new(match self {
 			Items::Named { items, .. } => Some(items.into_iter()),
