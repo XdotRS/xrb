@@ -60,30 +60,27 @@ use xrbk_macro::define;
 
 define! {
 	pub struct Unit;
-
-	pub struct Tuple(i32, i32);
-
+	pub struct Tuple<T>(T);
 	pub struct Struct {
 		x: i32,
 		y: i32,
 	}
 
 	pub enum Enum<T> {
-		Unit,
-		Tuple(T),
-		Struct {
+		UnitVariant,
+		TupleVariant(T),
+		StructVariant {
 			x: i32,
 			y: i32,
 		},
 	}
 
-	pub struct MyRequest: Request<7> {
-		// TODO: why does this highlight the `=>` for an error expecting a semicolon??
-		let data_len = &self => self.data.len() as u32,
+	pub struct OpenFont: Request(45) {
+		pub font_id: u32,
 
-		#[context(data_len => data_len as usize)]
-		pub data: Vec<u8>,
-
-		[(); ..],
+		let name_len: u16 = &self => self.name.len() as u16,
+		[(); 2],
+		#[context(name_len => name_len as usize)]
+		pub name: String,
 	}
 }

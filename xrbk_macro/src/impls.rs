@@ -66,7 +66,10 @@ impl ItemSerializeTokens for Field {
 	// Tokens to serialize a field.
 	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
 		let name = id.formatted();
-		tokens.append_tokens(|| quote!(#name.write_to(writer)?;));
+		let r#type = &self.r#type;
+
+		tokens
+			.append_tokens(|| quote!(<#r#type as cornflakes::Writable>::write_to(#name, writer)?;));
 	}
 }
 
@@ -79,23 +82,28 @@ impl ItemDeserializeTokens for Field {
 		tokens.append_tokens(|| {
 			// If this is a contextual field, that context must be provided.
 			if let Some(context) = self.context() {
-				let args = context.source().fmt_args();
+				// TODO: ident: Type
+				let args = context.source().args.iter().flatten();
+				let formatted_args = context.source().fmt_args();
+				let expr = &context.source().expr;
 
 				quote!(
-					// let __my_field__ = <Vec<u8>>::read_with(
-					//     reader,
-					//     __my_field__(__my_len__),
-					// )?;
+					fn #name(
+						#( #args, )*
+					) -> &<#r#type as cornflakes::ContextualReadable>::Context {
+						#expr
+					}
+
 					let #name = <#r#type as cornflakes::ContextualReadable>
 						::read_with(
 							reader,
-							#name( #(#args,)* ),
+							#name( #( #formatted_args, )* ),
 						)?;
 				)
 			} else {
 				quote!(
 					// let __my_field2__ = u8::read_from(reader)?;
-					let #name = <r#type as cornflakes::Readable>::read_from(reader)?;
+					let #name = <#r#type as cornflakes::Readable>::read_from(reader)?;
 				)
 			}
 		});
@@ -105,11 +113,18 @@ impl ItemDeserializeTokens for Field {
 impl ItemSerializeTokens for Let {
 	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
 		let name = id.formatted();
-		let args = self.source.fmt_args();
+		let r#type = &self.r#type;
+		let formatted_args = self.source.fmt_args();
+		// TODO: ident: Type
+		let args = self.source.args.iter().flatten();
+		let expr = &self.source.expr;
 
 		quote!(
-			// __data_len__(&__data__).write_to(writer)?;
-			#name( #( &#args, )* ).write_to(writer)?;
+			fn #name( #( #args, )* ) -> #r#type {
+				#expr
+			}
+
+			<#r#type as cornflakes::Writable>::write_to(#name( #( &#formatted_args, )* ), writer)?;
 		)
 		.to_tokens(tokens);
 	}
@@ -143,13 +158,19 @@ impl ItemSerializeTokens for Unused {
 
 					match &array.content {
 						ArrayContent::Source(source) => {
-							let args = source.fmt_args();
+							// TODO: ident: Type
+							let args = source.args.iter().flatten();
+							let formatted_args = source.fmt_args();
+							let expr = &source.expr;
 
 							quote!(
-								// writer.put_many(0u8, _unused_1_(&__data__));
+								fn #name( #( #args, )* ) -> usize {
+									#expr
+								}
+
 								writer.put_many(
 									0u8,
-									#name( #(#args,)* )
+									#name( #( #formatted_args, )* )
 								);
 							)
 						}
@@ -178,12 +199,17 @@ impl ItemDeserializeTokens for Unused {
 
 					match &array.content {
 						ArrayContent::Source(source) => {
-							let args = source.fmt_args();
+							let args = source.args.iter().flatten();
+							let formatted_args = source.fmt_args();
+							let expr = &source.expr;
 
 							quote!(
-								// reader.advance(_unused_1_(&__data__) as usize);
+								fn #name( #( #args, )* ) -> usize {
+									#expr
+								}
+
 								reader.advance(
-									#name( #(#args,)* ) as usize,
+									#name( #( #formatted_args, )* ),
 								);
 							)
 						}
@@ -234,6 +260,7 @@ impl ItemDeserializeTokens for Item {
 impl Enum {
 	fn serialize_tokens(&self, tokens: &mut TokenStream2) {
 		let name = &self.ident;
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		let arms = TokenStream2::with_tokens(|tokens| {
 			// Start the variants' discriminant tokens at `0`. We add `1` each
@@ -267,7 +294,7 @@ impl Enum {
 					quote!(
 						Self::#name #pat => {
 							// Write the variant's discriminant (as a single byte).
-							((#discrim) as u8).write_to(writer)?;
+							writer.put_u8((#discrim) as u8);
 
 							#inner
 						}
@@ -296,11 +323,11 @@ impl Enum {
 				//         }
 				//     }
 				// }
-				impl cornflakes::Writable for #name {
+				impl #impl_generics cornflakes::Writable for #name #type_generics #where_clause{
 					fn write_to(
 						&self,
 						writer: &mut impl bytes::BufMut,
-					) -> Result<(), Box<dyn std::error::Error>> {
+					) -> Result<(), cornflakes::WriteError> {
 						match self {
 							#arms
 						}
@@ -314,6 +341,7 @@ impl Enum {
 impl Enum {
 	fn deserialize_tokens(&self, tokens: &mut TokenStream2) {
 		let name = &self.ident;
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		let arms = TokenStream2::with_tokens(|tokens| {
 			// Start the variants' discriminant tokens at `0`. We add `1` each
@@ -327,7 +355,7 @@ impl Enum {
 				// If the variant explicitly specifies its discriminant, reset
 				// the `discrim` tokens to that discriminant expression.
 				if let Some((_, expr)) = &variant.discriminant {
-					discrim = expr.to_token_stream();
+					discrim = quote!((#expr));
 				}
 
 				// Tokens to fill in the fields for the variant's constructor.
@@ -346,7 +374,7 @@ impl Enum {
 				tokens.append_tokens(|| {
 					quote!(
 						// Match against the discriminant...
-						#discrim => {
+						discrim if discrim == (#discrim) as u8 => {
 							// Deserialize the items.
 							#inner
 
@@ -373,10 +401,10 @@ impl Enum {
 				//         }
 				//     }
 				// }
-				impl cornflakes::Readable for #name {
+				impl #impl_generics cornflakes::Readable for #name #type_generics #where_clause {
 					fn read_from(
 						reader: &mut impl bytes::Buf,
-					) -> Result<Self, Box<dyn std::error::Error>> {
+					) -> Result<Self, cornflakes::ReadError> {
 						// Match against the discriminant...
 						Ok(match reader.read::<u8>()? {
 							#arms
@@ -421,6 +449,7 @@ impl Struct {
 impl SerializeMessageTokens for BasicStructMetadata {
 	fn serialize_tokens(&self, tokens: &mut TokenStream2, items: &Items) {
 		let name = &self.name;
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		// Tokens to destructure the struct's fields.
 		let pat = TokenStream2::with_tokens(|tokens| {
@@ -447,11 +476,11 @@ impl SerializeMessageTokens for BasicStructMetadata {
 				//         __1__.write_to(writer)?;
 				//     }
 				// }
-				impl cornflakes::Writable for #name {
+				impl #impl_generics cornflakes::Writable for #name #type_generics #where_clause {
 					fn write_to(
 						&self,
 						writer: &mut impl bytes::BufMut,
-					) -> Result<(), Box<dyn std::error::Error>> {
+					) -> Result<(), cornflakes::WriteError> {
 						// Destructure the struct.
 						let Self #pat = self;
 
@@ -466,6 +495,7 @@ impl SerializeMessageTokens for BasicStructMetadata {
 impl DeserializeMessageTokens for BasicStructMetadata {
 	fn deserialize_tokens(&self, tokens: &mut TokenStream2, items: &Items) {
 		let name = &self.name;
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		// Tokens to fill in the fields for the struct's constructor.
 		let cons = TokenStream2::with_tokens(|tokens| {
@@ -489,13 +519,13 @@ impl DeserializeMessageTokens for BasicStructMetadata {
 				//         Self(__0__, __1__)
 				//     }
 				// }
-				impl cornflakes::Readable for #name {
+				impl #impl_generics cornflakes::Readable for #name #type_generics #where_clause {
 					fn read_from(
 						reader: &mut impl bytes::Buf,
-					) -> Result<Self, Box<dyn std::error::Error>> {
+					) -> Result<Self, cornflakes::ReadError> {
 						#inner
 
-						Self #cons
+						Ok(Self #cons)
 					}
 				}
 			)
@@ -513,6 +543,7 @@ impl SerializeMessageTokens for Request {
 		// ...
 
 		let name = &self.name;
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		// Tokens required to destructure the request's fields.
 		let pat = TokenStream2::with_tokens(|tokens| {
@@ -526,7 +557,7 @@ impl SerializeMessageTokens for Request {
 				// written in the metabyte position.
 				tokens.append_tokens(|| {
 					quote!(
-						writer.put_u16(<Self as crate::x11::traits::Request>::minor_opcode());
+						writer.put_u16(<Self as xrb::Request>::minor_opcode());
 					)
 				});
 			} else {
@@ -545,20 +576,20 @@ impl SerializeMessageTokens for Request {
 
 		tokens.append_tokens(|| {
 			quote!(
-				impl cornflakes::Writable for #name {
+				impl #impl_generics cornflakes::Writable for #name #type_generics #where_clause {
 					fn write_to(
 						&self,
 						writer: &mut impl bytes::BufMut,
-					) -> Result<(), Box<dyn std::error::Error>> {
+					) -> Result<(), cornflakes::WriteError> {
 						// Destructure the struct.
 						let Self #pat = self;
 
 						// Major opcode.
-						writer.put_u8(<Self as crate::x11::traits::Request>::major_opcode());
+						writer.put_u8(<Self as xrb::Request>::major_opcode());
 						// Metabyte (minor opcode, metabyte item, or nothing).
 						#metabyte
 						// Request length.
-						writer.put_u16(<Self as crate::x11::traits::Request>::length(&self));
+						writer.put_u16(<Self as xrb::Request>::length(&self));
 
 						// Rest of the items.
 						#inner
@@ -579,6 +610,7 @@ impl DeserializeMessageTokens for Request {
 		// ...
 
 		let name = &self.name;
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		let metabyte = TokenStream2::with_tokens(|tokens| {
 			// If the request has a minor opcode, then it must have already
@@ -603,7 +635,7 @@ impl DeserializeMessageTokens for Request {
 
 		tokens.append_tokens(|| {
 			quote!(
-				impl cornflakes::Readable for #name {
+				impl #impl_generics cornflakes::Readable for #name #type_generics #where_clause {
 					fn read_from(
 						reader: &mut impl bytes::Buf,
 					) -> Result<Self, cornflakes::ReadError> {
@@ -616,7 +648,7 @@ impl DeserializeMessageTokens for Request {
 						#inner
 
 						// Call the constructor.
-						Self #cons
+						Ok(Self #cons)
 					}
 				}
 			)
@@ -635,6 +667,7 @@ impl SerializeMessageTokens for Reply {
 		// ...
 
 		let name = &self.name;
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		// Tokens required to destructure the reply's fields.
 		let pat = TokenStream2::with_tokens(|tokens| {
@@ -671,7 +704,7 @@ impl SerializeMessageTokens for Reply {
 
 		tokens.append_tokens(|| {
 			quote!(
-				impl cornflakes::Writable for #name {
+				impl #impl_generics cornflakes::Writable for #name #type_generics #where_clause {
 					fn write_to(
 						&self,
 						writer: &mut impl bytes::BufMut,
@@ -685,7 +718,7 @@ impl SerializeMessageTokens for Reply {
 						// The sequence field, if there is one.
 						#sequence
 						// The length of the reply.
-						writer.put_u16(<Self as crate::x11::traits::Reply>::length(&self));
+						writer.put_u16(<Self as xrb::Reply>::length(&self));
 
 						#inner
 					}
@@ -706,6 +739,7 @@ impl DeserializeMessageTokens for Reply {
 		// ...
 
 		let name = &self.name;
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		// Deserialization tokens for the metabyte item.
 		let metabyte = TokenStream2::with_tokens(|tokens| {
@@ -743,7 +777,7 @@ impl DeserializeMessageTokens for Reply {
 
 		tokens.append_tokens(|| {
 			quote!(
-				impl cornflakes::Readable for #name {
+				impl #impl_generics cornflakes::Readable for #name #type_generics #where_clause {
 					fn read_from(
 						reader: &mut impl bytes::Buf,
 					) -> Result<Self, cornflakes::ReadError> {
@@ -756,7 +790,7 @@ impl DeserializeMessageTokens for Reply {
 
 						#inner
 
-						Self #cons
+						Ok(Self #cons)
 					}
 				}
 			)
@@ -774,6 +808,7 @@ impl SerializeMessageTokens for Event {
 		// ...
 
 		let name = &self.name;
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		// Pattern to destructure the event struct.
 		let pat = TokenStream2::with_tokens(|tokens| {
@@ -794,7 +829,7 @@ impl SerializeMessageTokens for Event {
 
 		tokens.append_tokens(|| {
 			quote!(
-				impl cornflakes::Writable for #name {
+				impl #impl_generics cornflakes::Writable for #name #type_generics #where_clause {
 					fn write_to(
 						&self,
 						writer: &mut impl bytes::BufMut,
@@ -802,7 +837,7 @@ impl SerializeMessageTokens for Event {
 						let Self #pat = self;
 
 						// Event code.
-						writer.put_u8(<Self as crate::x11::traits::Event>::code());
+						writer.put_u8(<Self as xrb::Event>::code());
 						// Serialize the metabyte item.
 						#metabyte
 						// Serialize the sequence field.
@@ -826,6 +861,7 @@ impl DeserializeMessageTokens for Event {
 		// ...
 
 		let name = &self.name;
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		// Deserialize the metabyte item, if any (otherwise skip the byte).
 		let metabyte = TokenStream2::with_tokens(|tokens| {
@@ -846,7 +882,7 @@ impl DeserializeMessageTokens for Event {
 
 		tokens.append_tokens(|| {
 			quote!(
-				impl cornflakes::Readable for #name {
+				impl #impl_generics cornflakes::Readable for #name #type_generics #where_clause {
 					fn read_from(
 						reader: &mut impl bytes::Buf,
 					) -> Result<Self, cornflakes::ReadError> {
@@ -857,7 +893,7 @@ impl DeserializeMessageTokens for Event {
 
 						#inner
 
-						Self #cons
+						Ok(Self #cons)
 					}
 				}
 			)
@@ -869,6 +905,8 @@ impl Request {
 	pub fn impl_request_tokens(&self, tokens: &mut TokenStream2) {
 		// Request name.
 		let name = &self.name;
+		// Generics.
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 		// Type of reply generated, if any.
 		let reply = self.reply_ty.as_ref().map(|(_, reply_ty)| reply_ty);
 
@@ -886,7 +924,7 @@ impl Request {
 			quote!(
 				// NOTE: in `xrb`, `extern crate self as xrb;` will have to be
 				//       used so that the trait path works.
-				impl xrb::Request<#reply> for #name {
+				impl #impl_generics xrb::Request<#reply> for #name #type_generics #where_clause {
 					// The major opcode uniquely identifying the request.
 					fn major_opcode() -> u8 {
 						(#major) as u8
@@ -917,6 +955,8 @@ impl Reply {
 	pub fn impl_reply_tokens(&self, tokens: &mut TokenStream2) {
 		//  The name of the reply.
 		let name = &self.name;
+		// Generics.
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 		// The type of request associated with this reply.
 		let request = &self.request_ty;
 
@@ -932,7 +972,7 @@ impl Reply {
 			quote!(
 				// NOTE: in `xrb`, `extern crate self as xrb;` will have to be
 				//       used so that the trait path works.
-				impl xrb::Reply<#request> for #name {
+				impl #impl_generics xrb::Reply<#request> for #name #type_generics #where_clause {
 					// The sequence number associated with the request that
 					// generated this reply, if any.
 					fn sequence(&self) -> Option<u16> {
@@ -955,6 +995,8 @@ impl Event {
 	pub fn impl_event_tokens(&self, tokens: &mut TokenStream2) {
 		// Name of the event.
 		let name = &self.name;
+		// Generics.
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 		// The expression evaluating to the event's event code.
 		let code = &self.event_code_expr;
 
@@ -962,7 +1004,7 @@ impl Event {
 			quote!(
 				// NOTE: in `xrb`, `extern crate self as xrb;` will have to be
 				//       used so that the trait path works.
-				impl xrb::Event for #name {
+				impl #impl_generics xrb::Event for #name #type_generics #where_clause {
 					// The code uniquely identifying this event.
 					fn code() -> u8 {
 						(#code) as u8

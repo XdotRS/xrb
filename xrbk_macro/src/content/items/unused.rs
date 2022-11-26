@@ -48,7 +48,7 @@ pub enum ArrayContent {
 	/// Infer the number of unused bytes.
 	Infer(Token![..]),
 	/// Evaluate a [`Source`] for the number of unused bytes.
-	Source(Source),
+	Source(Box<Source>),
 }
 
 impl Unused {
@@ -86,7 +86,7 @@ impl ArrayContent {
 		Ok(if input.peek(Token![..]) {
 			Self::Infer(input.parse()?)
 		} else {
-			Self::Source(Source::parse_with_idents(input, map)?)
+			Self::Source(Box::new(Source::parse_with_idents(input, map)?))
 		})
 	}
 }
