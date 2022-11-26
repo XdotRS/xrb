@@ -14,7 +14,7 @@ use syn::{
 	Error, Expr, Ident, Receiver, Token, Type,
 };
 
-type IdentMap<'a> = &'a HashMap<String, Type>;
+pub type IdentMap<'a> = &'a HashMap<String, Type>;
 type ArgList = Punctuated<Arg, Token![,]>;
 
 pub enum Arg {

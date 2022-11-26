@@ -129,31 +129,43 @@ impl ItemDeserializeTokens for Let {
 
 impl ItemSerializeTokens for Unused {
 	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
-		match self {
-			Self::Unit { .. } => {
-				// 0u8.write_to(writer)?;
-				tokens.append_tokens(|| {
+		tokens.append_tokens(|| {
+			match self {
+				Self::Unit { .. } => {
+					// 0u8.write_to(writer)?;
 					quote!(
 						writer.put_u8(0);
 					)
-				});
-			}
+				}
 
-			Self::Array(array) => {
-				let name = id.formatted();
-				let args = array.source.fmt_args();
+				Self::Array(array) => {
+					let name = id.formatted();
 
-				tokens.append_tokens(|| {
-					quote!(
-						// writer.put_many(0u8, _unused_1_(&__data__));
-						writer.put_many(
-							0u8,
-							#name( #(#args,)* )
-						);
-					)
-				});
+					match &array.content {
+						ArrayContent::Source(source) => {
+							let args = source.fmt_args();
+
+							quote!(
+								// writer.put_many(0u8, _unused_1_(&__data__));
+								writer.put_many(
+									0u8,
+									#name( #(#args,)* )
+								);
+							)
+						}
+
+						ArrayContent::Infer(_) => {
+							quote!(
+								writer.put_many(
+									0u8,
+									// TODO: use padding function
+								);
+							)
+						}
+					}
+				}
 			}
-		}
+		});
 	}
 }
 
@@ -163,14 +175,27 @@ impl ItemDeserializeTokens for Unused {
 			match self {
 				Self::Array(array) => {
 					let name = id.formatted();
-					let args = array.source.fmt_args();
 
-					quote!(
-						// reader.advance(_unused_1_(&__data__) as usize);
-						reader.advance(
-							#name( #(#args,)* ) as usize,
-						);
-					)
+					match &array.content {
+						ArrayContent::Source(source) => {
+							let args = source.fmt_args();
+
+							quote!(
+								// reader.advance(_unused_1_(&__data__) as usize);
+								reader.advance(
+									#name( #(#args,)* ) as usize,
+								);
+							)
+						}
+
+						ArrayContent::Infer(_) => {
+							quote!(
+								reader.advance(
+									// TODO: use padding function
+								);
+							)
+						}
+					}
 				}
 
 				Self::Unit { .. } => {

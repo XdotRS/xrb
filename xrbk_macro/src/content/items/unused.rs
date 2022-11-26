@@ -2,13 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use std::collections::HashMap;
+use syn::{parse::ParseStream, token, Result, Token};
 
-use syn::{bracketed, parenthesized, parse::ParseStream, token, Result, Token, Type};
-
-use crate::content::Attribute;
-
-use super::Source;
+use super::{Attribute, IdentMap, Source};
 
 pub enum Unused {
 	/// A unit token representing one single unused byte.
@@ -42,8 +38,17 @@ pub struct Array {
 	pub unit_token: token::Paren,
 	/// A semicolon token: `;`.
 	pub semicolon_token: Token![;],
-	/// The [`Source`] that provides the number of unused bytes.
-	pub source: Source,
+	/// The [content] of the `Array` that provides the number of unused bytes.
+	///
+	/// [content]: ArrayContent
+	pub content: ArrayContent,
+}
+
+pub enum ArrayContent {
+	/// Infer the number of unused bytes.
+	Infer(Token![..]),
+	/// Evaluate a [`Source`] for the number of unused bytes.
+	Source(Source),
 }
 
 impl Unused {
@@ -57,10 +62,18 @@ impl Unused {
 		matches!(self, Self::Array { .. })
 	}
 
-	/// Returns the contained [`Source`] if this is [`Unused::Array`].
+	/// Returns the contained [`Source`] if this is [`Unused::Array`] with
+	/// content [`AttrContent::Source`].
 	pub const fn source(&self) -> Option<&Source> {
 		match self {
-			Self::Array(array) => Some(&array.source),
+			Self::Array(array) => {
+				if let ArrayContent::Source(source) = &array.content {
+					Some(source)
+				} else {
+					None
+				}
+			}
+
 			Self::Unit { .. } => None,
 		}
 	}
@@ -68,15 +81,12 @@ impl Unused {
 
 // Parsing {{{
 
-impl Array {
-	pub fn parse(input: ParseStream, map: &HashMap<String, Type>) -> Result<Self> {
-		let (content, _unit);
-
-		Ok(Self {
-			bracket_token: bracketed!(content in input),
-			unit_token: parenthesized!(_unit in content),
-			semicolon_token: content.parse()?,
-			source: Source::parse_with_idents(&content, map)?,
+impl ArrayContent {
+	pub fn parse(input: ParseStream, map: IdentMap) -> Result<Self> {
+		Ok(if input.peek(Token![..]) {
+			Self::Infer(input.parse()?)
+		} else {
+			Self::Source(Source::parse_with_idents(input, map)?)
 		})
 	}
 }

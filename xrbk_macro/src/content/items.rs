@@ -264,184 +264,182 @@ impl Items {
 		// While there are still tokens left in the `input` stream, we continue
 		// to parse items.
 		while !input.is_empty() {
-			if input.peek(Token![#]) {
-				let mut attributes = Attribute::parse_outer(input, &map)?;
+			let mut attributes = Attribute::parse_outer(input, &map)?;
 
-				if input.peek(token::Bracket) || input.peek(token::Paren) {
-					// Unused bytes item.
+			if input.peek(token::Bracket) || input.peek(token::Paren) {
+				// Unused bytes item.
 
-					if let Some(attr) = attributes.first() {
-						if !attr.is_metabyte() {
-							return Err(Error::new(
-								attr.span(),
-								"only a metabyte attribute is allowed for unused items",
-							));
-						}
-					} else if let Some(attr) = attributes.get(1) {
+				if let Some(attr) = attributes.get(0) {
+					if !attr.is_metabyte() {
 						return Err(Error::new(
 							attr.span(),
-							"only zero or one (metabyte) attributes are allowed for unused items",
-						));
-					}
-
-					let _unit;
-
-					if !attributes.is_empty() {
-						// Unit with attribute.
-
-						items.push_value((
-							ItemId::Unused(None),
-							Item::Unused(Unused::Unit {
-								attribute: Some(attributes.remove(0)),
-								unit_token: parenthesized!(_unit in input),
-							}),
-						));
-					} else if input.peek(token::Paren) {
-						// Unit, no attribute.
-
-						items.push_value((
-							ItemId::Unused(None),
-							Item::Unused(Unused::Unit {
-								attribute: None,
-								unit_token: parenthesized!(_unit in input),
-							}),
-						));
-					} else {
-						// Array.
-
-						let content;
-
-						let index = unused_index;
-						unused_index += 1;
-
-						items.push_value((
-							ItemId::Unused(Some(index)),
-							Item::Unused(Unused::Array(Box::new(Array {
-								bracket_token: bracketed!(content in input),
-								unit_token: parenthesized!(_unit in content),
-								semicolon_token: content.parse()?,
-								source: Source::parse(input, &map)?,
-							}))),
-						));
-					}
-				} else if input.peek(Token![let]) {
-					// Let item.
-
-					if let Some(attr) = attributes.get(0) {
-						if !attr.is_metabyte() {
-							return Err(Error::new(
-								attr.span(),
-								"only a metabyte attribute is allowed for let items",
-							));
-						}
-					} else if let Some(attr) = attributes.get(1) {
-						return Err(Error::new(
-							attr.span(),
-							"only zero or one (metabyte) attributes are allowed for let items",
-						));
-					}
-
-					let r#let = Let {
-						attribute: if !attributes.is_empty() {
-							Some(attributes.remove(0))
-						} else {
-							None
-						},
-
-						let_token: input.parse()?,
-
-						ident: input.parse()?,
-						colon_token: input.parse()?,
-						r#type: input.parse()?,
-
-						eq_token: input.parse()?,
-
-						source: Source::parse_with_receivers(input)?,
-					};
-
-					// Insert the let item's `ident` and `type` to the `map` of
-					// known `Ident`s.
-					map.insert(r#let.ident.to_string(), r#let.r#type.to_owned());
-
-					// Push the let item's ID and the let item itself to the
-					// list of parsed items.
-					items.push_value((
-						ItemId::Let(r#let.ident.to_owned()),
-						Item::Let(Box::new(r#let)),
-					));
-				} else {
-					// Field item.
-
-					if named {
-						// If this is a named field, parse it with an `ident`
-						// and a `colon_token`.
-
-						let vis = input.parse()?;
-
-						let ident: Ident = input.parse()?;
-						let colon_token = input.parse()?;
-
-						let r#type: Type = input.parse()?;
-
-						// Insert the field's `ident` and `type` to the `map`
-						// of known `Ident`s.
-						map.insert(ident.to_string(), r#type.to_owned());
-
-						// Push the field's ID and the field itself to the
-						// list of parsed items.
-						items.push_value((
-							ItemId::Field(FieldId::Ident(ident.to_owned())),
-							Item::Field(Box::new(Field {
-								attributes,
-
-								vis,
-
-								ident: Some(ident),
-								colon_token: Some(colon_token),
-
-								r#type,
-							})),
-						));
-					} else {
-						// Copy the current `field_index`.
-						let index = field_index;
-						// Increase the `field_index` by `1` without affecting
-						// `index`.
-						field_index += 1;
-
-						let vis = input.parse()?;
-						let r#type: Type = input.parse()?;
-
-						// Insert the field's `index` and `type` to the `map`
-						// of known `Ident`s.
-						map.insert(index.to_string(), r#type.to_owned());
-
-						// Push the field's ID and the field itself to the list of parsed items.
-						items.push_value((
-							ItemId::Field(FieldId::Id(index)),
-							Item::Field(Box::new(Field {
-								attributes,
-
-								vis,
-
-								ident: None,
-								colon_token: None,
-
-								r#type,
-							})),
+							"only a metabyte attribute is allowed for unused items",
 						));
 					}
 				}
+
+				if let Some(attr) = attributes.get(1) {
+					return Err(Error::new(
+						attr.span(),
+						"only zero or one (metabyte) attributes are allowed for unused items",
+					));
+				}
+
+				let _unit;
+
+				if !attributes.is_empty() {
+					// Unit with attribute.
+
+					items.push_value((
+						ItemId::Unused(None),
+						Item::Unused(Unused::Unit {
+							attribute: Some(attributes.remove(0)),
+							unit_token: parenthesized!(_unit in input),
+						}),
+					));
+				} else if input.peek(token::Paren) {
+					// Unit, no attribute.
+
+					items.push_value((
+						ItemId::Unused(None),
+						Item::Unused(Unused::Unit {
+							attribute: None,
+							unit_token: parenthesized!(_unit in input),
+						}),
+					));
+				} else {
+					// Array.
+
+					let content;
+
+					let index = unused_index;
+					unused_index += 1;
+
+					items.push_value((
+						ItemId::Unused(Some(index)),
+						Item::Unused(Unused::Array(Box::new(Array {
+							bracket_token: bracketed!(content in input),
+							unit_token: parenthesized!(_unit in content),
+							semicolon_token: content.parse()?,
+							content: ArrayContent::parse(&content, &map)?,
+						}))),
+					));
+				}
+			} else if input.peek(Token![let]) {
+				// Let item.
+
+				if let Some(attr) = attributes.get(0) {
+					if !attr.is_metabyte() {
+						return Err(Error::new(
+							attr.span(),
+							"only a metabyte attribute is allowed for let items",
+						));
+					}
+				}
+
+				if let Some(attr) = attributes.get(1) {
+					return Err(Error::new(
+						attr.span(),
+						"only zero or one (metabyte) attributes are allowed for let items",
+					));
+				}
+
+				let r#let = Let {
+					attribute: if !attributes.is_empty() {
+						Some(attributes.remove(0))
+					} else {
+						None
+					},
+
+					let_token: input.parse()?,
+
+					ident: input.parse()?,
+					colon_token: input.parse()?,
+					r#type: input.parse()?,
+
+					eq_token: input.parse()?,
+
+					source: Source::parse_with_receivers(input)?,
+				};
+
+				// Insert the let item's `ident` and `type` to the `map` of
+				// known `Ident`s.
+				map.insert(r#let.ident.to_string(), r#let.r#type.to_owned());
+
+				// Push the let item's ID and the let item itself to the
+				// list of parsed items.
+				items.push_value((
+					ItemId::Let(r#let.ident.to_owned()),
+					Item::Let(Box::new(r#let)),
+				));
+			} else {
+				// Field item.
+
+				if named {
+					// If this is a named field, parse it with an `ident`
+					// and a `colon_token`.
+
+					let vis = input.parse()?;
+
+					let ident: Ident = input.parse()?;
+					let colon_token = input.parse()?;
+
+					let r#type: Type = input.parse()?;
+
+					// Insert the field's `ident` and `type` to the `map`
+					// of known `Ident`s.
+					map.insert(ident.to_string(), r#type.to_owned());
+
+					// Push the field's ID and the field itself to the
+					// list of parsed items.
+					items.push_value((
+						ItemId::Field(FieldId::Ident(ident.to_owned())),
+						Item::Field(Box::new(Field {
+							attributes,
+
+							vis,
+
+							ident: Some(ident),
+							colon_token: Some(colon_token),
+
+							r#type,
+						})),
+					));
+				} else {
+					// Copy the current `field_index`.
+					let index = field_index;
+					// Increase the `field_index` by `1` without affecting
+					// `index`.
+					field_index += 1;
+
+					let vis = input.parse()?;
+					let r#type: Type = input.parse()?;
+
+					// Insert the field's `index` and `type` to the `map`
+					// of known `Ident`s.
+					map.insert(index.to_string(), r#type.to_owned());
+
+					// Push the field's ID and the field itself to the list of parsed items.
+					items.push_value((
+						ItemId::Field(FieldId::Id(index)),
+						Item::Field(Box::new(Field {
+							attributes,
+
+							vis,
+
+							ident: None,
+							colon_token: None,
+
+							r#type,
+						})),
+					));
+				}
 			}
 
-			// If the token following the item is not a comma, then it must be
-			// the end of the list, so we break from the loop.
-			if !input.peek(Token![,]) {
-				break;
-			} else {
-				// Otherwise, if the next token is a comma, then the list can
-				// continue: we add the comma to the list.
+			if input.peek(Token![,]) {
 				items.push_punct(input.parse()?);
+			} else {
+				break;
 			}
 		}
 
