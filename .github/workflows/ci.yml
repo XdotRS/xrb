@@ -39,14 +39,6 @@ jobs:
       - name: Checkout XRB
         uses: actions/checkout@v3
 
-      - name: Download `target` archive
-        uses: actions/download-artifact@v3
-        with:
-          name: target
-
-      - name: Extract downloaded `target.tar`
-        run: tar -xvf target.tar
-
       # Install the latest nightly release of the Rust toolchain.
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
@@ -70,6 +62,7 @@ jobs:
   # Automatically applies suggested fixes from `clippy`.
   clippy-fixes:
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     outputs:
       # The ID of the commit made for the fixes, or, if no fixes were applied,
@@ -122,6 +115,7 @@ jobs:
   auto-format:
     runs-on: ubuntu-latest
     needs: clippy-fixes
+    if: success() || failure()
 
     outputs:
       # The ID of the commit made for the automatic formatting, or, if no
@@ -179,6 +173,7 @@ jobs:
     runs-on: ubuntu-latest
     # We run clippy analysis after any fixes that can be applied have been.
     needs: clippy-fixes
+    if: success() || failure()
 
     steps:
       # Check out (a.k.a. clones) the XRB repository with fixes made by `clippy`
@@ -215,6 +210,7 @@ jobs:
     # We only build the documentation after the code has been changed so that
     # the code sources linked in the documentation are up-to-date.
     needs: auto-format
+    if: success() || failure()
 
     steps:
       # Check out (a.k.a. clones) the XRB repository with fixes made by `clippy`
