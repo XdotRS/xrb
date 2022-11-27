@@ -12,6 +12,8 @@ use syn::{
 	Error, Expr, Ident, Token, Type,
 };
 
+use crate::TsExt;
+
 pub type IdentMap<'a> = &'a HashMap<String, Type>;
 
 pub struct Arg(pub Ident, pub Option<Type>);
@@ -40,6 +42,26 @@ impl Args {
 		let Self(args) = self;
 
 		args.iter().map(|arg| arg.format()).collect()
+	}
+}
+
+impl Source {
+	pub fn args_to_tokens(&self, tokens: &mut TokenStream2) {
+		if let Some(Args(args)) = &self.args {
+			for Arg(ident, r#type) in args {
+				tokens.append_tokens(|| quote!(#ident: &#r#type,));
+			}
+		}
+	}
+
+	pub fn formatted_args_to_tokens(&self, tokens: &mut TokenStream2) {
+		if let Some(args) = &self.args {
+			let args = args.format();
+
+			for ident in args {
+				tokens.append_tokens(|| quote!(&#ident,));
+			}
+		}
 	}
 }
 

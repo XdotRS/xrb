@@ -82,35 +82,24 @@ impl ItemDeserializeTokens for Field {
 		tokens.append_tokens(|| {
 			// If this is a contextual field, that context must be provided.
 			if let Some(context) = self.context() {
-				// TODO: clean up whatever tf is happening with these args
-				let args = context
-					.source()
-					.args
-					.as_ref()
-					.map(|Args(args)| args)
-					.into_iter()
-					.flatten();
-				let formatted_args = context
-					.source()
-					.args
-					.as_ref()
-					.map(|args| args.format())
-					.into_iter()
-					.flatten();
+				let args = TokenStream2::with_tokens(|tokens| {
+					context.source().args_to_tokens(tokens);
+				});
+				let formatted_args = TokenStream2::with_tokens(|tokens| {
+					context.source().formatted_args_to_tokens(tokens);
+				});
+
 				let expr = &context.source().expr;
 
 				quote!(
-					fn #name(
-						#( &#args, )*
-					) -> <#r#type as cornflakes::ContextualReadable>::Context {
+					fn #name(#args) -> <#r#type as cornflakes::ContextualReadable>::Context {
 						#expr
 					}
 
-					let #name = <#r#type as cornflakes::ContextualReadable>
-						::read_with(
-							reader,
-							&#name( #( &#formatted_args, )* ),
-						)?;
+					let #name = <#r#type as cornflakes::ContextualReadable>::read_with(
+						reader,
+						&#name(#formatted_args),
+					)?;
 				)
 			} else {
 				quote!(
@@ -126,31 +115,25 @@ impl ItemSerializeTokens for Let {
 	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
 		let name = id.formatted();
 		let r#type = &self.r#type;
-		// TODO: clean up whatever tf is happening with these args
-		let args = self
-			.source
-			.args
-			.as_ref()
-			.map(|Args(args)| args)
-			.into_iter()
-			.flatten();
-		// TODO: for formatted args, the type also needs to be the reference
-		//       type (<r#type as AsRef>::Output or something like that?)
-		let formatted_args = self
-			.source
-			.args
-			.as_ref()
-			.map(|args| args.format())
-			.into_iter()
-			.flatten();
+
+		let args = TokenStream2::with_tokens(|tokens| {
+			self.source.args_to_tokens(tokens);
+		});
+		let formatted_args = TokenStream2::with_tokens(|tokens| {
+			self.source.formatted_args_to_tokens(tokens);
+		});
+
 		let expr = &self.source.expr;
 
 		quote!(
-			fn #name( #( &#args, )* ) -> #r#type {
+			fn #name(#args) -> #r#type {
 				#expr
 			}
 
-			<#r#type as cornflakes::Writable>::write_to(#name( #( &#formatted_args, )* ), writer)?;
+			<#r#type as cornflakes::Writable>::write_to(
+				#name(#formatted_args),
+				writer,
+			)?;
 		)
 		.to_tokens(tokens);
 	}
@@ -161,10 +144,9 @@ impl ItemDeserializeTokens for Let {
 		let name = id.formatted();
 		let r#type = &self.r#type;
 
-		tokens.append_tokens(|| {
-			// let __data_len__: u32 = reader.read()?;
-			quote!(let #name: #r#type = reader.read()?;)
-		});
+		tokens.append_tokens(
+			|| quote!(let #name = <#r#type as cornflakes::Readable>::read_from(reader)?;),
+		);
 	}
 }
 
@@ -184,29 +166,23 @@ impl ItemSerializeTokens for Unused {
 
 					match &array.content {
 						ArrayContent::Source(source) => {
-							// TODO: clean up whatever tf is happening with these args
-							let args = source
-								.args
-								.as_ref()
-								.map(|Args(args)| args)
-								.into_iter()
-								.flatten();
-							let formatted_args = source
-								.args
-								.as_ref()
-								.map(|args| args.format())
-								.into_iter()
-								.flatten();
+							let args = TokenStream2::with_tokens(|tokens| {
+								source.args_to_tokens(tokens);
+							});
+							let formatted_args = TokenStream2::with_tokens(|tokens| {
+								source.formatted_args_to_tokens(tokens);
+							});
+
 							let expr = &source.expr;
 
 							quote!(
-								fn #name( #( &#args, )* ) -> usize {
+								fn #name(#args) -> usize {
 									#expr
 								}
 
 								writer.put_many(
 									0u8,
-									#name( #( &#formatted_args, )* )
+									#name(#formatted_args),
 								);
 							)
 						}
@@ -235,29 +211,21 @@ impl ItemDeserializeTokens for Unused {
 
 					match &array.content {
 						ArrayContent::Source(source) => {
-							// TODO: clean up whatever tf is happening with these args
-							let args = source
-								.args
-								.as_ref()
-								.map(|Args(args)| args)
-								.into_iter()
-								.flatten();
-							let formatted_args = source
-								.args
-								.as_ref()
-								.map(|args| args.format())
-								.into_iter()
-								.flatten();
+							let args = TokenStream2::with_tokens(|tokens| {
+								source.args_to_tokens(tokens);
+							});
+							let formatted_args = TokenStream2::with_tokens(|tokens| {
+								source.formatted_args_to_tokens(tokens);
+							});
+
 							let expr = &source.expr;
 
 							quote!(
-								fn #name( #( &#args, )* ) -> usize {
+								fn #name(#args) -> usize {
 									#expr
 								}
 
-								reader.advance(
-									#name( #( &#formatted_args, )* ),
-								);
+								reader.advance(#name(#formatted_args));
 							)
 						}
 
@@ -358,18 +326,6 @@ impl Enum {
 
 		tokens.append_tokens(|| {
 			quote!(
-				// impl Writable for MyEnum {
-				//     fn write_to(
-				//         &self,
-				//         writer: &mut impl BufMut,
-				//     ) -> Result<(), Box<dyn Error>> {
-				//         match self {
-				//             Self::Variant => {
-				//                 (0 as u8).write_to(writer)?;
-				//             }
-				//         }
-				//     }
-				// }
 				impl #impl_generics cornflakes::Writable for #name #type_generics #where_clause{
 					fn write_to(
 						&self,
@@ -440,16 +396,6 @@ impl Enum {
 
 		tokens.append_tokens(|| {
 			quote!(
-				// impl Readable for MyEnum {
-				//     fn read_from(reader: &mut impl Buf) -> Result<Self, Box<dyn Error>> {
-				//         match reader.read::<u8>() {
-				//             (0 as u8) => {
-				//                 Self::Variant
-				//             }
-				//             _ => panic!("unrecognized enum variant discriminant"),
-				//         }
-				//     }
-				// }
 				impl #impl_generics cornflakes::Readable for #name #type_generics #where_clause {
 					fn read_from(
 						reader: &mut impl bytes::Buf,
@@ -514,17 +460,6 @@ impl SerializeMessageTokens for BasicStructMetadata {
 
 		tokens.append_tokens(|| {
 			quote!(
-				// impl Writable for MyStruct {
-				//     fn write_to(
-				//         &self,
-				//         writer: &mut impl BufMut,
-				//     ) -> Result<(), Box<dyn Error>> {
-				//         let Self(__0__, __1__) = self;
-				//
-				//         __0__.write_to(writer)?;
-				//         __1__.write_to(writer)?;
-				//     }
-				// }
 				impl #impl_generics cornflakes::Writable for #name #type_generics #where_clause {
 					fn write_to(
 						&self,
@@ -562,14 +497,6 @@ impl DeserializeMessageTokens for BasicStructMetadata {
 
 		tokens.append_tokens(|| {
 			quote!(
-				// impl Readable for MyStruct {
-				//     fn read_from(reader: &mut impl Buf) -> Result<Self, Box<dyn Error>> {
-				//         let __0__: i32 = reader.read();
-				//         let __1__: i32 = reader.read();
-				//
-				//         Self(__0__, __1__)
-				//     }
-				// }
 				impl #impl_generics cornflakes::Readable for #name #type_generics #where_clause {
 					fn read_from(
 						reader: &mut impl bytes::Buf,
