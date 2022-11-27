@@ -86,7 +86,7 @@ impl ArrayContent {
 		Ok(if input.peek(Token![..]) {
 			Self::Infer(input.parse()?)
 		} else {
-			Self::Source(Box::new(Source::parse_with_idents(input, map)?))
+			Self::Source(Box::new(Source::parse(input, map)?))
 		})
 	}
 }

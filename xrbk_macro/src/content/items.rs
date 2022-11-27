@@ -359,7 +359,7 @@ impl Items {
 
 					eq_token: input.parse()?,
 
-					source: Source::parse_with_receivers(input)?,
+					source: Source::parse(input, &map)?,
 				};
 
 				// Insert the let item's `ident` and `type` to the `map` of

@@ -6,7 +6,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
 use syn::{Ident, Token, Type};
 
-use crate::{Attribute, TsExt};
+use crate::Attribute;
 
 use super::Source;
 
@@ -54,23 +54,6 @@ impl ToTokens for Let {
 			reader.read()?;
 		)
 		.to_tokens(tokens);
-	}
-}
-
-impl Let {
-	pub fn to_fn_tokens(&self, tokens: &mut TokenStream2) {
-		self.source
-			.fn_to_tokens(tokens, &format_ident!("__{}__", self.ident), &self.r#type);
-	}
-
-	pub fn to_write_tokens(&self, tokens: &mut TokenStream2) {
-		let name = format_ident!("__{}__", self.ident);
-
-		tokens.append_tokens(|| {
-			quote!(
-				writer.write(self.#name());
-			)
-		});
 	}
 }
 

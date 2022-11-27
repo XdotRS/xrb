@@ -82,9 +82,21 @@ impl ItemDeserializeTokens for Field {
 		tokens.append_tokens(|| {
 			// If this is a contextual field, that context must be provided.
 			if let Some(context) = self.context() {
-				// TODO: ident: Type
-				let args = context.source().args.iter().flatten();
-				let formatted_args = context.source().fmt_args();
+				// TODO: clean up whatever tf is happening with these args
+				let args = context
+					.source()
+					.args
+					.as_ref()
+					.map(|Args(args)| args)
+					.into_iter()
+					.flatten();
+				let formatted_args = context
+					.source()
+					.args
+					.as_ref()
+					.map(|args| args.format())
+					.into_iter()
+					.flatten();
 				let expr = &context.source().expr;
 
 				quote!(
@@ -114,9 +126,21 @@ impl ItemSerializeTokens for Let {
 	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
 		let name = id.formatted();
 		let r#type = &self.r#type;
-		let formatted_args = self.source.fmt_args();
-		// TODO: ident: Type
-		let args = self.source.args.iter().flatten();
+		// TODO: clean up whatever tf is happening with these args
+		let formatted_args = self
+			.source
+			.args
+			.as_ref()
+			.map(|Args(args)| args)
+			.into_iter()
+			.flatten();
+		let args = self
+			.source
+			.args
+			.as_ref()
+			.map(|Args(args)| args)
+			.into_iter()
+			.flatten();
 		let expr = &self.source.expr;
 
 		quote!(
@@ -158,9 +182,19 @@ impl ItemSerializeTokens for Unused {
 
 					match &array.content {
 						ArrayContent::Source(source) => {
-							// TODO: ident: Type
-							let args = source.args.iter().flatten();
-							let formatted_args = source.fmt_args();
+							// TODO: clean up whatever tf is happening with these args
+							let args = source
+								.args
+								.as_ref()
+								.map(|Args(args)| args)
+								.into_iter()
+								.flatten();
+							let formatted_args = source
+								.args
+								.as_ref()
+								.map(|args| args.format())
+								.into_iter()
+								.flatten();
 							let expr = &source.expr;
 
 							quote!(
@@ -199,8 +233,19 @@ impl ItemDeserializeTokens for Unused {
 
 					match &array.content {
 						ArrayContent::Source(source) => {
-							let args = source.args.iter().flatten();
-							let formatted_args = source.fmt_args();
+							// TODO: clean up whatever tf is happening with these args
+							let args = source
+								.args
+								.as_ref()
+								.map(|Args(args)| args)
+								.into_iter()
+								.flatten();
+							let formatted_args = source
+								.args
+								.as_ref()
+								.map(|args| args.format())
+								.into_iter()
+								.flatten();
 							let expr = &source.expr;
 
 							quote!(

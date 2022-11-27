@@ -78,9 +78,10 @@ define! {
 	pub struct OpenFont: Request(45) {
 		pub font_id: u32,
 
-		let name_len: u16 = &self => self.name.len() as u16,
+		pub name: String,
+		let name_len: u16 = name => name.len() as u16,
 		[(); 2],
 		#[context(name_len => name_len as usize)]
-		pub name: String,
+		pub namen: String,
 	}
 }
