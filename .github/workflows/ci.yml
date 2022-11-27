@@ -30,38 +30,9 @@ jobs:
         with:
           access_token: ${{ github.token }}
 
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      # Check out (a.k.a. clones) the XRB repository.
-      - name: Checkout XRB
-        uses: actions/checkout@v3
-
-      # Install the latest nightly release of the Rust toolchain.
-      - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: true
-
-      - name: Build
-        run: cargo build
-
-      - name: Archive `target/`
-        run: tar -cvf target.tar target
-
-      - name: Upload `target.tar` as an artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: target
-          path: target.tar
-
   # Runs unit tests.
   run-tests:
     runs-on: ubuntu-latest
-    needs: build
 
     steps:
       # Check out (a.k.a. clones) the XRB repository.
@@ -99,7 +70,6 @@ jobs:
   # Automatically applies suggested fixes from `clippy`.
   clippy-fixes:
     runs-on: ubuntu-latest
-    needs: build
 
     outputs:
       # The ID of the commit made for the fixes, or, if no fixes were applied,
@@ -110,14 +80,6 @@ jobs:
       # Check out (a.k.a. clones) the XRB repository.
       - name: Checkout XRB
         uses: actions/checkout@v3
-
-      - name: Download `target` archive
-        uses: actions/download-artifact@v3
-        with:
-          name: target
-
-      - name: Extract downloaded `target.tar`
-        run: tar -xvf target.tar && rm target.tar
 
       # Install the latest nightly release of the Rust toolchain.
       - name: Install latest nightly
@@ -175,14 +137,6 @@ jobs:
         with:
           ref: ${{ needs.clippy-fixes.outputs.commit-id }}
 
-      - name: Download `target` archive
-        uses: actions/download-artifact@v3
-        with:
-          name: target
-
-      - name: Extract downloaded `target.tar`
-        run: tar -xvf target.tar && rm target.tar
-
       # Install the latest nightly release of the Rust toolchain.
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
@@ -234,14 +188,6 @@ jobs:
         with:
           ref: ${{ needs.clippy-fixes.outputs.commit-id }}
 
-      - name: Download `target` archive
-        uses: actions/download-artifact@v3
-        with:
-          name: target
-
-      - name: Extract downloaded `target.tar`
-        run: tar -xvf target.tar
-
       # Install the latest nightly release of the Rust toolchain.
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
@@ -268,7 +214,7 @@ jobs:
     runs-on: ubuntu-latest
     # We only build the documentation after the code has been changed so that
     # the code sources linked in the documentation are up-to-date.
-    needs: [build, auto-format]
+    needs: auto-format
 
     steps:
       # Check out (a.k.a. clones) the XRB repository with fixes made by `clippy`
@@ -279,16 +225,6 @@ jobs:
         with:
           ref: ${{ needs.auto-format.outputs.commit-id }}
           path: xrb
-
-      - name: Download `target` archive
-        uses: actions/download-artifact@v3
-        with:
-          name: target
-          path: xrb
-
-      - name: Extract downloaded `target.tar`
-        working-directory: xrb
-        run: tar -xvf target.tar
 
       # Check out a template to put the generated docs in.
       - name: Checkout XRB docs template
