@@ -45,9 +45,9 @@ pub trait Request<Reply = ()> {
 ///
 /// The request associated with a reply is indicated by `Request`.
 #[doc(notable_trait)]
-pub trait Reply<Request>
+pub trait Reply<Req>
 where
-	Request: Request<Self>,
+	Req: Request<Self>,
 	Self: Sized,
 {
 	/// The length of this reply in 4-byte units minus 8.

@@ -53,6 +53,9 @@ pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 
 // /// Implementations for the core X11 protocol.
 // mod x11;
+mod traits;
+
+pub use traits::*;
 
 extern crate self as xrb;
 
@@ -78,10 +81,9 @@ define! {
 	pub struct OpenFont: Request(45) {
 		pub font_id: u32,
 
-		pub name: String,
 		let name_len: u16 = name => name.len() as u16,
 		[(); 2],
 		#[context(name_len => name_len as usize)]
-		pub namen: String,
+		pub name: String,
 	}
 }

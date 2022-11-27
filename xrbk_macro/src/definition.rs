@@ -249,9 +249,7 @@ impl ToTokens for Enum {
 
 		// Surround the enum's variants with its curly brackets (`{` and `}`).
 		self.brace_token.surround(tokens, |tokens| {
-			for variant in &self.variants {
-				variant.to_tokens(tokens);
-			}
+			self.variants.to_tokens(tokens);
 		});
 	}
 }

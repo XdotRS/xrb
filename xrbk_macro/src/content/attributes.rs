@@ -231,27 +231,33 @@ impl Context {
 
 		if look.peek(Token![=]) {
 			// Equals sign context (`=`)
-			Ok(Self::Equals(input.parse()?, Source::parse(input, map)?))
+			Ok(Self::Equals(
+				input.parse()?,
+				Source::parse_mapped(input, map)?,
+			))
 		} else if look.peek(Token![:]) {
 			// Colon context (`:`)
-			Ok(Self::Colon(input.parse()?, Source::parse(input, map)?))
+			Ok(Self::Colon(
+				input.parse()?,
+				Source::parse_mapped(input, map)?,
+			))
 		} else if look.peek(token::Paren) {
 			// Normal bracket context (`(...)`)
 			Ok(Self::Paren(
 				parenthesized!(content in input),
-				Source::parse(&content, map)?,
+				Source::parse_mapped(&content, map)?,
 			))
 		} else if look.peek(token::Bracket) {
 			// Square bracket context (`[...]`)
 			Ok(Self::Bracket(
 				bracketed!(content in input),
-				Source::parse(&content, map)?,
+				Source::parse_mapped(&content, map)?,
 			))
 		} else if look.peek(token::Brace) {
 			// Curly bracket context (`{...}`)
 			Ok(Self::Brace(
 				braced!(content in input),
-				Source::parse(&content, map)?,
+				Source::parse_mapped(&content, map)?,
 			))
 		} else {
 			// Otherwise, if the next token after `context` is none of those,

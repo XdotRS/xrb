@@ -257,14 +257,19 @@ impl Items {
 		let mut field_index: usize = 0;
 
 		let mut items = Punctuated::new();
-		// Keep track of the identifiers defined thus far and which types they
-		// correspond to. This is used to parse `Source`s.
-		let mut map = HashMap::new();
+
+		// Keep track of both let item and field identifiers encountered thus
+		// far to use for unused bytes item and context attribute `Source`s.
+		let mut read_map = HashMap::new();
+		// Build a map of field identifiers only so that let item `Source`s
+		// can refer to any field, whether it be defined before or after the
+		// let item.
+		let mut write_map = HashMap::new();
 
 		// While there are still tokens left in the `input` stream, we continue
 		// to parse items.
 		while !input.is_empty() {
-			let mut attributes = Attribute::parse_outer(input, &map)?;
+			let mut attributes = Attribute::parse_outer(input, &read_map)?;
 
 			if input.peek(token::Bracket) || input.peek(token::Paren) {
 				// Unused bytes item.
@@ -321,7 +326,7 @@ impl Items {
 							bracket_token: bracketed!(content in input),
 							unit_token: parenthesized!(_unit in content),
 							semicolon_token: content.parse()?,
-							content: ArrayContent::parse(&content, &map)?,
+							content: ArrayContent::parse(&content, &read_map)?,
 						}))),
 					));
 				}
@@ -359,12 +364,15 @@ impl Items {
 
 					eq_token: input.parse()?,
 
-					source: Source::parse(input, &map)?,
+					// Parse the let item's `source` without the map for now -
+					// the let item's `source` can use fields that are yet to
+					// be defined.
+					source: Source::parse_unmapped(input)?,
 				};
 
 				// Insert the let item's `ident` and `type` to the `map` of
 				// known `Ident`s.
-				map.insert(r#let.ident.to_string(), r#let.r#type.to_owned());
+				read_map.insert(r#let.ident.to_string(), r#let.r#type.to_owned());
 
 				// Push the let item's ID and the let item itself to the
 				// list of parsed items.
@@ -386,9 +394,12 @@ impl Items {
 
 					let r#type: Type = input.parse()?;
 
-					// Insert the field's `ident` and `type` to the `map`
+					// Insert the field's `ident` and `type` to the `read_map`
 					// of known `Ident`s.
-					map.insert(ident.to_string(), r#type.to_owned());
+					read_map.insert(ident.to_string(), r#type.to_owned());
+					// Insert the field's `ident` and `type` to the
+					// `write_map`, used for let item `Source`s.
+					write_map.insert(ident.to_string(), r#type.to_owned());
 
 					// Push the field's ID and the field itself to the
 					// list of parsed items.
@@ -415,9 +426,12 @@ impl Items {
 					let vis = input.parse()?;
 					let r#type: Type = input.parse()?;
 
-					// Insert the field's `index` and `type` to the `map`
+					// Insert the field's `index` and `type` to the `read_map`
 					// of known `Ident`s.
-					map.insert(index.to_string(), r#type.to_owned());
+					read_map.insert(index.to_string(), r#type.to_owned());
+					// Insert the field's `ident` and `type` to the
+					// `write_map`, used for let item `Source`s.
+					write_map.insert(index.to_string(), r#type.to_owned());
 
 					// Push the field's ID and the field itself to the list of parsed items.
 					items.push_value((
@@ -440,6 +454,34 @@ impl Items {
 				items.push_punct(input.parse()?);
 			} else {
 				break;
+			}
+		}
+
+		// Iterate over every `item` in `items`, taking a mutable reference...
+		for (_, item) in &mut items {
+			// For each let item...
+			if let Item::Let(item) = item {
+				// If its `Source` has `args`...
+				if let Some(Args(args)) = &mut item.source.args {
+					// Iterate over each of those `args`...
+					for Arg(ident, arg_type) in args {
+						if let Some(field_type) = write_map.get(&ident.to_string()) {
+							// If that `Arg`'s `ident` is contained in the
+							// `write_map` of field identifiers, replace its
+							// type with the correct field type.
+							*arg_type = Some(field_type.to_owned());
+						} else {
+							// Otherwise, if the `Arg`'s `ident` is not
+							// contained in the `write_map`, then it does not
+							// have a recognized identifier and therefore we
+							// can't find its type, so we generate an error.
+							return Err(Error::new(
+								ident.span(),
+								"unrecognized source argument identifier",
+							));
+						}
+					}
+				}
 			}
 		}
 

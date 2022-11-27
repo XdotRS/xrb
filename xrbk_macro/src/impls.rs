@@ -101,15 +101,15 @@ impl ItemDeserializeTokens for Field {
 
 				quote!(
 					fn #name(
-						#( #args, )*
-					) -> &<#r#type as cornflakes::ContextualReadable>::Context {
+						#( &#args, )*
+					) -> <#r#type as cornflakes::ContextualReadable>::Context {
 						#expr
 					}
 
 					let #name = <#r#type as cornflakes::ContextualReadable>
 						::read_with(
 							reader,
-							#name( #( #formatted_args, )* ),
+							&#name( #( &#formatted_args, )* ),
 						)?;
 				)
 			} else {
@@ -127,13 +127,6 @@ impl ItemSerializeTokens for Let {
 		let name = id.formatted();
 		let r#type = &self.r#type;
 		// TODO: clean up whatever tf is happening with these args
-		let formatted_args = self
-			.source
-			.args
-			.as_ref()
-			.map(|Args(args)| args)
-			.into_iter()
-			.flatten();
 		let args = self
 			.source
 			.args
@@ -141,10 +134,19 @@ impl ItemSerializeTokens for Let {
 			.map(|Args(args)| args)
 			.into_iter()
 			.flatten();
+		// TODO: for formatted args, the type also needs to be the reference
+		//       type (<r#type as AsRef>::Output or something like that?)
+		let formatted_args = self
+			.source
+			.args
+			.as_ref()
+			.map(|args| args.format())
+			.into_iter()
+			.flatten();
 		let expr = &self.source.expr;
 
 		quote!(
-			fn #name( #( #args, )* ) -> #r#type {
+			fn #name( #( &#args, )* ) -> #r#type {
 				#expr
 			}
 
@@ -198,13 +200,13 @@ impl ItemSerializeTokens for Unused {
 							let expr = &source.expr;
 
 							quote!(
-								fn #name( #( #args, )* ) -> usize {
+								fn #name( #( &#args, )* ) -> usize {
 									#expr
 								}
 
 								writer.put_many(
 									0u8,
-									#name( #( #formatted_args, )* )
+									#name( #( &#formatted_args, )* )
 								);
 							)
 						}
@@ -249,12 +251,12 @@ impl ItemDeserializeTokens for Unused {
 							let expr = &source.expr;
 
 							quote!(
-								fn #name( #( #args, )* ) -> usize {
+								fn #name( #( &#args, )* ) -> usize {
 									#expr
 								}
 
 								reader.advance(
-									#name( #( #formatted_args, )* ),
+									#name( #( &#formatted_args, )* ),
 								);
 							)
 						}
@@ -376,6 +378,8 @@ impl Enum {
 						match self {
 							#arms
 						}
+
+						Ok(())
 					}
 				}
 			)
@@ -530,6 +534,8 @@ impl SerializeMessageTokens for BasicStructMetadata {
 						let Self #pat = self;
 
 						#inner
+
+						Ok(())
 					}
 				}
 			)
@@ -638,6 +644,8 @@ impl SerializeMessageTokens for Request {
 
 						// Rest of the items.
 						#inner
+
+						Ok(())
 					}
 				}
 			)
@@ -766,6 +774,8 @@ impl SerializeMessageTokens for Reply {
 						writer.put_u16(<Self as xrb::Reply>::length(&self));
 
 						#inner
+
+						Ok(())
 					}
 				}
 			)
@@ -889,6 +899,8 @@ impl SerializeMessageTokens for Event {
 						writer.put_u16(_sequence_);
 
 						#inner
+
+						Ok(())
 					}
 				}
 			)

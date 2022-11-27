@@ -14,13 +14,10 @@ use syn::{
 
 pub type IdentMap<'a> = &'a HashMap<String, Type>;
 
-pub struct Arg(pub Ident, pub Type);
+pub struct Arg(pub Ident, pub Option<Type>);
 // TODO: iterator?
 pub struct Args(pub Punctuated<Arg, Token![,]>);
 
-// TODO: let items need to be able to use any field name (as well as any
-//       previously defined let item?), while context attributes need to be
-//       able to use any previously defined field name or let item name.
 pub struct Source {
 	/// Arguments to the `Source`, if any.
 	pub args: Option<Args>,
@@ -71,9 +68,13 @@ impl ToTokens for Arg {
 // Parsing {{{
 
 impl Source {
-	pub fn parse(input: ParseStream, map: IdentMap) -> Result<Self> {
+	fn parse(input: ParseStream, map: Option<IdentMap>) -> Result<Self> {
 		let fork = &input.fork();
-		let args = Args::parse(fork, map);
+		let args = if let Some(map) = map {
+			Args::parse_mapped(fork, map)
+		} else {
+			Args::parse_unmapped(fork)
+		};
 
 		Ok(if let Ok(args) = args && fork.peek(Token![=>]) {
 			// If we were able to successfully parse the `args` and there is a
@@ -97,15 +98,22 @@ impl Source {
 			}
 		})
 	}
+
+	pub fn parse_mapped(input: ParseStream, map: IdentMap) -> Result<Self> {
+		Self::parse(input, Some(map))
+	}
+
+	pub fn parse_unmapped(input: ParseStream) -> Result<Self> {
+		Self::parse(input, None)
+	}
 }
 
 impl Arg {
-	/// Parses a single `Arg`.
-	pub fn parse(input: ParseStream, map: IdentMap) -> Result<Self> {
+	pub fn parse_mapped(input: ParseStream, map: IdentMap) -> Result<Self> {
 		let ident: Ident = input.parse()?;
 
 		if let Some(r#type) = map.get(&ident.to_string()) {
-			Ok(Self(ident, r#type.to_owned()))
+			Ok(Self(ident, Some(r#type.to_owned())))
 		} else {
 			Err(Error::new(
 				ident.span(),
@@ -113,14 +121,22 @@ impl Arg {
 			))
 		}
 	}
+
+	pub fn parse_unmapped(input: ParseStream) -> Result<Self> {
+		Ok(Self(input.parse::<Ident>()?, None))
+	}
 }
 
 impl Args {
-	pub fn parse(input: ParseStream, map: IdentMap) -> Result<Self> {
+	fn parse(input: ParseStream, map: Option<IdentMap>) -> Result<Self> {
 		let mut args = Punctuated::new();
 
 		while input.peek(Ident) {
-			args.push_value(Arg::parse(input, map)?);
+			if let Some(map) = map {
+				args.push_value(Arg::parse_mapped(input, map)?);
+			} else {
+				args.push_value(Arg::parse_unmapped(input)?);
+			}
 
 			if input.peek(Token![,]) {
 				args.push_punct(input.parse()?);
@@ -130,6 +146,14 @@ impl Args {
 		}
 
 		Ok(Self(args))
+	}
+
+	pub fn parse_mapped(input: ParseStream, map: IdentMap) -> Result<Self> {
+		Self::parse(input, Some(map))
+	}
+
+	pub fn parse_unmapped(input: ParseStream) -> Result<Self> {
+		Self::parse(input, None)
 	}
 }
 
