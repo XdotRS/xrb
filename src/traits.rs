@@ -7,7 +7,9 @@
 /// A request may have a specific reply associated with it. That reply is
 /// indicated by `Reply`.
 #[doc(notable_trait)]
-pub trait Request<Reply = ()> {
+pub trait Request {
+	type Reply;
+
 	/// The major opcode that uniquely identifies this request or extension.
 	///
 	/// X core protocol requests have unique major opcodes, but each extension
@@ -45,11 +47,12 @@ pub trait Request<Reply = ()> {
 ///
 /// The request associated with a reply is indicated by `Request`.
 #[doc(notable_trait)]
-pub trait Reply<Req>
+pub trait Reply
 where
-	Req: Request<Self>,
 	Self: Sized,
 {
+	type Req: Request<Reply = Self>;
+
 	/// The length of this reply in 4-byte units minus 8.
 	///
 	/// Every reply always consists of 32 bytes followed by zero or more

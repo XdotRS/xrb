@@ -3,7 +3,8 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
+use quote::{format_ident, quote};
+use syn::{parse_quote, Generics, TypeParamBound};
 
 use crate::{ts_ext::TsExt, *};
 
@@ -272,10 +273,43 @@ impl ItemDeserializeTokens for Item {
 	}
 }
 
+fn add_bounds(generics: &mut Generics, bound: TypeParamBound) {
+	for type_param in generics.type_params_mut() {
+		type_param.bounds.push(bound.to_owned());
+	}
+}
+
 impl Enum {
 	fn serialize_tokens(&self, tokens: &mut TokenStream2) {
 		let name = &self.ident;
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let generics = {
+			let mut generics = self.generics.to_owned();
+			add_bounds(&mut generics, parse_quote!(cornflakes::Writable));
+
+			generics
+		};
+		let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
+
+		// For every variant discriminant expression, create a function to
+		// isolate the expression, then store it in a variable for later use.
+		let discriminants = TokenStream2::with_tokens(|tokens| {
+			for variant in &self.variants {
+				if let Some((_, expr)) = &variant.discriminant {
+					let name = format_ident!("_{}_discrim_", variant.ident);
+
+					tokens.append_tokens(|| {
+						quote!(
+							fn #name() -> usize {
+								#expr
+							}
+
+							let #name = #name();
+						)
+					});
+				}
+			}
+		});
 
 		let arms = TokenStream2::with_tokens(|tokens| {
 			// Start the variants' discriminant tokens at `0`. We add `1` each
@@ -286,10 +320,11 @@ impl Enum {
 			for variant in &self.variants {
 				let name = &variant.ident;
 
-				// If the variant explicitly specifies its discriminant, reset
-				// the `discrim` tokens to that discriminant expression.
-				if let Some((_, expr)) = &variant.discriminant {
-					discrim = expr.to_token_stream();
+				// If the variant has a discriminant, use that discriminant
+				// evaluated earlier.
+				if variant.discriminant.is_some() {
+					let name = format_ident!("_{}_discrim_", variant.ident);
+					discrim = quote!(#name);
 				}
 
 				// Tokens to destructure the variant's fields.
@@ -331,6 +366,8 @@ impl Enum {
 						&self,
 						writer: &mut impl bytes::BufMut,
 					) -> Result<(), cornflakes::WriteError> {
+						#discriminants
+
 						match self {
 							#arms
 						}
@@ -346,7 +383,34 @@ impl Enum {
 impl Enum {
 	fn deserialize_tokens(&self, tokens: &mut TokenStream2) {
 		let name = &self.ident;
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let generics = {
+			let mut generics = self.generics.to_owned();
+			add_bounds(&mut generics, parse_quote!(cornflakes::Readable));
+
+			generics
+		};
+		let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
+
+		// For every variant discriminant expression, create a function to
+		// isolate the expression, then store it in a variable for later use.
+		let discriminants = TokenStream2::with_tokens(|tokens| {
+			for variant in &self.variants {
+				if let Some((_, expr)) = &variant.discriminant {
+					let name = format_ident!("_{}_discrim_", variant.ident);
+
+					tokens.append_tokens(|| {
+						quote!(
+							fn #name() -> usize {
+								#expr
+							}
+
+							let #name = #name();
+						)
+					});
+				}
+			}
+		});
 
 		let arms = TokenStream2::with_tokens(|tokens| {
 			// Start the variants' discriminant tokens at `0`. We add `1` each
@@ -357,10 +421,11 @@ impl Enum {
 			for variant in &self.variants {
 				let name = &variant.ident;
 
-				// If the variant explicitly specifies its discriminant, reset
-				// the `discrim` tokens to that discriminant expression.
-				if let Some((_, expr)) = &variant.discriminant {
-					discrim = quote!((#expr));
+				// If the variant has a discriminant, use that discriminant
+				// evaluated earlier.
+				if variant.discriminant.is_some() {
+					let name = format_ident!("_{}_discrim_", variant.ident);
+					discrim = quote!(#name);
 				}
 
 				// Tokens to fill in the fields for the variant's constructor.
@@ -400,6 +465,8 @@ impl Enum {
 					fn read_from(
 						reader: &mut impl bytes::Buf,
 					) -> Result<Self, cornflakes::ReadError> {
+						#discriminants
+
 						// Match against the discriminant...
 						Ok(match reader.read::<u8>()? {
 							#arms
@@ -444,7 +511,14 @@ impl Struct {
 impl SerializeMessageTokens for BasicStructMetadata {
 	fn serialize_tokens(&self, tokens: &mut TokenStream2, items: &Items) {
 		let name = &self.name;
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let generics = {
+			let mut generics = self.generics.to_owned();
+			add_bounds(&mut generics, parse_quote!(cornflakes::Writable));
+
+			generics
+		};
+		let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
 
 		// Tokens to destructure the struct's fields.
 		let pat = TokenStream2::with_tokens(|tokens| {
@@ -481,7 +555,14 @@ impl SerializeMessageTokens for BasicStructMetadata {
 impl DeserializeMessageTokens for BasicStructMetadata {
 	fn deserialize_tokens(&self, tokens: &mut TokenStream2, items: &Items) {
 		let name = &self.name;
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let generics = {
+			let mut generics = self.generics.to_owned();
+			add_bounds(&mut generics, parse_quote!(cornflakes::Readable));
+
+			generics
+		};
+		let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
 
 		// Tokens to fill in the fields for the struct's constructor.
 		let cons = TokenStream2::with_tokens(|tokens| {
@@ -521,7 +602,14 @@ impl SerializeMessageTokens for Request {
 		// ...
 
 		let name = &self.name;
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let generics = {
+			let mut generics = self.generics.to_owned();
+			add_bounds(&mut generics, parse_quote!(cornflakes::Writable));
+
+			generics
+		};
+		let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
 
 		// Tokens required to destructure the request's fields.
 		let pat = TokenStream2::with_tokens(|tokens| {
@@ -590,7 +678,14 @@ impl DeserializeMessageTokens for Request {
 		// ...
 
 		let name = &self.name;
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let generics = {
+			let mut generics = self.generics.to_owned();
+			add_bounds(&mut generics, parse_quote!(cornflakes::Readable));
+
+			generics
+		};
+		let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
 
 		let metabyte = TokenStream2::with_tokens(|tokens| {
 			// If the request has a minor opcode, then it must have already
@@ -647,7 +742,14 @@ impl SerializeMessageTokens for Reply {
 		// ...
 
 		let name = &self.name;
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let generics = {
+			let mut generics = self.generics.to_owned();
+			add_bounds(&mut generics, parse_quote!(cornflakes::Writable));
+
+			generics
+		};
+		let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
 
 		// Tokens required to destructure the reply's fields.
 		let pat = TokenStream2::with_tokens(|tokens| {
@@ -721,7 +823,14 @@ impl DeserializeMessageTokens for Reply {
 		// ...
 
 		let name = &self.name;
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let generics = {
+			let mut generics = self.generics.to_owned();
+			add_bounds(&mut generics, parse_quote!(cornflakes::Readable));
+
+			generics
+		};
+		let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
 
 		// Deserialization tokens for the metabyte item.
 		let metabyte = TokenStream2::with_tokens(|tokens| {
@@ -790,7 +899,14 @@ impl SerializeMessageTokens for Event {
 		// ...
 
 		let name = &self.name;
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let generics = {
+			let mut generics = self.generics.to_owned();
+			add_bounds(&mut generics, parse_quote!(cornflakes::Writable));
+
+			generics
+		};
+		let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
 
 		// Pattern to destructure the event struct.
 		let pat = TokenStream2::with_tokens(|tokens| {
@@ -845,7 +961,14 @@ impl DeserializeMessageTokens for Event {
 		// ...
 
 		let name = &self.name;
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let generics = {
+			let mut generics = self.generics.to_owned();
+			add_bounds(&mut generics, parse_quote!(cornflakes::Readable));
+
+			generics
+		};
+		let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
 
 		// Deserialize the metabyte item, if any (otherwise skip the byte).
 		let metabyte = TokenStream2::with_tokens(|tokens| {
@@ -892,7 +1015,13 @@ impl Request {
 		// Generics.
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 		// Type of reply generated, if any.
-		let reply = self.reply_ty.as_ref().map(|(_, reply_ty)| reply_ty);
+		let reply = TokenStream2::with_tokens(|tokens| {
+			if let Some((_, r#type)) = &self.reply_ty {
+				r#type.to_tokens(tokens);
+			} else {
+				quote!(()).to_tokens(tokens);
+			}
+		});
 
 		// The expression evaluating to the request's major opcode.
 		let major = &self.major_opcode_expr;
@@ -908,7 +1037,9 @@ impl Request {
 			quote!(
 				// NOTE: in `xrb`, `extern crate self as xrb;` will have to be
 				//       used so that the trait path works.
-				impl #impl_generics xrb::Request<#reply> for #name #type_generics #where_clause {
+				impl #impl_generics xrb::Request for #name #type_generics #where_clause {
+					type Reply = #reply;
+
 					// The major opcode uniquely identifying the request.
 					fn major_opcode() -> u8 {
 						(#major) as u8
@@ -956,7 +1087,9 @@ impl Reply {
 			quote!(
 				// NOTE: in `xrb`, `extern crate self as xrb;` will have to be
 				//       used so that the trait path works.
-				impl #impl_generics xrb::Reply<#request> for #name #type_generics #where_clause {
+				impl #impl_generics xrb::Reply for #name #type_generics #where_clause {
+					type Req = #request;
+
 					// The sequence number associated with the request that
 					// generated this reply, if any.
 					fn sequence(&self) -> Option<u16> {

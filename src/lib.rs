@@ -62,28 +62,47 @@ extern crate self as xrb;
 use xrbk_macro::define;
 
 define! {
-	pub struct Unit;
-	pub struct Tuple<T>(T);
-	pub struct Struct {
-		x: i32,
-		y: i32,
+	pub struct Window(u32);
+	pub struct VisualId(u32);
+
+	pub struct GetWindowAttributes: Request(3) -> GetWindowAttributesReply {
+		pub window: Window,
 	}
 
-	pub enum Enum<T> {
-		UnitVariant,
-		TupleVariant(T),
-		StructVariant {
-			x: i32,
-			y: i32,
-		},
+	pub enum BackingStore {
+		NotUseful,
+		WhenMapped,
+		Always,
 	}
 
-	pub struct OpenFont: Request(45) {
-		pub font_id: u32,
+	pub enum WindowClass {
+		InputOutput = 1,
+		InputOnly,
+	}
 
-		let name_len: u16 = name => name.len() as u16,
+	pub enum MapState {
+		Unmapped,
+		Unviewable,
+		Viewable,
+	}
+
+	pub struct GetWindowAttributesReply: Reply for GetWindowAttributes {
+		#[metabyte]
+		pub backing_store: BackingStore,
+		pub visual_id: VisualId,
+		pub class: WindowClass,
+		//pub bit_gravity: BitGravity,
+		//pub win_gravity: WinGravity,
+		pub backing_planes: u32,
+		pub backing_pixel: u32,
+		pub save_under: bool,
+		pub map_is_installed: bool,
+		pub map_state: MapState,
+		pub override_redirect: bool,
+		//pub colormap: Option<Colormap>,
+		//pub all_event_masks: EventMask,
+		//pub your_event_mask: EventMask,
+		//pub do_not_propagate_mask: DeviceEvent,
 		[(); 2],
-		#[context(name_len => name_len as usize)]
-		pub name: String,
 	}
 }
