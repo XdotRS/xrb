@@ -27,38 +27,43 @@ pub enum Item {
 impl Item {
 	pub fn is_metabyte(&self) -> bool {
 		match self {
-			Self::Field(field) => field.attributes.iter().any(|attr| {
+			Self::Field(field) => field.attributes.iter().any(|attribute| {
 				matches!(
-					attr,
+					attribute,
 					Attribute {
-						content: AttrContent::Metabyte(_),
+						content: AttrContent::Metabyte(..),
 						..
 					}
 				)
 			}),
 
-			Self::Let(r#let) => {
+			Self::Let(r#let) => r#let.attributes.iter().any(|attribute| {
 				matches!(
-					r#let.attribute,
-					Some(Attribute {
-						content: AttrContent::Metabyte(_),
-						..
-					})
-				)
-			}
-
-			Self::Unused(unused) => {
-				matches!(
-					unused,
-					Unused::Unit {
-						attribute: Some(Attribute {
-							content: AttrContent::Metabyte(_),
-							..
-						}),
+					attribute,
+					Attribute {
+						content: AttrContent::Metabyte(..),
 						..
 					}
 				)
-			}
+			}),
+
+			Self::Unused(Unused::Array(array)) => array.attributes.iter().any(|attribute| {
+				matches!(
+					attribute,
+					Attribute {
+						content: AttrContent::Metabyte(..),
+						..
+					}
+				)
+			}),
+
+			Self::Unused(Unused::Unit { attribute, .. }) => matches!(
+				attribute,
+				Some(Attribute {
+					content: AttrContent::Metabyte(..),
+					..
+				})
+			),
 		}
 	}
 }

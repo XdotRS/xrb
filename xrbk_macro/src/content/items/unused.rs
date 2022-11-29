@@ -36,12 +36,18 @@ pub enum Unused {
 }
 
 pub struct Array {
+	/// Attributes associated with the unused bytes item's [`Source`] function,
+	/// if any.
+	pub attributes: Vec<Attribute>,
+
 	/// A pair of square brackets: `[` and `]`.
 	pub bracket_token: token::Bracket,
+
 	/// A unit token: `()`.
 	pub unit_token: token::Paren,
 	/// A semicolon token: `;`.
 	pub semicolon_token: Token![;],
+
 	/// The [content] of the `Array` that provides the number of unused bytes.
 	///
 	/// [content]: ArrayContent

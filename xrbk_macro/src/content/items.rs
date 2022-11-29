@@ -274,46 +274,56 @@ impl Items {
 			if input.peek(token::Bracket) || input.peek(token::Paren) {
 				// Unused bytes item.
 
-				if let Some(attr) = attributes.get(0) {
-					if !attr.is_metabyte() {
-						return Err(Error::new(
-							attr.span(),
-							"only a metabyte attribute is allowed for unused items",
-						));
-					}
-				}
-
-				if let Some(attr) = attributes.get(1) {
-					return Err(Error::new(
-						attr.span(),
-						"only zero or one (metabyte) attributes are allowed for unused items",
-					));
-				}
-
 				let _unit;
 
-				if !attributes.is_empty() {
-					// Unit with attribute.
+				if input.peek(token::Paren) {
+					// Unit
+
+					if let Some(attr) = attributes.get(0) {
+						if !attr.is_metabyte() {
+							return Err(Error::new(
+								attr.span(),
+								"only a metabyte attribute is allowed for unit-type unused bytes items",
+							));
+						}
+					}
+
+					if let Some(attr) = attributes.get(1) {
+						return Err(Error::new(
+							attr.span(),
+							"only zero or one (metabyte) attributes are allowed for unit-type unused bytes items",
+						));
+					}
 
 					items.push_value((
 						ItemId::Unused(None),
 						Item::Unused(Unused::Unit {
-							attribute: Some(attributes.remove(0)),
-							unit_token: parenthesized!(_unit in input),
-						}),
-					));
-				} else if input.peek(token::Paren) {
-					// Unit, no attribute.
+							attribute: if attributes.is_empty() {
+								None
+							} else {
+								Some(attributes.remove(0))
+							},
 
-					items.push_value((
-						ItemId::Unused(None),
-						Item::Unused(Unused::Unit {
-							attribute: None,
 							unit_token: parenthesized!(_unit in input),
 						}),
 					));
 				} else {
 					// Array.
+
+					// Find a metabyte or context attribute, if one exists...
+					let bad_attr = attributes.iter().find(|Attribute { content, .. }| {
+						matches!(
+							content,
+							AttrContent::Metabyte(..) | AttrContent::Context(..)
+						)
+					});
+					// ...if one does exist, generate an error.
+					if let Some(bad_attr) = bad_attr {
+						return Err(Error::new(
+							bad_attr.span(),
+							"only normal attributes are allowed for array-type unused bytes items",
+						));
+					}
 
 					let content;
 
@@ -323,9 +333,13 @@ impl Items {
 					items.push_value((
 						ItemId::Unused(Some(index)),
 						Item::Unused(Unused::Array(Box::new(Array {
+							attributes,
+
 							bracket_token: bracketed!(content in input),
+
 							unit_token: parenthesized!(_unit in content),
 							semicolon_token: content.parse()?,
+
 							content: ArrayContent::parse(&content, &read_map)?,
 						}))),
 					));
@@ -333,28 +347,21 @@ impl Items {
 			} else if input.peek(Token![let]) {
 				// Let item.
 
-				if let Some(attr) = attributes.get(0) {
-					if !attr.is_metabyte() {
-						return Err(Error::new(
-							attr.span(),
-							"only a metabyte attribute is allowed for let items",
-						));
-					}
-				}
-
-				if let Some(attr) = attributes.get(1) {
+				// Find a context attribute, if one exists...
+				let bad_attr = attributes
+					.iter()
+					.find(|Attribute { content, .. }| matches!(content, AttrContent::Context(..)));
+				// ...if one does exist, generate an error.
+				if let Some(bad_attr) = bad_attr {
 					return Err(Error::new(
-						attr.span(),
-						"only zero or one (metabyte) attributes are allowed for let items",
+						bad_attr.span(),
+						// TODO: why not?
+						"context attributes are not allowed for let items",
 					));
 				}
 
 				let r#let = Let {
-					attribute: if !attributes.is_empty() {
-						Some(attributes.remove(0))
-					} else {
-						None
-					},
+					attributes,
 
 					let_token: input.parse()?,
 

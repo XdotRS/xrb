@@ -3,16 +3,18 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{format_ident, quote, ToTokens};
+use quote::{quote, ToTokens};
 use syn::{Ident, Token, Type};
 
+use crate::content::{AttrContent, Context};
 use crate::{Attribute, ItemDeserializeTokens, ItemId, ItemSerializeTokens, TsExt};
 
 use super::Source;
 
 pub struct Let {
-	/// An optional metabyte attribute associated with the `Let` item.
-	pub attribute: Option<Attribute>,
+	/// Attributes associated with the let item and its [`Source`]'s function,
+	/// if any.
+	pub attributes: Vec<Attribute>,
 
 	/// The let token: `let`.
 	pub let_token: Token![let],
@@ -33,31 +35,32 @@ pub struct Let {
 	pub source: Source,
 }
 
-// Expansion {{{
+impl Let {
+	/// Returns whether this let item has a context attribute.
+	pub fn has_context(&self) -> bool {
+		self.attributes
+			.iter()
+			.any(|attribute| attribute.is_context())
+	}
 
-impl ToTokens for Let {
-	fn to_tokens(&self, tokens: &mut TokenStream2) {
-		// `let`
-		self.let_token.to_tokens(tokens);
+	/// Returns whether this let item has a metabyte attribute.
+	pub fn is_metabyte(&self) -> bool {
+		self.attributes
+			.iter()
+			.any(|attribute| attribute.is_metabyte())
+	}
 
-		// `product` -> `__product__`
-		format_ident!("__{}__", self.ident).to_tokens(tokens);
-		// `:`
-		self.colon_token.to_tokens(tokens);
-		// `Type`
-		self.r#type.to_tokens(tokens);
-
-		// `=`
-		self.eq_token.to_tokens(tokens);
-
-		quote! (
-			reader.read()?;
-		)
-		.to_tokens(tokens);
+	/// Gets the context of this let item if it has a context attribute.
+	#[allow(clippy::borrowed_box)]
+	pub fn context(&self) -> Option<&Box<Context>> {
+		self.attributes
+			.iter()
+			.find_map(|attribute| match &attribute.content {
+				AttrContent::Context(_, context) => Some(context),
+				_ => None,
+			})
 	}
 }
-
-// }}}
 
 // Implementations {{{
 
@@ -65,6 +68,12 @@ impl ItemSerializeTokens for Let {
 	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
 		let name = id.formatted();
 		let r#type = &self.r#type;
+
+		for attr in &self.attributes {
+			if matches!(attr.content, AttrContent::Other(..)) {
+				attr.to_tokens(tokens);
+			}
+		}
 
 		let args = TokenStream2::with_tokens(|tokens| {
 			self.source.args_to_tokens(tokens);
@@ -75,17 +84,18 @@ impl ItemSerializeTokens for Let {
 
 		let expr = &self.source.expr;
 
-		quote!(
-			fn #name(#args) -> #r#type {
-				#expr
-			}
+		tokens.append_tokens(|| {
+			quote!(
+				fn #name(#args) -> #r#type {
+					#expr
+				}
 
-			<#r#type as cornflakes::Writable>::write_to(
-				&#name(#formatted_args),
-				writer,
-			)?;
-		)
-		.to_tokens(tokens);
+				<#r#type as cornflakes::Writable>::write_to(
+					&#name(#formatted_args),
+					writer,
+				)?;
+			)
+		});
 	}
 }
 
@@ -94,9 +104,33 @@ impl ItemDeserializeTokens for Let {
 		let name = id.formatted();
 		let r#type = &self.r#type;
 
-		tokens.append_tokens(
-			|| quote!(let #name = <#r#type as cornflakes::Readable>::read_from(reader)?;),
-		);
+		tokens.append_tokens(|| {
+			if let Some(context) = self.context() {
+				let args = TokenStream2::with_tokens(|tokens| {
+					context.source().args_to_tokens(tokens);
+				});
+				let formatted_args = TokenStream2::with_tokens(|tokens| {
+					context.source().formatted_args_to_tokens(tokens);
+				});
+
+				let expr = &context.source().expr;
+
+				quote!(
+					fn #name(#args) -> <#r#type as cornflakes::ContextualReadable>::Context {
+						#expr
+					}
+
+					let #name = <r#type as cornflakes::ContextualReadable>::read_with(
+						reader,
+						&#name(#formatted_args),
+					)?;
+				)
+			} else {
+				quote!(
+					let #name = <#r#type as cornflakes::Readable>::read_from(reader)?;
+				)
+			}
+		});
 	}
 }
 

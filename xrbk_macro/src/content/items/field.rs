@@ -20,7 +20,6 @@ pub struct Field {
 
 impl Field {
 	/// Returns whether this field has a name.
-	#[allow(dead_code)]
 	pub const fn is_named(&self) -> bool {
 		self.ident.is_some() && self.colon_token.is_some()
 	}
@@ -30,14 +29,20 @@ impl Field {
 		self.ident.is_none() && self.colon_token.is_none()
 	}
 
-	/// Returns whether this field as a context attribute.
-	#[allow(dead_code)]
+	/// Returns whether this field has a context attribute.
 	pub fn has_context(&self) -> bool {
 		self.attributes.iter().any(|attr| attr.is_context())
 	}
 
+	/// Returns whether this field has a metabyte attribute.
+	pub fn is_metabyte(&self) -> bool {
+		self.attributes
+			.iter()
+			.any(|attribute| attribute.is_metabyte())
+	}
+
 	/// Gets the context of this field if it has a context attribute.
-	#[allow(dead_code, clippy::borrowed_box)]
+	#[allow(clippy::borrowed_box)]
 	pub fn context(&self) -> Option<&Box<Context>> {
 		self.attributes.iter().find_map(|attr| match &attr.content {
 			AttrContent::Context(_, context) => Some(context),
@@ -113,7 +118,6 @@ impl ItemDeserializeTokens for Field {
 				)
 			} else {
 				quote!(
-					// let __my_field2__ = u8::read_from(reader)?;
 					let #name = <#r#type as cornflakes::Readable>::read_from(reader)?;
 				)
 			}
