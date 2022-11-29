@@ -12,6 +12,8 @@ pub use r#let::*;
 pub use source::*;
 pub use unused::*;
 
+use crate::{ItemDeserializeTokens, ItemSerializeTokens};
+
 mod attributes;
 mod items;
 mod source;
@@ -70,6 +72,34 @@ impl ToTokens for Item {
 		// deserialization code.
 		if let Self::Field(field) = self {
 			field.to_tokens(tokens);
+		}
+	}
+}
+
+// }}}
+
+// Implementations {{{
+
+impl ItemSerializeTokens for Item {
+	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
+		match self {
+			Item::Field(field) => field.serialize_tokens(tokens, id),
+
+			Item::Let(r#let) => r#let.serialize_tokens(tokens, id),
+
+			Item::Unused(unused) => unused.serialize_tokens(tokens, id),
+		}
+	}
+}
+
+impl ItemDeserializeTokens for Item {
+	fn deserialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
+		match self {
+			Item::Field(field) => field.deserialize_tokens(tokens, id),
+
+			Item::Let(r#let) => r#let.deserialize_tokens(tokens, id),
+
+			Item::Unused(unused) => unused.deserialize_tokens(tokens, id),
 		}
 	}
 }

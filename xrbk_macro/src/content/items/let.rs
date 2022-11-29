@@ -6,7 +6,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
 use syn::{Ident, Token, Type};
 
-use crate::Attribute;
+use crate::{Attribute, ItemDeserializeTokens, ItemId, ItemSerializeTokens, TsExt};
 
 use super::Source;
 
@@ -54,6 +54,49 @@ impl ToTokens for Let {
 			reader.read()?;
 		)
 		.to_tokens(tokens);
+	}
+}
+
+// }}}
+
+// Implementations {{{
+
+impl ItemSerializeTokens for Let {
+	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
+		let name = id.formatted();
+		let r#type = &self.r#type;
+
+		let args = TokenStream2::with_tokens(|tokens| {
+			self.source.args_to_tokens(tokens);
+		});
+		let formatted_args = TokenStream2::with_tokens(|tokens| {
+			self.source.formatted_args_to_tokens(tokens);
+		});
+
+		let expr = &self.source.expr;
+
+		quote!(
+			fn #name(#args) -> #r#type {
+				#expr
+			}
+
+			<#r#type as cornflakes::Writable>::write_to(
+				#name(#formatted_args),
+				writer,
+			)?;
+		)
+		.to_tokens(tokens);
+	}
+}
+
+impl ItemDeserializeTokens for Let {
+	fn deserialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
+		let name = id.formatted();
+		let r#type = &self.r#type;
+
+		tokens.append_tokens(
+			|| quote!(let #name = <#r#type as cornflakes::Readable>::read_from(reader)?;),
+		);
 	}
 }
 

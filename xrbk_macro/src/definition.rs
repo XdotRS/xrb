@@ -9,10 +9,10 @@ use syn::{
 };
 
 use proc_macro2::TokenStream as TokenStream2;
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 use syn::punctuated::Punctuated;
 
-use crate::Items;
+use crate::{Item, Items, TsExt};
 
 /// A list of [`Definition`]s.
 pub struct Definitions(pub Vec<Definition>);
@@ -208,7 +208,9 @@ pub struct Reply {
 
 impl ToTokens for Definitions {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
-		for definition in &self.0 {
+		let Self(definitions) = &self;
+
+		for definition in definitions {
 			definition.to_tokens(tokens);
 		}
 	}
@@ -226,7 +228,44 @@ impl ToTokens for Definition {
 impl ToTokens for Struct {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		self.metadata.to_tokens(tokens);
-		self.items.to_tokens(tokens);
+
+		let mut items = || {
+			let to_tokens = |tokens: &mut TokenStream2, items: &Punctuated<_, _>| {
+				tokens.append_tokens(|| quote!(_sequence_: u16,));
+
+				for (_, item) in items {
+					if let Item::Field(field) = item {
+						field.to_tokens(tokens);
+						quote!(,).to_tokens(tokens);
+					}
+				}
+			};
+
+			match &self.items {
+				Items::Named { brace_token, items } => {
+					brace_token.surround(tokens, |tokens| to_tokens(tokens, items));
+				}
+
+				Items::Unnamed { paren_token, items } => {
+					paren_token.surround(tokens, |tokens| to_tokens(tokens, items));
+				}
+
+				Items::Unit => {}
+			}
+		};
+
+		match &self.metadata {
+			StructMetadata::Reply(Reply { sequence_token, .. }) if sequence_token.is_none() => {
+				items();
+			}
+
+			StructMetadata::Event(_) => items(),
+
+			_ => {
+				self.items.to_tokens(tokens);
+			}
+		}
+
 		self.semicolon_token.to_tokens(tokens);
 	}
 }
@@ -695,6 +734,47 @@ impl StructMetadata {
 					message_ty_ident.span(),
 					"expected a message type of `Event`, `Request`, or `Reply`",
 				)),
+			}
+		}
+	}
+}
+
+// }}}
+
+// Implementations {{{
+
+impl Definitions {
+	/// Expands the trait implementations for the given definition.
+	pub fn impl_tokens(&self, tokens: &mut TokenStream2) {
+		let Self(definitions) = self;
+
+		for definition in definitions {
+			match definition {
+				Definition::Enum(r#enum) => {
+					r#enum.serialize_tokens(tokens);
+					r#enum.deserialize_tokens(tokens);
+				}
+
+				Definition::Struct(r#struct) => {
+					r#struct.serialize_tokens(tokens);
+					r#struct.deserialize_tokens(tokens);
+
+					match &r#struct.metadata {
+						StructMetadata::Request(request) => {
+							request.impl_request_tokens(tokens);
+						}
+
+						StructMetadata::Reply(reply) => {
+							reply.impl_reply_tokens(tokens);
+						}
+
+						StructMetadata::Event(event) => {
+							event.impl_event_tokens(tokens);
+						}
+
+						_ => {}
+					}
+				}
 			}
 		}
 	}

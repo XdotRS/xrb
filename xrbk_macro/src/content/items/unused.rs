@@ -2,9 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use proc_macro2::TokenStream as TokenStream2;
+use quote::quote;
 use syn::{parse::ParseStream, token, Result, Token};
 
-use super::{Attribute, IdentMap, Source};
+use crate::{
+	Attribute, IdentMap, ItemDeserializeTokens, ItemId, ItemSerializeTokens, Source, TsExt,
+};
 
 pub enum Unused {
 	/// A unit token representing one single unused byte.
@@ -88,6 +92,108 @@ impl ArrayContent {
 		} else {
 			Self::Source(Box::new(Source::parse_mapped(input, map)?))
 		})
+	}
+}
+
+// }}}
+
+// Implementations {{{
+
+impl ItemSerializeTokens for Unused {
+	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
+		tokens.append_tokens(|| {
+			match self {
+				Self::Unit { .. } => {
+					// 0u8.write_to(writer)?;
+					quote!(
+						writer.put_u8(0);
+					)
+				}
+
+				Self::Array(array) => {
+					let name = id.formatted();
+
+					match &array.content {
+						ArrayContent::Source(source) => {
+							let args = TokenStream2::with_tokens(|tokens| {
+								source.args_to_tokens(tokens);
+							});
+							let formatted_args = TokenStream2::with_tokens(|tokens| {
+								source.formatted_args_to_tokens(tokens);
+							});
+
+							let expr = &source.expr;
+
+							quote!(
+								fn #name(#args) -> usize {
+									#expr
+								}
+
+								writer.put_bytes(
+									0u8,
+									#name(#formatted_args),
+								);
+							)
+						}
+
+						ArrayContent::Infer(_) => {
+							quote!(
+								writer.put_bytes(
+									0u8,
+									// TODO: use padding function
+								);
+							)
+						}
+					}
+				}
+			}
+		});
+	}
+}
+
+impl ItemDeserializeTokens for Unused {
+	fn deserialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
+		tokens.append_tokens(|| {
+			match self {
+				Self::Array(array) => {
+					let name = id.formatted();
+
+					match &array.content {
+						ArrayContent::Source(source) => {
+							let args = TokenStream2::with_tokens(|tokens| {
+								source.args_to_tokens(tokens);
+							});
+							let formatted_args = TokenStream2::with_tokens(|tokens| {
+								source.formatted_args_to_tokens(tokens);
+							});
+
+							let expr = &source.expr;
+
+							quote!(
+								fn #name(#args) -> usize {
+									#expr
+								}
+
+								reader.advance(#name(#formatted_args));
+							)
+						}
+
+						ArrayContent::Infer(_) => {
+							quote!(
+								reader.advance(
+									// TODO: use padding function
+								);
+							)
+						}
+					}
+				}
+
+				Self::Unit { .. } => {
+					// reader.advance(1);
+					quote!(reader.advance(1);)
+				}
+			}
+		});
 	}
 }
 
