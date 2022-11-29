@@ -110,18 +110,38 @@ define! {
 		/// degrees, this angle is truncated to 360 degrees.
 		end_angle: i16,
 	}
+
+	pub enum HostFamily {
+		Internet,
+		Decnet,
+		Chaos,
+		ServerInterpreted = 5,
+		InternetV6,
+	}
+
+	pub struct Host {
+		pub family: HostFamily,
+
+		(),
+
+		#[allow(clippy::cast_possible_truncation)]
+		let address_len: u16 = address => address.len() as u16,
+
+		#[context(address_len => *address_len as usize)]
+		pub address: Vec<u8>,
+
+		// TODO: Padding still isn't implemented yet.
+		//[(); ..],
+	}
 }
 
-pub trait DrawableId {}
-pub trait FontableId {}
+pub trait Drawable {}
+pub trait Fontable {}
 
-pub type Drawable = Box<dyn DrawableId>;
-pub type Fontable = Box<dyn FontableId>;
+impl Drawable for Window {}
+impl Drawable for Pixmap {}
 
-impl DrawableId for Window {}
-impl DrawableId for Pixmap {}
+impl Fontable for Font {}
+impl Fontable for GraphicsContext {}
 
-impl FontableId for Font {}
-impl FontableId for GraphicsContext {}
-
-fn _assert_object_safety(_drawable: &dyn DrawableId, _fontable: &dyn FontableId) {}
+fn _assert_object_safety(_drawable: &dyn Drawable, _fontable: &dyn Fontable) {}
