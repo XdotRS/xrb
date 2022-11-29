@@ -54,55 +54,7 @@ pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 // /// Implementations for the core X11 protocol.
 // mod x11;
 mod traits;
+mod common;
 
 pub use traits::*;
-
-extern crate self as xrb;
-
-use xrbk_macro::define;
-
-define! {
-	pub struct Window(u32);
-	pub struct VisualId(u32);
-
-	pub struct GetWindowAttributes: Request(3) -> GetWindowAttributesReply {
-		pub window: Window,
-	}
-
-	pub enum BackingStore {
-		NotUseful,
-		WhenMapped,
-		Always,
-	}
-
-	pub enum WindowClass {
-		InputOutput = 1,
-		InputOnly,
-	}
-
-	pub enum MapState {
-		Unmapped,
-		Unviewable,
-		Viewable,
-	}
-
-	pub struct GetWindowAttributesReply: Reply for GetWindowAttributes {
-		#[metabyte]
-		pub backing_store: BackingStore,
-		pub visual_id: VisualId,
-		pub class: WindowClass,
-		//pub bit_gravity: BitGravity,
-		//pub win_gravity: WinGravity,
-		pub backing_planes: u32,
-		pub backing_pixel: u32,
-		pub save_under: bool,
-		pub map_is_installed: bool,
-		pub map_state: MapState,
-		pub override_redirect: bool,
-		//pub colormap: Option<Colormap>,
-		//pub all_event_masks: EventMask,
-		//pub your_event_mask: EventMask,
-		//pub do_not_propagate_mask: DeviceEvent,
-		[(); 2],
-	}
-}
+pub use common::*;
