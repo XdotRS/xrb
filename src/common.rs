@@ -4,6 +4,10 @@
 
 extern crate self as xrb;
 
+mod masks;
+
+pub use masks::*;
+
 use xrbk_macro::define;
 
 define! {
@@ -30,8 +34,6 @@ define! {
 
 	/// A resource ID referring to a particular colormap resource.
 	pub struct Colormap(u32);
-
-
 
 	/// A unique ID corresponding to a string name.
 	///

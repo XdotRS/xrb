@@ -3,10 +3,9 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use bitflags::bitflags;
-use xrb_proc_macros::{ByteSize, StaticByteSize};
 
 bitflags! {
-	#[derive(StaticByteSize, ByteSize, Default)]
+	#[derive(Default)]
 	pub struct ColorChannelMask: u8 {
 		/// Whether the red color channel is enabled.
 		const DO_RED = 0x01;
@@ -17,7 +16,7 @@ bitflags! {
 	}
 
 	/// A mask of events.
-	#[derive(StaticByteSize, ByteSize, Default)]
+	#[derive(Default)]
 	pub struct EventMask: u32 {
 		/// Key press events.
 		const KEY_PRESS = 0x0000_0001;
@@ -58,28 +57,18 @@ bitflags! {
 		/// secondary mouse buttons.
 		const BUTTON_3_MOTION = 0x0000_0400;
 		/// Pointer 'drag' events when 'mouse button 4' is held.
-		///
-		/// > Help wanted! If you know what 'mouse button 4' represents in terms
-		/// > of its common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const BUTTON_4_MOTION = 0x0000_0800;
 		/// Pointer 'drag' events when 'mouse button 5' is held.
-		///
-		/// > Help wanted! If you know what 'mouse button 5' represents in terms
-		/// > of its common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const BUTTON_5_MOTION = 0x0000_1000;
 		/// Pointer 'drag' events when any mouse button is held.
 		const BUTTON_MOTION = 0x0000_2000;
 		/// Events generated when the state of the keymap changes.
 		///
-		/// keymap refers to the mapping between the [`Keycode`]s interpreted
+		/// "Keymap" refers to the mapping between the [`Keycode`]s interpreted
 		/// by the kernel and the [`Keysym`]s outputted by X.
 		///
-		/// [`Keycode`]: crate::x11::common::values::Keycode
-		/// [`Keysym`]: crate::x11::common::values::Keysym
+		/// [`Keycode`]: crate::Keycode
+		/// [`Keysym`]: crate::Keysym
 		const KEYMAP_STATE = 0x0000_4000;
 		/// Events generated for arbitrary rectangular areas of windows that
 		/// need to be rendered.
@@ -95,17 +84,19 @@ bitflags! {
 		const EXPOSURE = 0x0000_8000;
 		/// Events generated when the [visibility] of a window changes.
 		///
-		/// [visibility]: crate::x11::requests::MapState
+		/// [visibility]: crate::x11::MapState
 		const VISIBILITY_CHANGE = 0x0001_0000;
 		/// Events generated when the structure of a window changes.
 		///
-		/// In constrast to [`SUBSTRUCTURE_NOTIFY`], `STRUCTURE_NOTIFY` events
+		/// In contrast to [`SUBSTRUCTURE_NOTIFY`], `STRUCTURE_NOTIFY` events
 		/// are generated when the structure of a window itself changes, rather
 		/// than when the structure of its children changes.
+		///
+		/// [`SUBSTRUCTURE_NOTIFY`]: EventMask::SUBSTRUCTURE_NOTIFY
 		const STRUCTURE_NOTIFY = 0x0002_0000;
 		/// Events generated when the substructure of a window changes.
 		///
-		/// In constrast to [`STRUCTURE_NOTIFY`], `SUBSTRUCTURE_NOTIFY` events
+		/// In contrast to [`STRUCTURE_NOTIFY`], `SUBSTRUCTURE_NOTIFY` events
 		/// are generated when the structure of a window's _children_ changes,
 		/// rather than when the structure of that window itself changes.
 		///
@@ -121,7 +112,7 @@ bitflags! {
 		/// Redirects certain structural requests to the selecting client.
 		///
 		/// `SUBSTRUCTURE_REDIRECT` allows a client to have certain requests
-		/// relating to the structure of the direct children of the slected
+		/// relating to the structure of the direct children of the selected
 		/// window redirected to itself. It is commonly selected by window
 		/// managers so that they can have their own 'verdict' on whether to
 		/// honor, modify, or reject certain requests sent by a window.
@@ -152,7 +143,7 @@ bitflags! {
 	/// - `PROPERTY_CHANGE`
 	/// - `COLORMAP_CHANGE`
 	/// - `OWNER_GRAB_BUTTON`
-	#[derive(StaticByteSize, ByteSize, Default)]
+	#[derive(Default)]
 	pub struct PointerEventMask: u32 {
 		// removes KEY_PRESS and KEY_RELEASE
 		/// Mouse button press events.
@@ -189,18 +180,8 @@ bitflags! {
 		/// secondary mouse buttons.
 		const BUTTON_3_MOTION = 0x0000_0400;
 		/// Pointer 'drag' events when 'mouse button 4' is held.
-		///
-		/// > Help wanted! If you know what 'mouse button 4' represents in terms
-		/// > of its common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const BUTTON_4_MOTION = 0x0000_0800;
 		/// Pointer 'drag' events when 'mouse button 5' is held.
-		///
-		/// > Help wanted! If you know what 'mouse button 5' represents in terms
-		/// > of its common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const BUTTON_5_MOTION = 0x0000_1000;
 		/// Pointer 'drag' events when any mouse button is held.
 		const BUTTON_MOTION = 0x0000_2000;
@@ -209,8 +190,8 @@ bitflags! {
 		/// keymap refers to the mapping between the [`Keycode`]s interpreted
 		/// by the kernel and the [`Keysym`]s outputted by X.
 		///
-		/// [`Keycode`]: crate::x11::common::values::Keycode
-		/// [`Keysym`]: crate::x11::common::values::Keysym
+		/// [`Keycode`]: crate::Keycode
+		/// [`Keysym`]: crate::Keysym
 		const KEYMAP_STATE = 0x0000_4000;
 		// removes other events irrelevant to the pointer and buttons
 	}
@@ -236,7 +217,7 @@ bitflags! {
 	/// - `PROPERTY_CHANGE`
 	/// - `COLORMAP_CHANGE`
 	/// - `OWNER_GRAB_BUTTON`
-	#[derive(StaticByteSize, ByteSize, Default)]
+	#[derive(Default)]
 	pub struct DeviceEventMask: u32 {
 		/// Key press events.
 		const KEY_PRESS = 0x0000_0001;
@@ -265,18 +246,8 @@ bitflags! {
 		/// secondary mouse buttons.
 		const BUTTON_3_MOTION = 0x0000_0400;
 		/// Pointer 'drag' events when 'mouse button 4' is held.
-		///
-		/// > Help wanted! If you know what 'mouse button 4' represents in terms
-		/// > of its common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const BUTTON_4_MOTION = 0x0000_0800;
 		/// Pointer 'drag' events when 'mouse button 5' is held.
-		///
-		/// > Help wanted! If you know what 'mouse button 5' represents in terms
-		/// > of its common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const BUTTON_5_MOTION = 0x0000_1000;
 		/// Pointer 'drag' events when any mouse button is held.
 		const BUTTON_MOTION = 0x0000_2000;
@@ -287,7 +258,7 @@ bitflags! {
 	///
 	/// This is the same as [`ModifierKeyMask`], but with masks for currently
 	/// held mouse buttons.
-	#[derive(StaticByteSize, ByteSize, Default)]
+	#[derive(Default)]
 	pub struct ModifierMask: u16 {
 		/// Whether `Shift` is held.
 		const SHIFT = 0x0001;
@@ -296,25 +267,10 @@ bitflags! {
 		/// Whether `Ctrl` is held.
 		const CONTROL = 0x0004;
 		/// Whether 'modifier key 1' is held.
-		///
-		/// > Help wanted! If you know what `MOD_1` represents in terms of its
-		/// > common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const MOD_1 = 0x0008;
 		/// Whether 'modifier key 2' is held.
-		///
-		/// > Help wanted! If you know what `MOD_2` represents in terms of its
-		/// > common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const MOD_2 = 0x0010;
 		/// Whether 'modifier key 3' is held.
-		///
-		/// > Help wanted! If you know what `MOD_3` represents in terms of its
-		/// > common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const MOD_3 = 0x0020;
 		/// Whether the `Super`/`Meta` key is held.
 		///
@@ -322,11 +278,6 @@ bitflags! {
 		/// and as 'command' or 'cmd' on MacOS devices.
 		const MOD_4 = 0x0040;
 		/// Whether 'modifier key 5' is held.
-		///
-		/// > Help wanted! If you know what `MOD_5` represents in terms of its
-		/// > common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const MOD_5 = 0x0080;
 		/// Whether the primary mouse button is held.
 		///
@@ -343,18 +294,8 @@ bitflags! {
 		/// secondary mouse buttons.
 		const BUTTON_3 = 0x0400;
 		/// Whether 'mouse button 4' is held.
-		///
-		/// > Help wanted! If you know what `BUTTON_4` represents in terms of
-		/// > its common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const BUTTON_4 = 0x0800;
 		/// Whether 'mouse button 5' is held.
-		///
-		/// > Help wanted! If you know what `BUTTON_5` represents in terms of
-		/// > its common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const BUTTON_5 = 0x1000;
 	}
 
@@ -365,7 +306,7 @@ bitflags! {
 	/// mask for [`ANY_MODIFIER`].
 	///
 	/// [`ANY_MODIFIER`]: AnyModifierKeyMask::ANY_MODIFIER
-	#[derive(StaticByteSize, ByteSize, Default)]
+	#[derive(Default)]
 	pub struct ModifierKeyMask: u16 {
 		/// Whether `Shift` is held.
 		const SHIFT = 0x0001;
@@ -374,25 +315,10 @@ bitflags! {
 		/// Whether `Ctrl` is held.
 		const CONTROL = 0x0004;
 		/// Whether 'modifier key 1' is held.
-		///
-		/// > Help wanted! If you know what `MOD_1` represents in terms of its
-		/// > common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const MOD_1 = 0x0008;
 		/// Whether 'modifier key 2' is held.
-		///
-		/// > Help wanted! If you know what `MOD_2` represents in terms of its
-		/// > common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const MOD_2 = 0x0010;
 		/// Whether 'modifier key 3' is held.
-		///
-		/// > Help wanted! If you know what `MOD_3` represents in terms of its
-		/// > common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const MOD_3 = 0x0020;
 		/// Whether the `Super`/`Meta` key is held.
 		///
@@ -400,11 +326,6 @@ bitflags! {
 		/// and as 'command' or 'cmd' on MacOS devices.
 		const MOD_4 = 0x0040;
 		/// Whether 'modifier key 5' is held.
-		///
-		/// > Help wanted! If you know what `MOD_5` represents in terms of its
-		/// > common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const MOD_5 = 0x0080;
 		// removes BUTTON_#
 	}
@@ -415,7 +336,7 @@ bitflags! {
 	/// [`ANY_MODIFIER`].
 	///
 	/// [`ANY_MODIFIER`]: AnyModifierKeyMask::ANY_MODIFIER
-	#[derive(StaticByteSize, ByteSize, Default)]
+	#[derive(Default)]
 	pub struct AnyModifierKeyMask: u16 {
 		/// Whether `Shift` is held.
 		const SHIFT = 0x0001;
@@ -424,25 +345,10 @@ bitflags! {
 		/// Whether `Ctrl` is held.
 		const CONTROL = 0x0004;
 		/// Whether 'modifier key 1' is held.
-		///
-		/// > Help wanted! If you know what `MOD_1` represents in terms of its
-		/// > common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const MOD_1 = 0x0009;
 		/// Whether 'modifier key 2' is held.
-		///
-		/// > Help wanted! If you know what `MOD_2` represents in terms of its
-		/// > common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const MOD_2 = 0x0010;
 		/// Whether 'modifier key 3' is held.
-		///
-		/// > Help wanted! If you know what `MOD_3` represents in terms of its
-		/// > common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const MOD_3 = 0x0020;
 		/// Whether the `Super`/`Meta` key is held.
 		///
@@ -450,11 +356,6 @@ bitflags! {
 		/// and as 'command' or 'cmd' on MacOS devices.
 		const MOD_4 = 0x0040;
 		/// Whether 'modifier key 5' is held.
-		///
-		/// > Help wanted! If you know what `MOD_5` represents in terms of its
-		/// > common name, please [let us know].
-		///
-		/// [let us know]: https://github.com/XdotRS/xrb/issues
 		const MOD_5 = 0x0080;
 		// removes BUTTON_#
 		// adds ANY_MODIFIER
@@ -462,7 +363,7 @@ bitflags! {
 		const ANY_MODIFIER = 0x8000;
 	}
 
-	#[derive(StaticByteSize, ByteSize, Default)]
+	#[derive(Default)]
 	pub struct GraphicsContextMask: u32 {
 		const FUNCTION = 0x0000_0001;
 		const PLANE_MASK = 0x0000_0002;
@@ -511,26 +412,26 @@ bitflags! {
 	/// |[Colormap]          |[`Inherit::CopyFromParent`]|[`InputOutput`]                |
 	/// |[Cursor]            |[`None`]                   |[`InputOutput`] & [`InputOnly`]|
 	///
-	/// [`CreateWindow`]: crate::requests::CreateWindow
+	/// [`CreateWindow`]: crate::x11::requests::CreateWindow
 	/// [window classes]: crate::x11::requests::WindowClass
-	/// [`InputOutput`]: crate::x11::requests::WindowClass::InputOutput
-	/// [`InputOnly`]: crate::x11::requests::WindowClass::InputOnly
-	/// [BackgroundPixmap]: crate::x11::requests::Attribute::BackgroundPixmap
-	/// [BorderPixmap]: crate::x11::requests::Attribute::BorderPixmap
-	/// [BitGravity]: crate::x11::requests::Attribute::BitGravity
-	/// [WinGravity]: crate::x11::requests::Attribute::WinGravity
-	/// [BackingStore]: crate::x11::requests::Attribute::BackingStore
-	/// [BackingPlanes]: crate::x11::requests::Attribute::BackingPlanes
-	/// [BackingPixel]: crate::x11::requests::Attribute::BackingPixel
-	/// [SaveUnder]: crate::x11::requests::Attribute::SaveUnder
-	/// [EventMask]: crate::x11::requests::Attribute::EventMask
-	/// [DoNotPropagateMask]: crate::x11::requests::Attribute::DoNotPropagateMask
-	/// [OverrideRedirect]: crate::x11::requests::Attribute::OverrideRedirect
-	/// [Colormap]: crate::x11::requests::Attribute::Colormap
-	/// [Cursor]: crate::x11::requests::Attribute::Cursor
+	/// [`InputOutput`]: crate::x11::WindowClass::InputOutput
+	/// [`InputOnly`]: crate::x11::WindowClass::InputOnly
+	/// [BackgroundPixmap]: crate::x11::Attribute::BackgroundPixmap
+	/// [BorderPixmap]: crate::x11::Attribute::BorderPixmap
+	/// [BitGravity]: crate::x11::Attribute::BitGravity
+	/// [WinGravity]: crate::x11::Attribute::WinGravity
+	/// [BackingStore]: crate::x11::Attribute::BackingStore
+	/// [BackingPlanes]: crate::x11::Attribute::BackingPlanes
+	/// [BackingPixel]: crate::x11::Attribute::BackingPixel
+	/// [SaveUnder]: crate::x11::Attribute::SaveUnder
+	/// [EventMask]: crate::x11::Attribute::EventMask
+	/// [DoNotPropagateMask]: crate::x11::Attribute::DoNotPropagateMask
+	/// [OverrideRedirect]: crate::x11::Attribute::OverrideRedirect
+	/// [Colormap]: crate::x11::Attribute::Colormap
+	/// [Cursor]: crate::x11::Attribute::Cursor
 	/// [`EventMask::none()`]: EventMask::none
 	/// [`DeviceEventMask::none()`]: DeviceEventMask::none
-	#[derive(StaticByteSize, ByteSize, Default)]
+	#[derive(Default)]
 	pub struct AttributeMask: u32 {
 		/// See also: [`BackgroundPixmap`]
 		///
@@ -578,7 +479,7 @@ bitflags! {
 		const SAVE_UNDER = 0x0000_0400;
 		/// See also: [`EventMask`]
 		///
-		/// [`Eventmask`]: crate::x11::requests::EventMask
+		/// [`EventMask`]: crate::x11::requests::EventMask
 		const EVENT_MASK = 0x0000_0800;
 		/// See also: [`DoNotPropagateMask`]
 		///
@@ -594,7 +495,7 @@ bitflags! {
 		const CURSOR = 0x0000_4000;
 	}
 
-	#[derive(StaticByteSize, ByteSize, Default)]
+	#[derive(Default)]
 	pub struct ConfigureWindowMask: u16 {
 		const X = 0x0001;
 		const Y = 0x0002;
