@@ -4,9 +4,7 @@
 
 extern crate self as xrb;
 
-mod masks;
-
-pub use masks::*;
+pub mod mask;
 
 use xrbk_macro::define;
 
