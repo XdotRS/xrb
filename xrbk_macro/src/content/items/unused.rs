@@ -11,8 +11,8 @@ use crate::{
 };
 
 pub enum Unused {
-	/// A unit token representing one single unused byte.
-	Unit {
+	/// One single unused byte.
+	Single {
 		/// An optional [metabyte attribute] which denotes the metabyte
 		/// position as being a single unused byte.
 		///
@@ -23,8 +23,8 @@ pub enum Unused {
 		/// [metabyte attribute]: crate::content::AttrContent::Metabyte
 		attribute: Option<Attribute>,
 
-		/// A unit token: `()`.
-		unit_token: token::Paren,
+		/// An underscore token: `_`.
+		underscore_token: Token![_],
 	},
 
 	// There is no guarantee the number of unused bytes returned by the
@@ -43,8 +43,8 @@ pub struct Array {
 	/// A pair of square brackets: `[` and `]`.
 	pub bracket_token: token::Bracket,
 
-	/// A unit token: `()`.
-	pub unit_token: token::Paren,
+	/// An underscore token: `_`.
+	pub underscore_token: Token![_],
 	/// A semicolon token: `;`.
 	pub semicolon_token: Token![;],
 
@@ -62,9 +62,9 @@ pub enum ArrayContent {
 }
 
 impl Unused {
-	/// Returns whether this is the [`Unused::Unit`] form.
-	pub const fn is_unit(&self) -> bool {
-		matches!(self, Self::Unit { .. })
+	/// Returns whether this is the [`Unused::Single`] form.
+	pub const fn is_single(&self) -> bool {
+		matches!(self, Self::Single { .. })
 	}
 
 	/// Returns whether this is the [`Unused::Array`] form.
@@ -84,7 +84,7 @@ impl Unused {
 				}
 			}
 
-			Self::Unit { .. } => None,
+			Self::Single { .. } => None,
 		}
 	}
 }
@@ -109,7 +109,7 @@ impl ItemSerializeTokens for Unused {
 	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
 		tokens.append_tokens(|| {
 			match self {
-				Self::Unit { .. } => {
+				Self::Single { .. } => {
 					// 0u8.write_to(writer)?;
 					quote!(
 						writer.put_u8(0);
@@ -194,7 +194,7 @@ impl ItemDeserializeTokens for Unused {
 					}
 				}
 
-				Self::Unit { .. } => {
+				Self::Single { .. } => {
 					// reader.advance(1);
 					quote!(reader.advance(1);)
 				}

@@ -271,12 +271,10 @@ impl Items {
 		while !input.is_empty() {
 			let mut attributes = Attribute::parse_outer(input, &read_map)?;
 
-			if input.peek(token::Bracket) || input.peek(token::Paren) {
+			if input.peek(Token![_]) || input.peek(token::Bracket) {
 				// Unused bytes item.
 
-				let _unit;
-
-				if input.peek(token::Paren) {
+				if input.peek(Token![_]) {
 					// Unit
 
 					if let Some(attr) = attributes.get(0) {
@@ -297,14 +295,14 @@ impl Items {
 
 					items.push_value((
 						ItemId::Unused(None),
-						Item::Unused(Unused::Unit {
+						Item::Unused(Unused::Single {
 							attribute: if attributes.is_empty() {
 								None
 							} else {
 								Some(attributes.remove(0))
 							},
 
-							unit_token: parenthesized!(_unit in input),
+							underscore_token: input.parse()?,
 						}),
 					));
 				} else {
@@ -337,7 +335,7 @@ impl Items {
 
 							bracket_token: bracketed!(content in input),
 
-							unit_token: parenthesized!(_unit in content),
+							underscore_token: content.parse()?,
 							semicolon_token: content.parse()?,
 
 							content: ArrayContent::parse(&content, &read_map)?,

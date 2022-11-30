@@ -122,7 +122,7 @@ define! {
 	pub struct Host {
 		pub family: HostFamily,
 
-		(),
+		_,
 
 		#[allow(clippy::cast_possible_truncation)]
 		let address_len: u16 = address => address.len() as u16,
@@ -131,7 +131,7 @@ define! {
 		pub address: Vec<u8>,
 
 		// TODO: Padding still isn't implemented yet.
-		//[(); ..],
+		//[_; ..],
 	}
 }
 

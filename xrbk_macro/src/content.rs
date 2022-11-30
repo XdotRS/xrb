@@ -57,7 +57,7 @@ impl Item {
 				)
 			}),
 
-			Self::Unused(Unused::Unit { attribute, .. }) => matches!(
+			Self::Unused(Unused::Single { attribute, .. }) => matches!(
 				attribute,
 				Some(Attribute {
 					content: AttrContent::Metabyte(..),
