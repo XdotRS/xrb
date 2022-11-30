@@ -74,6 +74,9 @@ define! {
 	pub struct Char8(u8);
 	pub struct Char16(u8, u8);
 
+	pub struct String8(Vec<Char8>);
+	pub struct String16(Vec<Char16>);
+
 	pub struct Point {
 		x: i16,
 		y: i16,
