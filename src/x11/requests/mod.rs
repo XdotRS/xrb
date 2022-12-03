@@ -108,7 +108,7 @@ define! {
 		pub all_event_masks: EventMask,
 		pub your_event_mask: EventMask,
 		pub do_not_propagate_mask: DeviceEventMask,
-		[_; 2],
+		[_; ..],
 	}
 
 	pub struct DestroyWindow: Request(4) { pub target: Window, }
@@ -136,7 +136,7 @@ define! {
 	pub struct ConfigureWindow<'a>: Request(12) {
 		pub target: Window,
 		pub value_mask: ConfigureWindowMask,
-		pub values: &'a [ConfigureWindowValue],
+		pub values: Vec<ConfigureWindowValue>,
 	}
 
 	pub struct CirculateWindow: Request(13) {
@@ -156,7 +156,7 @@ define! {
 		pub width: u16,
 		pub height: u16,
 		pub border_width: u16,
-		[_; 10],
+		[_; ..],
 	}
 
 	pub struct QueryTree: Request(15) -> QueryTreeReply { pub target: Window, }
@@ -164,38 +164,36 @@ define! {
 	pub struct QueryTreeReply: Reply for QueryTree {
 		pub root: Window,
 		pub parent: Option<Window>,
-		// Here is where we need a way to specify that this is the length of
-		// children.
-		// #children: u16,
-		pub children_len: u16,
+		let children_len: u16 = children => children.len() as u16,
 		[_; 14],
 		// Wouldn't it be better to use &'a [Window] instead ?
+		#[context(children_len => *children_len as usize)]
 		pub children: Vec<Window>,
 	}
 
 	pub struct InternAtom: Request(16) -> InternAtomReply {
 		#[metabyte]
 		pub only_if_exists: bool,
-		// #name: u16,
-		pub name_len: u16,
+		let name_len: u16 = name => name.len() as u16,
 		[_; 2],
+		#[context(name_len => *name_len as usize)]
 		pub name: String8,
-		[_; {name}],
+		[_; ..],
 	}
 
 	pub struct InternAtomReply: Reply for InternAtom {
 		pub atom: Option<Atom>,
-		[_; 20],
+		[_; ..],
 	}
 
 	pub struct GetAtomName: Request(17) -> GetAtomNameReply { pub atom: Atom, }
 
 	pub struct GetAtomNameReply: Reply for GetAtomName {
-		// #name: u16,
-		pub name_len: u16,
+		let name_len: u16 = name => name.len() as u16,
 		[_; 22],
+		#[context(name_len => *name_len as usize)]
 		pub name: String8,
-		[_; {name}],
+		[_; ..],
 	}
 
 	// The property requests (`ChangeProperty(18)`, `DeleteProperty(19)`,
@@ -203,7 +201,6 @@ define! {
 	// to be defined manually. You can find them in `mod properties;`.
 
 	pub struct SetSelectionOwner: Request(22) {
-		#[metabyte]
 		pub owner: Option<Window>,
 		pub selection: Atom,
 		pub time: Time,
@@ -215,7 +212,7 @@ define! {
 
 	pub struct GetSelectionOwnerReply: Reply for GetSelectionOwner {
 		pub owner: Option<Window>,
-		[_; 20],
+		[_; ..],
 	}
 
 	pub struct ConvertSelection: Request(24) {
@@ -249,7 +246,7 @@ define! {
 	pub struct GrabPointerReply: Reply for GrabPointer {
 		#[metabyte]
 		pub status: GrabStatus,
-		[_; 24],
+		[_; ..],
 	}
 
 	pub struct UngrabPointer: Request(27) { pub time: Time, }
@@ -272,14 +269,14 @@ define! {
 		#[metabyte]
 		pub button: Any<Button>,
 		pub target_window: Window,
-		[_; 2],
+		[_; ..],
 	}
 
 	pub struct ChangeActivePointerGrab: Request(30) {
 		pub cursor_override: Option<Cursor>,
 		pub time: Time,
 		pub event_mask: PointerEventMask,
-		[_; 2],
+		[_; ..],
 	}
 
 	pub struct GrabKeyboard: Request(31) -> GrabKeyboardReply {
@@ -289,13 +286,13 @@ define! {
 		pub time: Time,
 		pub pointer_mode: GrabMode,
 		pub keyboard_mode: GrabMode,
-		[_; 2],
+		[_; ..],
 	}
 
 	pub struct GrabKeyboardReply: Reply for GrabKeyboard {
 		#[metabyte]
 		pub status: GrabStatus,
-		[_; 24],
+		[_; ..],
 	}
 
 	pub struct UngrabKeyboard: Request(32) { pub time: Time, }
@@ -308,7 +305,7 @@ define! {
 		pub key: Any<Keycode>,
 		pub pointer_mode: GrabMode,
 		pub keyboard_mode: GrabMode,
-		[_; 3],
+		[_; ..],
 	}
 
 	pub struct UngrabKey: Request(34) {
@@ -316,7 +313,7 @@ define! {
 		pub key: Any<Keycode>,
 		pub target_window: Window,
 		pub modifiers: AnyModifierKeyMask,
-		[_; 2],
+		[_; ..],
 	}
 
 	pub struct AllowEvents: Request(35) {
@@ -340,7 +337,7 @@ define! {
 		pub win_x: i16,
 		pub win_y: i16,
 		pub mask: ModifierMask,
-		[_; 6],
+		[_; ..],
 	}
 
 	pub struct GetMotionEvents: Request(39) -> GetMotionEventsReply {
@@ -369,7 +366,7 @@ define! {
 		pub child: Option<Window>,
 		pub dest_x: i16,
 		pub dest_y: i16,
-		[_; 16],
+		[_; ..],
 	}
 
 	pub struct WarpPointer: Request(41) {
@@ -395,7 +392,7 @@ define! {
 		#[metabyte]
 		pub revert_to: RevertTo,
 		pub focus: Option<InputFocus>,
-		[_; 20],
+		[_; ..],
 	}
 
 	pub struct QueryKeymap: Request(44) -> QueryKeymapReply;
@@ -406,11 +403,11 @@ define! {
 
 	pub struct OpenFont: Request(45) {
 		pub font_id: Font,
-		// #name: u16,
-		pub name_len: u16,
+		let name_len: u16 = name => name.len() as u16,
 		[_; 2],
+		#[context(name_len => *name_len as usize)]
 		pub name: String8,
-		[_; {name}],
+		[_; ..],
 	}
 
 	pub struct CloseFont: Request(46){ pub font: Font, }
@@ -442,8 +439,8 @@ define! {
 		#[metabyte]
 		pub odd_length: bool,
 		pub font: Box<dyn Fontable>,
-		pub string: String16,
-		[_; {string}],
+		pub string: String16, // TODO: context attribute
+		[_; ..],
 	}
 
 	pub struct QueryTextExtentsReply: Reply for QueryTextExtents {
@@ -456,23 +453,23 @@ define! {
 		pub overall_width: i32,
 		pub overall_left: i32,
 		pub overall_right: i32,
-		[_; 4],
+		[_; ..],
 	}
 
 	pub struct ListFonts: Request(49) -> ListFontsReply {
 		pub max_names: u16,
-		// #pattern: u16,
-		pub pattern_len: u16,
+		let pattern_len: u16 = pattern => pattern.len() as u16,
+		#[context(pattern_len => *pattern_len as usize)]
 		pub pattern: String8,
-		[_; {pattern}],
+		[_; ..],
 	}
 
 	pub struct ListFontsReply: Reply for ListFonts {
-		// #names: u32,
-		pub names_len: u32,
+		let names_len: u16 = names => names.len() as u16,
 		[_; 22],
+		#[context(names_len => *names_len as usize)]
 		pub names: Vec<LenString8>,
-		[_; {names}],
+		[_; ..],
 	}
 
 	// ListFontsWithInfo has a special format for its reply that needs to be
@@ -480,11 +477,11 @@ define! {
 	// `mod list_fonts_with_info;` module.
 
 	pub struct SetFontPath<'a>: Request(51) {
-		// #path: u16,
-		pub path_len: u16,
+		let path_len: u16 = path => path.len() as u16,
 		[_; 2],
+		#[context(path_len => *path_len as usize)]
 		pub path: &'a [LenString8],
-		[_; {path}],
+		[_; ..],
 	}
 
 	// GetFontPath has a special format for its request. Both the request and
@@ -524,10 +521,10 @@ define! {
 	pub struct SetDashes<'a>: Request(58) {
 		pub context: GraphicsContext,
 		pub dash_offset: u16,
-		// #dashes: u16,
-		pub dashes_len: u16,
+		let dashes_len: u16 = dashes => dashes.len() as u16,
+		#[context(dashes_len => *dashes_len as usize)]
 		pub dashes: &'a [u8],
-		[_; {dashes}],
+		[_; ..],
 	}
 
 	pub struct SetClipRectangles<'a>: Request(59) {
@@ -643,8 +640,8 @@ define! {
 		pub left_padding: u8,
 		pub depth: u8,
 		[_; 2],
-		pub data: &'a [u8],
-		[_; {data}],
+		pub data: &'a [u8], // TODO: context attribute
+		[_; ..],
 	}
 
 	pub struct GetImage<'a>: Request(73) -> GetImageReply {
@@ -663,8 +660,8 @@ define! {
 		pub depth: u8,
 		pub visual: Option<VisualId>,
 		[_; 20],
-		pub data: Vec<u8>,
-		[_; {data}],
+		pub data: Vec<u8>, // TODO: context attribute
+		[_; ..],
 	}
 
 	pub struct PolyText8<'a>: Request(74) {
@@ -690,8 +687,8 @@ define! {
 		pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
-		pub string: String8,
-		[_; {string}],
+		pub string: String8, // TODO: context attribute
+		[_; ..],
 	}
 
 	pub struct ImageText16<'a>: Request(77) {
@@ -699,8 +696,8 @@ define! {
 		pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
-		pub string: String16,
-		[_; {string}],
+		pub string: String16, // TODO: context attribute
+		[_; ..],
 	}
 
 	pub struct CreateColormap: Request(78) {
@@ -735,30 +732,31 @@ define! {
 	pub struct AllocColor: Request(84) -> AllocColorReply {
 		pub colormap: Colormap,
 		pub color: (u16, u16, u16),
-		[_; 2],
+		[_; ..],
 	}
 
 	pub struct AllocColorReply: Reply for AllocColor {
 		pub color: (u16, u16, u16),
 		[_; 2],
 		pub pixel: u32,
-		[_; 12],
+		[_; ..],
 	}
 
 	pub struct AllocNamedColor: Request(85) -> AllocNamedColorReply {
 		pub colormap: Colormap,
 		// #name: u16,
-		pub name_len: u16,
+		let name_len: u16 = name => name.len() as u16,
 		[_; 2],
+		#[context(name_len => *name_len as usize)]
 		pub name: String8,
-		[_; {name}],
+		[_; ..],
 	}
 
 	pub struct AllocNamedColorReply: Reply for AllocNamedColor {
 		pub pixel: u32,
 		pub exact_color: (u16, u16, u16),
 		pub visual_color: (u16, u16, u16),
-		[_; 8],
+		[_; ..],
 	}
 
 	pub struct AllocColorCells: Request(86) -> AllocColorCellsReply {
@@ -813,10 +811,11 @@ define! {
 		pub colormap: Colormap,
 		pub pixel: u32,
 		// #name: u16,
-		pub name_len: u16,
+		let name_len: u16 = name => name.len() as u16,
 		[_; 2],
+		#[context(name_len => *name_len as usize)]
 		pub name: String8,
-		[_; {name}],
+		[_; ..],
 	}
 
 	// The QueryColorsReply for the QueryColors request uses a special format
@@ -825,17 +824,17 @@ define! {
 
 	pub struct LookupColor: Request(92) -> LookupColorReply {
 		pub colormap: Colormap,
-		// #name: u16,
-		pub name_len: u16,
+		let name_len: u16 = name => name.len() as u16,
 		[_; 2],
+		#[context(name_len => *name_len as usize)]
 		pub name: String8,
-		[_; {name}],
+		[_; ..],
 	}
 
 	pub struct LookupColorReply: Reply for LookupColor {
 		pub exact_color: (u16, u16, u16),
 		pub visual_color: (u16, u16, u16),
-		[_; 12],
+		[_; ..],
 	}
 
 	pub struct CreateCursor: Request(93) {
@@ -937,15 +936,15 @@ define! {
 		pub width: u16,
 		/// The height of the ideal size found.
 		pub height: u16,
-		[_; 20],
+		[_; ..],
 	}
 
 	pub struct QueryExtension: Request(98) -> QueryExtensionReply {
-		// #name: u16,
-		pub name_len: u16,
+		let name_len: u16 = name => name.len() as u16,
 		[_; 2],
+		#[context(name_len => *name_len as usize)]
 		pub name: String8,
-		[_; {name}],
+		[_; ..],
 	}
 
 	pub struct QueryExtensionReply: Reply for QueryExtension {
@@ -954,18 +953,18 @@ define! {
 		pub major_opcode: u8,
 		pub first_event: u8,
 		pub first_error: u8,
-		[_; 20],
+		[_; ..],
 	}
 
 	pub struct ListExtensions: Request(99) -> ListExtensionsReply;
 
 	pub struct ListExtensionsReply: Reply for ListExtensions {
-		// #names: u8,
 		#[metabyte]
-		pub names_len: u8,
+		let names_len: u16 = names => names.len() as u16,
 		[_; 24],
+		#[context(names_len => *names_len as usize)]
 		pub names: Vec<LenString8>,
-		[_; {names}],
+		[_; ..],
 	}
 
 	// The `ChangeKeyboardMapping` and `GetKeyboardMapping` requests, as well as
@@ -1010,7 +1009,7 @@ define! {
 		pub acceleration_numerator: i16,
 		pub acceleration_denominator: u16,
 		pub threshold: u16,
-		[_; 18],
+		[_; ..],
 	}
 
 	pub struct SetScreenSaver: Request(107) {
@@ -1018,7 +1017,7 @@ define! {
 		pub interval: i16,
 		pub prefer_blanking: Defaultable<bool>,
 		pub allow_exposures: Defaultable<bool>,
-		[_; 2],
+		[_; ..],
 	}
 
 	pub struct GetScreenSaver: Request(108) -> GetScreenSaverReply;
@@ -1028,7 +1027,7 @@ define! {
 		pub interval: i16,
 		pub prefer_blanking: bool,
 		pub allow_exposures: bool,
-		[_; 18],
+		[_; ..],
 	}
 
 	pub struct ChangeHosts<'a>: Request(109) {
@@ -1036,10 +1035,10 @@ define! {
 		pub mode: EditMode,
 		pub family: HostFamilyA,
 		[_; 1],
-		// #address: u16,
-		pub address_len: u16,
+		let address_len: u16 = address => address.len() as u16,
+		#[context(address_len => *address_len as usize)]
 		pub address: &'a [u8],
-		[_; {address}],
+		[_; ..],
 	}
 
 	pub struct ListHosts: Request(110) -> ListHostsReply;
@@ -1079,28 +1078,28 @@ define! {
 	}
 
 	pub struct SetPointerMapping<'a>: Request(116) -> SetPointerMappingReply {
-		// $#map: u8,
 		#[metabyte]
-		pub map_len: u8,
+		let map_len: u16 = map => map.len() as u16,
+		#[context(map_len => *map_len as usize)]
 		pub map: &'a [u8],
-		[_; {map}],
+		[_; ..],
 	}
 
 	pub struct SetPointerMappingReply: Reply for SetPointerMapping<'_> {
 		#[metabyte]
 		pub status: Status,
-		[_; 24],
+		[_; ..],
 	}
 
 	pub struct GetPointerMapping: Request(117) -> GetPointerMappingReply;
 
 	pub struct GetPointerMappingReply: Reply for GetPointerMapping {
-		// $#map: u8,
 		#[metabyte]
-		pub map_len: u8,
+		let map_len: u16 = map => map.len() as u16,
 		[_; 24],
+		#[context(map_len => *map_len as usize)]
 		pub map: Vec<u8>,
-		[_; {map}],
+		[_; ..],
 	}
 
 	// `SetModifierMapping` and `GetModifierMappingReply` both use a special
