@@ -52,9 +52,9 @@ pub const PROTOCOL_MAJOR_VERSION: u16 = 11;
 pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 
 // /// Implementations for the core X11 protocol.
-mod x11;
 mod common;
 mod r#trait;
+mod x11;
 
 pub use common::*;
 pub use r#trait::*;
