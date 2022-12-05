@@ -34,7 +34,7 @@ define! {
 	/// [Pixmap]: crate::x11::errors::Pixmap
 	/// [Value]: crate::x11::errors::Value
 	/// [Window]: crate::x11::errors::Window
-	pub struct CreateWindow<'a>: Request(1) {
+	pub struct CreateWindow: Request(1) {
 		/// The color depth of the window in bits per pixel.
 		///
 		/// If the class is not [`InputOnly`], [`CopyFromParent`] will copy the
@@ -46,6 +46,7 @@ define! {
 		/// [`Match`]: crate::x11::errors::Match
 		#[metabyte]
 		pub depth: Inheritable<u8>,
+
 		/// The resource ID given to the window.
 		pub window_id: Window,
 		/// The parent of which the window will be created as a child of.
@@ -78,13 +79,13 @@ define! {
 		/// A list of [window attributes] that are to configured for the window.
 		///
 		/// [window attributes]: Attribute
-		pub values: &'a [Attribute], // Window is a placeholder until WinAttr is done
+		pub values: Vec<Attribute>, // Window is a placeholder until WinAttr is done
 	}
 
-	pub struct ChangeWindowAttributes<'a>: Request(2) {
+	pub struct ChangeWindowAttributes: Request(2) {
 		pub target: Window,
 		pub value_mask: AttributeMask,
-		pub values: &'a [Attribute],
+		pub values: Vec<Attribute>,
 	}
 
 	pub struct GetWindowAttributes: Request(3) -> GetWindowAttributesReply {
@@ -94,6 +95,7 @@ define! {
 	pub struct GetWindowAttributesReply: Reply for GetWindowAttributes {
 		#[metabyte]
 		pub backing_store: BackingStore,
+
 		pub visual: VisualId,
 		pub class: WindowClass,
 		pub bit_gravity: BitGravity,
@@ -122,6 +124,7 @@ define! {
 	pub struct ChangeSaveSet: Request(6) {
 		#[metabyte]
 		pub mode: EditMode,
+
 		pub target: Window,
 	}
 
@@ -148,7 +151,7 @@ define! {
 		pub target: Window,
 	}
 
-	pub struct ConfigureWindow<'a>: Request(12) {
+	pub struct ConfigureWindow: Request(12) {
 		pub target: Window,
 		pub value_mask: ConfigureWindowMask,
 		pub values: Vec<ConfigureWindowValue>,
@@ -157,6 +160,7 @@ define! {
 	pub struct CirculateWindow: Request(13) {
 		#[metabyte]
 		pub direction: CirculateDirection,
+
 		pub target: Window,
 	}
 
@@ -167,6 +171,7 @@ define! {
 	pub struct GetGeometryReply: Reply for GetGeometry {
 		#[metabyte]
 		pub depth: u8,
+
 		pub root: Window,
 		pub x: i16,
 		pub y: i16,
@@ -185,6 +190,7 @@ define! {
 		pub parent: Option<Window>,
 		let children_len: u16 = children => children.len() as u16,
 		[_; 14],
+
 		// Wouldn't it be better to use &'a [Window] instead ?
 		#[context(children_len => *children_len as usize)]
 		pub children: Vec<Window>,
@@ -193,8 +199,10 @@ define! {
 	pub struct InternAtom: Request(16) -> InternAtomReply {
 		#[metabyte]
 		pub only_if_exists: bool,
+
 		let name_len: u16 = name => name.len() as u16,
 		[_; 2],
+
 		#[context(name_len => *name_len as usize)]
 		pub name: String8,
 		[_; ..],
@@ -212,6 +220,7 @@ define! {
 	pub struct GetAtomNameReply: Reply for GetAtomName {
 		let name_len: u16 = name => name.len() as u16,
 		[_; 22],
+
 		#[context(name_len => *name_len as usize)]
 		pub name: String8,
 		[_; ..],
@@ -273,7 +282,9 @@ define! {
 		[_; ..],
 	}
 
-	pub struct UngrabPointer: Request(27) { pub time: Time, }
+	pub struct UngrabPointer: Request(27) {
+		pub time: Time,
+	}
 
 	pub struct GrabButton: Request(28) {
 		#[metabyte]
@@ -286,7 +297,6 @@ define! {
 		pub confine_to: Option<Window>,
 		pub cursor_override: Option<Cursor>,
 		pub button: Any<Button>,
-
 		_,
 
 		pub modifiers: AnyModifierKeyMask,
@@ -419,8 +429,8 @@ define! {
 	}
 
 	pub struct SetInputFocus: Request(42) {
-		//#[metabyte]
-		//pub revert_to: Option<RevertTo>,
+		#[metabyte]
+		pub revert_to: Option<RevertTo>,
 
 		pub focus: Option<InputFocus>,
 		pub time: Time,
@@ -452,11 +462,15 @@ define! {
 		[_; ..],
 	}
 
-	pub struct CloseFont: Request(46){ pub font: Font, }
+	pub struct CloseFont: Request(46) {
+		pub font: Font,
+	}
 
-	pub struct QueryFont<'a>: Request(47) -> QueryFontReply{ pub font: &'a dyn Fontable, }
+	pub struct QueryFont: Request(47) -> QueryFontReply {
+		pub font: Box<dyn Fontable>,
+	}
 
-	pub struct QueryFontReply: Reply for QueryFont<'_> {
+	pub struct QueryFontReply: Reply for QueryFont {
 		pub min_bounds: CharInfo,
 		[_; 4],
 
@@ -473,7 +487,9 @@ define! {
 		pub font_ascent: i16,
 		pub font_descent: i16,
 		let charinfos_len: u32 = charinfos => charinfos.len() as u32,
+		#[context(properties_len => *properties_len as usize)]
 		pub properties: Vec<FontProperty>,
+		#[context(charinfos_len => *charinfos_len as usize)]
 		pub charinfos: Vec<CharInfo>,
 	}
 
@@ -553,12 +569,14 @@ define! {
 		pub context_id: GraphicsContext,
 		pub drawable: Box<dyn Drawable>,
 		pub value_mask: GraphicsContextMask,
+		// TODO: context attribute
 		pub values: Vec<GraphicsContextValue>,
 	}
 
 	pub struct ChangeGraphicsContext: Request(56) {
 		pub context: GraphicsContext,
 		pub value_mask: GraphicsContextMask,
+		// TODO: context attribute
 		pub values: Vec<GraphicsContextValue>,
 	}
 
@@ -584,6 +602,7 @@ define! {
 		pub context: GraphicsContext,
 		pub clip_x_origin: i16,
 		pub clip_y_origin: i16,
+		// TODO: context attribute
 		pub rectangles: Vec<Rectangle>,
 	}
 
@@ -643,24 +662,28 @@ define! {
 
 		pub drawable: Box<dyn Drawable>,
 		pub context: GraphicsContext,
+		// TODO: context attribute
 		pub points: Vec<(i16, i16)>,
 	}
 
 	pub struct PolySegment: Request(66) {
 		pub drawable: Box<dyn Drawable>,
 		pub context: GraphicsContext,
+		// TODO: context attribute
 		pub segments: Vec<Segment>,
 	}
 
 	pub struct PolyRectangle: Request(67) {
 		pub drawable: Box<dyn Drawable>,
 		pub context: GraphicsContext,
+		// TODO: context attribute
 		pub rectangles: Vec<Rectangle>,
 	}
 
 	pub struct PolyArc: Request(68) {
 		pub drawable: Box<dyn Drawable>,
 		pub context: GraphicsContext,
+		// TODO: context attribute
 		pub arcs: Vec<GeomArc>,
 	}
 
@@ -671,18 +694,21 @@ define! {
 		pub coordinate_mode: CoordinateMode,
 		[_; 2],
 
+		// TODO: context attribute
 		pub points: Vec<(i16, i16)>,
 	}
 
 	pub struct PolyFillRectangle: Request(70) {
 		pub drawable: Box<dyn Drawable>,
 		pub context: GraphicsContext,
+		// TODO: context attribute
 		pub rectangles: Vec<Rectangle>,
 	}
 
 	pub struct PolyFillArc: Request(71) {
 		pub drawable: Box<dyn Drawable>,
 		pub context: GraphicsContext,
+		// TODO: context attribute
 		pub arcs: Vec<GeomArc>,
 	}
 
@@ -717,7 +743,7 @@ define! {
 		pub plane_mask: u32,
 	}
 
-	pub struct GetImageReply: Reply for GetImage<'_> {
+	pub struct GetImageReply: Reply for GetImage {
 		#[metabyte]
 		pub depth: u8,
 
@@ -730,7 +756,7 @@ define! {
 	}
 
 	pub struct PolyText8: Request(74) {
-		pub drawable: &'a dyn Drawable,
+		pub drawable: Box<dyn Drawable>,
 		pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
@@ -1213,162 +1239,4 @@ define! {
 	// `mod no_operation;` module.
 }
 
-#[cfg(test)]
-mod tests {
-	use super::*;
-	use crate::traits::*;
-
-	#[test]
-	fn create_window_length_is_correct() {
-		let create_window = CreateWindow {
-			window_id: Window::empty(),
-			parent: Window::empty(),
-			class: Inheritable::CopyFromParent,
-			depth: Inheritable::CopyFromParent,
-			visual: Inheritable::CopyFromParent,
-			x: 0,
-			y: 0,
-			width: 1,
-			height: 1,
-			border_width: 0,
-			value_mask: AttributeMask::empty(),
-			values: &[Attribute::BackingPixel(0), Attribute::Cursor(None)],
-		};
-
-		assert_eq!(create_window.length(), 10);
-	}
-
-	#[test]
-	fn change_window_attributes_length_is_correct() {
-		let change_window_attributes = ChangeWindowAttributes {
-			target: Window::new(0),
-			value_mask: AttributeMask::empty(),
-			values: &[],
-		};
-
-		assert_eq!(change_window_attributes.length(), 3);
-	}
-
-	#[test]
-	fn get_window_attributes_length_is_correct() {
-		let get_window_attributes = GetWindowAttributes {
-			target: Window::new(0),
-		};
-
-		assert_eq!(get_window_attributes.length(), 2);
-	}
-
-	#[test]
-	fn get_window_attributes_reply_length_is_correct() {
-		let get_window_attributes_reply = GetWindowAttributesReply {
-			__sequence: 0,
-			__major_opcode: None,
-			__minor_opcode: None,
-			backing_store: BackingStore::Always,
-			visual: VisualId::new(0),
-			class: WindowClass::InputOnly,
-			bit_gravity: BitGravity::West,
-			win_gravity: WinGravity::West,
-			backing_planes: 0,
-			backing_pixel: 0,
-			save_under: false,
-			map_is_installed: false,
-			map_state: MapState::Unmapped,
-			override_redirect: false,
-			colormap: None,
-			all_event_masks: EventMask::empty(),
-			your_event_mask: EventMask::empty(),
-			do_not_propagate_mask: DeviceEventMask::empty(),
-		};
-
-		assert_eq!(get_window_attributes_reply.length(), 0);
-	}
-
-	#[test]
-	fn destroy_window_length_is_correct() {
-		let destroy_window = DestroyWindow {
-			target: Window::new(0),
-		};
-
-		assert_eq!(destroy_window.length(), 2);
-	}
-
-	#[test]
-	fn destroy_subwindows_length_is_correct() {
-		let destroy_subwindows = DestroySubwindows {
-			target: Window::new(0),
-		};
-
-		assert_eq!(destroy_subwindows.length(), 2);
-	}
-
-	#[test]
-	fn change_save_set_length_is_correct() {
-		let change_save_set = ChangeSaveSet {
-			mode: EditMode::Insert,
-			target: Window::new(0),
-		};
-
-		assert_eq!(change_save_set.length(), 2);
-	}
-
-	#[test]
-	fn reparent_window_length_is_correct() {
-		let reparent_window = ReparentWindow {
-			target: Window::new(0),
-			new_parent: Window::new(0),
-			new_x: 0,
-			new_y: 0,
-		};
-
-		assert_eq!(reparent_window.length(), 4);
-	}
-
-	#[test]
-	fn convert_selection_length_is_correct() {
-		let convert_selection = ConvertSelection {
-			requestor: Window::new(0),
-			selection: Atom::new(0),
-			target: Atom::new(0),
-			property: None,
-			time: Time::Current,
-		};
-
-		assert_eq!(convert_selection.length(), 6);
-	}
-
-	#[test]
-	fn grab_pointer_length_is_correct() {
-		let grab_pointer = GrabPointer {
-			owner_events: false,
-			target_window: Window::new(0),
-			event_mask: PointerEventMask::empty(),
-			pointer_mode: GrabMode::Asynchronous,
-			keyboard_mode: GrabMode::Asynchronous,
-			confine_to: None,
-			cursor_override: None,
-			time: Time::Current,
-		};
-
-		assert_eq!(grab_pointer.length(), 6);
-	}
-
-	#[test]
-	fn grab_pointer_reply_length_is_correct() {
-		let grab_pointer_reply = GrabPointerReply {
-			__sequence: 0,
-			__major_opcode: None,
-			__minor_opcode: None,
-			status: GrabStatus::Success,
-		};
-
-		assert_eq!(grab_pointer_reply.length(), 0);
-	}
-
-	#[test]
-	fn grab_server_length_is_correct() {
-		let grab_server = GrabServer {};
-
-		assert_eq!(grab_server.length(), 1);
-	}
-}
+// TODO: tests
