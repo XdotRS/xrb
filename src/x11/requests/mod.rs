@@ -111,8 +111,13 @@ define! {
 		[_; ..],
 	}
 
-	pub struct DestroyWindow: Request(4) { pub target: Window, }
-	pub struct DestroySubwindows: Request(5) { pub target: Window, }
+	pub struct DestroyWindow: Request(4) {
+		pub target: Window,
+	}
+
+	pub struct DestroySubwindows: Request(5) {
+		pub target: Window,
+	}
 
 	pub struct ChangeSaveSet: Request(6) {
 		#[metabyte]
@@ -127,11 +132,21 @@ define! {
 		pub new_y: i16,
 	}
 
-	pub struct MapWindow: Request(8) { pub target: Window, }
-	pub struct MapSubwindows: Request(9) { pub target: Window, }
+	pub struct MapWindow: Request(8) {
+		pub target: Window,
+	}
 
-	pub struct UnmapWindow: Request(10) { pub target: Window, }
-	pub struct UnmapSubwindows: Request(11) { pub target: Window, }
+	pub struct MapSubwindows: Request(9) {
+		pub target: Window,
+	}
+
+	pub struct UnmapWindow: Request(10) {
+		pub target: Window,
+	}
+
+	pub struct UnmapSubwindows: Request(11) {
+		pub target: Window,
+	}
 
 	pub struct ConfigureWindow<'a>: Request(12) {
 		pub target: Window,
@@ -145,7 +160,9 @@ define! {
 		pub target: Window,
 	}
 
-	pub struct GetGeometry: Request(14) -> GetGeometryReply { pub target: Box<dyn Drawable>, }
+	pub struct GetGeometry: Request(14) -> GetGeometryReply {
+		pub target: Box<dyn Drawable>,
+	}
 
 	pub struct GetGeometryReply: Reply for GetGeometry {
 		#[metabyte]
@@ -159,7 +176,9 @@ define! {
 		[_; ..],
 	}
 
-	pub struct QueryTree: Request(15) -> QueryTreeReply { pub target: Window, }
+	pub struct QueryTree: Request(15) -> QueryTreeReply {
+		pub target: Window,
+	}
 
 	pub struct QueryTreeReply: Reply for QueryTree {
 		pub root: Window,
@@ -186,7 +205,9 @@ define! {
 		[_; ..],
 	}
 
-	pub struct GetAtomName: Request(17) -> GetAtomNameReply { pub atom: Atom, }
+	pub struct GetAtomName: Request(17) -> GetAtomNameReply {
+		pub atom: Atom,
+	}
 
 	pub struct GetAtomNameReply: Reply for GetAtomName {
 		let name_len: u16 = name => name.len() as u16,
@@ -226,6 +247,7 @@ define! {
 	pub struct SendEvent: Request(25) {
 		#[metabyte]
 		pub propagate: bool,
+
 		pub destination: Destination,
 		pub event_mask: EventMask,
 		//pub event: Box<dyn Event>,
@@ -234,6 +256,7 @@ define! {
 	pub struct GrabPointer: Request(26) -> GrabPointerReply {
 		#[metabyte]
 		pub owner_events: bool,
+
 		pub target_window: Window,
 		pub event_mask: PointerEventMask,
 		pub pointer_mode: GrabMode,
@@ -246,6 +269,7 @@ define! {
 	pub struct GrabPointerReply: Reply for GrabPointer {
 		#[metabyte]
 		pub status: GrabStatus,
+
 		[_; ..],
 	}
 
@@ -254,6 +278,7 @@ define! {
 	pub struct GrabButton: Request(28) {
 		#[metabyte]
 		pub owner_events: bool,
+
 		pub target_window: Window,
 		pub event_mask: PointerEventMask,
 		pub pointer_mode: GrabMode,
@@ -261,13 +286,16 @@ define! {
 		pub confine_to: Option<Window>,
 		pub cursor_override: Option<Cursor>,
 		pub button: Any<Button>,
+
 		_,
+
 		pub modifiers: AnyModifierKeyMask,
 	}
 
 	pub struct UngrabButton: Request(29) {
 		#[metabyte]
 		pub button: Any<Button>,
+
 		pub target_window: Window,
 		[_; ..],
 	}
@@ -282,6 +310,7 @@ define! {
 	pub struct GrabKeyboard: Request(31) -> GrabKeyboardReply {
 		#[metabyte]
 		pub owner_events: bool,
+
 		pub target_window: Window,
 		pub time: Time,
 		pub pointer_mode: GrabMode,
@@ -292,6 +321,7 @@ define! {
 	pub struct GrabKeyboardReply: Reply for GrabKeyboard {
 		#[metabyte]
 		pub status: GrabStatus,
+
 		[_; ..],
 	}
 
@@ -300,6 +330,7 @@ define! {
 	pub struct GrabKey: Request(33) {
 		#[metabyte]
 		pub owner_events: bool,
+
 		pub target_window: Window,
 		pub modifiers: AnyModifierKeyMask,
 		pub key: Any<Keycode>,
@@ -311,6 +342,7 @@ define! {
 	pub struct UngrabKey: Request(34) {
 		#[metabyte]
 		pub key: Any<Keycode>,
+
 		pub target_window: Window,
 		pub modifiers: AnyModifierKeyMask,
 		[_; ..],
@@ -319,17 +351,21 @@ define! {
 	pub struct AllowEvents: Request(35) {
 		#[metabyte]
 		pub mode: AllowEventsMode,
+
 		pub time: Time,
 	}
 
 	pub struct GrabServer: Request(36);
 	pub struct UngrabSever: Request(37);
 
-	pub struct QueryPointer: Request(38) -> QueryPointerReply { pub target: Window, }
+	pub struct QueryPointer: Request(38) -> QueryPointerReply {
+		pub target: Window,
+	}
 
 	pub struct QueryPointerReply: Reply for QueryPointer {
 		#[metabyte]
 		pub same_screen: bool,
+
 		pub root: Window,
 		pub child: Option<Window>,
 		pub root_x: i16,
@@ -347,9 +383,10 @@ define! {
 	}
 
 	pub struct GetMotionEventsReply: Reply for GetMotionEvents {
-		// #events: u32,
-		pub event_len: u32,
+		let event_len: u32 = events => events.len() as u32,
 		[_; 20],
+
+		#[context(events_len => *events_len as usize)]
 		pub events: Vec<(Timestamp, (i16, i16))>,
 	}
 
@@ -363,6 +400,7 @@ define! {
 	pub struct TranslateCoordinatesReply: Reply for TranslateCoordinates {
 		#[metabyte]
 		pub same_screen: bool,
+
 		pub child: Option<Window>,
 		pub dest_x: i16,
 		pub dest_y: i16,
@@ -381,7 +419,9 @@ define! {
 	}
 
 	pub struct SetInputFocus: Request(42) {
-		//pub $revert_to: Option<RevertTo>,
+		//#[metabyte]
+		//pub revert_to: Option<RevertTo>,
+
 		pub focus: Option<InputFocus>,
 		pub time: Time,
 	}
@@ -391,6 +431,7 @@ define! {
 	pub struct GetInputFocusReply: Reply for GetInputFocus {
 		#[metabyte]
 		pub revert_to: RevertTo,
+
 		pub focus: Option<InputFocus>,
 		[_; ..],
 	}
@@ -405,6 +446,7 @@ define! {
 		pub font_id: Font,
 		let name_len: u16 = name => name.len() as u16,
 		[_; 2],
+
 		#[context(name_len => *name_len as usize)]
 		pub name: String8,
 		[_; ..],
@@ -417,20 +459,20 @@ define! {
 	pub struct QueryFontReply: Reply for QueryFont<'_> {
 		pub min_bounds: CharInfo,
 		[_; 4],
+
 		pub max_bounds: CharInfo,
 		[_; 4],
+
 		pub min_char_or_byte2: u16,
 		pub max_char_or_byte2: u16,
-		// #properties: u16,
-		pub properties_len: u16,
+		let properties_len: u16 = properties => properties.len() as u16,
 		pub draw_direction: DrawDirection,
 		pub min_byte1: u8,
 		pub max_byte1: u8,
 		pub all_chars_exist: bool,
 		pub font_ascent: i16,
 		pub font_descent: i16,
-		// #charinfos: u32,
-		pub charinfos_len: u32,
+		let charinfos_len: u32 = charinfos => charinfos.len() as u32,
 		pub properties: Vec<FontProperty>,
 		pub charinfos: Vec<CharInfo>,
 	}
@@ -438,14 +480,17 @@ define! {
 	pub struct QueryTextExtents: Request(48) -> QueryTextExtentsReply {
 		#[metabyte]
 		pub odd_length: bool,
+
 		pub font: Box<dyn Fontable>,
-		pub string: String16, // TODO: context attribute
+		// TODO: #[context(self::length => (*length as usize) - 8)]
+		pub string: String16,
 		[_; ..],
 	}
 
 	pub struct QueryTextExtentsReply: Reply for QueryTextExtents {
 		#[metabyte]
 		pub draw_direction: DrawDirection,
+
 		pub font_ascent: i16,
 		pub font_descent: i16,
 		pub overall_ascent: i16,
@@ -467,6 +512,7 @@ define! {
 	pub struct ListFontsReply: Reply for ListFonts {
 		let names_len: u16 = names => names.len() as u16,
 		[_; 22],
+
 		#[context(names_len => *names_len as usize)]
 		pub names: Vec<LenString8>,
 		[_; ..],
@@ -476,11 +522,12 @@ define! {
 	// done manually, so both the request and the reply are contained within the
 	// `mod list_fonts_with_info;` module.
 
-	pub struct SetFontPath<'a>: Request(51) {
+	pub struct SetFontPath: Request(51) {
 		let path_len: u16 = path => path.len() as u16,
 		[_; 2],
+
 		#[context(path_len => *path_len as usize)]
-		pub path: &'a [LenString8],
+		pub path: Vec<LenString8>,
 		[_; ..],
 	}
 
@@ -488,28 +535,31 @@ define! {
 	// the reply are done manually and can be found in the `mod get_font_path;`
 	// module.
 
-	pub struct CreatePixmap<'a>: Request(53) {
+	pub struct CreatePixmap: Request(53) {
 		#[metabyte]
 		pub depth: u8,
+
 		pub pixmap_id: Pixmap,
-		pub drawable: &'a dyn Drawable,
+		pub drawable: Box<dyn Drawable>,
 		pub width: u16,
 		pub height: u16,
 	}
 
-	pub struct FreePixmap: Request(54){ pub pixmap: Pixmap, }
-
-	pub struct CreateGraphicsContext<'a>: Request(55) {
-		pub context_id: GraphicsContext,
-		pub drawable: &'a dyn Drawable,
-		pub value_mask: GraphicsContextMask,
-		pub values: &'a [GraphicsContextValue],
+	pub struct FreePixmap: Request(54){
+		pub pixmap: Pixmap,
 	}
 
-	pub struct ChangeGraphicsContext<'a>: Request(56) {
+	pub struct CreateGraphicsContext: Request(55) {
+		pub context_id: GraphicsContext,
+		pub drawable: Box<dyn Drawable>,
+		pub value_mask: GraphicsContextMask,
+		pub values: Vec<GraphicsContextValue>,
+	}
+
+	pub struct ChangeGraphicsContext: Request(56) {
 		pub context: GraphicsContext,
 		pub value_mask: GraphicsContextMask,
-		pub values: &'a [GraphicsContextValue],
+		pub values: Vec<GraphicsContextValue>,
 	}
 
 	pub struct CopyGraphicsContext: Request(57) {
@@ -518,29 +568,33 @@ define! {
 		pub value_mask: GraphicsContextMask,
 	}
 
-	pub struct SetDashes<'a>: Request(58) {
+	pub struct SetDashes: Request(58) {
 		pub context: GraphicsContext,
 		pub dash_offset: u16,
 		let dashes_len: u16 = dashes => dashes.len() as u16,
 		#[context(dashes_len => *dashes_len as usize)]
-		pub dashes: &'a [u8],
+		pub dashes: Vec<u8>,
 		[_; ..],
 	}
 
-	pub struct SetClipRectangles<'a>: Request(59) {
+	pub struct SetClipRectangles: Request(59) {
 		#[metabyte]
 		pub ordering: Ordering,
+
 		pub context: GraphicsContext,
 		pub clip_x_origin: i16,
 		pub clip_y_origin: i16,
-		pub rectangles: &'a [Rectangle],
+		pub rectangles: Vec<Rectangle>,
 	}
 
-	pub struct FreeGraphicsContext: Request(60){ pub context: GraphicsContext, }
+	pub struct FreeGraphicsContext: Request(60){
+		pub context: GraphicsContext,
+	}
 
 	pub struct ClearArea: Request(61) {
 		#[metabyte]
 		pub exposures: bool,
+
 		pub target_window: Window,
 		pub x: i16,
 		pub y: i16,
@@ -548,9 +602,9 @@ define! {
 		pub height: u16,
 	}
 
-	pub struct CopyArea<'a>: Request(62) {
-		pub source: &'a dyn Drawable,
-		pub destination: &'a dyn Drawable,
+	pub struct CopyArea: Request(62) {
+		pub source: Box<dyn Drawable>,
+		pub destination: Box<dyn Drawable>,
 		pub context: GraphicsContext,
 		pub src_x: i16,
 		pub src_y: i16,
@@ -560,9 +614,9 @@ define! {
 		pub height: u16,
 	}
 
-	pub struct CopyPlane<'a>: Request(63) {
-		pub source: &'a dyn Drawable,
-		pub destination: &'a dyn Drawable,
+	pub struct CopyPlane: Request(63) {
+		pub source: Box<dyn Drawable>,
+		pub destination: Box<dyn Drawable>,
 		pub context: GraphicsContext,
 		pub src_x: i16,
 		pub src_y: i16,
@@ -573,65 +627,70 @@ define! {
 		pub bit_plane: u32,
 	}
 
-	pub struct PolyPoint<'a>: Request(64) {
+	pub struct PolyPoint: Request(64) {
 		#[metabyte]
 		pub coordinate_mode: CoordinateMode,
-		pub drawable: &'a dyn Drawable,
+
+		pub drawable: Box<dyn Drawable>,
 		pub context: GraphicsContext,
-		pub points: &'a [(i16, i16)],
+		// TODO: context attribute
+		pub points: Vec<(i16, i16)>,
 	}
 
-	pub struct PolyLine<'a>: Request(65) {
+	pub struct PolyLine: Request(65) {
 		#[metabyte]
 		pub coordinate_mode: CoordinateMode,
-		pub drawable: &'a dyn Drawable,
+
+		pub drawable: Box<dyn Drawable>,
 		pub context: GraphicsContext,
-		pub points: &'a [(i16, i16)],
+		pub points: Vec<(i16, i16)>,
 	}
 
-	pub struct PolySegment<'a>: Request(66) {
-		pub drawable: &'a dyn Drawable,
+	pub struct PolySegment: Request(66) {
+		pub drawable: Box<dyn Drawable>,
 		pub context: GraphicsContext,
-		pub segments: &'a [Segment],
+		pub segments: Vec<Segment>,
 	}
 
-	pub struct PolyRectangle<'a>: Request(67) {
-		pub drawable: &'a dyn Drawable,
+	pub struct PolyRectangle: Request(67) {
+		pub drawable: Box<dyn Drawable>,
 		pub context: GraphicsContext,
-		pub rectangles: &'a [Rectangle],
+		pub rectangles: Vec<Rectangle>,
 	}
 
-	pub struct PolyArc<'a>: Request(68) {
-		pub drawable: &'a dyn Drawable,
+	pub struct PolyArc: Request(68) {
+		pub drawable: Box<dyn Drawable>,
 		pub context: GraphicsContext,
-		pub arcs: &'a [GeomArc],
+		pub arcs: Vec<GeomArc>,
 	}
 
-	pub struct FillPoly<'a>: Request(69) {
-		pub drawable: &'a dyn Drawable,
+	pub struct FillPoly: Request(69) {
+		pub drawable: Box<dyn Drawable>,
 		pub context: GraphicsContext,
 		pub shape: Shape,
 		pub coordinate_mode: CoordinateMode,
 		[_; 2],
-		pub points: &'a [(i16, i16)],
+
+		pub points: Vec<(i16, i16)>,
 	}
 
-	pub struct PolyFillRectangle<'a>: Request(70) {
-		pub drawable: &'a dyn Drawable,
+	pub struct PolyFillRectangle: Request(70) {
+		pub drawable: Box<dyn Drawable>,
 		pub context: GraphicsContext,
-		pub rectangles: &'a [Rectangle],
+		pub rectangles: Vec<Rectangle>,
 	}
 
-	pub struct PolyFillArc<'a>: Request(71) {
-		pub drawable: &'a dyn Drawable,
+	pub struct PolyFillArc: Request(71) {
+		pub drawable: Box<dyn Drawable>,
 		pub context: GraphicsContext,
-		pub arcs: &'a [GeomArc],
+		pub arcs: Vec<GeomArc>,
 	}
 
-	pub struct PutImage<'a>: Request(72) {
+	pub struct PutImage: Request(72) {
 		#[metabyte]
 		pub format: BitmapFormat,
-		pub drawable: &'a dyn Drawable,
+
+		pub drawable: Box<dyn Drawable>,
 		pub context: GraphicsContext,
 		pub width: u16,
 		pub height: u16,
@@ -640,14 +699,17 @@ define! {
 		pub left_padding: u8,
 		pub depth: u8,
 		[_; 2],
-		pub data: &'a [u8], // TODO: context attribute
+
+		// TODO: context attribute
+		pub data: Vec<u8>,
 		[_; ..],
 	}
 
-	pub struct GetImage<'a>: Request(73) -> GetImageReply {
+	pub struct GetImage: Request(73) -> GetImageReply {
 		#[metabyte]
 		pub format: Format,
-		pub drawable: &'a dyn Drawable,
+
+		pub drawable: Box<dyn Drawable>,
 		pub x: i16,
 		pub y: i16,
 		pub width: u16,
@@ -658,74 +720,88 @@ define! {
 	pub struct GetImageReply: Reply for GetImage<'_> {
 		#[metabyte]
 		pub depth: u8,
+
 		pub visual: Option<VisualId>,
 		[_; 20],
-		pub data: Vec<u8>, // TODO: context attribute
+
+		// TODO: context attribute
+		pub data: Vec<u8>,
 		[_; ..],
 	}
 
-	pub struct PolyText8<'a>: Request(74) {
+	pub struct PolyText8: Request(74) {
 		pub drawable: &'a dyn Drawable,
 		pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
-		//pub items: &'a [TextItem8], // TODO: TextItem8 and TextItem16 need to be done separately
-		//[(); {items}],
-	}
-
-	pub struct PolyText16<'a>: Request(75) {
-		pub drawable: &'a dyn Drawable,
-		pub context: GraphicsContext,
-		pub x: i16,
-		pub y: i16,
-		//pub items: [TextItem16], // TODO: TextItem8 and TextItem16 need to be done separately
-		//[(); {items}],
-	}
-
-	pub struct ImageText8<'a>: Request(76) {
-		pub drawable: &'a dyn Drawable,
-		pub context: GraphicsContext,
-		pub x: i16,
-		pub y: i16,
-		pub string: String8, // TODO: context attribute
+		pub items: Vec<TextItem8>,
 		[_; ..],
 	}
 
-	pub struct ImageText16<'a>: Request(77) {
-		pub drawable: &'a dyn Drawable,
+	pub struct PolyText16: Request(75) {
+		pub drawable: Box<dyn Drawable>,
 		pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
-		pub string: String16, // TODO: context attribute
+		pub items: Vec<TextItem16>,
+		[_; ..],
+	}
+
+	pub struct ImageText8: Request(76) {
+		pub drawable: Box<dyn Drawable>,
+		pub context: GraphicsContext,
+		pub x: i16,
+		pub y: i16,
+		// TODO: context attribute
+		pub string: String8,
+		[_; ..],
+	}
+
+	pub struct ImageText16: Request(77) {
+		pub drawable: Box<dyn Drawable>,
+		pub context: GraphicsContext,
+		pub x: i16,
+		pub y: i16,
+		// TODO: context attribute
+		pub string: String16,
 		[_; ..],
 	}
 
 	pub struct CreateColormap: Request(78) {
 		#[metabyte]
 		pub alloc: ColormapAlloc,
+
 		pub colormap_id: Colormap,
 		pub window: Window,
 		pub visual: VisualId,
 	}
 
-	pub struct FreeColormap: Request(79){ pub colormap: Colormap, }
+	pub struct FreeColormap: Request(79){
+		pub colormap: Colormap,
+	}
 
 	pub struct CopyColormapAndFree: Request(80) {
 		pub colormap_id: Colormap,
 		pub source: Colormap,
 	}
 
-	pub struct InstallColormap: Request(81){ pub colormap: Colormap, }
-	pub struct UninstallColormap: Request(82){ pub colormap: Colormap, }
+	pub struct InstallColormap: Request(81){
+		pub colormap: Colormap,
+	}
+
+	pub struct UninstallColormap: Request(82){
+		pub colormap: Colormap,
+	}
 
 	pub struct ListInstalledColormaps: Request(73) -> ListInstalledColormapsReply {
 		pub target_window: Window,
 	}
 
 	pub struct ListInstalledColormapsReply: Reply for ListInstalledColormaps {
-		// #colormaps: u16,
-		pub colormaps_len: u16,
+		let colormaps_len: u16 = colormaps => colormaps.len() as u16,
 		[_; 22],
+
+		#[context(colormaps_len => *colormaps_len as usize)]
 		pub colormaps: Vec<Colormap>,
 	}
 
@@ -738,15 +814,16 @@ define! {
 	pub struct AllocColorReply: Reply for AllocColor {
 		pub color: (u16, u16, u16),
 		[_; 2],
+
 		pub pixel: u32,
 		[_; ..],
 	}
 
 	pub struct AllocNamedColor: Request(85) -> AllocNamedColorReply {
 		pub colormap: Colormap,
-		// #name: u16,
 		let name_len: u16 = name => name.len() as u16,
 		[_; 2],
+
 		#[context(name_len => *name_len as usize)]
 		pub name: String8,
 		[_; ..],
@@ -762,57 +839,65 @@ define! {
 	pub struct AllocColorCells: Request(86) -> AllocColorCellsReply {
 		#[metabyte]
 		pub contiguous: bool,
+
 		pub colormap: Colormap,
 		pub num_colors: u16, // TODO: its just called `colors`... is it the number?
 		pub planes: u16,
 	}
 
 	pub struct AllocColorCellsReply: Reply for AllocColorCells {
-		// #pixels: u16,
-		pub pixels_len: u16,
-		// #masks: u16,
-		pub masks_len: u16,
+		let pixels_len: u16 = pixels => pixels.len() as u16,
+		let masks_len: u16 = masks => masks.len() as u16,
 		[_; 20],
+
+		#[context(pixels_len => *pixels_len as usize)]
 		pub pixels: Vec<u32>,
+		#[context(masks_len => *masks_len as usize)]
 		pub masks: Vec<u32>,
 	}
 
 	pub struct AllocColorPlanes: Request(87) -> AllocColorPlanesReply {
 		#[metabyte]
 		pub contiguous: bool,
+
 		pub colormap: Colormap,
 		pub num_colors: u16, // TODO: its just called `colors`... is it the number?
 		pub colors: (u16, u16, u16),
 	}
 
 	pub struct AllocColorPlanesReply: Reply for AllocColorPlanes {
-		// #pixels: u16,
-		pub pixels_len: u16,
+		let pixels_len: u16 = pixels => pixels.len() as u16,
 		[_; 2],
+
 		pub color_mask: (u16, u16, u16),
 		[_; 8],
+
+		#[context(pixels_len => *pixels_len as usize)]
 		pub pixels: Vec<u32>,
 	}
 
-	pub struct FreeColors<'a>: Request(88) {
+	pub struct FreeColors: Request(88) {
 		pub colormap: Colormap,
 		pub plane_mask: u32,
-		pub pixels: &'a [u32],
+		// TODO: context attribute
+		pub pixels: Vec<u32>,
 	}
 
 	pub struct StoreColors: Request(89) {
 		pub colormap: Colormap,
-		//pub items: [ColorItem], // ColorItems need to be done separately
+		// TODO: context attribute
+		pub items: Vec<ColorItem>,
 	}
 
 	pub struct StoreNamedColor: Request(90) {
 		#[metabyte]
 		pub channel_mask: ColorChannelMask,
+
 		pub colormap: Colormap,
 		pub pixel: u32,
-		// #name: u16,
 		let name_len: u16 = name => name.len() as u16,
 		[_; 2],
+
 		#[context(name_len => *name_len as usize)]
 		pub name: String8,
 		[_; ..],
@@ -826,6 +911,7 @@ define! {
 		pub colormap: Colormap,
 		let name_len: u16 = name => name.len() as u16,
 		[_; 2],
+
 		#[context(name_len => *name_len as usize)]
 		pub name: String8,
 		[_; ..],
@@ -857,7 +943,9 @@ define! {
 		pub background_color: (u16, u16, u16),
 	}
 
-	pub struct FreeCursor: Request(95){ pub cursor: Cursor, }
+	pub struct FreeCursor: Request(95){
+		pub cursor: Cursor,
+	}
 
 	/// Changes the color of the given `cursor`.
 	///
@@ -904,10 +992,11 @@ define! {
 	/// [`Value`]: crate::x11::errors::Value
 	/// [window]: Window
 	/// [`InputOnly`]: WindowClass::InputOnly
-	pub struct QueryBestSize<'a>: Request(97) -> QueryBestSizeReply {
+	pub struct QueryBestSize: Request(97) -> QueryBestSizeReply {
 		/// The 'type' of 'best size' being queried.
 		#[metabyte]
 		pub class: QueryBestSizeClass,
+
 		/// Indicates the desired screen.
 		///
 		/// For [`Tile`] and [`Stipple`], the `drawable` indicates the screen
@@ -919,7 +1008,7 @@ define! {
 		/// [`Tile`]: query_best_size::Class::Tile
 		/// [`Stipple`]: query_best_size::Class::Stipple
 		/// [`InputOnly`]: query_best_size::Class::InputOnly
-		pub drawable: &'a dyn Drawable,
+		pub drawable: Box<dyn Drawable>,
 		/// The given width to find an ideal size for.
 		pub width: u16,
 		/// The given height to find an ideal size for.
@@ -942,6 +1031,7 @@ define! {
 	pub struct QueryExtension: Request(98) -> QueryExtensionReply {
 		let name_len: u16 = name => name.len() as u16,
 		[_; 2],
+
 		#[context(name_len => *name_len as usize)]
 		pub name: String8,
 		[_; ..],
@@ -950,6 +1040,7 @@ define! {
 	pub struct QueryExtensionReply: Reply for QueryExtension {
 		#[metabyte]
 		pub present: bool,
+
 		pub major_opcode: u8,
 		pub first_event: u8,
 		pub first_error: u8,
@@ -960,8 +1051,9 @@ define! {
 
 	pub struct ListExtensionsReply: Reply for ListExtensions {
 		#[metabyte]
-		let names_len: u16 = names => names.len() as u16,
+		let names_len: u8 = names => names.len() as u8,
 		[_; 24],
+
 		#[context(names_len => *names_len as usize)]
 		pub names: Vec<LenString8>,
 		[_; ..],
@@ -981,12 +1073,14 @@ define! {
 	pub struct GetKeyboardControlReply: Reply for GetKeyboardControl {
 		#[metabyte]
 		pub global_auto_repeat: bool,
+
 		pub led_mask: u32,
 		pub key_click_percent: u8,
 		pub bell_percent: u8,
 		pub bell_pitch: u16,
 		pub bell_duration: u16,
 		[_; 2],
+
 		pub auto_repeats: [u8; 32],
 	}
 
@@ -1030,14 +1124,16 @@ define! {
 		[_; ..],
 	}
 
-	pub struct ChangeHosts<'a>: Request(109) {
+	pub struct ChangeHosts: Request(109) {
 		#[metabyte]
 		pub mode: EditMode,
+
 		pub family: HostFamilyA,
 		[_; 1],
+
 		let address_len: u16 = address => address.len() as u16,
 		#[context(address_len => *address_len as usize)]
-		pub address: &'a [u8],
+		pub address: Vec<u8>,
 		[_; ..],
 	}
 
@@ -1046,9 +1142,10 @@ define! {
 	pub struct ListHostsReply: Reply for ListHosts {
 		#[metabyte]
 		pub enabled: bool,
-		// #hosts: u16,
-		pub hosts_len: u16,
+
+		let hosts_len: u16 = hosts => hosts.len() as u16,
 		[_; 22],
+
 		pub hosts: Vec<Host>,
 	}
 
@@ -1064,12 +1161,12 @@ define! {
 
 	//pub struct KillClient(113): pub resource: AllTemp<u32>;
 
-	pub struct RotateProperties<'a>: Request(114) {
+	pub struct RotateProperties: Request(114) {
 		pub target: Window,
-		// #properties: u16,
-		pub properties_len: u16,
+		let properties_len: u16 = properties => properties.len() as u16,
 		pub delta: i16,
-		pub properties: &'a [Atom],
+		#[context(properties_len => *properties_len as usize)]
+		pub properties: Vec<Atom>,
 	}
 
 	pub struct ForceScreenSaver: Request(115){
@@ -1077,11 +1174,12 @@ define! {
 		pub mode: ScreenSaverMode,
 	}
 
-	pub struct SetPointerMapping<'a>: Request(116) -> SetPointerMappingReply {
+	pub struct SetPointerMapping: Request(116) -> SetPointerMappingReply {
 		#[metabyte]
-		let map_len: u16 = map => map.len() as u16,
+		let map_len: u8 = map => map.len() as u16,
+
 		#[context(map_len => *map_len as usize)]
-		pub map: &'a [u8],
+		pub map: Vec<u8>,
 		[_; ..],
 	}
 
@@ -1095,8 +1193,10 @@ define! {
 
 	pub struct GetPointerMappingReply: Reply for GetPointerMapping {
 		#[metabyte]
-		let map_len: u16 = map => map.len() as u16,
+		let map_len: u8 = map => map.len() as u8,
+
 		[_; 24],
+
 		#[context(map_len => *map_len as usize)]
 		pub map: Vec<u8>,
 		[_; ..],
