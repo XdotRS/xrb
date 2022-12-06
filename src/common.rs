@@ -15,6 +15,9 @@ define! {
 	/// A resource ID referring to a particular pixmap resource.
 	pub struct Pixmap(u32);
 
+	/// A resource ID referring to either a [`Window`] or a [`Pixmap`].
+	pub struct Drawable(u32);
+
 	/// A resource ID referring to a particular cursor resource.
 	pub struct Cursor(u32);
 
@@ -29,6 +32,9 @@ define! {
 	/// [`Drawable`]s that have the same `root` and `depth` as the
 	/// `GraphicsContext`.
 	pub struct GraphicsContext(u32);
+
+	/// A resource ID referring to either a [`Font`] or a [`GraphicsContext`].
+	pub struct Fontable(u32);
 
 	/// A resource ID referring to a particular colormap resource.
 	pub struct Colormap(u32);
@@ -121,7 +127,6 @@ define! {
 
 	pub struct Host {
 		pub family: HostFamily,
-
 		_,
 
 		#[allow(clippy::cast_possible_truncation)]
@@ -129,19 +134,62 @@ define! {
 
 		#[context(address_len => *address_len as usize)]
 		pub address: Vec<u8>,
-
-		// TODO: Padding still isn't implemented yet.
-		//[_; ..],
+		[_; ..],
 	}
 }
 
-pub trait Drawable {}
-pub trait Fontable {}
+impl From<Window> for Drawable {
+	fn from(window: Window) -> Self {
+		let Window(id) = window;
+		Self(id)
+	}
+}
 
-impl Drawable for Window {}
-impl Drawable for Pixmap {}
+impl From<Pixmap> for Drawable {
+	fn from(pixmap: Pixmap) -> Self {
+		let Pixmap(id) = pixmap;
+		Self(id)
+	}
+}
 
-impl Fontable for Font {}
-impl Fontable for GraphicsContext {}
+impl From<Drawable> for Window {
+	fn from(drawable: Drawable) -> Self {
+		let Drawable(id) = drawable;
+		Self(id)
+	}
+}
 
-fn _assert_object_safety(_drawable: &dyn Drawable, _fontable: &dyn Fontable) {}
+impl From<Drawable> for Pixmap {
+	fn from(drawable: Drawable) -> Self {
+		let Drawable(id) = drawable;
+		Self(id)
+	}
+}
+
+impl From<Font> for Fontable {
+	fn from(font: Font) -> Self {
+		let Font(id) = font;
+		Self(id)
+	}
+}
+
+impl From<GraphicsContext> for Fontable {
+	fn from(context: GraphicsContext) -> Self {
+		let GraphicsContext(id) = context;
+		Self(id)
+	}
+}
+
+impl From<Fontable> for Font {
+	fn from(fontable: Fontable) -> Self {
+		let Fontable(id) = fontable;
+		Self(id)
+	}
+}
+
+impl From<Fontable> for GraphicsContext {
+	fn from(fontable: Fontable) -> Self {
+		let Fontable(id) = fontable;
+		Self(id)
+	}
+}
