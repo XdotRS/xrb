@@ -6,11 +6,7 @@
 # fixes, and publishes documentation.
 name: Continuous integration
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+on: [push, pull_request]
 
 permissions:
   contents: write
