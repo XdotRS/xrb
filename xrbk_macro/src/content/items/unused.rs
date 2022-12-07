@@ -9,6 +9,7 @@ use syn::{parse::ParseStream, token, Result, Token};
 use crate::{
 	Attribute, IdentMap, ItemDeserializeTokens, ItemId, ItemSerializeTokens, Source, TsExt,
 };
+use crate::content::LengthMode;
 
 pub enum Unused {
 	/// One single unused byte.
@@ -92,11 +93,11 @@ impl Unused {
 // Parsing {{{
 
 impl ArrayContent {
-	pub fn parse(input: ParseStream, map: IdentMap) -> Result<Self> {
+	pub fn parse(input: ParseStream, map: IdentMap, mode: LengthMode) -> Result<Self> {
 		Ok(if input.peek(Token![..]) {
 			Self::Infer(input.parse()?)
 		} else {
-			Self::Source(Box::new(Source::parse_mapped(input, map)?))
+			Self::Source(Box::new(Source::parse_mapped(input, map, mode)?))
 		})
 	}
 }

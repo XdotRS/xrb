@@ -13,6 +13,7 @@ use quote::{quote, ToTokens};
 use syn::punctuated::Punctuated;
 
 use crate::{Item, Items, TsExt};
+use crate::content::LengthMode;
 
 /// A list of [`Definition`]s.
 pub struct Definitions(pub Vec<Definition>);
@@ -430,7 +431,7 @@ impl Struct {
 		// Parse the struct's metadata.
 		let metadata = StructMetadata::parse_with(input, attributes, vis)?;
 		// Parse the struct's items.
-		let items: Items = input.parse()?;
+		let items = Items::parse(input, LengthMode::Disallowed)?;
 
 		// If this is a unit struct or tuple struct, require a semicolon,
 		// otherwise forbid it.
@@ -518,7 +519,7 @@ impl Parse for Variant {
 
 			ident: input.parse()?,
 			// Items associated with the enum variant.
-			items: input.parse()?,
+			items: Items::parse(input, LengthMode::Disallowed)?,
 
 			// If the next token is an equals sign, parse the discriminant.
 			discriminant: if input.peek(Token![=]) {

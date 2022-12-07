@@ -8,7 +8,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
 use syn::{
 	braced, bracketed, parenthesized,
-	parse::{Parse, ParseStream, Result},
+	parse::{ParseStream, Result},
 	punctuated::{Pair, Punctuated},
 	spanned::Spanned,
 	token, Error, Ident, Token, Type,
@@ -252,6 +252,7 @@ impl Items {
 	pub(self) fn parse_items(
 		input: ParseStream,
 		named: bool,
+		mode: LengthMode,
 	) -> Result<Punctuated<ItemWithId, Token![,]>> {
 		let mut unused_index: usize = 0;
 		let mut field_index: usize = 0;
@@ -269,7 +270,7 @@ impl Items {
 		// While there are still tokens left in the `input` stream, we continue
 		// to parse items.
 		while !input.is_empty() {
-			let mut attributes = Attribute::parse_outer(input, &read_map)?;
+			let mut attributes = Attribute::parse_outer(input, &read_map, mode)?;
 
 			if input.peek(Token![_]) || input.peek(token::Bracket) {
 				// Unused bytes item.
@@ -338,7 +339,7 @@ impl Items {
 							underscore_token: content.parse()?,
 							semicolon_token: content.parse()?,
 
-							content: ArrayContent::parse(&content, &read_map)?,
+							content: ArrayContent::parse(&content, &read_map, mode)?,
 						}))),
 					));
 				}
@@ -372,7 +373,7 @@ impl Items {
 					// Parse the let item's `source` without the map for now -
 					// the let item's `source` can use fields that are yet to
 					// be defined.
-					source: Source::parse_unmapped(input)?,
+					source: Source::parse_unmapped(input, mode)?,
 				};
 
 				// Insert the let item's `ident` and `type` to the `map` of
@@ -469,21 +470,23 @@ impl Items {
 				// If its `Source` has `args`...
 				if let Some(Args(args)) = &mut item.source.args {
 					// Iterate over each of those `args`...
-					for Arg(ident, arg_type) in args {
-						if let Some(field_type) = write_map.get(&ident.to_string()) {
-							// If that `Arg`'s `ident` is contained in the
-							// `write_map` of field identifiers, replace its
-							// type with the correct field type.
-							*arg_type = Some(field_type.to_owned());
-						} else {
-							// Otherwise, if the `Arg`'s `ident` is not
-							// contained in the `write_map`, then it does not
-							// have a recognized identifier and therefore we
-							// can't find its type, so we generate an error.
-							return Err(Error::new(
-								ident.span(),
-								"unrecognized source argument identifier",
-							));
+					for Arg(_, ident, arg_type) in args {
+						if arg_type.is_none() {
+							if let Some(field_type) = write_map.get(&ident.to_string()) {
+								// If that `Arg`'s `ident` is contained in the
+								// `write_map` of field identifiers, replace its
+								// type with the correct field type.
+								*arg_type = Some(field_type.to_owned());
+							} else {
+								// Otherwise, if the `Arg`'s `ident` is not
+								// contained in the `write_map`, then it does not
+								// have a recognized identifier and therefore we
+								// can't find its type, so we generate an error.
+								return Err(Error::new(
+									ident.span(),
+									"unrecognized source argument identifier",
+								));
+							}
 						}
 					}
 				}
@@ -495,37 +498,37 @@ impl Items {
 
 	/// Parse [`Items`] surrounded by curly brackets (`{` and `}`) and with
 	/// named [`Field`s`](Field).
-	pub fn parse_named(input: ParseStream) -> Result<Self> {
+	pub fn parse_named(input: ParseStream, mode: LengthMode) -> Result<Self> {
 		let content;
 
 		let brace_token = braced!(content in input);
-		let items = Self::parse_items(&content, true)?;
+		let items = Self::parse_items(&content, true, mode)?;
 
 		Ok(Self::Named { brace_token, items })
 	}
 
 	/// Parse [`Items`] surrounded by normal brackets (`(` and `)`) and with
 	/// unnamed [`Field`s](Field).
-	pub fn parse_unnamed(input: ParseStream) -> Result<Self> {
+	pub fn parse_unnamed(input: ParseStream, mode: LengthMode) -> Result<Self> {
 		let content;
 
 		let paren_token = parenthesized!(content in input);
-		let items = Self::parse_items(&content, false)?;
+		let items = Self::parse_items(&content, false, mode)?;
 
 		Ok(Self::Unnamed { paren_token, items })
 	}
 }
 
-impl Parse for Items {
-	fn parse(input: ParseStream) -> Result<Self> {
+impl Items {
+	pub fn parse(input: ParseStream, mode: LengthMode) -> Result<Self> {
 		if input.peek(token::Brace) {
 			// If the next token is a curly bracket (`{`), parse as named
 			// `Item`s.
-			Self::parse_named(input)
+			Self::parse_named(input, mode)
 		} else if input.peek(token::Paren) {
 			// Otherwise, if the next token is a normal bracket (`(`), parse as
 			// unnamed `Item`s.
-			Self::parse_unnamed(input)
+			Self::parse_unnamed(input, mode)
 		} else {
 			// Otherwise, if the next token is neither a curly bracket (`{`),
 			// nor a normal bracket (`(`), there are no items; simply return

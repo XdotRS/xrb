@@ -10,6 +10,7 @@ use syn::{
 	braced, bracketed, parenthesized, parse::ParseStream, spanned::Spanned, token, Error, Path,
 	Result, Token, Type,
 };
+use crate::content::LengthMode;
 
 use super::source::Source;
 
@@ -118,13 +119,13 @@ impl ToTokens for Attribute {
 // Parsing {{{
 
 impl Attribute {
-	pub(self) fn parse(input: ParseStream, map: &HashMap<String, Type>) -> Result<Self> {
+	pub(self) fn parse(input: ParseStream, map: &HashMap<String, Type>, mode: LengthMode) -> Result<Self> {
 		let content;
 
 		let hash_token = input.parse()?;
 		let style: Option<Token![!]> = input.parse().ok();
 		let bracket_token = bracketed!(content in input);
-		let attr_content = AttrContent::parse(&content, map)?;
+		let attr_content = AttrContent::parse(&content, map, mode)?;
 
 		// If this is an inner context attribute, generate an error:
 		if let Some(style) = style {
@@ -155,11 +156,11 @@ impl Attribute {
 		})
 	}
 
-	pub fn parse_outer(input: ParseStream, map: &HashMap<String, Type>) -> Result<Vec<Self>> {
+	pub fn parse_outer(input: ParseStream, map: &HashMap<String, Type>, mode: LengthMode) -> Result<Vec<Self>> {
 		let mut attributes = vec![];
 
 		while input.peek(Token![#]) && input.peek2(token::Bracket) {
-			let attribute: Attribute = Self::parse(input, map)?;
+			let attribute: Attribute = Self::parse(input, map, mode)?;
 
 			// If this is an inner attribute, generate an error:
 			if attribute.style.is_some() {
@@ -176,11 +177,11 @@ impl Attribute {
 	}
 
 	#[allow(dead_code)]
-	pub fn parse_inner(input: ParseStream, map: &HashMap<String, Type>) -> Result<Vec<Self>> {
+	pub fn parse_inner(input: ParseStream, map: &HashMap<String, Type>, mode: LengthMode) -> Result<Vec<Self>> {
 		let mut attributes = vec![];
 
 		while input.peek(Token![#]) && input.peek2(token::Bracket) {
-			let attribute: Attribute = Self::parse(input, map)?;
+			let attribute: Attribute = Self::parse(input, map, mode)?;
 
 			// If this is an outer attribute, generate an error:
 			if attribute.style.is_none() {
@@ -198,11 +199,11 @@ impl Attribute {
 }
 
 impl AttrContent {
-	fn parse(input: ParseStream, map: &HashMap<String, Type>) -> Result<Self> {
+	fn parse(input: ParseStream, map: &HashMap<String, Type>, mode: LengthMode) -> Result<Self> {
 		let path: Path = input.parse()?;
 
 		Ok(if path.is_ident("context") {
-			Self::Context(path, Box::new(Context::parse(input, map)?))
+			Self::Context(path, Box::new(Context::parse(input, map, mode)?))
 		} else if path.is_ident("metabyte") {
 			Self::Metabyte(path)
 		} else {
@@ -225,7 +226,7 @@ impl AttrContent {
 }
 
 impl Context {
-	fn parse(input: ParseStream, map: &HashMap<String, Type>) -> Result<Self> {
+	fn parse(input: ParseStream, map: &HashMap<String, Type>, mode: LengthMode) -> Result<Self> {
 		let content;
 		let look = input.lookahead1();
 
@@ -233,31 +234,31 @@ impl Context {
 			// Equals sign context (`=`)
 			Ok(Self::Equals(
 				input.parse()?,
-				Source::parse_mapped(input, map)?,
+				Source::parse_mapped(input, map, mode)?,
 			))
 		} else if look.peek(Token![:]) {
 			// Colon context (`:`)
 			Ok(Self::Colon(
 				input.parse()?,
-				Source::parse_mapped(input, map)?,
+				Source::parse_mapped(input, map, mode)?,
 			))
 		} else if look.peek(token::Paren) {
 			// Normal bracket context (`(...)`)
 			Ok(Self::Paren(
 				parenthesized!(content in input),
-				Source::parse_mapped(&content, map)?,
+				Source::parse_mapped(&content, map, mode)?,
 			))
 		} else if look.peek(token::Bracket) {
 			// Square bracket context (`[...]`)
 			Ok(Self::Bracket(
 				bracketed!(content in input),
-				Source::parse_mapped(&content, map)?,
+				Source::parse_mapped(&content, map, mode)?,
 			))
 		} else if look.peek(token::Brace) {
 			// Curly bracket context (`{...}`)
 			Ok(Self::Brace(
 				braced!(content in input),
-				Source::parse_mapped(&content, map)?,
+				Source::parse_mapped(&content, map, mode)?,
 			))
 		} else {
 			// Otherwise, if the next token after `context` is none of those,
