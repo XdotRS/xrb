@@ -26,14 +26,14 @@ define! {
 	/// - [Value]
 	/// - [Window]
 	///
-	/// [Alloc]: crate::x11::errors::Alloc
-	/// [Colormap]: crate::x11::errors::Colormap
-	/// [Cursor]: crate::x11::errors::Cursor
-	/// [IdChoice]: crate::x11::errors::IdChoice
-	/// [Match]: crate::x11::errors::Match
-	/// [Pixmap]: crate::x11::errors::Pixmap
-	/// [Value]: crate::x11::errors::Value
-	/// [Window]: crate::x11::errors::Window
+	/// [Alloc]: crate::x11::error::Alloc
+	/// [Colormap]: crate::x11::error::Colormap
+	/// [Cursor]: crate::x11::error::Cursor
+	/// [IdChoice]: crate::x11::error::IdChoice
+	/// [Match]: crate::x11::error::Match
+	/// [Pixmap]: crate::x11::error::Pixmap
+	/// [Value]: crate::x11::error::Value
+	/// [Window]: crate::x11::error::Window
 	pub struct CreateWindow: Request(1) {
 		/// The color depth of the window in bits per pixel.
 		///
@@ -43,7 +43,7 @@ define! {
 		///
 		/// [`InputOnly`]: WindowClass::InputOnly
 		/// [`CopyFromParent`]: Inherit::CopyFromParent
-		/// [`Match`]: crate::x11::errors::Match
+		/// [`Match`]: crate::x11::error::Match
 		#[metabyte]
 		pub depth: Inheritable<u8>,
 
@@ -72,7 +72,7 @@ define! {
 		/// [`InputOutput`]: WindowClass::InputOutput
 		/// [`InputOnly`]: WindowClass::InputOnly
 		/// [window class]: WindowClass
-		/// [`Match`]: crate::x11::errors::Match
+		/// [`Match`]: crate::x11::error::Match
 		pub class: Inheritable<WindowClass>,
 		pub visual: Inheritable<VisualId>,
 		pub value_mask: AttributeMask,
@@ -335,7 +335,9 @@ define! {
 		[_; ..],
 	}
 
-	pub struct UngrabKeyboard: Request(32) { pub time: Time, }
+	pub struct UngrabKeyboard: Request(32) {
+		pub time: Time,
+	}
 
 	pub struct GrabKey: Request(33) {
 		#[metabyte]
@@ -981,7 +983,7 @@ define! {
 	/// # Errors
 	/// - [`Cursor`]
 	///
-	/// [`Cursor`]: crate::x11::errors::Cursor
+	/// [`Cursor`]: crate::x11::error::Cursor
 	pub struct RecolorCursor: Request(96) {
 		pub cursor: Cursor,
 		/// The tint to apply to the cursor's foreground.
@@ -1013,9 +1015,9 @@ define! {
 	/// [`Cursor`]: query_best_size::Class::Cursor
 	/// [`Tile`]: query_best_size::Class::Tile
 	/// [`Stipple`]: query_best_size::Class::Stipple
-	/// [`Drawable`]: crate::x11::errors::Drawable
-	/// [`Match`]: crate::x11::errors::Match
-	/// [`Value`]: crate::x11::errors::Value
+	/// [`Drawable`]: crate::x11::error::Drawable
+	/// [`Match`]: crate::x11::error::Match
+	/// [`Value`]: crate::x11::error::Value
 	/// [window]: Window
 	/// [`InputOnly`]: WindowClass::InputOnly
 	pub struct QueryBestSize: Request(97) -> QueryBestSizeReply {
