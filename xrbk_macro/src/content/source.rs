@@ -16,8 +16,12 @@ use crate::TsExt;
 
 pub type IdentMap<'a> = &'a HashMap<String, Type>;
 
-pub struct Arg(pub Ident, pub Option<Type>);
-// TODO: iterator?
+pub struct Arg(
+	pub Option<(Token![self], Token![::])>,
+	pub Ident,
+	pub Option<Type>,
+);
+
 pub struct Args(pub Punctuated<Arg, Token![,]>);
 
 pub struct Source {
@@ -29,11 +33,22 @@ pub struct Source {
 	pub expr: Expr,
 }
 
+#[derive(Copy, Clone)]
+pub enum LengthMode {
+	Disallowed,
+	Request,
+	Reply,
+}
+
 impl Arg {
 	pub fn format(&self) -> Ident {
-		let Self(ident, _) = self;
+		let Self(length_syntax, ident, _) = self;
 
-		format_ident!("__{}__", ident)
+		if length_syntax.is_some() {
+			format_ident!("_{}_", ident)
+		} else {
+			format_ident!("__{}__", ident)
+		}
 	}
 }
 
@@ -48,7 +63,7 @@ impl Args {
 impl Source {
 	pub fn args_to_tokens(&self, tokens: &mut TokenStream2) {
 		if let Some(Args(args)) = &self.args {
-			for Arg(ident, r#type) in args {
+			for Arg(_, ident, r#type) in args {
 				tokens.append_tokens(|| quote!(#ident: &#r#type,));
 			}
 		}
@@ -77,7 +92,7 @@ impl ToTokens for Args {
 
 impl ToTokens for Arg {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
-		let Self(ident, r#type) = self;
+		let Self(_, ident, r#type) = self;
 
 		ident.to_tokens(tokens);
 		quote!(:).to_tokens(tokens);
@@ -90,12 +105,12 @@ impl ToTokens for Arg {
 // Parsing {{{
 
 impl Source {
-	fn parse(input: ParseStream, map: Option<IdentMap>) -> Result<Self> {
+	fn parse(input: ParseStream, map: Option<IdentMap>, mode: LengthMode) -> Result<Self> {
 		let fork = &input.fork();
 		let args = if let Some(map) = map {
-			Args::parse_mapped(fork, map)
+			Args::parse_mapped(fork, map, mode)
 		} else {
-			Args::parse_unmapped(fork)
+			Args::parse_unmapped(fork, mode)
 		};
 
 		Ok(if let Ok(args) = args && fork.peek(Token![=>]) {
@@ -121,43 +136,86 @@ impl Source {
 		})
 	}
 
-	pub fn parse_mapped(input: ParseStream, map: IdentMap) -> Result<Self> {
-		Self::parse(input, Some(map))
+	pub fn parse_mapped(input: ParseStream, map: IdentMap, mode: LengthMode) -> Result<Self> {
+		Self::parse(input, Some(map), mode)
 	}
 
-	pub fn parse_unmapped(input: ParseStream) -> Result<Self> {
-		Self::parse(input, None)
+	pub fn parse_unmapped(input: ParseStream, mode: LengthMode) -> Result<Self> {
+		Self::parse(input, None, mode)
 	}
 }
 
 impl Arg {
-	pub fn parse_mapped(input: ParseStream, map: IdentMap) -> Result<Self> {
-		let ident: Ident = input.parse()?;
+	pub fn parse_mapped(input: ParseStream, map: IdentMap, mode: LengthMode) -> Result<Self> {
+		Ok(if let LengthMode::Request | LengthMode::Reply = mode && input.peek(Token![self]) {
+			// If `self::length` syntax is allowed, and this `Arg` begins with
+			// `self`...
 
-		if let Some(r#type) = map.get(&ident.to_string()) {
-			Ok(Self(ident, Some(r#type.to_owned())))
+			// Parse the `self` token.
+			let self_token: Token![self] = input.parse()?;
+			// Parse the following `::` token.
+			let double_colon_token: Token![::] = input.parse()?;
+
+			// Parse the `length` identifier following `self::`.
+			let ident: Ident = input.parse()?;
+			// If the `ident` is not `length`, generate an error.
+			if ident.to_string() != "length" {
+				return Err(Error::new(
+					ident.span(),
+					"only `self::length` syntax is allowed with `self::`",
+				));
+			}
+
+			Self(Some((self_token, double_colon_token)), ident, Some(Type::Verbatim(match mode {
+				// Requests use `u16` lengths.
+				LengthMode::Request => quote!(u16),
+				// Replies use `u32` lengths.
+				LengthMode::Reply => quote!(u32),
+
+				_ => unreachable!(),
+			})))
 		} else {
-			Err(Error::new(
-				ident.span(),
-				"unrecognized source argument identifier",
-			))
-		}
+			// Otherwise, if `self::length` syntax is not allowed, or if this
+			// is not a `self::length` `Arg`...
+
+			let ident: Ident = input.parse()?;
+
+			if let Some(r#type) = map.get(&ident.to_string()) {
+				Self(None, ident, Some(r#type.to_owned()))
+			} else {
+				return Err(Error::new(
+					ident.span(),
+					"unrecognized source argument identifier",
+				));
+			}
+		})
 	}
 
-	pub fn parse_unmapped(input: ParseStream) -> Result<Self> {
-		Ok(Self(input.parse::<Ident>()?, None))
+	pub fn parse_unmapped(input: ParseStream, mode: LengthMode) -> Result<Self> {
+		Ok(if let LengthMode::Request | LengthMode::Reply = mode && input.peek(Token![self]) {
+			let self_token: Token![self] = input.parse()?;
+			let double_colon_token: Token![::] = input.parse()?;
+
+			Self(Some((self_token, double_colon_token)), input.parse()?, Some(Type::Verbatim(match mode {
+				LengthMode::Request => quote!(u16),
+				LengthMode::Reply => quote!(u32),
+				_ => unreachable!(),
+			})))
+		} else {
+			Self(None, input.parse()?, None)
+		})
 	}
 }
 
 impl Args {
-	fn parse(input: ParseStream, map: Option<IdentMap>) -> Result<Self> {
+	fn parse(input: ParseStream, map: Option<IdentMap>, mode: LengthMode) -> Result<Self> {
 		let mut args = Punctuated::new();
 
 		while input.peek(Ident) {
 			if let Some(map) = map {
-				args.push_value(Arg::parse_mapped(input, map)?);
+				args.push_value(Arg::parse_mapped(input, map, mode)?);
 			} else {
-				args.push_value(Arg::parse_unmapped(input)?);
+				args.push_value(Arg::parse_unmapped(input, mode)?);
 			}
 
 			if input.peek(Token![,]) {
@@ -170,12 +228,12 @@ impl Args {
 		Ok(Self(args))
 	}
 
-	pub fn parse_mapped(input: ParseStream, map: IdentMap) -> Result<Self> {
-		Self::parse(input, Some(map))
+	pub fn parse_mapped(input: ParseStream, map: IdentMap, mode: LengthMode) -> Result<Self> {
+		Self::parse(input, Some(map), mode)
 	}
 
-	pub fn parse_unmapped(input: ParseStream) -> Result<Self> {
-		Self::parse(input, None)
+	pub fn parse_unmapped(input: ParseStream, mode: LengthMode) -> Result<Self> {
+		Self::parse(input, None, mode)
 	}
 }
 

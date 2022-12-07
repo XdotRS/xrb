@@ -6,6 +6,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{parse::ParseStream, token, Result, Token};
 
+use crate::content::LengthMode;
 use crate::{
 	Attribute, IdentMap, ItemDeserializeTokens, ItemId, ItemSerializeTokens, Source, TsExt,
 };
@@ -92,11 +93,11 @@ impl Unused {
 // Parsing {{{
 
 impl ArrayContent {
-	pub fn parse(input: ParseStream, map: IdentMap) -> Result<Self> {
+	pub fn parse(input: ParseStream, map: IdentMap, mode: LengthMode) -> Result<Self> {
 		Ok(if input.peek(Token![..]) {
 			Self::Infer(input.parse()?)
 		} else {
-			Self::Source(Box::new(Source::parse_mapped(input, map)?))
+			Self::Source(Box::new(Source::parse_mapped(input, map, mode)?))
 		})
 	}
 }

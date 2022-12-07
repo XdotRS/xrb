@@ -12,6 +12,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
 use syn::punctuated::Punctuated;
 
+use crate::content::LengthMode;
 use crate::{Item, Items, TsExt};
 
 /// A list of [`Definition`]s.
@@ -430,7 +431,7 @@ impl Struct {
 		// Parse the struct's metadata.
 		let metadata = StructMetadata::parse_with(input, attributes, vis)?;
 		// Parse the struct's items.
-		let items: Items = input.parse()?;
+		let items = Items::parse(input, LengthMode::Disallowed)?;
 
 		// If this is a unit struct or tuple struct, require a semicolon,
 		// otherwise forbid it.
@@ -518,7 +519,7 @@ impl Parse for Variant {
 
 			ident: input.parse()?,
 			// Items associated with the enum variant.
-			items: input.parse()?,
+			items: Items::parse(input, LengthMode::Disallowed)?,
 
 			// If the next token is an equals sign, parse the discriminant.
 			discriminant: if input.peek(Token![=]) {
