@@ -4,13 +4,13 @@
 
 use std::collections::HashMap;
 
+use crate::content::LengthMode;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
 use syn::{
 	braced, bracketed, parenthesized, parse::ParseStream, spanned::Spanned, token, Error, Path,
 	Result, Token, Type,
 };
-use crate::content::LengthMode;
 
 use super::source::Source;
 
@@ -119,7 +119,11 @@ impl ToTokens for Attribute {
 // Parsing {{{
 
 impl Attribute {
-	pub(self) fn parse(input: ParseStream, map: &HashMap<String, Type>, mode: LengthMode) -> Result<Self> {
+	pub(self) fn parse(
+		input: ParseStream,
+		map: &HashMap<String, Type>,
+		mode: LengthMode,
+	) -> Result<Self> {
 		let content;
 
 		let hash_token = input.parse()?;
@@ -156,7 +160,11 @@ impl Attribute {
 		})
 	}
 
-	pub fn parse_outer(input: ParseStream, map: &HashMap<String, Type>, mode: LengthMode) -> Result<Vec<Self>> {
+	pub fn parse_outer(
+		input: ParseStream,
+		map: &HashMap<String, Type>,
+		mode: LengthMode,
+	) -> Result<Vec<Self>> {
 		let mut attributes = vec![];
 
 		while input.peek(Token![#]) && input.peek2(token::Bracket) {
@@ -177,7 +185,11 @@ impl Attribute {
 	}
 
 	#[allow(dead_code)]
-	pub fn parse_inner(input: ParseStream, map: &HashMap<String, Type>, mode: LengthMode) -> Result<Vec<Self>> {
+	pub fn parse_inner(
+		input: ParseStream,
+		map: &HashMap<String, Type>,
+		mode: LengthMode,
+	) -> Result<Vec<Self>> {
 		let mut attributes = vec![];
 
 		while input.peek(Token![#]) && input.peek2(token::Bracket) {

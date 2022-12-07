@@ -6,10 +6,10 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{parse::ParseStream, token, Result, Token};
 
+use crate::content::LengthMode;
 use crate::{
 	Attribute, IdentMap, ItemDeserializeTokens, ItemId, ItemSerializeTokens, Source, TsExt,
 };
-use crate::content::LengthMode;
 
 pub enum Unused {
 	/// One single unused byte.
