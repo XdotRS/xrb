@@ -89,11 +89,9 @@ impl ItemSerializeTokens for Let {
 				fn #name(#args) -> #r#type {
 					#expr
 				}
+				let #name = #name(#formatted_args);
 
-				<#r#type as cornflakes::Writable>::write_to(
-					&#name(#formatted_args),
-					writer,
-				)?;
+				<#r#type as cornflakes::Writable>::write_to(&#name, writer)?;
 			)
 		});
 	}
