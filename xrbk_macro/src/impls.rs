@@ -88,7 +88,8 @@ impl Enum {
 				// Generate the tokens to serialize each of the variant's items.
 				let inner = TokenStream2::with_tokens(|tokens| {
 					for (id, item) in variant.items.pairs() {
-						item.serialize_tokens(tokens, id);
+						item.serialize_tokens(tokens, id, None);
+						item.datasize_tokens(tokens, id);
 					}
 				});
 
@@ -120,6 +121,7 @@ impl Enum {
 						&self,
 						writer: &mut impl bytes::BufMut,
 					) -> Result<(), cornflakes::WriteError> {
+						let mut data_size: usize = 0;
 						#discriminants
 
 						match self {
@@ -190,7 +192,8 @@ impl Enum {
 				// Generate the tokens to deserialize each of the variant's items.
 				let inner = TokenStream2::with_tokens(|tokens| {
 					for (id, item) in variant.items.pairs() {
-						item.deserialize_tokens(tokens, id);
+						item.deserialize_tokens(tokens, id, None);
+						item.datasize_tokens(tokens, id);
 					}
 				});
 
@@ -220,6 +223,7 @@ impl Enum {
 					fn read_from(
 						reader: &mut impl bytes::Buf,
 					) -> Result<Self, cornflakes::ReadError> {
+						let mut data_size: usize = 0;
 						#discriminants
 
 						// Match against the discriminant...
@@ -283,7 +287,8 @@ impl SerializeMessageTokens for BasicStructMetadata {
 		// Tokens to serialize each of the struct's items.
 		let inner = TokenStream2::with_tokens(|tokens| {
 			for (id, item) in items.pairs() {
-				item.serialize_tokens(tokens, id);
+				item.serialize_tokens(tokens, id, None);
+				item.datasize_tokens(tokens, id);
 			}
 		});
 
@@ -295,6 +300,7 @@ impl SerializeMessageTokens for BasicStructMetadata {
 						&self,
 						writer: &mut impl bytes::BufMut,
 					) -> Result<(), cornflakes::WriteError> {
+						let mut data_size: usize = 0;
 						// Destructure the struct.
 						let Self #pat = self;
 
@@ -328,7 +334,8 @@ impl DeserializeMessageTokens for BasicStructMetadata {
 		// Generate the tokens to deserialize each of the struct's items.
 		let inner = TokenStream2::with_tokens(|tokens| {
 			for (id, item) in items.pairs() {
-				item.deserialize_tokens(tokens, id);
+				item.deserialize_tokens(tokens, id, None);
+				item.datasize_tokens(tokens, id);
 			}
 		});
 
@@ -339,6 +346,7 @@ impl DeserializeMessageTokens for BasicStructMetadata {
 					fn read_from(
 						reader: &mut impl bytes::Buf,
 					) -> Result<Self, cornflakes::ReadError> {
+						let mut data_size: usize = 0;
 						#inner
 
 						Ok(Self #cons)
@@ -393,7 +401,8 @@ impl SerializeMessageTokens for Request {
 		let inner = TokenStream2::with_tokens(|tokens| {
 			// Generate the serialization tokens for all non-metabyte items.
 			for (id, item) in items.pairs().filter(|(_, item)| !item.is_metabyte()) {
-				item.serialize_tokens(tokens, id);
+				item.serialize_tokens(tokens, id, None);
+				item.datasize_tokens(tokens, id);
 			}
 		});
 
@@ -405,6 +414,7 @@ impl SerializeMessageTokens for Request {
 						&self,
 						writer: &mut impl bytes::BufMut,
 					) -> Result<(), cornflakes::WriteError> {
+						let mut data_size: usize = 0;
 						// Destructure the struct.
 						let Self #pat = self;
 
@@ -457,7 +467,8 @@ impl DeserializeMessageTokens for Request {
 		let inner = TokenStream2::with_tokens(|tokens| {
 			// Deserialize every non-metabyte item.
 			for (id, item) in items.pairs().filter(|(_, item)| !item.is_metabyte()) {
-				item.deserialize_tokens(tokens, id);
+				item.deserialize_tokens(tokens, id, None);
+				item.datasize_tokens(tokens, id);
 			}
 		});
 
@@ -473,6 +484,7 @@ impl DeserializeMessageTokens for Request {
 					fn read_from(
 						reader: &mut impl bytes::Buf,
 					) -> Result<Self, cornflakes::ReadError> {
+						let mut data_size: usize = 0;
 						// Read the metabyte item, if any.
 						#metabyte
 						// Read the length of the request.
@@ -539,7 +551,8 @@ impl SerializeMessageTokens for Reply {
 		let inner = TokenStream2::with_tokens(|tokens| {
 			// Serialize every non-metabyte item.
 			for (id, item) in items.pairs().filter(|(_, item)| !item.is_metabyte()) {
-				item.serialize_tokens(tokens, id);
+				item.serialize_tokens(tokens, id, Some(32 - 8 /* 8 for the header */));
+				item.datasize_tokens(tokens, id);
 			}
 		});
 
@@ -551,6 +564,7 @@ impl SerializeMessageTokens for Reply {
 						&self,
 						writer: &mut impl bytes::BufMut,
 					) -> Result<(), cornflakes::WriteError> {
+						let mut data_size: usize = 0;
 						let Self #pat = self;
 
 						// `1` indicates this is a reply.
@@ -612,7 +626,8 @@ impl DeserializeMessageTokens for Reply {
 		let inner = TokenStream2::with_tokens(|tokens| {
 			// Deserialization tokens for every non-metabyte item.
 			for (id, item) in items.pairs().filter(|(_, item)| !item.is_metabyte()) {
-				item.deserialize_tokens(tokens, id);
+				item.deserialize_tokens(tokens, id, Some(32 - 8 /* 8 for the header */));
+				item.datasize_tokens(tokens, id);
 			}
 		});
 
@@ -633,6 +648,7 @@ impl DeserializeMessageTokens for Reply {
 					fn read_from(
 						reader: &mut impl bytes::Buf,
 					) -> Result<Self, cornflakes::ReadError> {
+						let mut data_size: usize = 0;
 						// Deserialize the metabyte item.
 						#metabyte
 						// Deserialize the sequence field.
@@ -682,7 +698,8 @@ impl SerializeMessageTokens for Event {
 		let inner = TokenStream2::with_tokens(|tokens| {
 			// Serialization tokens for every non-metabyte item.
 			for (id, item) in items.pairs().filter(|(_, item)| !item.is_metabyte()) {
-				item.serialize_tokens(tokens, id);
+				item.serialize_tokens(tokens, id, Some(32 - 4 /* 4 for the header */));
+				item.datasize_tokens(tokens, id);
 			}
 		});
 
@@ -694,6 +711,7 @@ impl SerializeMessageTokens for Event {
 						&self,
 						writer: &mut impl bytes::BufMut,
 					) -> Result<(), cornflakes::WriteError> {
+						let mut data_size: usize = 0;
 						let Self #pat = self;
 
 						// Event code.
@@ -740,7 +758,8 @@ impl DeserializeMessageTokens for Event {
 		let inner = TokenStream2::with_tokens(|tokens| {
 			// Deserialize every non-metabyte item.
 			for (id, item) in items.pairs().filter(|(_, item)| !item.is_metabyte()) {
-				item.deserialize_tokens(tokens, id);
+				item.deserialize_tokens(tokens, id, Some(32 - 4 /* 4 for the header */));
+				item.datasize_tokens(tokens, id);
 			}
 		});
 
@@ -756,6 +775,7 @@ impl DeserializeMessageTokens for Event {
 					fn read_from(
 						reader: &mut impl bytes::Buf,
 					) -> Result<Self, cornflakes::ReadError> {
+						let mut data_size: usize = 0;
 						// Deserialize the metabyte item.
 						#metabyte
 						// Deserialize the sequence field.
