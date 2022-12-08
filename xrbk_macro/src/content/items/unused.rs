@@ -7,9 +7,7 @@ use quote::quote;
 use syn::{parse::ParseStream, token, Result, Token};
 
 use crate::content::LengthMode;
-use crate::{
-	Attribute, IdentMap, ItemDeserializeTokens, ItemId, ItemSerializeTokens, Source, TsExt,
-};
+use crate::{Attribute, IdentMap, ItemId, Source, TsExt};
 
 pub enum Unused {
 	/// One single unused byte.
@@ -57,7 +55,11 @@ pub struct Array {
 
 pub enum ArrayContent {
 	/// Infer the number of unused bytes.
-	Infer(Token![..]),
+	Infer {
+		double_dot_token: Token![..],
+		last_item: bool,
+	},
+
 	/// Evaluate a [`Source`] for the number of unused bytes.
 	Source(Box<Source>),
 }
@@ -93,9 +95,17 @@ impl Unused {
 // Parsing {{{
 
 impl ArrayContent {
-	pub fn parse(input: ParseStream, map: IdentMap, mode: LengthMode) -> Result<Self> {
+	pub fn parse(
+		input: ParseStream,
+		map: IdentMap,
+		mode: LengthMode,
+		last_item: bool,
+	) -> Result<Self> {
 		Ok(if input.peek(Token![..]) {
-			Self::Infer(input.parse()?)
+			Self::Infer {
+				double_dot_token: input.parse()?,
+				last_item,
+			}
 		} else {
 			Self::Source(Box::new(Source::parse_mapped(input, map, mode)?))
 		})
@@ -106,8 +116,13 @@ impl ArrayContent {
 
 // Implementations {{{
 
-impl ItemSerializeTokens for Unused {
-	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
+impl Unused {
+	pub(crate) fn serialize_tokens(
+		&self,
+		tokens: &mut TokenStream2,
+		id: &ItemId,
+		min_length: Option<usize>,
+	) {
 		tokens.append_tokens(|| {
 			match self {
 				Self::Single { .. } => {
@@ -135,21 +150,33 @@ impl ItemSerializeTokens for Unused {
 								fn #name(#args) -> usize {
 									#expr
 								}
+								let #name = #name(#formatted_args);
 
 								writer.put_bytes(
 									0u8,
-									#name(#formatted_args),
+									#name,
 								);
 							)
 						}
 
-						ArrayContent::Infer(_) => {
-							quote!(
-								writer.put_bytes(
-									0u8,
-									// TODO: use padding function
-								);
-							)
+						ArrayContent::Infer { last_item, .. } => {
+							if *last_item && let Some(min_length) = min_length {
+								quote!(
+									let #name = if data_size < #min_length {
+										#min_length - data_size
+									} else {
+										(4 - (data_size % 4)) % 4
+									};
+
+									writer.put_bytes(0u8, #name);
+								)
+							} else {
+								quote!(
+									let #name = (4 - (data_size % 4)) % 4;
+
+									writer.put_bytes(0u8, #name);
+								)
+							}
 						}
 					}
 				}
@@ -158,8 +185,13 @@ impl ItemSerializeTokens for Unused {
 	}
 }
 
-impl ItemDeserializeTokens for Unused {
-	fn deserialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
+impl Unused {
+	pub fn deserialize_tokens(
+		&self,
+		tokens: &mut TokenStream2,
+		id: &ItemId,
+		min_length: Option<usize>,
+	) {
 		tokens.append_tokens(|| {
 			match self {
 				Self::Array(array) => {
@@ -180,17 +212,30 @@ impl ItemDeserializeTokens for Unused {
 								fn #name(#args) -> usize {
 									#expr
 								}
+								let #name = #name(#formatted_args);
 
-								reader.advance(#name(#formatted_args));
+								reader.advance(#name);
 							)
 						}
 
-						ArrayContent::Infer(_) => {
-							quote!(
-								reader.advance(
-									// TODO: use padding function
-								);
-							)
+						ArrayContent::Infer { last_item, .. } => {
+							if *last_item && let Some(min_length) = min_length {
+								quote!(
+									let #name = if data_size < #min_length {
+										#min_length - data_size
+									} else {
+										(4 - (data_size % 4)) % 4
+									};
+
+									reader.advance(#name);
+								)
+							} else {
+								quote!(
+									let #name = (4 - (data_size % 4)) % 4;
+
+									reader.advance(#name);
+								)
+							}
 						}
 					}
 				}

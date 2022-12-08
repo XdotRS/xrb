@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use proc_macro2::TokenStream as TokenStream2;
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 
 pub use attributes::*;
 pub use field::*;
@@ -12,7 +12,7 @@ pub use r#let::*;
 pub use source::*;
 pub use unused::*;
 
-use crate::{ItemDeserializeTokens, ItemSerializeTokens};
+use crate::{ItemDeserializeTokens, ItemSerializeTokens, TsExt};
 
 mod attributes;
 mod items;
@@ -66,6 +66,52 @@ impl Item {
 			),
 		}
 	}
+
+	pub fn datasize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
+		match self {
+			Self::Unused(Unused::Single { .. }) => {
+				if !self.is_metabyte() {
+					tokens.append_tokens(|| {
+						quote!(
+							data_size += 1;
+						)
+					});
+				}
+			}
+
+			Self::Unused(Unused::Array(_)) => {
+				let ident = id.formatted();
+
+				tokens.append_tokens(|| {
+					quote!(
+						data_size += #ident;
+					)
+				});
+			}
+
+			Self::Let(r#let) => {
+				let ident = id.formatted();
+				let r#type = &r#let.r#type;
+
+				tokens.append_tokens(|| {
+					quote!(
+						data_size += <#r#type as cornflakes::DataSize>::data_size(&#ident);
+					)
+				});
+			}
+
+			Self::Field(field) => {
+				let ident = id.formatted();
+				let r#type = &field.r#type;
+
+				tokens.append_tokens(|| {
+					quote!(
+						data_size += <#r#type as cornflakes::DataSize>::data_size(&#ident);
+					)
+				});
+			}
+		}
+	}
 }
 
 // Expansion {{{
@@ -85,26 +131,36 @@ impl ToTokens for Item {
 
 // Implementations {{{
 
-impl ItemSerializeTokens for Item {
-	fn serialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
+impl Item {
+	pub(crate) fn serialize_tokens(
+		&self,
+		tokens: &mut TokenStream2,
+		id: &ItemId,
+		min_length: Option<usize>,
+	) {
 		match self {
 			Item::Field(field) => field.serialize_tokens(tokens, id),
 
 			Item::Let(r#let) => r#let.serialize_tokens(tokens, id),
 
-			Item::Unused(unused) => unused.serialize_tokens(tokens, id),
+			Item::Unused(unused) => unused.serialize_tokens(tokens, id, min_length),
 		}
 	}
 }
 
-impl ItemDeserializeTokens for Item {
-	fn deserialize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
+impl Item {
+	pub(crate) fn deserialize_tokens(
+		&self,
+		tokens: &mut TokenStream2,
+		id: &ItemId,
+		min_length: Option<usize>,
+	) {
 		match self {
 			Item::Field(field) => field.deserialize_tokens(tokens, id),
 
 			Item::Let(r#let) => r#let.deserialize_tokens(tokens, id),
 
-			Item::Unused(unused) => unused.deserialize_tokens(tokens, id),
+			Item::Unused(unused) => unused.deserialize_tokens(tokens, id, min_length),
 		}
 	}
 }
