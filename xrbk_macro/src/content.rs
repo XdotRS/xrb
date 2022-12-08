@@ -73,15 +73,20 @@ impl Item {
 				if !self.is_metabyte() {
 					tokens.append_tokens(|| {
 						quote!(
-							*data_size += 1;
+							data_size += 1;
 						)
 					});
 				}
 			}
 
-			Self::Unused(Unused::Array(_array)) => {
-				// TODO: array-type unused bytes items probably need to
-				//       temporarily store their number of bytes in a variable.
+			Self::Unused(Unused::Array(_)) => {
+				let ident = id.formatted();
+
+				tokens.append_tokens(|| {
+					quote!(
+						data_size += #ident;
+					)
+				});
 			}
 
 			Self::Let(r#let) => {
@@ -90,7 +95,7 @@ impl Item {
 
 				tokens.append_tokens(|| {
 					quote!(
-						*data_size += <#r#type as cornflakes::DataSize>::data_size(&#ident);
+						data_size += <#r#type as cornflakes::DataSize>::data_size(&#ident);
 					)
 				});
 			}
@@ -101,7 +106,7 @@ impl Item {
 
 				tokens.append_tokens(|| {
 					quote!(
-						*data_size += <#r#type as cornflakes::DataSize>::data_size(&#ident);
+						data_size += <#r#type as cornflakes::DataSize>::data_size(&#ident);
 					)
 				});
 			}

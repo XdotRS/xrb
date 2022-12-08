@@ -150,10 +150,11 @@ impl Unused {
 								fn #name(#args) -> usize {
 									#expr
 								}
+								let #name = #name(#formatted_args);
 
 								writer.put_bytes(
 									0u8,
-									#name(#formatted_args),
+									#name,
 								);
 							)
 						}
@@ -161,21 +162,19 @@ impl Unused {
 						ArrayContent::Infer { last_item, .. } => {
 							if *last_item && let Some(min_length) = min_length {
 								quote!(
-									writer.put_bytes(
-										0u8,
-										if *data_size < #min_length {
-											#min_length - *data_size
-										} else {
-											(4 - (*data_size % 4)) % 4
-										},
-									);
+									let #name = if data_size < #min_length {
+										#min_length - data_size
+									} else {
+										(4 - (data_size % 4)) % 4
+									};
+
+									writer.put_bytes(0u8, #name);
 								)
 							} else {
 								quote!(
-									writer.put_bytes(
-										0u8,
-										(4 - (*data_size % 4)) % 4,
-									);
+									let #name = (4 - (data_size % 4)) % 4;
+
+									writer.put_bytes(0u8, #name);
 								)
 							}
 						}
@@ -213,29 +212,28 @@ impl Unused {
 								fn #name(#args) -> usize {
 									#expr
 								}
+								let #name = #name(#formatted_args);
 
-								reader.advance(#name(#formatted_args));
+								reader.advance(#name);
 							)
 						}
 
 						ArrayContent::Infer { last_item, .. } => {
 							if *last_item && let Some(min_length) = min_length {
 								quote!(
-									reader.advance(
-										0u8,
-										if *data_size < #min_length {
-											#min_length - *data_size
-										} else {
-											(4 - (*data_size % 4)) % 4
-										},
-									);
+									let #name = if data_size < #min_length {
+										#min_length - data_size
+									} else {
+										(4 - (data_size % 4)) % 4
+									};
+
+									reader.advance(#name);
 								)
 							} else {
 								quote!(
-									reader.advance(
-										0u8,
-										(4 - (*data_size % 4)) % 4,
-									);
+									let #name = (4 - (data_size % 4)) % 4;
+
+									reader.advance(#name);
 								)
 							}
 						}
