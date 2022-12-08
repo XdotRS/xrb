@@ -219,7 +219,7 @@ impl Items {
 	/// is one.
 	pub fn metabyte_serialize_tokens(&self, tokens: &mut TokenStream2) {
 		if let Some((id, metabyte)) = self.pairs().find(|(_, item)| item.is_metabyte()) {
-			metabyte.serialize_tokens(tokens, id);
+			metabyte.serialize_tokens(tokens, id, None);
 		} else {
 			// Otherwise, skip.
 			tokens.append_tokens(|| {
@@ -232,7 +232,7 @@ impl Items {
 
 	pub fn metabyte_deserialize_tokens(&self, tokens: &mut TokenStream2) {
 		if let Some((id, metabyte)) = self.pairs().find(|(_, item)| item.is_metabyte()) {
-			metabyte.deserialize_tokens(tokens, id);
+			metabyte.deserialize_tokens(tokens, id, None);
 		} else {
 			// Otherwise, skip.
 			tokens.append_tokens(|| {
@@ -339,7 +339,12 @@ impl Items {
 							underscore_token: content.parse()?,
 							semicolon_token: content.parse()?,
 
-							content: ArrayContent::parse(&content, &read_map, mode)?,
+							content: ArrayContent::parse(
+								&content,
+								&read_map,
+								mode,
+								input.is_empty(),
+							)?,
 						}))),
 					));
 				}
