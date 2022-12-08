@@ -4,6 +4,7 @@
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
+use syn::token::Token;
 use syn::{parse_quote, Generics, TypeParamBound};
 
 use crate::{ts_ext::TsExt, *};
@@ -241,6 +242,61 @@ impl Enum {
 	}
 }
 
+impl Enum {
+	pub fn data_size_tokens(&self, tokens: &mut TokenStream2) {
+		let name = &self.ident;
+
+		let generics = {
+			let mut generics = self.generics.to_owned();
+			add_bounds(&mut generics, parse_quote!(cornflakes::DataSize));
+
+			generics
+		};
+		let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
+
+		let arms = TokenStream2::with_tokens(|tokens| {
+			for variant in &self.variants {
+				let name = &variant.ident;
+
+				let pat = TokenStream2::with_tokens(|tokens| {
+					variant.items.fields_to_tokens(tokens, ExpandMode::Normal);
+				});
+
+				let inner = TokenStream2::with_tokens(|tokens| {
+					for (id, item) in variant.items.pairs() {
+						item.datasize_tokens(tokens, id);
+					}
+				});
+
+				tokens.append_tokens(|| {
+					quote!(
+						Self::#name #pat => {
+							let mut data_size: usize = 1;
+
+							#inner
+
+							data_size
+						}
+					)
+				});
+			}
+		});
+
+		tokens.append_tokens(|| {
+			quote!(
+				impl #impl_generics cornflakes::DataSize for #name #type_generics #where_clause {
+					#[allow(clippy::unused_underscore_binding)]
+					fn data_size(&self) -> usize {
+						match self {
+							#arms
+						}
+					}
+				}
+			)
+		});
+	}
+}
+
 impl Struct {
 	pub fn serialize_tokens(&self, tokens: &mut TokenStream2) {
 		match &self.metadata {
@@ -350,6 +406,46 @@ impl DeserializeMessageTokens for BasicStructMetadata {
 						#inner
 
 						Ok(Self #cons)
+					}
+				}
+			)
+		});
+	}
+}
+
+impl BasicStructMetadata {
+	pub fn data_size_tokens(&self, tokens: &mut TokenStream2, items: &Items) {
+		let name = &self.name;
+
+		let generics = {
+			let mut generics = self.generics.to_owned();
+			add_bounds(&mut generics, parse_quote!(cornflakes::DataSize));
+
+			generics
+		};
+		let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
+
+		let pat = TokenStream2::with_tokens(|tokens| {
+			items.fields_to_tokens(tokens, ExpandMode::Normal);
+		});
+
+		let inner = TokenStream2::with_tokens(|tokens| {
+			for (id, item) in items.pairs() {
+				item.datasize_tokens(tokens, id);
+			}
+		});
+
+		tokens.append_tokens(|| {
+			quote!(
+				impl #impl_generics cornflakes::DataSize for #name #type_generics #where_clause {
+					#[allow(clippy::unused_underscore_binding)]
+					fn data_size(&self) -> usize {
+						let mut data_size: usize = 0;
+						let Self #pat = self;
+
+						#inner
+
+						data_size
 					}
 				}
 			)
@@ -499,6 +595,28 @@ impl DeserializeMessageTokens for Request {
 				}
 			)
 		});
+	}
+}
+
+impl Request {
+	pub fn data_size_tokens(&self, _tokens: &mut TokenStream2, _items: &Items) {
+		//tokens.append_tokens(|| {
+		// TODO: complete this, also for replies. (need to take unused
+		//       bytes, let items into account, and filter out metabyte)
+		//quote!(
+		//	impl #impl_generics cornflakes::DataSize for #name #type_generics #where_clause {
+		//		#[allow(clippy::unused_underscore_binding)]
+		//		fn data_size(&self) -> usize {
+		//			let mut data_size: usize = 4;
+		//			let Self #pat = self;
+		//
+		//			#inner
+		//
+		//			data_size
+		//		}
+		//	}
+		//)
+		//});
 	}
 }
 
