@@ -754,6 +754,7 @@ impl Definitions {
 				Definition::Enum(r#enum) => {
 					r#enum.serialize_tokens(tokens);
 					r#enum.deserialize_tokens(tokens);
+					r#enum.data_size_tokens(tokens);
 				}
 
 				Definition::Struct(r#struct) => {
@@ -762,18 +763,23 @@ impl Definitions {
 
 					match &r#struct.metadata {
 						StructMetadata::Request(request) => {
+							//request.data_size_tokens(tokens);
 							request.impl_request_tokens(tokens);
 						}
 
 						StructMetadata::Reply(reply) => {
+							//reply.data_size_tokens(tokens);
 							reply.impl_reply_tokens(tokens);
 						}
 
 						StructMetadata::Event(event) => {
+							//event.data_size_tokens(tokens);
 							event.impl_event_tokens(tokens);
 						}
 
-						_ => {}
+						StructMetadata::Struct(struct_metadata) => {
+							struct_metadata.data_size_tokens(tokens, &r#struct.items);
+						}
 					}
 				}
 			}
