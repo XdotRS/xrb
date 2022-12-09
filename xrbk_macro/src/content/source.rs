@@ -159,7 +159,7 @@ impl Arg {
 			// Parse the `length` identifier following `self::`.
 			let ident: Ident = input.parse()?;
 			// If the `ident` is not `length`, generate an error.
-			if ident.to_string() != "length" {
+			if ident != "length" {
 				return Err(Error::new(
 					ident.span(),
 					"only `self::length` syntax is allowed with `self::`",

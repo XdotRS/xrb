@@ -4,7 +4,7 @@
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
-use syn::token::Token;
+
 use syn::{parse_quote, Generics, TypeParamBound};
 
 use crate::{ts_ext::TsExt, *};
