@@ -98,7 +98,7 @@ impl ArrayContent {
 	pub fn parse(
 		input: ParseStream,
 		map: IdentMap,
-		mode: LengthMode,
+		mode: &LengthMode,
 		last_item: bool,
 	) -> Result<Self> {
 		Ok(if input.peek(Token![..]) {

@@ -105,7 +105,7 @@ impl ToTokens for Arg {
 // Parsing {{{
 
 impl Source {
-	fn parse(input: ParseStream, map: Option<IdentMap>, mode: LengthMode) -> Result<Self> {
+	fn parse(input: ParseStream, map: Option<IdentMap>, mode: &LengthMode) -> Result<Self> {
 		let fork = &input.fork();
 		let args = if let Some(map) = map {
 			Args::parse_mapped(fork, map, mode)
@@ -136,17 +136,17 @@ impl Source {
 		})
 	}
 
-	pub fn parse_mapped(input: ParseStream, map: IdentMap, mode: LengthMode) -> Result<Self> {
+	pub fn parse_mapped(input: ParseStream, map: IdentMap, mode: &LengthMode) -> Result<Self> {
 		Self::parse(input, Some(map), mode)
 	}
 
-	pub fn parse_unmapped(input: ParseStream, mode: LengthMode) -> Result<Self> {
+	pub fn parse_unmapped(input: ParseStream, mode: &LengthMode) -> Result<Self> {
 		Self::parse(input, None, mode)
 	}
 }
 
 impl Arg {
-	pub fn parse_mapped(input: ParseStream, map: IdentMap, mode: LengthMode) -> Result<Self> {
+	pub fn parse_mapped(input: ParseStream, map: IdentMap, mode: &LengthMode) -> Result<Self> {
 		Ok(if let LengthMode::Request | LengthMode::Reply = mode && input.peek(Token![self]) {
 			// If `self::length` syntax is allowed, and this `Arg` begins with
 			// `self`...
@@ -191,7 +191,7 @@ impl Arg {
 		})
 	}
 
-	pub fn parse_unmapped(input: ParseStream, mode: LengthMode) -> Result<Self> {
+	pub fn parse_unmapped(input: ParseStream, mode: &LengthMode) -> Result<Self> {
 		Ok(if let LengthMode::Request | LengthMode::Reply = mode && input.peek(Token![self]) {
 			let self_token: Token![self] = input.parse()?;
 			let double_colon_token: Token![::] = input.parse()?;
@@ -208,7 +208,7 @@ impl Arg {
 }
 
 impl Args {
-	fn parse(input: ParseStream, map: Option<IdentMap>, mode: LengthMode) -> Result<Self> {
+	fn parse(input: ParseStream, map: Option<IdentMap>, mode: &LengthMode) -> Result<Self> {
 		let mut args = Punctuated::new();
 
 		while input.peek(Ident) {
@@ -228,11 +228,11 @@ impl Args {
 		Ok(Self(args))
 	}
 
-	pub fn parse_mapped(input: ParseStream, map: IdentMap, mode: LengthMode) -> Result<Self> {
+	pub fn parse_mapped(input: ParseStream, map: IdentMap, mode: &LengthMode) -> Result<Self> {
 		Self::parse(input, Some(map), mode)
 	}
 
-	pub fn parse_unmapped(input: ParseStream, mode: LengthMode) -> Result<Self> {
+	pub fn parse_unmapped(input: ParseStream, mode: &LengthMode) -> Result<Self> {
 		Self::parse(input, None, mode)
 	}
 }

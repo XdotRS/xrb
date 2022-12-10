@@ -26,6 +26,30 @@ pub mod unused;
 
 mod iter;
 
+pub trait PsExt {
+	fn parse_with<T: ParseWithContext>(&self, context: T::Context) -> Result<T>;
+}
+
+impl<'a> PsExt for ParseStream<'a> {
+	fn parse_with<T: ParseWithContext>(&self, context: T::Context) -> Result<T> {
+		T::parse_with(self, context)
+	}
+}
+
+pub trait ParseWithContext {
+	type Context;
+
+	fn parse_with(input: ParseStream, context: Self::Context) -> Result<Self>
+	where
+		Self: Sized;
+}
+
+pub trait Expand {
+	fn serialize_tokens(&self, tokens: &mut TokenStream2);
+	fn deserialize_tokens(&self, tokens: &mut TokenStream2);
+	fn datasize_tokens(&self, tokens: &mut TokenStream2);
+}
+
 pub enum Items {
 	/// [`Item`]s surrounded by curly brackets (`{` and `}`), with names for
 	/// [`Field`]s.
@@ -252,7 +276,7 @@ impl Items {
 	pub(self) fn parse_items(
 		input: ParseStream,
 		named: bool,
-		mode: LengthMode,
+		mode: &LengthMode,
 	) -> Result<Punctuated<ItemWithId, Token![,]>> {
 		let mut unused_index: usize = 0;
 		let mut field_index: usize = 0;
@@ -503,7 +527,7 @@ impl Items {
 
 	/// Parse [`Items`] surrounded by curly brackets (`{` and `}`) and with
 	/// named [`Field`s`](Field).
-	pub fn parse_named(input: ParseStream, mode: LengthMode) -> Result<Self> {
+	pub fn parse_named(input: ParseStream, mode: &LengthMode) -> Result<Self> {
 		let content;
 
 		let brace_token = braced!(content in input);
@@ -514,7 +538,7 @@ impl Items {
 
 	/// Parse [`Items`] surrounded by normal brackets (`(` and `)`) and with
 	/// unnamed [`Field`s](Field).
-	pub fn parse_unnamed(input: ParseStream, mode: LengthMode) -> Result<Self> {
+	pub fn parse_unnamed(input: ParseStream, mode: &LengthMode) -> Result<Self> {
 		let content;
 
 		let paren_token = parenthesized!(content in input);
@@ -524,8 +548,10 @@ impl Items {
 	}
 }
 
-impl Items {
-	pub fn parse(input: ParseStream, mode: LengthMode) -> Result<Self> {
+impl ParseWithContext for Items {
+	type Context = LengthMode;
+
+	fn parse_with(input: ParseStream, mode: &LengthMode) -> Result<Self> {
 		if input.peek(token::Brace) {
 			// If the next token is a curly bracket (`{`), parse as named
 			// `Item`s.

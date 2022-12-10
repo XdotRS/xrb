@@ -6,6 +6,7 @@
 #![feature(let_chains)]
 
 mod content;
+mod def;
 mod definition;
 mod impls;
 mod ts_ext;
