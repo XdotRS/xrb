@@ -162,17 +162,17 @@ impl Unused {
 						ArrayContent::Infer { last_item, .. } => {
 							if *last_item && let Some(min_length) = min_length {
 								quote!(
-									let #name = if data_size < #min_length {
-										#min_length - data_size
+									let #name = if datasize < #min_length {
+										#min_length - datasize
 									} else {
-										(4 - (data_size % 4)) % 4
+										(4 - (datasize % 4)) % 4
 									};
 
 									writer.put_bytes(0u8, #name);
 								)
 							} else {
 								quote!(
-									let #name = (4 - (data_size % 4)) % 4;
+									let #name = (4 - (datasize % 4)) % 4;
 
 									writer.put_bytes(0u8, #name);
 								)
@@ -221,17 +221,17 @@ impl Unused {
 						ArrayContent::Infer { last_item, .. } => {
 							if *last_item && let Some(min_length) = min_length {
 								quote!(
-									let #name = if data_size < #min_length {
-										#min_length - data_size
+									let #name = if datasize < #min_length {
+										#min_length - datasize
 									} else {
-										(4 - (data_size % 4)) % 4
+										(4 - (datasize % 4)) % 4
 									};
 
 									reader.advance(#name);
 								)
 							} else {
 								quote!(
-									let #name = (4 - (data_size % 4)) % 4;
+									let #name = (4 - (datasize % 4)) % 4;
 
 									reader.advance(#name);
 								)

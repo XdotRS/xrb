@@ -67,25 +67,63 @@ impl Item {
 		}
 	}
 
-	pub fn datasize_tokens(&self, tokens: &mut TokenStream2, id: &ItemId) {
+	pub fn datasize_tokens(
+		&self,
+		tokens: &mut TokenStream2,
+		id: &ItemId,
+		min_length: Option<usize>,
+	) {
 		match self {
 			Self::Unused(Unused::Single { .. }) => {
 				if !self.is_metabyte() {
 					tokens.append_tokens(|| {
 						quote!(
-							data_size += 1;
+							datasize += 1;
 						)
 					});
 				}
 			}
 
-			Self::Unused(Unused::Array(_)) => {
+			Self::Unused(Unused::Array(array)) => {
 				let ident = id.formatted();
 
 				tokens.append_tokens(|| {
-					quote!(
-						data_size += #ident;
-					)
+					match &array.content {
+						ArrayContent::Source(source) => {
+							let args = TokenStream2::with_tokens(|tokens| {
+								source.args_to_tokens(tokens);
+							});
+							let formatted_args = TokenStream2::with_tokens(|tokens| {
+								source.formatted_args_to_tokens(tokens);
+							});
+
+							let expr = &source.expr;
+
+							quote!(
+								fn #ident(#args) -> usize {
+									#expr
+								}
+
+								datasize += #ident(#formatted_args);
+							)
+						}
+
+						ArrayContent::Infer { last_item, .. } => {
+							if *last_item && let Some(min_length) = min_length {
+								quote!(
+									datasize += if datasize < #min_length {
+										#min_length - datasize
+									} else {
+										(4 - (datasize % 4)) % 4
+									};
+								)
+							} else {
+								quote!(
+									datasize += (4 - (datasize % 4)) % 4;
+								)
+							}
+						}
+					}
 				});
 			}
 
@@ -95,7 +133,7 @@ impl Item {
 
 				tokens.append_tokens(|| {
 					quote!(
-						data_size += <#r#type as cornflakes::DataSize>::data_size(&#ident);
+						datasize += <#r#type as cornflakes::DataSize>::data_size(&#ident);
 					)
 				});
 			}
@@ -106,7 +144,7 @@ impl Item {
 
 				tokens.append_tokens(|| {
 					quote!(
-						data_size += <#r#type as cornflakes::DataSize>::data_size(&#ident);
+						datasize += <#r#type as cornflakes::DataSize>::data_size(&#ident);
 					)
 				});
 			}
