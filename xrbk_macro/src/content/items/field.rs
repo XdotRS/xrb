@@ -7,7 +7,13 @@ use quote::{quote, ToTokens};
 use syn::{Ident, Token, Type, Visibility};
 
 use crate::{
-	AttrContent, Attribute, Context, ItemDeserializeTokens, ItemId, ItemSerializeTokens, TsExt,
+	AttrContent,
+	Attribute,
+	Context,
+	ItemDeserializeTokens,
+	ItemId,
+	ItemSerializeTokens,
+	TsExt,
 };
 
 pub struct Field {
@@ -20,19 +26,13 @@ pub struct Field {
 
 impl Field {
 	/// Returns whether this field has a name.
-	pub const fn is_named(&self) -> bool {
-		self.ident.is_some() && self.colon_token.is_some()
-	}
+	pub const fn is_named(&self) -> bool { self.ident.is_some() && self.colon_token.is_some() }
 
 	/// Returns whether this field does not have a name.
-	pub const fn is_unnamed(&self) -> bool {
-		self.ident.is_none() && self.colon_token.is_none()
-	}
+	pub const fn is_unnamed(&self) -> bool { self.ident.is_none() && self.colon_token.is_none() }
 
 	/// Returns whether this field has a context attribute.
-	pub fn has_context(&self) -> bool {
-		self.attributes.iter().any(|attr| attr.is_context())
-	}
+	pub fn has_context(&self) -> bool { self.attributes.iter().any(|attr| attr.is_context()) }
 
 	/// Returns whether this field has a metabyte attribute.
 	pub fn is_metabyte(&self) -> bool {

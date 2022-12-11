@@ -4,17 +4,27 @@
 
 use std::collections::HashMap;
 
-use crate::content::LengthMode;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
 use syn::{
-	braced, bracketed, parenthesized, parse::ParseStream, spanned::Spanned, token, Error, Path,
-	Result, Token, Type,
+	braced,
+	bracketed,
+	parenthesized,
+	parse::ParseStream,
+	spanned::Spanned,
+	token,
+	Error,
+	Path,
+	Result,
+	Token,
+	Type,
 };
 
 use super::source::Source;
+use crate::content::LengthMode;
 
-/// An attribute, reimplemented to allow for [`Context`] and metabyte attributes.
+/// An attribute, reimplemented to allow for [`Context`] and metabyte
+/// attributes.
 pub struct Attribute {
 	/// A hash token: `#`.
 	pub hash_token: Token![#],
@@ -28,24 +38,16 @@ pub struct Attribute {
 
 impl Attribute {
 	/// Whether this is an [`AttrContent::Context`] attribute.
-	pub const fn is_context(&self) -> bool {
-		matches!(self.content, AttrContent::Context(..))
-	}
+	pub const fn is_context(&self) -> bool { matches!(self.content, AttrContent::Context(..)) }
 
 	/// Whether this is an [`AttrContent::Metabyte`] attribute.
-	pub const fn is_metabyte(&self) -> bool {
-		matches!(self.content, AttrContent::Metabyte(..))
-	}
+	pub const fn is_metabyte(&self) -> bool { matches!(self.content, AttrContent::Metabyte(..)) }
 
 	/// Whether this is an inner style attribute.
-	pub const fn is_inner(&self) -> bool {
-		self.style.is_some()
-	}
+	pub const fn is_inner(&self) -> bool { self.style.is_some() }
 
 	/// Whether this is an outer style attribute.
-	pub const fn is_outer(&self) -> bool {
-		self.style.is_none()
-	}
+	pub const fn is_outer(&self) -> bool { self.style.is_none() }
 }
 
 /// The content of an [`Attribute`] (what is between the square brackets).
@@ -120,9 +122,7 @@ impl ToTokens for Attribute {
 
 impl Attribute {
 	pub(self) fn parse(
-		input: ParseStream,
-		map: &HashMap<String, Type>,
-		mode: LengthMode,
+		input: ParseStream, map: &HashMap<String, Type>, mode: LengthMode,
 	) -> Result<Self> {
 		let content;
 
@@ -161,9 +161,7 @@ impl Attribute {
 	}
 
 	pub fn parse_outer(
-		input: ParseStream,
-		map: &HashMap<String, Type>,
-		mode: LengthMode,
+		input: ParseStream, map: &HashMap<String, Type>, mode: LengthMode,
 	) -> Result<Vec<Self>> {
 		let mut attributes = vec![];
 
@@ -186,9 +184,7 @@ impl Attribute {
 
 	#[allow(dead_code)]
 	pub fn parse_inner(
-		input: ParseStream,
-		map: &HashMap<String, Type>,
-		mode: LengthMode,
+		input: ParseStream, map: &HashMap<String, Type>, mode: LengthMode,
 	) -> Result<Vec<Self>> {
 		let mut attributes = vec![];
 

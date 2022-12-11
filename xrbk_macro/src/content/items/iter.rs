@@ -2,8 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use super::{Item, ItemWithId, Items};
 use syn::punctuated::{IntoIter as PuncIntoIter, Iter as PuncIter};
+
+use super::{Item, ItemWithId, Items};
 
 /// An iterator over borrowed values of type `(`[`ItemId`]`, `[`Item`]`)`.
 ///
@@ -77,39 +78,31 @@ impl Iterator for IntoIter {
 
 impl<'a> Pairs<'a> {
 	/// Creates a new borrowing iterator of [`Pairs`].
-	fn new(iter: Option<PuncIter<'a, ItemWithId>>) -> Self {
-		Self(iter)
-	}
+	fn new(iter: Option<PuncIter<'a, ItemWithId>>) -> Self { Self(iter) }
 }
 
 impl IntoPairs {
 	/// Creates a new owning iterator of [`Pairs`].
-	fn new(into_iter: Option<PuncIntoIter<ItemWithId>>) -> Self {
-		Self(into_iter)
-	}
+	fn new(into_iter: Option<PuncIntoIter<ItemWithId>>) -> Self { Self(into_iter) }
 }
 
 impl<'a> Iter<'a> {
 	/// Creates a new borrowing iterator of [`Item`]s.
 	///
 	/// [`Item`]: Item
-	fn new(iter: Option<PuncIter<'a, ItemWithId>>) -> Self {
-		Self(Pairs::new(iter))
-	}
+	fn new(iter: Option<PuncIter<'a, ItemWithId>>) -> Self { Self(Pairs::new(iter)) }
 }
 
 impl IntoIter {
 	/// Creates a new owning iterator of [`Item`]s.
 	///
 	/// [`Item`]: Item
-	fn new(into_iter: Option<PuncIntoIter<ItemWithId>>) -> Self {
-		Self(IntoPairs::new(into_iter))
-	}
+	fn new(into_iter: Option<PuncIntoIter<ItemWithId>>) -> Self { Self(IntoPairs::new(into_iter)) }
 }
 
 impl<'a> IntoIterator for &'a Items {
-	type Item = &'a Item;
 	type IntoIter = Iter<'a>;
+	type Item = &'a Item;
 
 	fn into_iter(self) -> Self::IntoIter {
 		// If `self` contains items, use those items' iterator.
@@ -122,8 +115,8 @@ impl<'a> IntoIterator for &'a Items {
 }
 
 impl IntoIterator for Items {
-	type Item = Item;
 	type IntoIter = IntoIter;
+	type Item = Item;
 
 	fn into_iter(self) -> Self::IntoIter {
 		// If `self` contains items, use those items' iterator.
@@ -139,11 +132,10 @@ impl Items {
 	/// Creates a borrowing iterator over values of type [`Item`].
 	///
 	/// [`Item`]: Item
-	pub fn iter(&self) -> Iter {
-		self.into_iter()
-	}
+	pub fn iter(&self) -> Iter { self.into_iter() }
 
-	/// Creates a borrowing iterator over values of type `(`[`ItemId`]`, `[`Item`]`)`.
+	/// Creates a borrowing iterator over values of type `(`[`ItemId`]`,
+	/// `[`Item`]`)`.
 	///
 	/// [`ItemId`]: super::ItemId
 	/// [`Item`]: Item
@@ -155,7 +147,8 @@ impl Items {
 		})
 	}
 
-	/// Creates an owning iterator over values of type `(`[`ItemId`]`, `[`Item`]`)`.
+	/// Creates an owning iterator over values of type `(`[`ItemId`]`,
+	/// `[`Item`]`)`.
 	///
 	/// [`ItemId`]: super::ItemId
 	/// [`Item`]: Item
