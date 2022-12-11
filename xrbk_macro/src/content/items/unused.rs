@@ -64,10 +64,14 @@ pub enum ArrayContent {
 
 impl Unused {
 	/// Returns whether this is the [`Unused::Single`] form.
-	pub const fn is_single(&self) -> bool { matches!(self, Self::Single { .. }) }
+	pub const fn is_single(&self) -> bool {
+		matches!(self, Self::Single { .. })
+	}
 
 	/// Returns whether this is the [`Unused::Array`] form.
-	pub const fn is_array(&self) -> bool { matches!(self, Self::Array { .. }) }
+	pub const fn is_array(&self) -> bool {
+		matches!(self, Self::Array { .. })
+	}
 
 	/// Returns the contained [`Source`] if this is [`Unused::Array`] with
 	/// content [`AttrContent::Source`].

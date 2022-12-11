@@ -38,16 +38,24 @@ pub struct Attribute {
 
 impl Attribute {
 	/// Whether this is an [`AttrContent::Context`] attribute.
-	pub const fn is_context(&self) -> bool { matches!(self.content, AttrContent::Context(..)) }
+	pub const fn is_context(&self) -> bool {
+		matches!(self.content, AttrContent::Context(..))
+	}
 
 	/// Whether this is an [`AttrContent::Metabyte`] attribute.
-	pub const fn is_metabyte(&self) -> bool { matches!(self.content, AttrContent::Metabyte(..)) }
+	pub const fn is_metabyte(&self) -> bool {
+		matches!(self.content, AttrContent::Metabyte(..))
+	}
 
 	/// Whether this is an inner style attribute.
-	pub const fn is_inner(&self) -> bool { self.style.is_some() }
+	pub const fn is_inner(&self) -> bool {
+		self.style.is_some()
+	}
 
 	/// Whether this is an outer style attribute.
-	pub const fn is_outer(&self) -> bool { self.style.is_none() }
+	pub const fn is_outer(&self) -> bool {
+		self.style.is_none()
+	}
 }
 
 /// The content of an [`Attribute`] (what is between the square brackets).

@@ -78,26 +78,34 @@ impl Iterator for IntoIter {
 
 impl<'a> Pairs<'a> {
 	/// Creates a new borrowing iterator of [`Pairs`].
-	fn new(iter: Option<PuncIter<'a, ItemWithId>>) -> Self { Self(iter) }
+	fn new(iter: Option<PuncIter<'a, ItemWithId>>) -> Self {
+		Self(iter)
+	}
 }
 
 impl IntoPairs {
 	/// Creates a new owning iterator of [`Pairs`].
-	fn new(into_iter: Option<PuncIntoIter<ItemWithId>>) -> Self { Self(into_iter) }
+	fn new(into_iter: Option<PuncIntoIter<ItemWithId>>) -> Self {
+		Self(into_iter)
+	}
 }
 
 impl<'a> Iter<'a> {
 	/// Creates a new borrowing iterator of [`Item`]s.
 	///
 	/// [`Item`]: Item
-	fn new(iter: Option<PuncIter<'a, ItemWithId>>) -> Self { Self(Pairs::new(iter)) }
+	fn new(iter: Option<PuncIter<'a, ItemWithId>>) -> Self {
+		Self(Pairs::new(iter))
+	}
 }
 
 impl IntoIter {
 	/// Creates a new owning iterator of [`Item`]s.
 	///
 	/// [`Item`]: Item
-	fn new(into_iter: Option<PuncIntoIter<ItemWithId>>) -> Self { Self(IntoPairs::new(into_iter)) }
+	fn new(into_iter: Option<PuncIntoIter<ItemWithId>>) -> Self {
+		Self(IntoPairs::new(into_iter))
+	}
 }
 
 impl<'a> IntoIterator for &'a Items {
@@ -132,7 +140,9 @@ impl Items {
 	/// Creates a borrowing iterator over values of type [`Item`].
 	///
 	/// [`Item`]: Item
-	pub fn iter(&self) -> Iter { self.into_iter() }
+	pub fn iter(&self) -> Iter {
+		self.into_iter()
+	}
 
 	/// Creates a borrowing iterator over values of type `(`[`ItemId`]`,
 	/// `[`Item`]`)`.
