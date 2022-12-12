@@ -6,7 +6,6 @@ use super::*;
 use crate::PsExt;
 use syn::{
 	parse::{discouraged::Speculative, Parse, ParseStream},
-	token,
 	Attribute,
 	Token,
 	Visibility,
@@ -170,33 +169,7 @@ impl ParseWithContext for Reply {
 	where
 		Self: Sized,
 	{
-		let content;
 		let (attributes, vis, struct_token, ident, generics, colon_token, reply_token) = context;
-
-		let paren_token = if input.peek(token::Paren) {
-			Some(parenthesized!(content in input))
-		} else {
-			None
-		};
-		let question_token = if paren_token.is_some() {
-			Some(content.parse()?)
-		} else {
-			None
-		};
-		let sequence_token = if paren_token.is_some() {
-			let sequence_token: Ident = content.parse()?;
-
-			if sequence_token != "sequence" {
-				return Err(Error::new(sequence_token.span(), "expected `sequence`"));
-			}
-
-			Some(sequence_token)
-		} else {
-			None
-		};
-
-		let for_token = input.parse()?;
-		let request = input.parse()?;
 
 		Ok(Self {
 			attributes,
@@ -206,11 +179,8 @@ impl ParseWithContext for Reply {
 			generics,
 			colon_token,
 			reply_token,
-			paren_token,
-			question_token,
-			sequence_token,
-			for_token,
-			request,
+			for_token: input.parse()?,
+			request: input.parse()?,
 		})
 	}
 }

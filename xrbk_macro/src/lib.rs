@@ -6,17 +6,16 @@
 #![feature(let_chains)]
 
 mod content;
-mod def;
+mod definition;
 mod impls;
 mod ts_ext;
 
 use proc_macro::TokenStream;
-use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
 use syn::parse_macro_input;
 
 pub(crate) use content::*;
-pub(crate) use def::*;
+pub(crate) use definition::*;
 pub(crate) use impls::*;
 pub(crate) use ts_ext::*;
 
@@ -24,10 +23,7 @@ pub(crate) use ts_ext::*;
 pub fn define(input: TokenStream) -> TokenStream {
 	let definitions = parse_macro_input!(input as Definitions);
 
-	let expanded = TokenStream2::with_tokens(|tokens| {
-		definitions.to_tokens(tokens);
-		definitions.impl_tokens(tokens);
-	});
+	let expanded = definitions.into_token_stream();
 
 	expanded.into()
 }

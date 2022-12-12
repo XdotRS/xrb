@@ -115,10 +115,6 @@ pub struct Reply {
 	/// Specifies that this is a reply: `Reply`.
 	pub reply_token: Ident,
 
-	pub paren_token: Option<token::Paren>,
-	pub question_token: Option<Token![?]>,
-	pub sequence_token: Option<Ident>,
-
 	/// A for token: `for`.
 	pub for_token: Token![for],
 	/// The type of request that generates this reply.
