@@ -4,17 +4,27 @@
 
 use std::collections::HashMap;
 
-use crate::content::LengthMode;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
 use syn::{
-	braced, bracketed, parenthesized, parse::ParseStream, spanned::Spanned, token, Error, Path,
-	Result, Token, Type,
+	braced,
+	bracketed,
+	parenthesized,
+	parse::ParseStream,
+	spanned::Spanned,
+	token,
+	Error,
+	Path,
+	Result,
+	Token,
+	Type,
 };
 
 use super::source::Source;
+use crate::content::LengthMode;
 
-/// An attribute, reimplemented to allow for [`Context`] and metabyte attributes.
+/// An attribute, reimplemented to allow for [`Context`] and metabyte
+/// attributes.
 pub struct Attribute {
 	/// A hash token: `#`.
 	pub hash_token: Token![#],

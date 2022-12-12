@@ -6,8 +6,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{parse::ParseStream, token, Result, Token};
 
-use crate::content::LengthMode;
-use crate::{Attribute, IdentMap, ItemId, Source, TsExt};
+use crate::{content::LengthMode, Attribute, IdentMap, ItemId, Source, TsExt};
 
 pub enum Unused {
 	/// One single unused byte.
@@ -28,7 +27,6 @@ pub enum Unused {
 
 	// There is no guarantee the number of unused bytes returned by the
 	// expression is `1`... so don't allow metabyte.
-	//
 	/// A syntax that allows the number of unused bytes read or written to be
 	/// determined by a [`Source`].
 	Array(Box<Array>),
@@ -85,7 +83,7 @@ impl Unused {
 				} else {
 					None
 				}
-			}
+			},
 
 			Self::Single { .. } => None,
 		}
@@ -118,10 +116,7 @@ impl ArrayContent {
 
 impl Unused {
 	pub(crate) fn serialize_tokens(
-		&self,
-		tokens: &mut TokenStream2,
-		id: &ItemId,
-		min_length: Option<usize>,
+		&self, tokens: &mut TokenStream2, id: &ItemId, min_length: Option<usize>,
 	) {
 		tokens.append_tokens(|| {
 			match self {
@@ -130,7 +125,7 @@ impl Unused {
 					quote!(
 						writer.put_u8(0);
 					)
-				}
+				},
 
 				Self::Array(array) => {
 					let name = id.formatted();
@@ -179,7 +174,7 @@ impl Unused {
 							}
 						}
 					}
-				}
+				},
 			}
 		});
 	}
@@ -187,10 +182,7 @@ impl Unused {
 
 impl Unused {
 	pub fn deserialize_tokens(
-		&self,
-		tokens: &mut TokenStream2,
-		id: &ItemId,
-		min_length: Option<usize>,
+		&self, tokens: &mut TokenStream2, id: &ItemId, min_length: Option<usize>,
 	) {
 		tokens.append_tokens(|| {
 			match self {
@@ -238,12 +230,12 @@ impl Unused {
 							}
 						}
 					}
-				}
+				},
 
 				Self::Single { .. } => {
 					// reader.advance(1);
 					quote!(reader.advance(1);)
-				}
+				},
 			}
 		});
 	}

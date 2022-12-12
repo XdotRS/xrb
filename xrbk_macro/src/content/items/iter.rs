@@ -2,8 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use super::{Item, ItemWithId, Items};
 use syn::punctuated::{IntoIter as PuncIntoIter, Iter as PuncIter};
+
+use super::{Item, ItemWithId, Items};
 
 /// An iterator over borrowed values of type `(`[`ItemId`]`, `[`Item`]`)`.
 ///
@@ -108,8 +109,8 @@ impl IntoIter {
 }
 
 impl<'a> IntoIterator for &'a Items {
-	type Item = &'a Item;
 	type IntoIter = Iter<'a>;
+	type Item = &'a Item;
 
 	fn into_iter(self) -> Self::IntoIter {
 		// If `self` contains items, use those items' iterator.
@@ -122,8 +123,8 @@ impl<'a> IntoIterator for &'a Items {
 }
 
 impl IntoIterator for Items {
-	type Item = Item;
 	type IntoIter = IntoIter;
+	type Item = Item;
 
 	fn into_iter(self) -> Self::IntoIter {
 		// If `self` contains items, use those items' iterator.
@@ -143,7 +144,8 @@ impl Items {
 		self.into_iter()
 	}
 
-	/// Creates a borrowing iterator over values of type `(`[`ItemId`]`, `[`Item`]`)`.
+	/// Creates a borrowing iterator over values of type `(`[`ItemId`]`,
+	/// `[`Item`]`)`.
 	///
 	/// [`ItemId`]: super::ItemId
 	/// [`Item`]: Item
@@ -155,7 +157,8 @@ impl Items {
 		})
 	}
 
-	/// Creates an owning iterator over values of type `(`[`ItemId`]`, `[`Item`]`)`.
+	/// Creates an owning iterator over values of type `(`[`ItemId`]`,
+	/// `[`Item`]`)`.
 	///
 	/// [`ItemId`]: super::ItemId
 	/// [`Item`]: Item
