@@ -9,6 +9,18 @@ use syn::{
 	token, Attribute, Token, Visibility,
 };
 
+impl Parse for Definitions {
+	fn parse(input: ParseStream) -> Result<Self> {
+		let mut definitions = Vec::new();
+
+		while !input.is_empty() {
+			definitions.push(input.parse()?);
+		}
+
+		Ok(Self(definitions))
+	}
+}
+
 impl Parse for Definition {
 	fn parse(input: ParseStream) -> Result<Self> {
 		let fork = &input.fork();

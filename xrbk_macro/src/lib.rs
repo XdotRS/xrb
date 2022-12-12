@@ -7,7 +7,6 @@
 
 mod content;
 mod def;
-mod definition;
 mod impls;
 mod ts_ext;
 
@@ -18,6 +17,10 @@ use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
 use syn::parse_macro_input;
+
+pub(crate) use content::*;
+pub(crate) use def::*;
+pub(crate) use impls::*;
 pub(crate) use ts_ext::*;
 
 #[proc_macro]
