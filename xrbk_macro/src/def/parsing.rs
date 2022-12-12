@@ -6,7 +6,10 @@ use super::*;
 use crate::PsExt;
 use syn::{
 	parse::{discouraged::Speculative, Parse, ParseStream},
-	token, Attribute, Token, Visibility,
+	token,
+	Attribute,
+	Token,
+	Visibility,
 };
 
 impl Parse for Definitions {
@@ -110,7 +113,7 @@ impl ParseWithContext for Metadata {
 						message_token.span(),
 						"expected `Request`, `Reply`, or `Event` message type",
 					))
-				}
+				},
 			}
 		})
 	}

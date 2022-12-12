@@ -6,14 +6,23 @@ mod expansion;
 mod parsing;
 
 use syn::{
-	braced, parenthesized, token, Attribute, Error, Expr, Generics, Ident, Result, Token, Type,
+	braced,
+	parenthesized,
+	token,
+	Attribute,
+	Error,
+	Expr,
+	Generics,
+	Ident,
+	Result,
+	Token,
+	Type,
 	Visibility,
 };
 
 use syn::punctuated::Punctuated;
 
-use crate::content::ParseWithContext;
-use crate::Items;
+use crate::{content::ParseWithContext, Items};
 
 pub struct Definitions(Vec<Definition>);
 
@@ -36,6 +45,7 @@ pub enum Metadata {
 pub struct Struct {
 	/// Attributes associated with the struct, including doc comments.
 	pub attributes: Vec<Attribute>,
+
 	/// The visibility of the struct.
 	pub vis: Visibility,
 	/// The struct token: `struct`.
@@ -138,17 +148,21 @@ pub struct Event {
 
 pub struct Enum {
 	pub attributes: Vec<Attribute>,
+
 	pub vis: Visibility,
 	pub enum_token: Token![enum],
 	pub ident: Ident,
 	pub generics: Generics,
+
 	pub brace_token: token::Brace,
 	pub variants: Punctuated<Variant, Token![,]>,
 }
 
 pub struct Variant {
 	pub attributes: Vec<Attribute>,
+
 	pub ident: Ident,
 	pub items: Items,
+
 	pub discriminant: Option<(Token![=], Expr)>,
 }

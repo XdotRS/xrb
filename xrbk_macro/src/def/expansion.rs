@@ -25,7 +25,7 @@ impl ToTokens for Definition {
 				metadata.to_tokens(tokens);
 				items.to_tokens(tokens);
 				semicolon.to_tokens(tokens);
-			}
+			},
 
 			Self::Enum(r#enum) => r#enum.to_tokens(tokens),
 

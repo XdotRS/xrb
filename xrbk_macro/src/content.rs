@@ -2,14 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-pub use attributes::*;
-pub use field::*;
-pub use items::*;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
-pub use r#let::*;
+
+pub use attributes::*;
 pub use source::*;
-pub use unused::*;
+
+pub use items::{field::*, r#let::*, unused::*, *};
 
 use crate::{ItemDeserializeTokens, ItemSerializeTokens, TsExt};
 

@@ -130,9 +130,7 @@ impl ToTokens for Attribute {
 
 impl Attribute {
 	pub(self) fn parse(
-		input: ParseStream,
-		map: &HashMap<String, Type>,
-		mode: &LengthMode,
+		input: ParseStream, map: &HashMap<String, Type>, mode: &LengthMode,
 	) -> Result<Self> {
 		let content;
 
@@ -171,9 +169,7 @@ impl Attribute {
 	}
 
 	pub fn parse_outer(
-		input: ParseStream,
-		map: &HashMap<String, Type>,
-		mode: &LengthMode,
+		input: ParseStream, map: &HashMap<String, Type>, mode: &LengthMode,
 	) -> Result<Vec<Self>> {
 		let mut attributes = vec![];
 
@@ -196,9 +192,7 @@ impl Attribute {
 
 	#[allow(dead_code)]
 	pub fn parse_inner(
-		input: ParseStream,
-		map: &HashMap<String, Type>,
-		mode: &LengthMode,
+		input: ParseStream, map: &HashMap<String, Type>, mode: &LengthMode,
 	) -> Result<Vec<Self>> {
 		let mut attributes = vec![];
 

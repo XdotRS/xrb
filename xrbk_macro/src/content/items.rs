@@ -279,9 +279,7 @@ impl Items {
 
 impl Items {
 	pub(self) fn parse_items(
-		input: ParseStream,
-		named: bool,
-		mode: &LengthMode,
+		input: ParseStream, named: bool, mode: &LengthMode,
 	) -> Result<Punctuated<ItemWithId, Token![,]>> {
 		let mut unused_index: usize = 0;
 		let mut field_index: usize = 0;
@@ -534,7 +532,7 @@ impl Items {
 
 	/// Parse [`Items`] surrounded by curly brackets (`{` and `}`) and with
 	/// named [`Field`s`](Field).
-	pub fn parse_named(input: ParseStream, mode: &LengthMode) -> Result<Self> {
+	pub fn parse_named(input: ParseStream, mode: LengthMode) -> Result<Self> {
 		let content;
 
 		let brace_token = braced!(content in input);
@@ -556,9 +554,9 @@ impl Items {
 }
 
 impl ParseWithContext for Items {
-	type Context = LengthMode;
+	type Context = Option<&Metadata>;
 
-	fn parse_with(input: ParseStream, mode: &LengthMode) -> Result<Self> {
+	fn parse_with(input: ParseStream, metadata: Option<Metadata>) -> Result<Self> {
 		if input.peek(token::Brace) {
 			// If the next token is a curly bracket (`{`), parse as named
 			// `Item`s.
