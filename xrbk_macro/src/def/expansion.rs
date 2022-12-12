@@ -25,6 +25,14 @@ impl ToTokens for Definition {
 				metadata.to_tokens(tokens);
 				items.to_tokens(tokens);
 				semicolon.to_tokens(tokens);
+
+				match metadata {
+					Metadata::Request(request) => request.impl_trait(tokens),
+					Metadata::Reply(reply) => reply.impl_trait(tokens),
+					Metadata::Event(event) => event.impl_trait(tokens),
+
+					_ => (),
+				}
 			},
 
 			Self::Enum(r#enum) => r#enum.to_tokens(tokens),
@@ -52,6 +60,7 @@ impl ToTokens for Metadata {
 				request.ident,
 				request.generics,
 			),
+
 			Self::Reply(reply) => (
 				reply.attributes,
 				reply.vis,
@@ -59,6 +68,7 @@ impl ToTokens for Metadata {
 				reply.ident,
 				reply.generics,
 			),
+
 			Self::Event(event) => (
 				event.attributes,
 				event.vis,
