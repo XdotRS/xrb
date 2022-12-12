@@ -26,13 +26,18 @@ use crate::{content::ParseWithContext, Items};
 
 pub struct Definitions(Vec<Definition>);
 
+/// A definition within the `define!` macro.
 pub enum Definition {
 	Structlike(Metadata, Items, Option<Token![;]>),
 	Enum(Enum),
 
+	/// Any other item allowed in Rust that isn't a struct nor an enum.
 	Other(syn::Item),
 }
 
+/// Metadata associated with a [`Structlike` `Definition`].
+///
+/// [`Structlike` `Definition`]: Definition::Structlike
 pub enum Metadata {
 	Struct(Box<Struct>),
 
@@ -146,23 +151,36 @@ pub struct Event {
 	pub code: Expr,
 }
 
+/// An enum definition that contains [`Variant`]s which may contain [`Items`].
 pub struct Enum {
+	/// Attributes associated with the enum.
 	pub attributes: Vec<Attribute>,
 
+	/// The visibility of the enum.
 	pub vis: Visibility,
+	/// The enum token: `enum`.
 	pub enum_token: Token![enum],
+	/// The name of the enum.
 	pub ident: Ident,
+	/// Generics (lifetimes and/or generic types) associated with the enum.
 	pub generics: Generics,
 
+	/// A pair of curly brackets (`{` and `}`) surrounding the enum `variants`.
 	pub brace_token: token::Brace,
+	/// A list of the enum's [`Variant`]s, punctuated by commas.
 	pub variants: Punctuated<Variant, Token![,]>,
 }
 
+/// An [`Enum`] variant that may contain [`Items`].
 pub struct Variant {
+	/// Attributes associated with the enum variant.
 	pub attributes: Vec<Attribute>,
 
+	/// The name of the enum variant.
 	pub ident: Ident,
+	/// [`Items`] associated with the enum variant.
 	pub items: Items,
 
+	/// An optional discriminant expression for the enum variant.
 	pub discriminant: Option<(Token![=], Expr)>,
 }
