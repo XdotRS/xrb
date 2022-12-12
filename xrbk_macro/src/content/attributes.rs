@@ -47,6 +47,11 @@ impl Attribute {
 		matches!(self.content, AttrContent::Metabyte(..))
 	}
 
+	/// Whether this is an [`AttrContent::Sequence`] attribute.
+	pub const fn is_sequence(&self) -> bool {
+		matches!(self.content, AttrContent::Sequence(..))
+	}
+
 	/// Whether this is an inner style attribute.
 	pub const fn is_inner(&self) -> bool {
 		self.style.is_some()
@@ -62,6 +67,7 @@ impl Attribute {
 pub enum AttrContent {
 	Context(Path, Box<Context>),
 	Metabyte(Path),
+	Sequence(Path),
 
 	Other(Path, TokenStream2),
 }
@@ -69,37 +75,20 @@ pub enum AttrContent {
 /// An attribute that provides context for the deserialization of an `Item`.
 pub enum Context {
 	/// ```ignore
-	/// #[context = data_len => data_len]
+	/// #[context = data_len => *data_len as usize]
 	/// ```
 	Equals(Token![=], Source),
 	/// ```ignore
-	/// #[context: data_len => data_len]
-	/// ```
-	Colon(Token![:], Source),
-	/// ```ignore
-	/// #[context(data_len => data_len)]
+	/// #[context(data_len => *data_len as usize)]
 	/// ```
 	Paren(token::Paren, Source),
-	/// ```ignore
-	/// #[context[data_len => data_len]]
-	/// ```
-	Bracket(token::Bracket, Source),
-	/// ```ignore
-	/// #[context {
-	///     data_len => data_len
-	/// }]
-	/// ```
-	Brace(token::Brace, Source),
 }
 
 impl Context {
 	pub fn source(&self) -> &Source {
 		match self {
 			Self::Equals(_, source) => source,
-			Self::Colon(_, source) => source,
 			Self::Paren(_, source) => source,
-			Self::Bracket(_, source) => source,
-			Self::Brace(_, source) => source,
 		}
 	}
 }
@@ -222,6 +211,8 @@ impl AttrContent {
 			Self::Context(path, Box::new(Context::parse(input, map, mode)?))
 		} else if path.is_ident("metabyte") {
 			Self::Metabyte(path)
+		} else if path.is_ident("sequence") {
+			Self::Sequence(path)
 		} else {
 			Self::Other(path, input.parse()?)
 		})
@@ -252,28 +243,10 @@ impl Context {
 				input.parse()?,
 				Source::parse_mapped(input, map, mode)?,
 			))
-		} else if look.peek(Token![:]) {
-			// Colon context (`:`)
-			Ok(Self::Colon(
-				input.parse()?,
-				Source::parse_mapped(input, map, mode)?,
-			))
 		} else if look.peek(token::Paren) {
 			// Normal bracket context (`(...)`)
 			Ok(Self::Paren(
 				parenthesized!(content in input),
-				Source::parse_mapped(&content, map, mode)?,
-			))
-		} else if look.peek(token::Bracket) {
-			// Square bracket context (`[...]`)
-			Ok(Self::Bracket(
-				bracketed!(content in input),
-				Source::parse_mapped(&content, map, mode)?,
-			))
-		} else if look.peek(token::Brace) {
-			// Curly bracket context (`{...}`)
-			Ok(Self::Brace(
-				braced!(content in input),
 				Source::parse_mapped(&content, map, mode)?,
 			))
 		} else {

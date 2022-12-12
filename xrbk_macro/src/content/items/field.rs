@@ -37,7 +37,16 @@ impl Field {
 
 	/// Returns whether this field has a context attribute.
 	pub fn has_context(&self) -> bool {
-		self.attributes.iter().any(|attr| attr.is_context())
+		self.attributes
+			.iter()
+			.any(|attribute| attribute.is_context())
+	}
+
+	/// Returns whether this field has a sequence attribute.
+	pub fn is_sequence(&self) -> bool {
+		self.attributes
+			.iter()
+			.any(|attribute| attribute.is_sequence())
 	}
 
 	/// Returns whether this field has a metabyte attribute.
@@ -48,10 +57,9 @@ impl Field {
 	}
 
 	/// Gets the context of this field if it has a context attribute.
-	#[allow(clippy::borrowed_box)]
-	pub fn context(&self) -> Option<&Box<Context>> {
+	pub fn context(&self) -> Option<&Context> {
 		self.attributes.iter().find_map(|attr| match &attr.content {
-			AttrContent::Context(_, context) => Some(context),
+			AttrContent::Context(_, context) => Some(&**context),
 			_ => None,
 		})
 	}
@@ -61,8 +69,7 @@ impl Field {
 
 impl ToTokens for Field {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
-		// Convert every attribute (other than context attributes) on this field
-		// to tokens.
+		// Convert every normal attribute on this field to tokens.
 		for attribute in &self.attributes {
 			attribute.to_tokens(tokens);
 		}

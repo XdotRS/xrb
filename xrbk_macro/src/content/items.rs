@@ -338,11 +338,12 @@ impl Items {
 				} else {
 					// Array.
 
-					// Find a metabyte or context attribute, if one exists...
+					// Find a metabyte, context, or sequence attribute, if one exists...
 					let bad_attr = attributes.iter().find(|Attribute { content, .. }| {
 						matches!(
 							content,
-							AttrContent::Metabyte(..) | AttrContent::Context(..)
+							AttrContent::Metabyte(..)
+								| AttrContent::Context(..) | AttrContent::Sequence(..)
 						)
 					});
 					// ...if one does exist, generate an error.
@@ -380,16 +381,19 @@ impl Items {
 			} else if input.peek(Token![let]) {
 				// Let item.
 
-				// Find a context attribute, if one exists...
-				let bad_attr = attributes
-					.iter()
-					.find(|Attribute { content, .. }| matches!(content, AttrContent::Context(..)));
+				// Find a context or sequence attribute, if one exists...
+				let bad_attr = attributes.iter().find(|Attribute { content, .. }| {
+					matches!(
+						content,
+						AttrContent::Context(..) | AttrContent::Sequence(..)
+					)
+				});
 				// ...if one does exist, generate an error.
 				if let Some(bad_attr) = bad_attr {
 					return Err(Error::new(
 						bad_attr.span(),
-						// TODO: why not?
-						"context attributes are not allowed for let items",
+						// TODO: why not context attributes?
+						"only metabyte attributes and normal attributes are allowed for let items",
 					));
 				}
 
