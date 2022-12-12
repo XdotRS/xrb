@@ -5,8 +5,10 @@
 #![feature(anonymous_lifetime_in_impl_trait)]
 #![feature(let_chains)]
 
+mod attribute;
 mod content;
 mod definition;
+mod element;
 mod impls;
 mod ts_ext;
 
@@ -14,8 +16,10 @@ use proc_macro::TokenStream;
 use quote::ToTokens;
 use syn::parse_macro_input;
 
+pub(crate) use attribute::*;
 pub(crate) use content::*;
 pub(crate) use definition::*;
+pub(crate) use element::*;
 pub(crate) use impls::*;
 pub(crate) use ts_ext::*;
 

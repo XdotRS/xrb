@@ -4,6 +4,7 @@
 
 use std::collections::HashMap;
 
+use crate::content::ParseWithContext;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
 use syn::{
@@ -108,7 +109,9 @@ impl ToTokens for Arg {
 
 // Parsing {{{
 
-impl Source {
+impl ParseWithContext for Source {
+	type Context = (Option<IdentMap>, LengthMode);
+
 	fn parse(input: ParseStream, map: Option<IdentMap>, mode: &LengthMode) -> Result<Self> {
 		let fork = &input.fork();
 		let args = if let Some(map) = map {

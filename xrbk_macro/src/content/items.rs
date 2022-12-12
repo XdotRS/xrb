@@ -12,7 +12,7 @@ use syn::{
 	braced,
 	bracketed,
 	parenthesized,
-	parse::{ParseStream, Result},
+	parse::{ParseBuffer, ParseStream, Result},
 	punctuated::{Pair, Punctuated},
 	spanned::Spanned,
 	token,
@@ -33,6 +33,12 @@ mod iter;
 
 pub trait PsExt {
 	fn parse_with<T: ParseWithContext>(&self, context: T::Context) -> Result<T>;
+}
+
+impl<'a> PsExt for ParseBuffer<'a> {
+	fn parse_with<T: ParseWithContext>(&self, context: T::Context) -> Result<T> {
+		T::parse_with(self, context)
+	}
 }
 
 impl<'a> PsExt for ParseStream<'a> {
