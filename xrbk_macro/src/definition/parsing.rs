@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use super::*;
-use crate::PsExt;
+use crate::{ParseWithContext, PsExt};
 use syn::{
 	parse::{discouraged::Speculative, Parse, ParseStream},
 	Attribute,
@@ -54,7 +54,7 @@ impl Parse for Definition {
 impl ParseWithContext for Metadata {
 	type Context = (Vec<Attribute>, Visibility);
 
-	fn parse_with(input: ParseStream, context: Self::Context) -> Result<Self>
+	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
 	where
 		Self: Sized,
 	{
@@ -67,7 +67,7 @@ impl ParseWithContext for Metadata {
 		Ok(if !input.peek(Token![:]) {
 			Self::Struct(Box::new(Struct {
 				attributes,
-				vis,
+				visibility: vis,
 				struct_token,
 				ident,
 				generics,
@@ -131,16 +131,17 @@ type MetadataContext = (
 impl ParseWithContext for Request {
 	type Context = MetadataContext;
 
-	fn parse_with(input: ParseStream, context: Self::Context) -> Result<Self>
+	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
 	where
 		Self: Sized,
 	{
 		let content;
-		let (attributes, vis, struct_token, ident, generics, colon_token, request_token) = context;
+		let (attributes, visibility, struct_token, ident, generics, colon_token, request_token) =
+			context;
 
 		Ok(Self {
 			attributes,
-			vis,
+			visibility,
 			struct_token,
 			ident,
 			generics,
@@ -165,15 +166,16 @@ impl ParseWithContext for Request {
 impl ParseWithContext for Reply {
 	type Context = MetadataContext;
 
-	fn parse_with(input: ParseStream, context: Self::Context) -> Result<Self>
+	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
 	where
 		Self: Sized,
 	{
-		let (attributes, vis, struct_token, ident, generics, colon_token, reply_token) = context;
+		let (attributes, visibility, struct_token, ident, generics, colon_token, reply_token) =
+			context;
 
 		Ok(Self {
 			attributes,
-			vis,
+			visibility,
 			struct_token,
 			ident,
 			generics,
@@ -188,16 +190,17 @@ impl ParseWithContext for Reply {
 impl ParseWithContext for Event {
 	type Context = MetadataContext;
 
-	fn parse_with(input: ParseStream, context: Self::Context) -> Result<Self>
+	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
 	where
 		Self: Sized,
 	{
 		let content;
-		let (attributes, vis, struct_token, ident, generics, colon_token, event_token) = context;
+		let (attributes, visibility, struct_token, ident, generics, colon_token, event_token) =
+			context;
 
 		Ok(Self {
 			attributes,
-			vis,
+			visibility,
 			struct_token,
 			ident,
 			generics,
@@ -212,16 +215,16 @@ impl ParseWithContext for Event {
 impl ParseWithContext for Enum {
 	type Context = (Vec<Attribute>, Visibility);
 
-	fn parse_with(input: ParseStream, context: Self::Context) -> Result<Self>
+	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
 	where
 		Self: Sized,
 	{
 		let content;
-		let (attributes, vis) = context;
+		let (attributes, visibility) = context;
 
 		Ok(Self {
 			attributes,
-			vis,
+			visibility,
 			enum_token: input.parse()?,
 			ident: input.parse()?,
 			generics: input.parse()?,

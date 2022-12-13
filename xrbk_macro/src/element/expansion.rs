@@ -7,6 +7,32 @@ use quote::ToTokens;
 
 use super::*;
 
+impl ToTokens for Elements {
+	fn to_tokens(&self, tokens: &mut TokenStream) {
+		match self {
+			Self::Struct {
+				brace_token,
+				elements,
+			} => {
+				brace_token.surround(tokens, |tokens| {
+					elements.to_tokens(tokens);
+				});
+			},
+
+			Self::Tuple {
+				paren_token,
+				elements,
+			} => {
+				paren_token.surround(tokens, |tokens| {
+					elements.to_tokens(tokens);
+				});
+			},
+
+			Self::Unit => {},
+		}
+	}
+}
+
 impl ToTokens for Element {
 	fn to_tokens(&self, tokens: &mut TokenStream) {
 		if let Element::Field(field) = self {
@@ -21,7 +47,7 @@ impl ToTokens for Field {
 			attribute.to_tokens(tokens);
 		}
 
-		self.vis.to_tokens(tokens);
+		self.visibility.to_tokens(tokens);
 
 		self.ident.map(|(ident, colon)| {
 			ident.to_tokens(tokens);

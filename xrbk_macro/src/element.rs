@@ -5,12 +5,26 @@
 mod expansion;
 mod parsing;
 
-use syn::{token, Attribute, Ident, Token, Type, Visibility};
+use syn::{punctuated::Punctuated, token, Attribute, Ident, Token, Type, Visibility};
 
 use crate::{
 	attribute::{ContextAttribute, MetabyteAttribute, SequenceAttribute},
-	Source,
+	source::Source,
 };
+
+pub enum Elements {
+	Struct {
+		brace_token: token::Brace,
+		elements: Punctuated<Element, Token![,]>,
+	},
+
+	Tuple {
+		paren_token: token::Paren,
+		elements: Punctuated<Element, Token![,]>,
+	},
+
+	Unit,
+}
 
 pub enum Element {
 	Field(Box<Field>),
@@ -27,7 +41,7 @@ pub struct Field {
 	pub metabyte_attribute: Option<MetabyteAttribute>,
 	pub sequence_attribute: Option<SequenceAttribute>,
 
-	pub vis: Visibility,
+	pub visibility: Visibility,
 	pub ident: Option<(Ident, Token![:])>,
 	pub r#type: Type,
 }

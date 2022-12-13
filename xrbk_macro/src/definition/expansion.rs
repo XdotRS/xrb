@@ -47,7 +47,7 @@ impl ToTokens for Metadata {
 		let (attributes, vis, struct_token, ident, generics) = match self {
 			Self::Struct(r#struct) => (
 				r#struct.attributes,
-				r#struct.vis,
+				r#struct.visibility,
 				r#struct.struct_token,
 				r#struct.ident,
 				r#struct.generics,
@@ -55,7 +55,7 @@ impl ToTokens for Metadata {
 
 			Self::Request(request) => (
 				request.attributes,
-				request.vis,
+				request.visibility,
 				request.struct_token,
 				request.ident,
 				request.generics,
@@ -63,7 +63,7 @@ impl ToTokens for Metadata {
 
 			Self::Reply(reply) => (
 				reply.attributes,
-				reply.vis,
+				reply.visibility,
 				reply.struct_token,
 				reply.ident,
 				reply.generics,
@@ -71,7 +71,7 @@ impl ToTokens for Metadata {
 
 			Self::Event(event) => (
 				event.attributes,
-				event.vis,
+				event.visibility,
 				event.struct_token,
 				event.ident,
 				event.generics,
@@ -95,7 +95,7 @@ impl ToTokens for Enum {
 			attribute.to_tokens(tokens);
 		}
 
-		self.vis.to_tokens(tokens);
+		self.visibility.to_tokens(tokens);
 		self.enum_token.to_tokens(tokens);
 		self.ident.to_tokens(tokens);
 		self.generics.to_tokens(tokens);

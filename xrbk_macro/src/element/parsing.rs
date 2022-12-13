@@ -2,20 +2,57 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use syn::{bracketed, parse::ParseStream, spanned::Spanned, Error, Result};
+use std::collections::HashMap;
+use syn::{
+	braced,
+	bracketed,
+	parenthesized,
+	parse::{Parse, ParseStream},
+	spanned::Spanned,
+	Error,
+	Result,
+};
 
 use super::*;
-use crate::{attribute::parsing::ParsedAttributes, ParseWithContext, PsExt};
+use crate::{attribute::parsing::ParsedAttributes, source::Source, ParseWithContext, PsExt};
 
 pub enum ElementType {
 	Named,
 	Unnamed,
 }
 
-impl ParseWithContext for Element {
-	type Context = (ElementType, <Source as ParseWithContext>::Context);
+impl ParseWithContext for Elements {
+	type Context = bool;
 
-	fn parse_with(input: ParseStream, context: Self::Context) -> Result<Self> {
+	fn parse_with(input: ParseStream, length_allowed: bool) -> Result<Self> {
+		let mut map = HashMap::new();
+
+		let context = (Some(&mut map), length_allowed);
+
+		Ok(if input.peek(token::Brace) {
+			let content;
+
+			Self::Struct {
+				brace_token: braced!(content in input),
+				elements: content.parse_terminated_with(|| (ElementType::Named, context))?,
+			}
+		} else if input.peek(token::Paren) {
+			let content;
+
+			Self::Tuple {
+				paren_token: parenthesized!(content in input),
+				elements: content.parse_terminated_with(|| (ElementType::Unnamed, context))?,
+			}
+		} else {
+			Self::Unit
+		})
+	}
+}
+
+impl<'a> ParseWithContext for Element {
+	type Context = (ElementType, Source::Context<'a>);
+
+	fn parse_with(input: ParseStream, context: Self::Context<'a>) -> Result<Self> {
 		let (element_type, context) = context;
 		let parsed_attributes = crate::attribute::parsing::parse_attributes(input, context)?;
 
@@ -24,7 +61,11 @@ impl ParseWithContext for Element {
 		} else if input.peek(token::Bracket) {
 			Self::ArrayUnused(Box::new(input.parse_with((parsed_attributes, context))?))
 		} else if input.peek(Token![let]) {
-			Self::Let(Box::new(input.parse_with((parsed_attributes, context))?))
+			let (_, length_allowed) = context;
+
+			Self::Let(Box::new(
+				input.parse_with((parsed_attributes, length_allowed))?,
+			))
 		} else {
 			Self::Field(Box::new(
 				input.parse_with((element_type, parsed_attributes))?,
@@ -36,7 +77,7 @@ impl ParseWithContext for Element {
 impl ParseWithContext for SingleUnused {
 	type Context = ParsedAttributes;
 
-	fn parse_with(input: ParseStream, context: Self::Context) -> Result<Self> {
+	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self> {
 		let ParsedAttributes {
 			attributes,
 
@@ -52,16 +93,16 @@ impl ParseWithContext for SingleUnused {
 			));
 		}
 
-		if let Some(context_attribute) = context_attribute {
+		if let Some(attribute) = context_attribute {
 			return Err(Error::new(
-				context_attribute.span(),
+				attribute.span(),
 				"context attributes are not allowed for singular unused bytes elements",
 			));
 		}
 
-		if let Some(sequence_attribute) = sequence_attribute {
+		if let Some(attribute) = sequence_attribute {
 			return Err(Error::new(
-				sequence_attribute.span(),
+				attribute.span(),
 				"sequence attributes are not allowed for singular unused bytes elements",
 			));
 		}
@@ -73,10 +114,10 @@ impl ParseWithContext for SingleUnused {
 	}
 }
 
-impl ParseWithContext for ArrayUnused {
-	type Context = (ParsedAttributes, <Source as ParseWithContext>::Context);
+impl<'a> ParseWithContext for ArrayUnused {
+	type Context = (ParsedAttributes, Source::Context<'a>);
 
-	fn parse_with(input: ParseStream, context: Self::Context) -> Result<Self>
+	fn parse_with(input: ParseStream, context: Self::Context<'a>) -> Result<Self>
 	where
 		Self: Sized,
 	{
@@ -90,23 +131,23 @@ impl ParseWithContext for ArrayUnused {
 			context,
 		) = context;
 
-		if let Some(metabyte_attribute) = metabyte_attribute {
+		if let Some(attribute) = metabyte_attribute {
 			return Err(Error::new(
-				metabyte_attribute.span(),
+				attribute.span(),
 				"metabyte attributes are not allowed for array-type unused bytes elements",
 			));
 		}
 
-		if let Some(context_attribute) = context_attribute {
+		if let Some(attribute) = context_attribute {
 			return Err(Error::new(
-				context_attribute.span(),
+				attribute.span(),
 				"context attributes are not allowed for array-type unused bytes elements",
 			));
 		}
 
-		if let Some(sequence_attribute) = sequence_attribute {
+		if let Some(attribute) = sequence_attribute {
 			return Err(Error::new(
-				sequence_attribute.span(),
+				attribute.span(),
 				"sequence attributes are not allowed for array-type unused bytes elements",
 			));
 		}
@@ -124,10 +165,10 @@ impl ParseWithContext for ArrayUnused {
 	}
 }
 
-impl ParseWithContext for UnusedContent {
-	type Context = <Source as ParseWithContext>::Context;
+impl<'a> ParseWithContext for UnusedContent {
+	type Context = Source::Context<'a>;
 
-	fn parse_with(input: ParseStream, context: Self::Context) -> Result<Self>
+	fn parse_with(input: ParseStream, context: Self::Context<'a>) -> Result<Self>
 	where
 		Self: Sized,
 	{
@@ -139,10 +180,10 @@ impl ParseWithContext for UnusedContent {
 	}
 }
 
-impl ParseWithContext for Let {
-	type Context = (ParsedAttributes, <Source as ParseWithContext>::Context);
+impl<'a> ParseWithContext for Let {
+	type Context = (ParsedAttributes, bool);
 
-	fn parse_with(input: ParseStream, context: Self::Context) -> Result<Self>
+	fn parse_with(input: ParseStream, context: Self::Context<'a>) -> Result<Self>
 	where
 		Self: Sized,
 	{
@@ -156,9 +197,9 @@ impl ParseWithContext for Let {
 			context,
 		) = context;
 
-		if let Some(sequence_attribute) = sequence_attribute {
+		if let Some(attribute) = sequence_attribute {
 			return Err(Error::new(
-				sequence_attribute.span(),
+				attribute.span(),
 				"sequence attributes are not allowed for let elements",
 			));
 		}
@@ -176,7 +217,7 @@ impl ParseWithContext for Let {
 
 			equals_token: input.parse()?,
 
-			source: input.parse_with(context)?,
+			source: input.parse_with((None, context))?,
 		})
 	}
 }
@@ -184,7 +225,7 @@ impl ParseWithContext for Let {
 impl ParseWithContext for Field {
 	type Context = (ElementType, ParsedAttributes);
 
-	fn parse_with(input: ParseStream, context: Self::Context) -> Result<Self>
+	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
 	where
 		Self: Sized,
 	{
@@ -204,13 +245,11 @@ impl ParseWithContext for Field {
 			context_attribute,
 			sequence_attribute,
 
-			vis: input.parse()?,
-
+			visibility: input.parse()?,
 			ident: match element_type {
-				ElementType::Named => Some((input.parse()?, input.parse()?)),
+				ElementType::Named => Some((input.parse()?, input.parse::<Token![:]>()?)),
 				ElementType::Unnamed => None,
 			},
-
 			r#type: input.parse()?,
 		})
 	}

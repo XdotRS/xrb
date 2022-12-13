@@ -22,13 +22,13 @@ use syn::{
 
 use syn::punctuated::Punctuated;
 
-use crate::{content::ParseWithContext, Items};
+use crate::element::Elements;
 
 pub struct Definitions(Vec<Definition>);
 
 /// A definition within the `define!` macro.
 pub enum Definition {
-	Structlike(Metadata, Items, Option<Token![;]>),
+	Structlike(Metadata, Elements, Option<Token![;]>),
 	Enum(Enum),
 
 	/// Any other item allowed in Rust that isn't a struct nor an enum.
@@ -52,7 +52,7 @@ pub struct Struct {
 	pub attributes: Vec<Attribute>,
 
 	/// The visibility of the struct.
-	pub vis: Visibility,
+	pub visibility: Visibility,
 	/// The struct token: `struct`.
 	pub struct_token: Token![struct],
 	/// The name of the struct.
@@ -67,7 +67,7 @@ pub struct Request {
 	pub attributes: Vec<Attribute>,
 
 	/// The visibility of the request's struct.
-	pub vis: Visibility,
+	pub visibility: Visibility,
 	/// The struct token: `struct`.
 	pub struct_token: Token![struct],
 	/// The name of the request.
@@ -101,7 +101,7 @@ pub struct Reply {
 	pub attributes: Vec<Attribute>,
 
 	/// The visibility of the reply's struct.
-	pub vis: Visibility,
+	pub visibility: Visibility,
 	/// The struct token: `struct`.
 	pub struct_token: Token![struct],
 	/// The name of the reply.
@@ -127,7 +127,7 @@ pub struct Event {
 	pub attributes: Vec<Attribute>,
 
 	/// The visibility of the event's struct.
-	pub vis: Visibility,
+	pub visibility: Visibility,
 	/// The struct token: `struct`.
 	pub struct_token: Token![struct],
 	/// The name of the event.
@@ -153,7 +153,7 @@ pub struct Enum {
 	pub attributes: Vec<Attribute>,
 
 	/// The visibility of the enum.
-	pub vis: Visibility,
+	pub visibility: Visibility,
 	/// The enum token: `enum`.
 	pub enum_token: Token![enum],
 	/// The name of the enum.
@@ -174,8 +174,8 @@ pub struct Variant {
 
 	/// The name of the enum variant.
 	pub ident: Ident,
-	/// [`Items`] associated with the enum variant.
-	pub items: Items,
+	/// [`Elements`] associated with the enum variant.
+	pub elements: Elements,
 
 	/// An optional discriminant expression for the enum variant.
 	pub discriminant: Option<(Token![=], Expr)>,
