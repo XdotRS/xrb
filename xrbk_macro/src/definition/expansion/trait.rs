@@ -57,17 +57,23 @@ impl Reply {
 
 		let request = &self.request;
 		let sequence = match content {
-			Content::Struct { elements, .. } | Content::Tuple { elements, .. } => {
-				match elements.sequence_field {
-					Some(Field { id, .. }) => {
-						quote!(Some(self.#id))
-					},
+			Content::Struct {
+				elements: Elements {
+					sequence_field: Some(Field { id, .. }),
+					..
+				},
+				..
+			} => quote!(Some(self.#id)),
 
-					None => quote!(None),
-				}
-			},
+			Content::Tuple {
+				elements: Elements {
+					sequence_field: Some(Field { id, .. }),
+					..
+				},
+				..
+			} => quote!(Some(self.#id)),
 
-			Content::Unit => quote!(None),
+			_ => quote!(None),
 		};
 
 		tokens.append_tokens(|| {
