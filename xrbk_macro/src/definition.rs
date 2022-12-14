@@ -174,8 +174,8 @@ pub struct Variant<'a> {
 
 	/// The name of the enum variant.
 	pub ident: Ident,
-	/// [`Elements`] associated with the enum variant.
-	pub elements: Content<'a>,
+	/// [`Content`] associated with the enum variant.
+	pub content: Content<'a>,
 
 	/// An optional discriminant expression for the enum variant.
 	pub discriminant: Option<(Token![=], Expr)>,

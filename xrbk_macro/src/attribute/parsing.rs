@@ -107,10 +107,10 @@ impl ParseWithContext for ParsedAttributes {
 }
 
 impl ParseWithContext for Context {
-	type Context<'a> = (IdentMap<'a>, bool);
+	type Context<'a> = ((IdentMap<'a>, IdentMap<'a>), bool);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self> {
-		let (map, length_allowed) = context;
+		let ((let_map, field_map), length_allowed) = context;
 		let look = input.lookahead1();
 
 		Ok(if look.peek(token::Paren) {
@@ -118,12 +118,12 @@ impl ParseWithContext for Context {
 
 			Self::Paren {
 				paren_token: parenthesized!(content in input),
-				source: content.parse_with((&Some(map), length_allowed))?,
+				source: content.parse_with(((let_map, Some(field_map)), length_allowed))?,
 			}
 		} else if look.peek(Token![=]) {
 			Self::Equals {
 				equals_token: input.parse()?,
-				source: input.parse_with((&Some(map), length_allowed))?,
+				source: input.parse_with(((let_map, Some(field_map)), length_allowed))?,
 			}
 		} else {
 			return Err(look.error());

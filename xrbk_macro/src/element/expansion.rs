@@ -7,7 +7,7 @@ use quote::ToTokens;
 
 use super::*;
 
-impl ToTokens for Elements {
+impl ToTokens for Content<'_> {
 	fn to_tokens(&self, tokens: &mut TokenStream) {
 		match self {
 			Self::Struct {
@@ -30,6 +30,12 @@ impl ToTokens for Elements {
 
 			Self::Unit => {},
 		}
+	}
+}
+
+impl ToTokens for Elements<'_> {
+	fn to_tokens(&self, tokens: &mut TokenStream) {
+		self.elements.to_tokens(tokens);
 	}
 }
 

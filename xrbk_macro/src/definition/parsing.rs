@@ -247,7 +247,7 @@ impl Parse for Variant<'_> {
 		Ok(Self {
 			attributes: input.call(Attribute::parse_outer)?,
 			ident: input.parse()?,
-			elements: input.parse_with(false)?,
+			content: input.parse_with(false)?,
 			discriminant: if input.peek(Token![=]) {
 				Some((input.parse()?, input.parse()?))
 			} else {

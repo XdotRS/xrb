@@ -17,23 +17,27 @@ pub type IdentMap<'a> = &'a HashMap<String, Type>;
 pub type IdentMapMut<'a> = &'a mut HashMap<String, Type>;
 
 impl ParseWithContext for Arg {
-	type Context<'a> = &'a Option<IdentMap<'a>>;
+	type Context<'a> = (IdentMap<'a>, Option<IdentMap<'a>>);
 
-	fn parse_with(input: ParseStream, map: Self::Context<'_>) -> syn::Result<Self>
+	fn parse_with(input: ParseStream, maps: Self::Context<'_>) -> syn::Result<Self>
 	where
 		Self: Sized,
 	{
+		let (let_map, field_map) = maps;
+
 		let ident: Ident = input.parse()?;
 		let formatted_ident = format_ident!("__{}__", ident);
 
-		let r#type = if let Some(map) = map {
-			match map.get(&ident.to_string()) {
+		let r#type = if let Some(r#type) = let_map.get(&ident.to_string()) {
+			Some(r#type.to_owned())
+		} else if let Some(field_map) = field_map {
+			match field_map.get(&ident.to_string()) {
 				Some(r#type) => Some(r#type.to_owned()),
 				None => {
 					return Err(Error::new(
 						ident.span(),
 						"unrecognized source argument identifier",
-					))
+					));
 				},
 			}
 		} else {
@@ -75,13 +79,13 @@ impl Parse for LengthArg {
 }
 
 impl ParseWithContext for Args {
-	type Context<'a> = (<Arg as ParseWithContext>::Context<'a>, bool);
+	type Context<'a> = ((IdentMap<'a>, Option<IdentMap<'a>>), bool);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> syn::Result<Self>
 	where
 		Self: Sized,
 	{
-		let (map, length_allowed) = context;
+		let (maps, length_allowed) = context;
 
 		let mut args = Punctuated::new();
 		let mut length_arg = None;
@@ -105,7 +109,7 @@ impl ParseWithContext for Args {
 					break;
 				}
 			} else {
-				args.push_value(input.parse_with(map)?);
+				args.push_value(input.parse_with(maps)?);
 
 				if input.peek(Token![,]) {
 					args.push_punct(input.parse()?);
@@ -120,7 +124,7 @@ impl ParseWithContext for Args {
 }
 
 impl ParseWithContext for Source {
-	type Context<'a> = <Args as ParseWithContext>::Context<'a>;
+	type Context<'a> = ((IdentMap<'a>, Option<IdentMap<'a>>), bool);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> syn::Result<Self>
 	where

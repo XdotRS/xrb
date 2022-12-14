@@ -8,7 +8,10 @@ use syn::{braced, bracketed, parenthesized, parse::ParseStream, spanned::Spanned
 use super::*;
 use crate::{
 	attribute::parsing::ParsedAttributes,
-	source::parsing::{IdentMap, IdentMapMut},
+	source::{
+		parsing::{IdentMap, IdentMapMut},
+		Args,
+	},
 	ParseWithContext,
 	PsExt,
 };
@@ -52,14 +55,16 @@ impl ParseWithContext for Elements<'_> {
 	{
 		let (element_type, length_allowed) = context;
 
-		let mut map = HashMap::new();
+		let mut let_map = HashMap::new();
+		let mut field_map = HashMap::new();
 
 		let mut elements = Punctuated::new();
 		let mut metabyte_element = None;
 		let mut sequence_field = None;
 
 		while !input.is_empty() {
-			let element: Element = input.parse_with((element_type, &mut map, length_allowed))?;
+			let element: Element =
+				input.parse_with((element_type, (&mut let_map, &mut field_map), length_allowed))?;
 
 			if element.is_metabyte() {
 				if metabyte_element.is_some() {
@@ -92,6 +97,25 @@ impl ParseWithContext for Elements<'_> {
 			}
 		}
 
+		for element in elements {
+			if let Element::Let(r#let) = element {
+				if let Some((Args { args, .. }, _)) = r#let.source.args {
+					for mut arg in args {
+						if arg.r#type.is_none() {
+							if let Some(r#type) = field_map.get(&arg.ident.to_string()) {
+								arg.r#type = Some(r#type.to_owned());
+							} else {
+								return Err(Error::new(
+									arg.ident.span(),
+									"unrecognized source argument identifier",
+								));
+							}
+						}
+					}
+				}
+			}
+		}
+
 		Ok(Self {
 			elements,
 
@@ -102,31 +126,31 @@ impl ParseWithContext for Elements<'_> {
 }
 
 impl ParseWithContext for Element {
-	type Context<'a> = (ElementType, IdentMapMut<'a>, bool);
+	type Context<'a> = (ElementType, (IdentMapMut<'a>, IdentMapMut<'a>), bool);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self> {
-		let (element_type, map, length_allowed) = context;
-		let parsed_attributes = input.parse_with((&*map, length_allowed))?;
+		let (element_type, (let_map, field_map), length_allowed) = context;
+		let parsed_attributes = input.parse_with(((&*let_map, &*field_map), length_allowed))?;
 
 		Ok(if input.peek(Token![_]) {
 			Self::SingleUnused(input.parse_with(parsed_attributes)?)
 		} else if input.peek(token::Bracket) {
 			Self::ArrayUnused(Box::new(input.parse_with((
 				parsed_attributes,
-				&*map,
+				(&*let_map, &*field_map),
 				length_allowed,
 			))?))
 		} else if input.peek(Token![let]) {
 			Self::Let(Box::new(input.parse_with((
 				parsed_attributes,
-				map,
+				let_map,
 				length_allowed,
 			))?))
 		} else {
 			Self::Field(Box::new(input.parse_with((
 				element_type,
 				parsed_attributes,
-				map,
+				field_map,
 			))?))
 		})
 	}
@@ -173,7 +197,7 @@ impl ParseWithContext for SingleUnused {
 }
 
 impl ParseWithContext for ArrayUnused {
-	type Context<'a> = (ParsedAttributes, IdentMap<'a>, bool);
+	type Context<'a> = (ParsedAttributes, (IdentMap<'a>, IdentMap<'a>), bool);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
 	where
@@ -186,7 +210,7 @@ impl ParseWithContext for ArrayUnused {
 				context_attribute,
 				sequence_attribute,
 			},
-			map,
+			maps,
 			length_allowed,
 		) = context;
 
@@ -219,24 +243,26 @@ impl ParseWithContext for ArrayUnused {
 			bracket_token: bracketed!(content in input),
 			underscore_token: content.parse()?,
 			semicolon_token: content.parse()?,
-			content: content.parse_with((map, length_allowed))?,
+			content: content.parse_with((maps, length_allowed))?,
 		})
 	}
 }
 
 impl ParseWithContext for UnusedContent {
-	type Context<'a> = (IdentMap<'a>, bool);
+	type Context<'a> = ((IdentMap<'a>, IdentMap<'a>), bool);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
 	where
 		Self: Sized,
 	{
-		let (map, length_allowed) = context;
+		let ((let_map, field_map), length_allowed) = context;
 
 		Ok(if input.peek(Token![..]) {
 			Self::Infer(input.parse()?)
 		} else {
-			Self::Source(Box::new(input.parse_with((&Some(map), length_allowed))?))
+			Self::Source(Box::new(
+				input.parse_with(((let_map, Some(field_map)), length_allowed))?,
+			))
 		})
 	}
 }
@@ -255,7 +281,7 @@ impl ParseWithContext for Let {
 				context_attribute,
 				sequence_attribute,
 			},
-			map,
+			let_map,
 			length_allowed,
 		) = context;
 
@@ -274,9 +300,9 @@ impl ParseWithContext for Let {
 
 		let equals_token = input.parse()?;
 
-		let source = input.parse_with((&Some(&*map), length_allowed))?;
+		let source = input.parse_with(((&*let_map, None), length_allowed))?;
 
-		map.insert(ident.to_string(), r#type.to_owned());
+		let_map.insert(ident.to_string(), r#type.to_owned());
 
 		Ok(Self {
 			attributes,
