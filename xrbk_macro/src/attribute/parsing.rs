@@ -13,7 +13,7 @@ use syn::{
 };
 
 use super::*;
-use crate::{source::parsing::IdentMap, ParseWithContext, PsExt};
+use crate::{element::parsing::DefinitionType, source::parsing::IdentMap, ParseWithContext, PsExt};
 
 pub struct ParsedAttributes {
 	pub attributes: Vec<Attribute>,
@@ -107,10 +107,10 @@ impl ParseWithContext for ParsedAttributes {
 }
 
 impl ParseWithContext for Context {
-	type Context<'a> = ((IdentMap<'a>, IdentMap<'a>), bool);
+	type Context<'a> = ((IdentMap<'a>, IdentMap<'a>), DefinitionType);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self> {
-		let ((let_map, field_map), length_allowed) = context;
+		let ((let_map, field_map), definition_type) = context;
 		let look = input.lookahead1();
 
 		Ok(if look.peek(token::Paren) {
@@ -118,12 +118,12 @@ impl ParseWithContext for Context {
 
 			Self::Paren {
 				paren_token: parenthesized!(content in input),
-				source: content.parse_with(((let_map, Some(field_map)), length_allowed))?,
+				source: content.parse_with(((let_map, Some(field_map)), definition_type))?,
 			}
 		} else if look.peek(Token![=]) {
 			Self::Equals {
 				equals_token: input.parse()?,
-				source: input.parse_with(((let_map, Some(field_map)), length_allowed))?,
+				source: input.parse_with(((let_map, Some(field_map)), definition_type))?,
 			}
 		} else {
 			return Err(look.error());

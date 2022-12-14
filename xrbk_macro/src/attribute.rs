@@ -5,8 +5,7 @@
 mod expansion;
 pub mod parsing;
 
-use proc_macro2::Span;
-use syn::{spanned::Spanned, token, Path, Token};
+use syn::{token, Path, Token};
 
 use crate::Source;
 

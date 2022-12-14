@@ -7,6 +7,27 @@ use quote::ToTokens;
 
 use super::*;
 
+impl ToTokens for FieldId<'_> {
+	fn to_tokens(&self, tokens: &mut TokenStream) {
+		match self {
+			FieldId::Index { ident, .. } => ident.to_tokens(tokens),
+			FieldId::Ident { ident, .. } => ident.to_tokens(tokens),
+		}
+	}
+}
+
+impl ToTokens for LetId<'_> {
+	fn to_tokens(&self, tokens: &mut TokenStream) {
+		self.ident.to_tokens(tokens)
+	}
+}
+
+impl ToTokens for UnusedId {
+	fn to_tokens(&self, tokens: &mut TokenStream) {
+		self.ident.to_tokens(tokens)
+	}
+}
+
 impl ToTokens for Content<'_> {
 	fn to_tokens(&self, tokens: &mut TokenStream) {
 		match self {
@@ -39,7 +60,7 @@ impl ToTokens for Elements<'_> {
 	}
 }
 
-impl ToTokens for Element {
+impl ToTokens for Element<'_> {
 	fn to_tokens(&self, tokens: &mut TokenStream) {
 		if let Element::Field(field) = self {
 			field.to_tokens(tokens);
@@ -47,7 +68,7 @@ impl ToTokens for Element {
 	}
 }
 
-impl ToTokens for Field {
+impl ToTokens for Field<'_> {
 	fn to_tokens(&self, tokens: &mut TokenStream) {
 		for attribute in &self.attributes {
 			attribute.to_tokens(tokens);

@@ -21,15 +21,15 @@ impl ToTokens for Definitions<'_> {
 impl ToTokens for Definition<'_> {
 	fn to_tokens(&self, tokens: &mut TokenStream) {
 		match self {
-			Self::Structlike(metadata, items, semicolon) => {
+			Self::Structlike(metadata, content, semicolon) => {
 				metadata.to_tokens(tokens);
-				items.to_tokens(tokens);
+				content.to_tokens(tokens);
 				semicolon.to_tokens(tokens);
 
 				match metadata {
 					Metadata::Request(request) => request.impl_trait(tokens),
-					Metadata::Reply(reply) => reply.impl_trait(tokens),
-					Metadata::Event(event) => event.impl_trait(tokens),
+					Metadata::Reply(reply) => reply.impl_trait(tokens, content),
+					Metadata::Event(event) => event.impl_trait(tokens, content),
 
 					_ => (),
 				}

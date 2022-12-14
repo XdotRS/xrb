@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use crate::element::parsing::DefinitionType;
 use quote::format_ident;
 use std::collections::HashMap;
 use syn::{
@@ -79,19 +80,19 @@ impl Parse for LengthArg {
 }
 
 impl ParseWithContext for Args {
-	type Context<'a> = ((IdentMap<'a>, Option<IdentMap<'a>>), bool);
+	type Context<'a> = ((IdentMap<'a>, Option<IdentMap<'a>>), DefinitionType);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> syn::Result<Self>
 	where
 		Self: Sized,
 	{
-		let (maps, length_allowed) = context;
+		let (maps, definition_type) = context;
 
 		let mut args = Punctuated::new();
 		let mut length_arg = None;
 
-		while input.peek(Ident) || (length_allowed && input.peek(Token![self])) {
-			if length_allowed && input.peek(Token![self]) {
+		while input.peek(Ident) || (definition_type.length_syntax() && input.peek(Token![self])) {
+			if definition_type.length_syntax() && input.peek(Token![self]) {
 				if length_arg.is_some() {
 					let length_arg2: LengthArg = input.parse()?;
 
@@ -124,7 +125,7 @@ impl ParseWithContext for Args {
 }
 
 impl ParseWithContext for Source {
-	type Context<'a> = ((IdentMap<'a>, Option<IdentMap<'a>>), bool);
+	type Context<'a> = ((IdentMap<'a>, Option<IdentMap<'a>>), DefinitionType);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> syn::Result<Self>
 	where

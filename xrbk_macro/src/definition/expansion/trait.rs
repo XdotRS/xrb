@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use crate::element::{Elements, Field};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
@@ -50,11 +51,24 @@ impl Request {
 }
 
 impl Reply {
-	pub fn impl_trait(&self, tokens: &mut TokenStream2) {
+	pub fn impl_trait(&self, tokens: &mut TokenStream2, content: &Content) {
 		let name = &self.ident;
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		let request = &self.request;
+		let sequence = match content {
+			Content::Struct { elements, .. } | Content::Tuple { elements, .. } => {
+				match elements.sequence_field {
+					Some(Field { id, .. }) => {
+						quote!(Some(self.#id))
+					},
+
+					None => quote!(None),
+				}
+			},
+
+			Content::Unit => quote!(None),
+		};
 
 		tokens.append_tokens(|| {
 			quote!(
@@ -67,8 +81,7 @@ impl Reply {
 					}
 
 					fn sequence(&self) -> Option<u16> {
-						// TODO
-						None
+						#sequence
 					}
 				}
 			)
@@ -77,11 +90,30 @@ impl Reply {
 }
 
 impl Event {
-	pub fn impl_trait(&self, tokens: &mut TokenStream2) {
+	pub fn impl_trait(&self, tokens: &mut TokenStream2, content: &Content) {
 		let name = &self.ident;
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		let code = &self.code;
+		let sequence = match content {
+			Content::Struct {
+				elements: Elements {
+					sequence_field: Some(sequence),
+					..
+				},
+				..
+			} => &sequence.id,
+
+			Content::Tuple {
+				elements: Elements {
+					sequence_field: Some(sequence),
+					..
+				},
+				..
+			} => &sequence.id,
+
+			_ => panic!("events must have a sequence field"),
+		};
 
 		tokens.append_tokens(|| {
 			quote!(
@@ -91,8 +123,7 @@ impl Event {
 					}
 
 					fn sequence(&self) -> u16 {
-						// TODO
-						0
+						self.#sequence
 					}
 				}
 			)

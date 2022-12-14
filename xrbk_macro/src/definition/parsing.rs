@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use super::*;
-use crate::{ParseWithContext, PsExt};
+use crate::{element::parsing::DefinitionType, ParseWithContext, PsExt};
 use syn::{
 	parse::{discouraged::Speculative, Parse, ParseStream},
 	Attribute,
@@ -36,11 +36,11 @@ impl Parse for Definition<'_> {
 			let metadata = input.parse_with((attributes, visibility))?;
 
 			let content = input.parse_with(match metadata {
-				Metadata::Struct(_) => false,
+				Metadata::Struct(_) => DefinitionType::Basic,
 
-				Metadata::Request(_) => true,
-				Metadata::Reply(_) => true,
-				Metadata::Event(_) => false,
+				Metadata::Request(_) => DefinitionType::Request,
+				Metadata::Reply(_) => DefinitionType::Reply,
+				Metadata::Event(_) => DefinitionType::Event,
 			})?;
 
 			let semicolon = match content {
@@ -247,7 +247,7 @@ impl Parse for Variant<'_> {
 		Ok(Self {
 			attributes: input.call(Attribute::parse_outer)?,
 			ident: input.parse()?,
-			content: input.parse_with(false)?,
+			content: input.parse_with(DefinitionType::Basic)?,
 			discriminant: if input.peek(Token![=]) {
 				Some((input.parse()?, input.parse()?))
 			} else {
