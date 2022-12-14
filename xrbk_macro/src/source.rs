@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 mod expansion;
-mod parsing;
+pub mod parsing;
 
 use syn::{punctuated::Punctuated, Expr, Ident, Token, Type};
 

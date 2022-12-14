@@ -14,15 +14,16 @@ use super::*;
 use crate::ext::{ParseWithContext, PsExt};
 
 pub type IdentMap<'a> = &'a HashMap<String, Type>;
+pub type IdentMapMut<'a> = &'a mut HashMap<String, Type>;
 
 impl ParseWithContext for Arg {
-	type Context<'a> = Option<IdentMap<'a>>;
+	type Context<'a> = &'a Option<IdentMap<'a>>;
 
 	fn parse_with(input: ParseStream, map: Self::Context<'_>) -> syn::Result<Self>
 	where
 		Self: Sized,
 	{
-		let ident = input.parse()?;
+		let ident: Ident = input.parse()?;
 		let formatted_ident = format_ident!("__{}__", ident);
 
 		let r#type = if let Some(map) = map {
@@ -74,7 +75,7 @@ impl Parse for LengthArg {
 }
 
 impl ParseWithContext for Args {
-	type Context<'a> = (Arg::Context<'a>, bool);
+	type Context<'a> = (<Arg as ParseWithContext>::Context<'a>, bool);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> syn::Result<Self>
 	where
@@ -96,7 +97,7 @@ impl ParseWithContext for Args {
 					));
 				}
 
-				length_arg = input.parse()?;
+				length_arg = Some(input.parse()?);
 
 				if input.peek(Token![,]) {
 					input.parse::<Token![,]>()?;
@@ -119,7 +120,7 @@ impl ParseWithContext for Args {
 }
 
 impl ParseWithContext for Source {
-	type Context<'a> = Args::Context<'a>;
+	type Context<'a> = <Args as ParseWithContext>::Context<'a>;
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> syn::Result<Self>
 	where

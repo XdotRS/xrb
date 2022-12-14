@@ -13,7 +13,7 @@ use syn::{
 };
 
 use super::*;
-use crate::{content::ParseWithContext, PsExt};
+use crate::{source::parsing::IdentMap, ParseWithContext, PsExt};
 
 pub struct ParsedAttributes {
 	pub attributes: Vec<Attribute>,
@@ -23,88 +23,94 @@ pub struct ParsedAttributes {
 	pub sequence_attribute: Option<SequenceAttribute>,
 }
 
-pub fn parse_attributes(
-	input: ParseStream, context: <Source as ParseWithContext>::Context,
-) -> Result<ParsedAttributes> {
-	let mut attributes = Vec::new();
+impl ParseWithContext for ParsedAttributes {
+	type Context<'a> = <Context as ParseWithContext>::Context<'a>;
 
-	let mut context_attribute = None;
-	let mut metabyte_attribute = None;
-	let mut sequence_attribute = None;
+	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
+	where
+		Self: Sized,
+	{
+		let mut attributes = Vec::new();
 
-	while input.peek(Token![#]) && input.peek2(token::Bracket) {
-		let content;
+		let mut context_attribute = None;
+		let mut metabyte_attribute = None;
+		let mut sequence_attribute = None;
 
-		let hash_token = input.parse()?;
-		let bracket_token = bracketed!(content in input);
-		let path: Path = content.parse()?;
+		while input.peek(Token![#]) && input.peek2(token::Bracket) {
+			let content;
 
-		if path.is_ident("context") {
-			if context_attribute.is_some() {
-				return Err(Error::new(
-					path.span(),
-					"no more than one context attribute is allowed per element",
-				));
+			let hash_token = input.parse()?;
+			let bracket_token = bracketed!(content in input);
+			let path: Path = content.parse()?;
+
+			if path.is_ident("context") {
+				if context_attribute.is_some() {
+					return Err(Error::new(
+						path.span(),
+						"no more than one context attribute is allowed per element",
+					));
+				}
+
+				context_attribute = Some(ContextAttribute {
+					hash_token,
+					bracket_token,
+					path,
+
+					context: content.parse_with(context)?,
+				});
+			} else if path.is_ident("metabyte") {
+				if metabyte_attribute.is_some() {
+					return Err(Error::new(
+						path.span(),
+						"no more than one metabyte attribute is allowed per element",
+					));
+				}
+
+				metabyte_attribute = Some(MetabyteAttribute {
+					hash_token,
+					bracket_token,
+					path,
+				});
+			} else if path.is_ident("sequence") {
+				if sequence_attribute.is_some() {
+					return Err(Error::new(
+						path.span(),
+						"no more than one sequence attribute is allowed per element",
+					));
+				}
+
+				sequence_attribute = Some(SequenceAttribute {
+					hash_token,
+					bracket_token,
+					path,
+				});
+			} else {
+				attributes.push(Attribute {
+					pound_token: hash_token,
+					style: AttrStyle::Outer,
+					bracket_token,
+					path,
+
+					tokens: content.parse()?,
+				});
 			}
-
-			context_attribute = Some(ContextAttribute {
-				hash_token,
-				bracket_token,
-				path,
-
-				context: content.parse_with(context)?,
-			});
-		} else if path.is_ident("metabyte") {
-			if metabyte_attribute.is_some() {
-				return Err(Error::new(
-					path.span(),
-					"no more than one metabyte attribute is allowed per element",
-				));
-			}
-
-			metabyte_attribute = Some(MetabyteAttribute {
-				hash_token,
-				bracket_token,
-				path,
-			});
-		} else if path.is_ident("sequence") {
-			if sequence_attribute.is_some() {
-				return Err(Error::new(
-					path.span(),
-					"no more than one sequence attribute is allowed per element",
-				));
-			}
-
-			sequence_attribute = Some(SequenceAttribute {
-				hash_token,
-				bracket_token,
-				path,
-			});
-		} else {
-			attributes.push(Attribute {
-				pound_token: hash_token,
-				style: AttrStyle::Outer,
-				bracket_token,
-				path,
-
-				tokens: content.parse()?,
-			});
 		}
+
+		Ok(Self {
+			attributes,
+
+			context_attribute,
+			metabyte_attribute,
+			sequence_attribute,
+		})
 	}
-
-	Ok(ParsedAttributes {
-		attributes,
-
-		context_attribute,
-		metabyte_attribute,
-		sequence_attribute,
-	})
 }
 
 impl ParseWithContext for Context {
-	type Context = <Source as ParseWithContext>::Context;
+	type Context<'a> = (IdentMap<'a>, bool);
 
-	fn parse_with(input: ParseStream, context: Self::Context) -> Result<Self> {
+	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self> {
+		let (map, length_allowed) = context;
 		let look = input.lookahead1();
 
 		Ok(if look.peek(token::Paren) {
@@ -112,12 +118,12 @@ impl ParseWithContext for Context {
 
 			Self::Paren {
 				paren_token: parenthesized!(content in input),
-				source: content.parse_with(context)?,
+				source: content.parse_with((&Some(map), length_allowed))?,
 			}
 		} else if look.peek(Token![=]) {
 			Self::Equals {
 				equals_token: input.parse()?,
-				source: input.parse_with(context)?,
+				source: input.parse_with((&Some(map), length_allowed))?,
 			}
 		} else {
 			return Err(look.error());

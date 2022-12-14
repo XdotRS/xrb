@@ -3,45 +3,39 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use std::collections::HashMap;
-use syn::{
-	braced,
-	bracketed,
-	parenthesized,
-	parse::{Parse, ParseStream},
-	spanned::Spanned,
-	Error,
-	Result,
-};
+use syn::{braced, bracketed, parenthesized, parse::ParseStream, spanned::Spanned, Error, Result};
 
 use super::*;
-use crate::{attribute::parsing::ParsedAttributes, source::Source, ParseWithContext, PsExt};
+use crate::{
+	attribute::parsing::ParsedAttributes,
+	source::parsing::{IdentMap, IdentMapMut},
+	ParseWithContext,
+	PsExt,
+};
 
+#[derive(Clone, Copy)]
 pub enum ElementType {
 	Named,
 	Unnamed,
 }
 
-impl ParseWithContext for Elements {
+impl ParseWithContext for Content<'_> {
 	type Context = bool;
 
 	fn parse_with(input: ParseStream, length_allowed: bool) -> Result<Self> {
-		let mut map = HashMap::new();
-
-		let context = (Some(&mut map), length_allowed);
-
 		Ok(if input.peek(token::Brace) {
 			let content;
 
 			Self::Struct {
 				brace_token: braced!(content in input),
-				elements: content.parse_terminated_with(|| (ElementType::Named, context))?,
+				elements: content.parse_with((ElementType::Named, length_allowed))?,
 			}
 		} else if input.peek(token::Paren) {
 			let content;
 
 			Self::Tuple {
 				paren_token: parenthesized!(content in input),
-				elements: content.parse_terminated_with(|| (ElementType::Unnamed, context))?,
+				elements: content.parse_with((ElementType::Unnamed, length_allowed))?,
 			}
 		} else {
 			Self::Unit
@@ -49,27 +43,91 @@ impl ParseWithContext for Elements {
 	}
 }
 
-impl<'a> ParseWithContext for Element {
-	type Context = (ElementType, Source::Context<'a>);
+impl ParseWithContext for Elements<'_> {
+	type Context = (ElementType, bool);
 
-	fn parse_with(input: ParseStream, context: Self::Context<'a>) -> Result<Self> {
-		let (element_type, context) = context;
-		let parsed_attributes = crate::attribute::parsing::parse_attributes(input, context)?;
+	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
+	where
+		Self: Sized,
+	{
+		let (element_type, length_allowed) = context;
+
+		let mut map = HashMap::new();
+
+		let mut elements = Punctuated::new();
+		let mut metabyte_element = None;
+		let mut sequence_field = None;
+
+		while !input.is_empty() {
+			let element: Element = input.parse_with((element_type, &mut map, length_allowed))?;
+
+			if element.is_metabyte() {
+				if metabyte_element.is_some() {
+					return Err(Error::new(
+						element.span(),
+						"no more than one metabyte element is allowed per message",
+					));
+				}
+
+				metabyte_element = Some(&element);
+			}
+
+			if let Element::Field(field) = &element && field.is_sequence() {
+				if sequence_field.is_some() {
+					return Err(Error::new(
+						field.span(),
+						"no more than one sequence field is allowed per message",
+					));
+				}
+
+				sequence_field = Some(&**field);
+			}
+
+			elements.push_value(element);
+
+			if input.peek(Token![,]) {
+				elements.push_punct(input.parse()?);
+			} else {
+				break;
+			}
+		}
+
+		Ok(Self {
+			elements,
+
+			metabyte_element,
+			sequence_field,
+		})
+	}
+}
+
+impl ParseWithContext for Element {
+	type Context<'a> = (ElementType, IdentMapMut<'a>, bool);
+
+	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self> {
+		let (element_type, map, length_allowed) = context;
+		let parsed_attributes = input.parse_with((&*map, length_allowed))?;
 
 		Ok(if input.peek(Token![_]) {
 			Self::SingleUnused(input.parse_with(parsed_attributes)?)
 		} else if input.peek(token::Bracket) {
-			Self::ArrayUnused(Box::new(input.parse_with((parsed_attributes, context))?))
+			Self::ArrayUnused(Box::new(input.parse_with((
+				parsed_attributes,
+				&*map,
+				length_allowed,
+			))?))
 		} else if input.peek(Token![let]) {
-			let (_, length_allowed) = context;
-
-			Self::Let(Box::new(
-				input.parse_with((parsed_attributes, length_allowed))?,
-			))
+			Self::Let(Box::new(input.parse_with((
+				parsed_attributes,
+				map,
+				length_allowed,
+			))?))
 		} else {
-			Self::Field(Box::new(
-				input.parse_with((element_type, parsed_attributes))?,
-			))
+			Self::Field(Box::new(input.parse_with((
+				element_type,
+				parsed_attributes,
+				map,
+			))?))
 		})
 	}
 }
@@ -114,10 +172,10 @@ impl ParseWithContext for SingleUnused {
 	}
 }
 
-impl<'a> ParseWithContext for ArrayUnused {
-	type Context = (ParsedAttributes, Source::Context<'a>);
+impl ParseWithContext for ArrayUnused {
+	type Context<'a> = (ParsedAttributes, IdentMap<'a>, bool);
 
-	fn parse_with(input: ParseStream, context: Self::Context<'a>) -> Result<Self>
+	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
 	where
 		Self: Sized,
 	{
@@ -128,7 +186,8 @@ impl<'a> ParseWithContext for ArrayUnused {
 				context_attribute,
 				sequence_attribute,
 			},
-			context,
+			map,
+			length_allowed,
 		) = context;
 
 		if let Some(attribute) = metabyte_attribute {
@@ -160,30 +219,32 @@ impl<'a> ParseWithContext for ArrayUnused {
 			bracket_token: bracketed!(content in input),
 			underscore_token: content.parse()?,
 			semicolon_token: content.parse()?,
-			content: content.parse_with(context)?,
+			content: content.parse_with((map, length_allowed))?,
 		})
 	}
 }
 
-impl<'a> ParseWithContext for UnusedContent {
-	type Context = Source::Context<'a>;
+impl ParseWithContext for UnusedContent {
+	type Context<'a> = (IdentMap<'a>, bool);
 
-	fn parse_with(input: ParseStream, context: Self::Context<'a>) -> Result<Self>
+	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
 	where
 		Self: Sized,
 	{
+		let (map, length_allowed) = context;
+
 		Ok(if input.peek(Token![..]) {
 			Self::Infer(input.parse()?)
 		} else {
-			Self::Source(Box::new(input.parse_with(context)?))
+			Self::Source(Box::new(input.parse_with((&Some(map), length_allowed))?))
 		})
 	}
 }
 
-impl<'a> ParseWithContext for Let {
-	type Context = (ParsedAttributes, bool);
+impl ParseWithContext for Let {
+	type Context<'a> = (ParsedAttributes, IdentMapMut<'a>, bool);
 
-	fn parse_with(input: ParseStream, context: Self::Context<'a>) -> Result<Self>
+	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
 	where
 		Self: Sized,
 	{
@@ -194,7 +255,8 @@ impl<'a> ParseWithContext for Let {
 				context_attribute,
 				sequence_attribute,
 			},
-			context,
+			map,
+			length_allowed,
 		) = context;
 
 		if let Some(attribute) = sequence_attribute {
@@ -204,26 +266,38 @@ impl<'a> ParseWithContext for Let {
 			));
 		}
 
+		let let_token = input.parse()?;
+
+		let ident: Ident = input.parse()?;
+		let colon_token = input.parse()?;
+		let r#type: Type = input.parse()?;
+
+		let equals_token = input.parse()?;
+
+		let source = input.parse_with((&Some(&*map), length_allowed))?;
+
+		map.insert(ident.to_string(), r#type.to_owned());
+
 		Ok(Self {
 			attributes,
 			metabyte_attribute,
 			context_attribute,
 
-			let_token: input.parse()?,
+			let_token,
 
-			ident: input.parse()?,
-			colon_token: input.parse()?,
-			r#type: input.parse()?,
+			ident,
+			colon_token,
+			r#type,
 
-			equals_token: input.parse()?,
+			equals_token,
 
-			source: input.parse_with((None, context))?,
+			source,
 		})
 	}
 }
 
 impl ParseWithContext for Field {
-	type Context = (ElementType, ParsedAttributes);
+	type Context<'a> = (ElementType, ParsedAttributes, IdentMapMut<'a>);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
 	where
@@ -237,7 +311,18 @@ impl ParseWithContext for Field {
 				context_attribute,
 				sequence_attribute,
 			},
+			map,
 		) = context;
+
+		let visibility = input.parse()?;
+		let ident: Option<(Ident, _)> = match element_type {
+			ElementType::Named => Some((input.parse()?, input.parse()?)),
+			ElementType::Unnamed => None,
+		};
+		let r#type = input.parse()?;
+
+		// TODO: need ID
+		map.insert(ident.to_string(), r#type.to_owned());
 
 		Ok(Self {
 			attributes,
@@ -245,12 +330,9 @@ impl ParseWithContext for Field {
 			context_attribute,
 			sequence_attribute,
 
-			visibility: input.parse()?,
-			ident: match element_type {
-				ElementType::Named => Some((input.parse()?, input.parse::<Token![:]>()?)),
-				ElementType::Unnamed => None,
-			},
-			r#type: input.parse()?,
+			visibility,
+			ident,
+			r#type,
 		})
 	}
 }

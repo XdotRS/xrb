@@ -12,18 +12,25 @@ use crate::{
 	source::Source,
 };
 
-pub enum Elements {
+pub enum Content<'a> {
 	Struct {
 		brace_token: token::Brace,
-		elements: Punctuated<Element, Token![,]>,
+		elements: Elements<'a>,
 	},
 
 	Tuple {
 		paren_token: token::Paren,
-		elements: Punctuated<Element, Token![,]>,
+		elements: Elements<'a>,
 	},
 
 	Unit,
+}
+
+pub struct Elements<'a> {
+	pub elements: Punctuated<Element, Token![,]>,
+
+	pub metabyte_element: Option<&'a Element>,
+	pub sequence_field: Option<&'a Field>,
 }
 
 pub enum Element {
@@ -35,6 +42,19 @@ pub enum Element {
 	ArrayUnused(Box<ArrayUnused>),
 }
 
+impl Element {
+	pub const fn is_metabyte(&self) -> bool {
+		match self {
+			Self::Field(field) => field.is_metabyte(),
+
+			Self::Let(r#let) => r#let.is_metabyte(),
+
+			Self::SingleUnused(unused) => unused.is_metabyte(),
+			Self::ArrayUnused(_) => false,
+		}
+	}
+}
+
 pub struct Field {
 	pub attributes: Vec<Attribute>,
 	pub context_attribute: Option<ContextAttribute>,
@@ -44,6 +64,16 @@ pub struct Field {
 	pub visibility: Visibility,
 	pub ident: Option<(Ident, Token![:])>,
 	pub r#type: Type,
+}
+
+impl Field {
+	pub const fn is_metabyte(&self) -> bool {
+		self.metabyte_attribute.is_some()
+	}
+
+	pub const fn is_sequence(&self) -> bool {
+		self.sequence_attribute.is_some()
+	}
 }
 
 pub struct Let {
@@ -61,9 +91,21 @@ pub struct Let {
 	pub source: Source,
 }
 
+impl Let {
+	pub const fn is_metabyte(&self) -> bool {
+		self.metabyte_attribute.is_some()
+	}
+}
+
 pub struct SingleUnused {
 	pub attribute: Option<MetabyteAttribute>,
 	pub underscore_token: Token![_],
+}
+
+impl SingleUnused {
+	pub const fn is_metabyte(&self) -> bool {
+		self.attribute.is_some()
+	}
 }
 
 pub struct ArrayUnused {

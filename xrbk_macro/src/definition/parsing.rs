@@ -11,7 +11,7 @@ use syn::{
 	Visibility,
 };
 
-impl Parse for Definitions {
+impl Parse for Definitions<'_> {
 	fn parse(input: ParseStream) -> Result<Self> {
 		let mut definitions = Vec::new();
 
@@ -23,7 +23,7 @@ impl Parse for Definitions {
 	}
 }
 
-impl Parse for Definition {
+impl Parse for Definition<'_> {
 	fn parse(input: ParseStream) -> Result<Self> {
 		let fork = &input.fork();
 
@@ -34,13 +34,21 @@ impl Parse for Definition {
 			input.advance_to(fork);
 
 			let metadata = input.parse_with((attributes, visibility))?;
-			let items = input.parse_with(Some(&metadata))?;
-			let semicolon = match items {
-				Items::Named { .. } => None,
+
+			let content = input.parse_with(match metadata {
+				Metadata::Struct(_) => false,
+
+				Metadata::Request(_) => true,
+				Metadata::Reply(_) => true,
+				Metadata::Event(_) => false,
+			})?;
+
+			let semicolon = match content {
+				Content::Struct { .. } => None,
 				_ => Some(input.parse()?),
 			};
 
-			Self::Structlike(metadata, items, semicolon)
+			Self::Structlike(metadata, content, semicolon)
 		} else if fork.peek(Token![enum]) {
 			input.advance_to(fork);
 
@@ -212,7 +220,7 @@ impl ParseWithContext for Event {
 	}
 }
 
-impl ParseWithContext for Enum {
+impl ParseWithContext for Enum<'_> {
 	type Context = (Vec<Attribute>, Visibility);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
@@ -234,12 +242,12 @@ impl ParseWithContext for Enum {
 	}
 }
 
-impl Parse for Variant {
+impl Parse for Variant<'_> {
 	fn parse(input: ParseStream) -> Result<Self> {
 		Ok(Self {
 			attributes: input.call(Attribute::parse_outer)?,
 			ident: input.parse()?,
-			items: input.parse_with(None)?,
+			elements: input.parse_with(false)?,
 			discriminant: if input.peek(Token![=]) {
 				Some((input.parse()?, input.parse()?))
 			} else {
