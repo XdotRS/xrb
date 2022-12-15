@@ -52,6 +52,17 @@ impl Field<'_> {
 			},
 		}
 	}
+
+	pub fn add_datasize_tokens(&self, tokens: &mut TokenStream2) {
+		tokens.append_tokens(|| {
+			let r#type = &self.r#type;
+			let formatted = self.id.formatted();
+
+			quote!(
+				datasize += <#r#type as cornflakes::DataSize>::data_size(#formatted);
+			)
+		});
+	}
 }
 
 // }}} Let {{{
@@ -87,18 +98,15 @@ impl Let<'_> {
 					.source()
 					.function_to_tokens(tokens, None, formatted, r#type);
 
-				let args = TokenStream2::with_tokens(|tokens| {
-					context
-						.source()
-						.args
-						.map(|(args, _)| args.formatted_tokens(tokens));
+				let function_call = TokenStream2::with_tokens(|tokens| {
+					context.source().call_to_tokens(tokens, formatted);
 				});
 
 				tokens.append_tokens(|| {
 					quote!(
 						let #formatted = <#r#type as cornflakes::ContextualReadable>::read_with(
 							buf,
-							#formatted(#args),
+							#function_call,
 						)?;
 					)
 				});
@@ -112,6 +120,17 @@ impl Let<'_> {
 				});
 			},
 		}
+	}
+
+	pub fn add_datasize_tokens(&self, tokens: &mut TokenStream2) {
+		let r#type = &self.r#type;
+		let formatted = &self.id.formatted;
+
+		tokens.append_tokens(|| {
+			quote!(
+				datasize += <#r#type as cornflakes::DataSize>::data_size(#formatted);
+			)
+		});
 	}
 }
 
@@ -130,6 +149,14 @@ impl SingleUnused {
 		tokens.append_tokens(|| {
 			quote!(
 				buf.advance(1);
+			)
+		});
+	}
+
+	pub fn add_datasize_tokens(&self, tokens: &mut TokenStream2) {
+		tokens.append_tokens(|| {
+			quote!(
+				datasize += 1;
 			)
 		});
 	}
@@ -201,6 +228,16 @@ impl ArrayUnused {
 				buf.advance(#formatted);
 			)
 		})
+	}
+
+	pub fn add_datasize_tokens(&self, tokens: &mut TokenStream2) {
+		let formatted = &self.id.formatted;
+
+		tokens.append_tokens(|| {
+			quote!(
+				datasize += #formatted;
+			)
+		});
 	}
 }
 
