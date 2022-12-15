@@ -3,12 +3,15 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use proc_macro2::TokenStream;
-use quote::ToTokens;
+
+use proc_macro2::TokenStream as TokenStream2;
+use quote::{quote, ToTokens};
+use syn::punctuated::Pair;
 
 use super::*;
 
 impl ToTokens for FieldId<'_> {
-	fn to_tokens(&self, tokens: &mut TokenStream) {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		match self {
 			FieldId::Index { ident, .. } => ident.to_tokens(tokens),
 			FieldId::Ident { ident, .. } => ident.to_tokens(tokens),
@@ -17,19 +20,19 @@ impl ToTokens for FieldId<'_> {
 }
 
 impl ToTokens for LetId<'_> {
-	fn to_tokens(&self, tokens: &mut TokenStream) {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		self.ident.to_tokens(tokens)
 	}
 }
 
 impl ToTokens for UnusedId {
-	fn to_tokens(&self, tokens: &mut TokenStream) {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		self.ident.to_tokens(tokens)
 	}
 }
 
 impl ToTokens for Content<'_> {
-	fn to_tokens(&self, tokens: &mut TokenStream) {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		match self {
 			Self::Struct {
 				brace_token,
@@ -54,14 +57,56 @@ impl ToTokens for Content<'_> {
 	}
 }
 
+impl Content<'_> {
+	pub fn fields_to_tokens(&self, tokens: &mut TokenStream2) {
+		match self {
+			Self::Struct {
+				brace_token,
+				elements,
+			} => {
+				brace_token.surround(tokens, |tokens| {
+					elements.fields_to_tokens(tokens);
+				});
+			},
+
+			Self::Tuple {
+				paren_token,
+				elements,
+			} => {
+				paren_token.surround(tokens, |tokens| {
+					elements.fields_to_tokens(tokens);
+				});
+			},
+
+			Self::Unit => {},
+		}
+	}
+}
+
 impl ToTokens for Elements<'_> {
-	fn to_tokens(&self, tokens: &mut TokenStream) {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		self.elements.to_tokens(tokens);
 	}
 }
 
+impl Elements<'_> {
+	pub fn fields_to_tokens(&self, tokens: &mut TokenStream2) {
+		for pair in self.fields.pairs() {
+			let (field, comma) = match pair {
+				Pair::Punctuated(field, comma) => (field, Some(comma)),
+				Pair::End(field) => (field, None),
+			};
+
+			let (field, formatted) = (field.id.ident(), field.id.formatted());
+
+			quote!(#field: #formatted).to_tokens(tokens);
+			comma.to_tokens(tokens);
+		}
+	}
+}
+
 impl ToTokens for Element<'_> {
-	fn to_tokens(&self, tokens: &mut TokenStream) {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		if let Element::Field(field) = self {
 			field.to_tokens(tokens);
 		}
@@ -69,7 +114,7 @@ impl ToTokens for Element<'_> {
 }
 
 impl ToTokens for Field<'_> {
-	fn to_tokens(&self, tokens: &mut TokenStream) {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		for attribute in &self.attributes {
 			attribute.to_tokens(tokens);
 		}

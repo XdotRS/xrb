@@ -24,7 +24,7 @@ pub struct LengthArg {
 
 pub struct Args {
 	pub args: Punctuated<Arg, Token![,]>,
-	pub length_arg: Option<LengthArg>,
+	pub length_arg: Option<(LengthArg, Type)>,
 }
 
 pub struct Source {

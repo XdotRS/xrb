@@ -92,7 +92,7 @@ impl ParseWithContext for Args {
 		let mut length_arg = None;
 
 		while input.peek(Ident) || (definition_type.length_syntax() && input.peek(Token![self])) {
-			if definition_type.length_syntax() && input.peek(Token![self]) {
+			if let Some(r#type) = definition_type.length_type() && input.peek(Token![self]) {
 				if length_arg.is_some() {
 					let length_arg2: LengthArg = input.parse()?;
 
@@ -102,7 +102,7 @@ impl ParseWithContext for Args {
 					));
 				}
 
-				length_arg = Some(input.parse()?);
+				length_arg = Some((input.parse()?, r#type));
 
 				if input.peek(Token![,]) {
 					input.parse::<Token![,]>()?;

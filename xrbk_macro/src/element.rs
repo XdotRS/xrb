@@ -28,11 +28,35 @@ pub enum Content<'a> {
 	Unit,
 }
 
+impl Content<'_> {
+	/// Whether there is an [`ArrayUnused`] element with
+	/// [`UnusedContent::Infer`] within this `Content`.
+	///
+	/// See [`Elements::contains_infer`] for more information.
+	pub const fn contains_infer(&self) -> bool {
+		match self {
+			Self::Struct { elements, .. } | Self::Tuple { elements, .. } => elements.contains_infer,
+
+			Self::Unit => false,
+		}
+	}
+}
+
 pub struct Elements<'a> {
 	pub elements: Punctuated<Element<'a>, Token![,]>,
 
+	pub fields: Punctuated<&'a Field<'a>, &'a Token![,]>,
 	pub metabyte_element: Option<&'a Element<'a>>,
 	pub sequence_field: Option<&'a Field<'a>>,
+
+	/// Whether there is an [`ArrayUnused`] element with
+	/// [`UnusedContent::Infer`] within these `Elements`.
+	///
+	/// This is used because if there is no [`UnusedContent::Infer`]
+	/// [`ArrayUnused`] element, the cumulative data size of previous elements
+	/// does not need to be kept track of during serialization and
+	/// deserialization.
+	pub contains_infer: bool,
 }
 
 // Element {{{
@@ -98,7 +122,21 @@ pub enum FieldId<'a> {
 }
 
 impl<'a> FieldId<'a> {
-	pub fn new_ident(ident: &'a Ident) -> Self {
+	pub const fn ident(&self) -> &Ident {
+		match self {
+			Self::Index { ident, .. } => ident,
+			Self::Ident { ident, .. } => ident,
+		}
+	}
+
+	pub const fn formatted(&self) -> &Ident {
+		match self {
+			Self::Index { formatted, .. } => formatted,
+			Self::Ident { formatted, .. } => formatted,
+		}
+	}
+
+	pub fn new_ident(ident: &Ident) -> Self {
 		Self::Ident {
 			ident,
 
@@ -192,7 +230,7 @@ pub struct ArrayUnused {
 	pub bracket_token: token::Bracket,
 
 	pub underscore_token: Token![_],
-	pub semicolon_token: Token![_],
+	pub semicolon_token: Token![;],
 
 	pub content: UnusedContent,
 
@@ -200,7 +238,11 @@ pub struct ArrayUnused {
 }
 
 pub enum UnusedContent {
-	Infer(Token![..]),
+	Infer {
+		double_colon_token: Token![::],
+		last_element: bool,
+	},
+
 	Source(Box<Source>),
 }
 

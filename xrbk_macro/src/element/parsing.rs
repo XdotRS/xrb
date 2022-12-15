@@ -2,8 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use quote::quote;
 use std::collections::HashMap;
-use syn::{braced, bracketed, parenthesized, parse::ParseStream, spanned::Spanned, Error, Result};
+use syn::{
+	braced,
+	bracketed,
+	parenthesized,
+	parse::ParseStream,
+	punctuated::Pair,
+	spanned::Spanned,
+	Error,
+	Result,
+};
 
 use super::*;
 use crate::{
@@ -32,6 +42,25 @@ pub enum DefinitionType {
 }
 
 impl DefinitionType {
+	pub fn min_length(&self) -> Option<usize> {
+		match self {
+			Self::Basic => None,
+
+			Self::Request => None,
+			Self::Reply => Some(32),
+			Self::Event => Some(32),
+		}
+	}
+
+	pub fn length_type(&self) -> Option<Type> {
+		match self {
+			Self::Request => Some(Type::Verbatim(quote!(u16))),
+			Self::Reply => Some(Type::Verbatim(quote!(u32))),
+
+			_ => None,
+		}
+	}
+
 	pub fn length_syntax(&self) -> bool {
 		match self {
 			Self::Request => true,
@@ -149,11 +178,46 @@ impl ParseWithContext for Elements<'_> {
 			}
 		}
 
+		// If the last element is an `ArrayUnused` element with `UnusedContent::Infer`,
+		// then we can set the `UnusedContent::Infer`'s `last_element` field to `true`.
+		if let Some(Element::ArrayUnused(unused)) = elements.last_mut() {
+			if let UnusedContent::Infer { last_element, .. } = &mut unused.content {
+				*last_element = true;
+			}
+		}
+
 		Ok(Self {
 			elements,
 
 			metabyte_element,
 			sequence_field,
+
+			fields: elements
+				.pairs()
+				.filter_map(|pair| {
+					let element = match pair {
+						Pair::Punctuated(element, ..) => element,
+						Pair::End(element) => element,
+					};
+
+					match element {
+						Element::Field(field) => Some(match pair {
+							Pair::Punctuated(_, comma) => Pair::Punctuated(&**field, comma),
+							Pair::End(..) => Pair::End(&**field),
+						}),
+
+						_ => None,
+					}
+				})
+				.collect(),
+
+			contains_infer: elements.iter().any(|element| {
+				if let Element::ArrayUnused(unused) = &element {
+					matches!(unused.content, UnusedContent::Infer { .. })
+				} else {
+					false
+				}
+			}),
 		})
 	}
 }
@@ -307,7 +371,14 @@ impl ParseWithContext for UnusedContent {
 		let ((let_map, field_map), definition_type) = context;
 
 		Ok(if input.peek(Token![..]) {
-			Self::Infer(input.parse()?)
+			Self::Infer {
+				double_colon_token: input.parse()?,
+
+				// We don't know whether this is the last element or not until we have parsed the
+				// comma following it (if does indeed follow it), so we initialize this as `false`
+				// until then.
+				last_element: false,
+			}
 		} else {
 			Self::Source(Box::new(
 				input.parse_with(((let_map, Some(field_map)), definition_type))?,
