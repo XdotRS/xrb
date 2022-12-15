@@ -5,9 +5,8 @@
 mod expansion;
 mod parsing;
 
-use proc_macro2::Span;
 use quote::format_ident;
-use syn::{punctuated::Punctuated, token, Attribute, Ident, Token, Type, Visibility};
+use syn::{punctuated::Punctuated, token, Attribute, Ident, Index, Token, Type, Visibility};
 
 use crate::{
 	attribute::{ContextAttribute, MetabyteAttribute, SequenceAttribute},
@@ -173,9 +172,7 @@ pub enum FieldId<'a> {
 		/// This counts from `0` for the first field, and increments for each
 		/// field. The presence of other elements does not increment the field
 		/// index.
-		index: usize,
-
-		ident: Ident,
+		index: Index,
 		/// The [`Field`]'s formatted [`struct@Ident`] for use in generated
 		/// code.
 		formatted: Ident,
@@ -183,14 +180,6 @@ pub enum FieldId<'a> {
 }
 
 impl<'a> FieldId<'a> {
-	/// The [`FieldId`]'s unformatted [`struct@Ident`].
-	pub const fn ident(&self) -> &Ident {
-		match self {
-			Self::Index { ident, .. } => ident,
-			Self::Ident { ident, .. } => ident,
-		}
-	}
-
 	/// The [`FieldId`]'s formatted [`struct@Ident`].
 	pub const fn formatted(&self) -> &Ident {
 		match self {
@@ -211,9 +200,7 @@ impl<'a> FieldId<'a> {
 	/// Creates a new [`FieldId::Index`] with the given `index`.
 	pub fn new_index(index: usize) -> Self {
 		Self::Index {
-			index,
-
-			ident: Ident::new(&*index.to_string(), Span::call_site()),
+			index: Index::from(index),
 			formatted: format_ident!("field_{}", index),
 		}
 	}
@@ -223,7 +210,7 @@ impl ToString for FieldId<'_> {
 	fn to_string(&self) -> String {
 		match self {
 			Self::Ident { ident, .. } => ident.to_string(),
-			Self::Index { index, .. } => index.to_string(),
+			Self::Index { index, .. } => index.index.to_string(),
 		}
 	}
 }
@@ -380,9 +367,7 @@ pub struct UnusedId {
 	/// increments for each array-type unused bytes element. The presence of
 	/// other types of element does not increment the array-type unused bytes
 	/// element index.
-	index: usize,
-
-	ident: Ident,
+	index: Index,
 	/// The [`ArrayUnused`] bytes element's formatted [`struct@Ident`] for use
 	/// in generated code.
 	formatted: Ident,
@@ -392,9 +377,7 @@ impl UnusedId {
 	/// Creates a new `UnusedId` with the given `index`.
 	pub fn new(index: usize) -> Self {
 		Self {
-			index,
-
-			ident: Ident::new(&*index.to_string(), Span::call_site()),
+			index: Index::from(index),
 			// Create a formatted `Ident` by prepending `unused_` to the index.
 			formatted: format_ident!("unused_{}", index),
 		}
@@ -403,7 +386,7 @@ impl UnusedId {
 
 impl ToString for UnusedId {
 	fn to_string(&self) -> String {
-		self.index.to_string()
+		self.index.index.to_string()
 	}
 }
 

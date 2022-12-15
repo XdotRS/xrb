@@ -13,8 +13,8 @@ use super::*;
 impl ToTokens for FieldId<'_> {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		match self {
-			FieldId::Index { ident, .. } => ident.to_tokens(tokens),
 			FieldId::Ident { ident, .. } => ident.to_tokens(tokens),
+			FieldId::Index { index, .. } => index.to_tokens(tokens),
 		}
 	}
 }
@@ -27,7 +27,7 @@ impl ToTokens for LetId<'_> {
 
 impl ToTokens for UnusedId {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
-		self.ident.to_tokens(tokens)
+		self.index.to_tokens(tokens)
 	}
 }
 
@@ -97,10 +97,17 @@ impl Elements<'_> {
 				Pair::End(field) => (field, None),
 			};
 
-			let (field, formatted) = (field.id.ident(), field.id.formatted());
+			match &field.id {
+				FieldId::Ident { ident, formatted } => {
+					quote!(#ident: #formatted).to_tokens(tokens);
+					comma.to_tokens(tokens);
+				},
 
-			quote!(#field: #formatted).to_tokens(tokens);
-			comma.to_tokens(tokens);
+				FieldId::Index { formatted, .. } => {
+					formatted.to_tokens(tokens);
+					comma.to_tokens(tokens);
+				},
+			}
 		}
 	}
 }
