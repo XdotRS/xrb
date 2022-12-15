@@ -24,7 +24,7 @@ use crate::{
 };
 
 impl ParseWithContext for Content<'_> {
-	type Context = DefinitionType;
+	type Context<'a> = DefinitionType;
 
 	fn parse_with(input: ParseStream, definition_type: DefinitionType) -> Result<Self> {
 		Ok(if input.peek(token::Brace) {
@@ -48,7 +48,7 @@ impl ParseWithContext for Content<'_> {
 }
 
 impl ParseWithContext for Elements<'_> {
-	type Context = (ElementType, DefinitionType);
+	type Context<'a> = (ElementType, DefinitionType);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
 	where
@@ -214,7 +214,7 @@ impl ParseWithContext for Element<'_> {
 }
 
 impl ParseWithContext for SingleUnused {
-	type Context = ParsedAttributes;
+	type Context<'a> = ParsedAttributes;
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self> {
 		let ParsedAttributes {

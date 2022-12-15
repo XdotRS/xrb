@@ -60,7 +60,7 @@ impl Parse for Definition<'_> {
 }
 
 impl ParseWithContext for Metadata {
-	type Context = (Vec<Attribute>, Visibility);
+	type Context<'a> = (Vec<Attribute>, Visibility);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
 	where
@@ -137,7 +137,7 @@ type MetadataContext = (
 );
 
 impl ParseWithContext for Request {
-	type Context = MetadataContext;
+	type Context<'a> = MetadataContext;
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
 	where
@@ -172,7 +172,7 @@ impl ParseWithContext for Request {
 }
 
 impl ParseWithContext for Reply {
-	type Context = MetadataContext;
+	type Context<'a> = MetadataContext;
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
 	where
@@ -196,7 +196,7 @@ impl ParseWithContext for Reply {
 }
 
 impl ParseWithContext for Event {
-	type Context = MetadataContext;
+	type Context<'a> = MetadataContext;
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
 	where
@@ -221,7 +221,7 @@ impl ParseWithContext for Event {
 }
 
 impl ParseWithContext for Enum<'_> {
-	type Context = (Vec<Attribute>, Visibility);
+	type Context<'a> = (Vec<Attribute>, Visibility);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
 	where

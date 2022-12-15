@@ -162,7 +162,8 @@ pub enum FieldId<'a> {
 		///
 		/// [`ident`]: Field::ident
 		ident: &'a Ident,
-		/// The [`Field`]'s formatted [`Ident`] for use in generated code.
+		/// The [`Field`]'s formatted [`struct@Ident`] for use in generated
+		/// code.
 		formatted: Ident,
 	},
 
@@ -175,13 +176,14 @@ pub enum FieldId<'a> {
 		index: usize,
 
 		ident: Ident,
-		/// The [`Field`]'s formatted [`Ident`] for use in generated code.
+		/// The [`Field`]'s formatted [`struct@Ident`] for use in generated
+		/// code.
 		formatted: Ident,
 	},
 }
 
 impl<'a> FieldId<'a> {
-	/// The [`FieldId`]'s unformatted [`Ident`].
+	/// The [`FieldId`]'s unformatted [`struct@Ident`].
 	pub const fn ident(&self) -> &Ident {
 		match self {
 			Self::Index { ident, .. } => ident,
@@ -189,7 +191,7 @@ impl<'a> FieldId<'a> {
 		}
 	}
 
-	/// The [`FieldId`]'s formatted [`Ident`].
+	/// The [`FieldId`]'s formatted [`struct@Ident`].
 	pub const fn formatted(&self) -> &Ident {
 		match self {
 			Self::Index { formatted, .. } => formatted,
@@ -272,7 +274,8 @@ pub struct LetId<'a> {
 	///
 	/// [`ident`]: Let::ident
 	ident: &'a Ident,
-	/// The [`Let`] element's formatted [`Ident`] for use in generated code.
+	/// The [`Let`] element's formatted [`struct@Ident`] for use in generated
+	/// code.
 	formatted: Ident,
 }
 
@@ -380,8 +383,8 @@ pub struct UnusedId {
 	index: usize,
 
 	ident: Ident,
-	/// The [`ArrayUnused`] bytes element's formatted [`Ident`] for use in
-	/// generated code.
+	/// The [`ArrayUnused`] bytes element's formatted [`struct@Ident`] for use
+	/// in generated code.
 	formatted: Ident,
 }
 
