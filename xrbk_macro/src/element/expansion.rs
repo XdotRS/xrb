@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use proc_macro2::TokenStream;
+mod rw;
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
