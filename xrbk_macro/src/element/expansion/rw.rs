@@ -5,6 +5,38 @@
 use super::*;
 use crate::{definition::DefinitionType, TsExt};
 
+impl Element<'_> {
+	pub fn serialize(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
+		match self {
+			Self::Field(field) => field.serialize(tokens),
+			Self::Let(r#let) => r#let.serialize(tokens),
+
+			Self::SingleUnused(unused) => unused.serialize(tokens),
+			Self::ArrayUnused(unused) => unused.serialize(tokens, definition_type),
+		}
+	}
+
+	pub fn deserialize(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
+		match self {
+			Self::Field(field) => field.deserialize(tokens),
+			Self::Let(r#let) => r#let.deserialize(tokens),
+
+			Self::SingleUnused(unused) => unused.deserialize(tokens),
+			Self::ArrayUnused(unused) => unused.deserialize(tokens, definition_type),
+		}
+	}
+
+	pub fn add_datasize_tokens(&self, tokens: &mut TokenStream2) {
+		match self {
+			Self::Field(field) => field.add_datasize_tokens(tokens),
+			Self::Let(r#let) => r#let.add_datasize_tokens(tokens),
+
+			Self::SingleUnused(unused) => unused.add_datasize_tokens(tokens),
+			Self::ArrayUnused(unused) => unused.add_datasize_tokens(tokens),
+		}
+	}
+}
+
 // Field {{{
 
 impl Field<'_> {

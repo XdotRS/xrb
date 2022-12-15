@@ -2,13 +2,20 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::{definition::Struct, element::Content, ext::TsExt};
+use crate::{
+	definition::{DefinitionType, Struct},
+	element::Content,
+	ext::TsExt,
+};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
 impl Struct {
 	pub fn impl_writable(&self, tokens: &mut TokenStream2, content: &Content) {
 		let ident = &self.ident;
+
+		// TODO: add generic bounds
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		let declare_datasize = if content.contains_infer() {
 			// TODO: start at an appropriate number based on the size of the
@@ -21,6 +28,16 @@ impl Struct {
 
 		let pat = TokenStream2::with_tokens(|tokens| {
 			content.fields_to_tokens(tokens);
+		});
+
+		let writes = TokenStream2::with_tokens(|tokens| {
+			for element in content {
+				element.serialize(tokens, DefinitionType::Basic);
+
+				if content.contains_infer() {
+					element.add_datasize_tokens(tokens);
+				}
+			}
 		});
 
 		tokens.append_tokens(|| {
