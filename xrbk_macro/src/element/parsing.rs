@@ -324,7 +324,7 @@ impl ParseWithContext for UnusedContent {
 
 		Ok(if input.peek(Token![..]) {
 			Self::Infer {
-				double_colon_token: input.parse()?,
+				double_dot_token: input.parse()?,
 
 				// We don't know whether this is the last element or not until we have parsed the
 				// comma following it (if does indeed follow it), so we initialize this as `false`
