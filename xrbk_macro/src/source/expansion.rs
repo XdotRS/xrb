@@ -6,7 +6,7 @@ use super::*;
 use crate::TsExt;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
-use syn::punctuated::Pair;
+use syn::{punctuated::Pair, Attribute};
 
 impl ToTokens for LengthArg {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
@@ -43,10 +43,38 @@ impl ToTokens for Args {
 	}
 }
 
+impl Args {
+	pub fn formatted_tokens(&self, tokens: &mut TokenStream2) {
+		if let Some((length_arg, _)) = &self.length_arg {
+			let formatted = &length_arg.formatted_length_token;
+			quote!(#formatted,).to_tokens(tokens);
+		}
+
+		for pair in self.args.pairs() {
+			let (arg, comma) = match pair {
+				Pair::Punctuated(arg, comma) => (arg, Some(comma)),
+				Pair::End(arg) => (arg, None),
+			};
+
+			arg.formatted_ident.to_tokens(tokens);
+			comma.to_tokens(tokens);
+		}
+	}
+}
+
 impl Source {
-	pub fn function_to_tokens(&self, tokens: &mut TokenStream2, ident: &Ident, return_type: &Type) {
+	pub fn function_to_tokens(
+		&self, tokens: &mut TokenStream2, attributes: Option<&Vec<Attribute>>, ident: &Ident,
+		return_type: &Type,
+	) {
 		let args = self.args.map(|(args, ..)| args);
 		let expr = &self.expr;
+
+		if let Some(attributes) = attributes {
+			for attribute in attributes {
+				attribute.to_tokens(tokens);
+			}
+		}
 
 		tokens.append_tokens(|| {
 			quote!(

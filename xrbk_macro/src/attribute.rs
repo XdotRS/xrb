@@ -72,3 +72,12 @@ pub enum Context {
 		source: Source,
 	},
 }
+
+impl Context {
+	pub const fn source(&self) -> &Source {
+		match self {
+			Self::Paren { source, .. } => source,
+			Self::Equals { source, .. } => source,
+		}
+	}
+}

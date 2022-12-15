@@ -5,6 +5,143 @@
 use super::*;
 use crate::{definition::DefinitionType, TsExt};
 
+// Field {{{
+
+impl Field<'_> {
+	pub fn serialize(&self, tokens: &mut TokenStream2) {
+		let formatted = &self.id.formatted();
+		let r#type = &self.r#type;
+
+		tokens.append_tokens(|| {
+			quote!(
+				<#r#type as cornflakes::Writable>::write_to(#formatted, buf)?;
+			)
+		});
+	}
+
+	pub fn deserialize(&self, tokens: &mut TokenStream2) {
+		let formatted = &self.id.formatted();
+		let r#type = &self.r#type;
+
+		match &self.context_attribute {
+			Some(ContextAttribute { context, .. }) => {
+				context
+					.source()
+					.function_to_tokens(tokens, None, formatted, r#type);
+
+				let args = TokenStream2::with_tokens(|tokens| {
+					context
+						.source()
+						.args
+						.map(|(args, _)| args.formatted_tokens(tokens));
+				});
+
+				tokens.append_tokens(|| {
+					quote!(
+						let #formatted = <#r#type as cornflakes::ContextualReadable>::read_with(
+							buf,
+							#formatted(#args),
+						)?;
+					)
+				});
+			},
+
+			None => {
+				tokens.append_tokens(|| {
+					quote!(
+						let #formatted = <#r#type as cornflakes::Readable>::read_from(buf)?;
+					)
+				});
+			},
+		}
+	}
+}
+
+// }}} Let {{{
+
+impl Let<'_> {
+	pub fn serialize(&self, tokens: &mut TokenStream2) {
+		let formatted = &self.id.formatted;
+		let r#type = &self.r#type;
+
+		self.source
+			.function_to_tokens(tokens, Some(&self.attributes), formatted, &self.r#type);
+
+		let args = TokenStream2::with_tokens(|tokens| {
+			self.source
+				.args
+				.map(|(args, _)| args.formatted_tokens(tokens));
+		});
+
+		tokens.append_tokens(|| {
+			quote!(
+				let #formatted = #formatted(#args);
+
+				<#r#type as cornflakes::Writable>::write_to(#formatted, buf)?;
+			)
+		});
+	}
+
+	pub fn deserialize(&self, tokens: &mut TokenStream2) {
+		let formatted = &self.id.formatted;
+		let r#type = &self.r#type;
+
+		match &self.context_attribute {
+			Some(ContextAttribute { context, .. }) => {
+				context
+					.source()
+					.function_to_tokens(tokens, None, formatted, r#type);
+
+				let args = TokenStream2::with_tokens(|tokens| {
+					context
+						.source()
+						.args
+						.map(|(args, _)| args.formatted_tokens(tokens));
+				});
+
+				tokens.append_tokens(|| {
+					quote!(
+						let #formatted = <#r#type as cornflakes::ContextualReadable>::read_with(
+							buf,
+							#formatted(#args),
+						)?;
+					)
+				});
+			},
+
+			None => {
+				tokens.append_tokens(|| {
+					quote!(
+						let #formatted = <#r#type as cornflakes::Readable>::read_from(buf)?;
+					)
+				});
+			},
+		}
+	}
+}
+
+// }}} Single unused byte {{{
+
+impl SingleUnused {
+	pub fn serialize(&self, tokens: &mut TokenStream2) {
+		tokens.append_tokens(|| {
+			quote!(
+				buf.put_u8(0);
+			)
+		});
+	}
+
+	pub fn deserialize(&self, tokens: &mut TokenStream2) {
+		tokens.append_tokens(|| {
+			quote!(
+				buf.advance(1);
+			)
+		});
+	}
+}
+
+// }}} Array-type unused bytes {{{
+
 impl ArrayUnused {
 	fn r#impl(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		let formatted = &self.id.formatted;
@@ -31,7 +168,12 @@ impl ArrayUnused {
 			},
 
 			UnusedContent::Source(source) => {
-				source.function_to_tokens(tokens, formatted, &Type::Verbatim(quote!(usize)));
+				source.function_to_tokens(
+					tokens,
+					Some(&self.attributes),
+					formatted,
+					&Type::Verbatim(quote!(usize)),
+				);
 
 				tokens.append_tokens(|| {
 					quote!(
@@ -42,27 +184,29 @@ impl ArrayUnused {
 		}
 	}
 
-	pub fn impl_writable(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
+	pub fn serialize(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		let formatted = &self.id.formatted;
 
 		self.r#impl(tokens, definition_type);
 
 		tokens.append_tokens(|| {
 			quote!(
-				writer.put_bytes(0u8, #formatted);
+				buf.put_bytes(0u8, #formatted);
 			)
 		});
 	}
 
-	pub fn impl_readable(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
+	pub fn deserialize(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		let formatted = &self.id.formatted;
 
 		self.r#impl(tokens, definition_type);
 
 		tokens.append_tokens(|| {
 			quote!(
-				reader.advance(#formatted);
+				buf.advance(#formatted);
 			)
 		})
 	}
 }
+
+// }}}

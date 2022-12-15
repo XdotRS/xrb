@@ -30,7 +30,7 @@ impl Struct {
 					fn write_to(
 						&self,
 						// TODO: re-export `Buf` and `BufMut` in `cornflakes`
-						writer: &mut impl bytes::BufMut,
+						buf: &mut impl bytes::BufMut,
 					) -> Result<(), cornflakes::WriteError> {
 						#declare_datasize
 						// Destructure the struct's fields, if any.
