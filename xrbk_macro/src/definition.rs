@@ -148,7 +148,10 @@ pub struct Event {
 	pub code: Expr,
 }
 
-/// An enum definition that contains [`Variant`]s which may contain [`Items`].
+/// An enum definition that contains [`Variant`]s which may contain
+/// [`Element`]s.
+///
+/// [`Element`]: crate::element::Element
 pub struct Enum<'a> {
 	/// Attributes associated with the enum.
 	pub attributes: Vec<Attribute>,
@@ -168,7 +171,9 @@ pub struct Enum<'a> {
 	pub variants: Punctuated<Variant<'a>, Token![,]>,
 }
 
-/// An [`Enum`] variant that may contain [`Items`].
+/// An [`Enum`] variant that may contain [`Element`]s.
+///
+/// [`Element`]: crate::element::Element
 pub struct Variant<'a> {
 	/// Attributes associated with the enum variant.
 	pub attributes: Vec<Attribute>,
