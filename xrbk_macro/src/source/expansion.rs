@@ -84,4 +84,12 @@ impl Source {
 			)
 		});
 	}
+
+	pub fn call_to_tokens(&self, tokens: &mut TokenStream2, ident: &Ident) {
+		let args = TokenStream2::with_tokens(|tokens| {
+			self.args.map(|(args, ..)| args.formatted_tokens(tokens));
+		});
+
+		quote!(#ident(#args)).to_tokens(tokens);
+	}
 }

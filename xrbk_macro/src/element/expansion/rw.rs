@@ -29,18 +29,15 @@ impl Field<'_> {
 					.source()
 					.function_to_tokens(tokens, None, formatted, r#type);
 
-				let args = TokenStream2::with_tokens(|tokens| {
-					context
-						.source()
-						.args
-						.map(|(args, _)| args.formatted_tokens(tokens));
+				let function_call = TokenStream2::with_tokens(|tokens| {
+					context.source().call_to_tokens(tokens, formatted);
 				});
 
 				tokens.append_tokens(|| {
 					quote!(
 						let #formatted = <#r#type as cornflakes::ContextualReadable>::read_with(
 							buf,
-							#formatted(#args),
+							#function_call,
 						)?;
 					)
 				});
@@ -67,15 +64,13 @@ impl Let<'_> {
 		self.source
 			.function_to_tokens(tokens, Some(&self.attributes), formatted, &self.r#type);
 
-		let args = TokenStream2::with_tokens(|tokens| {
-			self.source
-				.args
-				.map(|(args, _)| args.formatted_tokens(tokens));
+		let function_call = TokenStream2::with_tokens(|tokens| {
+			self.source.call_to_tokens(tokens, formatted);
 		});
 
 		tokens.append_tokens(|| {
 			quote!(
-				let #formatted = #formatted(#args);
+				let #formatted = #function_call;
 
 				<#r#type as cornflakes::Writable>::write_to(#formatted, buf)?;
 			)
