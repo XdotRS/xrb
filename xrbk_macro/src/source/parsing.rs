@@ -2,9 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::element::parsing::DefinitionType;
+use crate::definition::DefinitionType;
 use quote::format_ident;
-use std::collections::HashMap;
 use syn::{
 	parse::{discouraged::Speculative, Parse, ParseStream},
 	spanned::Spanned,
@@ -13,9 +12,6 @@ use syn::{
 
 use super::*;
 use crate::ext::{ParseWithContext, PsExt};
-
-pub type IdentMap<'a> = &'a HashMap<String, Type>;
-pub type IdentMapMut<'a> = &'a mut HashMap<String, Type>;
 
 impl ParseWithContext for Arg {
 	type Context<'a> = (IdentMap<'a>, Option<IdentMap<'a>>);

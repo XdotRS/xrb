@@ -3,9 +3,13 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 mod expansion;
-pub mod parsing;
+mod parsing;
 
+use std::collections::HashMap;
 use syn::{punctuated::Punctuated, Expr, Ident, Token, Type};
+
+pub type IdentMap<'a> = &'a HashMap<String, Type>;
+pub type IdentMapMut<'a> = &'a mut HashMap<String, Type>;
 
 pub struct Arg {
 	pub ident: Ident,

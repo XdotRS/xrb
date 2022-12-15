@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use super::*;
-use crate::{element::parsing::DefinitionType, TsExt};
+use crate::{definition::DefinitionType, TsExt};
 
 impl ArrayUnused {
 	fn r#impl(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {

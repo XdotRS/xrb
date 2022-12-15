@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use super::*;
-use crate::{element::parsing::DefinitionType, ParseWithContext, PsExt};
+use crate::{definition::DefinitionType, ParseWithContext, PsExt};
 use syn::{
 	parse::{discouraged::Speculative, Parse, ParseStream},
 	Attribute,

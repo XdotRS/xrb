@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use quote::quote;
 use std::collections::HashMap;
 use syn::{
 	braced,
@@ -18,58 +17,11 @@ use syn::{
 use super::*;
 use crate::{
 	attribute::parsing::ParsedAttributes,
-	source::{
-		parsing::{IdentMap, IdentMapMut},
-		Args,
-	},
+	definition::DefinitionType,
+	source::{Args, IdentMap, IdentMapMut},
 	ParseWithContext,
 	PsExt,
 };
-
-#[derive(Clone, Copy)]
-pub enum ElementType {
-	Named,
-	Unnamed,
-}
-
-#[derive(Clone, Copy)]
-pub enum DefinitionType {
-	Basic,
-
-	Request,
-	Reply,
-	Event,
-}
-
-impl DefinitionType {
-	pub fn min_length(&self) -> Option<usize> {
-		match self {
-			Self::Basic => None,
-
-			Self::Request => None,
-			Self::Reply => Some(32),
-			Self::Event => Some(32),
-		}
-	}
-
-	pub fn length_type(&self) -> Option<Type> {
-		match self {
-			Self::Request => Some(Type::Verbatim(quote!(u16))),
-			Self::Reply => Some(Type::Verbatim(quote!(u32))),
-
-			_ => None,
-		}
-	}
-
-	pub fn length_syntax(&self) -> bool {
-		match self {
-			Self::Request => true,
-			Self::Reply => true,
-
-			_ => false,
-		}
-	}
-}
 
 impl ParseWithContext for Content<'_> {
 	type Context = DefinitionType;

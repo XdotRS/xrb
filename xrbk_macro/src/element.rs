@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 mod expansion;
-pub mod parsing;
+mod parsing;
 
 use proc_macro2::Span;
 use quote::format_ident;
@@ -271,3 +271,9 @@ impl ToString for UnusedId {
 }
 
 // }}}
+
+#[derive(Clone, Copy)]
+pub enum ElementType {
+	Named,
+	Unnamed,
+}

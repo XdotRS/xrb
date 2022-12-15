@@ -13,7 +13,7 @@ use syn::{
 };
 
 use super::*;
-use crate::{element::parsing::DefinitionType, source::parsing::IdentMap, ParseWithContext, PsExt};
+use crate::{definition::DefinitionType, source::IdentMap, ParseWithContext, PsExt};
 
 pub struct ParsedAttributes {
 	pub attributes: Vec<Attribute>,
