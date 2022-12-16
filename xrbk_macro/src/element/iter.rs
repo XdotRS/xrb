@@ -118,8 +118,8 @@ impl<'a> Iter<'a> {
 	}
 }
 
-impl IntoIter<'_> {
-	fn new(into_iter: Option<PuncIntoIter<Element<'_>>>) -> Self {
+impl<'a> IntoIter<'a> {
+	fn new(into_iter: Option<PuncIntoIter<Element<'a>>>) -> Self {
 		Self(into_iter)
 	}
 }
@@ -136,8 +136,8 @@ impl<'a> Pairs<'a> {
 	}
 }
 
-impl IntoPairs<'_> {
-	fn new(into_pairs: Option<PuncIntoPairs<Element<'_>, Token![,]>>) -> Self {
+impl<'a> IntoPairs<'a> {
+	fn new(into_pairs: Option<PuncIntoPairs<Element<'a>, Token![,]>>) -> Self {
 		Self(into_pairs)
 	}
 }
@@ -163,6 +163,7 @@ impl<'a> IntoIterator for Elements<'a> {
 	type IntoIter = IntoIter<'a>;
 	type Item = Element<'a>;
 
+	/// Creates an owning iterator over [`Element`]s.
 	fn into_iter(self) -> Self::IntoIter {
 		IntoIter::new(Some(self.elements.into_iter()))
 	}

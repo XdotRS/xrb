@@ -190,7 +190,7 @@ impl<'a> FieldId<'a> {
 	}
 
 	/// Creates a new [`FieldId::Ident`] with the given `ident`.
-	pub fn new_ident(ident: &Ident) -> Self {
+	pub fn new_ident(ident: &'a Ident) -> Self {
 		Self::Ident {
 			ident,
 

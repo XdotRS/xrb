@@ -45,37 +45,37 @@ impl ToTokens for Definition<'_> {
 
 impl ToTokens for Metadata {
 	fn to_tokens(&self, tokens: &mut TokenStream) {
-		let (attributes, vis, struct_token, ident, generics) = match self {
+		let (attributes, visibility, struct_token, ident, generics) = match self {
 			Self::Struct(r#struct) => (
-				r#struct.attributes,
-				r#struct.visibility,
-				r#struct.struct_token,
-				r#struct.ident,
-				r#struct.generics,
+				&r#struct.attributes,
+				&r#struct.visibility,
+				&r#struct.struct_token,
+				&r#struct.ident,
+				&r#struct.generics,
 			),
 
 			Self::Request(request) => (
-				request.attributes,
-				request.visibility,
-				request.struct_token,
-				request.ident,
-				request.generics,
+				&request.attributes,
+				&request.visibility,
+				&request.struct_token,
+				&request.ident,
+				&request.generics,
 			),
 
 			Self::Reply(reply) => (
-				reply.attributes,
-				reply.visibility,
-				reply.struct_token,
-				reply.ident,
-				reply.generics,
+				&reply.attributes,
+				&reply.visibility,
+				&reply.struct_token,
+				&reply.ident,
+				&reply.generics,
 			),
 
 			Self::Event(event) => (
-				event.attributes,
-				event.visibility,
-				event.struct_token,
-				event.ident,
-				event.generics,
+				&event.attributes,
+				&event.visibility,
+				&event.struct_token,
+				&event.ident,
+				&event.generics,
 			),
 		};
 
@@ -83,7 +83,7 @@ impl ToTokens for Metadata {
 			attribute.to_tokens(tokens);
 		}
 
-		vis.to_tokens(tokens);
+		visibility.to_tokens(tokens);
 		struct_token.to_tokens(tokens);
 		ident.to_tokens(tokens);
 		generics.to_tokens(tokens);
@@ -115,7 +115,7 @@ impl ToTokens for Variant<'_> {
 
 		self.ident.to_tokens(tokens);
 		self.content.to_tokens(tokens);
-		self.discriminant.map(|(equals, expr)| {
+		self.discriminant.as_ref().map(|(equals, expr)| {
 			equals.to_tokens(tokens);
 			expr.to_tokens(tokens);
 		});

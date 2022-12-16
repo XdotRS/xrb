@@ -111,9 +111,9 @@ impl ParseWithContext for Elements<'_> {
 			}
 		}
 
-		for element in elements {
+		for element in &mut elements {
 			if let Element::Let(r#let) = element {
-				if let Some((Args { args, .. }, _)) = r#let.source.args {
+				if let Some((Args { args, .. }, _)) = &mut r#let.source.args {
 					for mut arg in args {
 						if arg.r#type.is_none() {
 							if let Some(r#type) = field_map.get(&arg.ident.to_string()) {
@@ -139,8 +139,6 @@ impl ParseWithContext for Elements<'_> {
 		}
 
 		Ok(Self {
-			elements,
-
 			metabyte_element,
 			sequence_field,
 
@@ -170,6 +168,8 @@ impl ParseWithContext for Elements<'_> {
 					false
 				}
 			}),
+
+			elements,
 		})
 	}
 }
