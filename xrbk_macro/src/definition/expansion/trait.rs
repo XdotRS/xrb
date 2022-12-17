@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::element::{Elements, Field};
+use crate::element::{Element, Elements};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
@@ -58,20 +58,28 @@ impl Reply {
 		let request = &self.request;
 		let sequence = match content {
 			Content::Struct {
-				elements: Elements {
-					sequence_field: Some(Field { id, .. }),
-					..
-				},
+				elements:
+					Elements {
+						sequence_element: Some(Element::Field(field)),
+						..
+					},
 				..
-			} => quote!(Some(self.#id)),
+			} => {
+				let id = &field.id;
+				quote!(Some(self.#id))
+			},
 
 			Content::Tuple {
-				elements: Elements {
-					sequence_field: Some(Field { id, .. }),
-					..
-				},
+				elements:
+					Elements {
+						sequence_element: Some(Element::Field(field)),
+						..
+					},
 				..
-			} => quote!(Some(self.#id)),
+			} => {
+				let id = &field.id;
+				quote!(Some(self.#id))
+			},
 
 			_ => quote!(None),
 		};
@@ -103,20 +111,22 @@ impl Event {
 		let code = &self.code;
 		let sequence = match content {
 			Content::Struct {
-				elements: Elements {
-					sequence_field: Some(sequence),
-					..
-				},
+				elements:
+					Elements {
+						sequence_element: Some(Element::Field(field)),
+						..
+					},
 				..
-			} => &sequence.id,
+			} => &field.id,
 
 			Content::Tuple {
-				elements: Elements {
-					sequence_field: Some(sequence),
-					..
-				},
+				elements:
+					Elements {
+						sequence_element: Some(Element::Field(field)),
+						..
+					},
 				..
-			} => &sequence.id,
+			} => &field.id,
 
 			_ => panic!("events must have a sequence field"),
 		};

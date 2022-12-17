@@ -67,7 +67,7 @@ impl Source {
 		&self, tokens: &mut TokenStream2, attributes: Option<&Vec<Attribute>>, ident: &Ident,
 		return_type: &Type,
 	) {
-		let args = self.args.map(|(args, ..)| args);
+		let args = self.args.as_ref().map(|(args, ..)| args);
 		let expr = &self.expr;
 
 		if let Some(attributes) = attributes {
@@ -87,7 +87,9 @@ impl Source {
 
 	pub fn call_to_tokens(&self, tokens: &mut TokenStream2, ident: &Ident) {
 		let args = TokenStream2::with_tokens(|tokens| {
-			self.args.map(|(args, ..)| args.formatted_tokens(tokens));
+			if let Some((args, ..)) = self.args.as_ref() {
+				args.formatted_tokens(tokens)
+			}
 		});
 
 		quote!(#ident(#args)).to_tokens(tokens);

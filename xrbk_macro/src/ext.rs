@@ -19,22 +19,22 @@ pub trait PsExt {
 	///
 	/// Parsing continues until the end of this parse stream. The entire content
 	/// of this parse stream must consist of `T` and `P`.
-	fn parse_terminated_with<'a, T, F, P>(&self, context: F) -> Result<Punctuated<T, P>>
+	fn parse_terminated_with<'context, T, F, P>(&self, context: F) -> Result<Punctuated<T, P>>
 	where
 		T: ParseWithContext,
-		F: FnMut() -> T::Context<'a>,
+		F: FnMut() -> T::Context<'context>,
 		P: Parse;
 }
 
-impl<'a> PsExt for ParseBuffer<'a> {
+impl<'buffer> PsExt for ParseBuffer<'buffer> {
 	fn parse_with<T: ParseWithContext>(&self, context: T::Context<'_>) -> Result<T> {
 		T::parse_with(self, context)
 	}
 
-	fn parse_terminated_with<'b, T, F, P>(&self, context: F) -> Result<Punctuated<T, P>>
+	fn parse_terminated_with<'context, T, F, P>(&self, mut context: F) -> Result<Punctuated<T, P>>
 	where
 		T: ParseWithContext,
-		F: FnMut() -> T::Context<'b>,
+		F: FnMut() -> T::Context<'context>,
 		P: Parse,
 	{
 		let mut punctuated = Punctuated::new();

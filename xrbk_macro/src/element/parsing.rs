@@ -3,16 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use std::collections::HashMap;
-use syn::{
-	braced,
-	bracketed,
-	parenthesized,
-	parse::ParseStream,
-	punctuated::Pair,
-	spanned::Spanned,
-	Error,
-	Result,
-};
+use syn::{braced, bracketed, parenthesized, parse::ParseStream, spanned::Spanned, Error, Result};
 
 use super::*;
 use crate::{
@@ -23,7 +14,7 @@ use crate::{
 	PsExt,
 };
 
-impl ParseWithContext for Content<'_> {
+impl ParseWithContext for Content {
 	type Context<'a> = DefinitionType;
 
 	fn parse_with(input: ParseStream, definition_type: DefinitionType) -> Result<Self> {
@@ -47,7 +38,7 @@ impl ParseWithContext for Content<'_> {
 	}
 }
 
-impl ParseWithContext for Elements<'_> {
+impl ParseWithContext for Elements {
 	type Context<'a> = (ElementType, DefinitionType);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
@@ -61,7 +52,7 @@ impl ParseWithContext for Elements<'_> {
 
 		let mut elements = Punctuated::new();
 		let mut metabyte_element = None;
-		let mut sequence_field = None;
+		let mut sequence_element = None;
 
 		let mut field_index = 0;
 		let mut unused_index = 0;
@@ -74,6 +65,12 @@ impl ParseWithContext for Elements<'_> {
 				(&mut let_map, &mut field_map),
 			))?;
 
+			match &element {
+				Element::Field(_) => field_index += 1,
+				Element::ArrayUnused(_) => unused_index += 1,
+				_ => (),
+			}
+
 			if element.is_metabyte() {
 				if metabyte_element.is_some() {
 					return Err(Error::new(
@@ -82,27 +79,21 @@ impl ParseWithContext for Elements<'_> {
 					));
 				}
 
-				metabyte_element = Some(&element);
-			}
-
-			if let Element::Field(field) = &element && field.is_sequence() {
-				if sequence_field.is_some() {
+				metabyte_element = Some(element);
+				elements.push_value(ElementsItem::Metabyte);
+			} else if let Element::Field(field) = &element && field.is_sequence() {
+				if sequence_element.is_some() {
 					return Err(Error::new(
 						field.span(),
 						"no more than one sequence field is allowed per message",
 					));
 				}
 
-				sequence_field = Some(&**field);
+				sequence_element = Some(element);
+				elements.push_value(ElementsItem::Sequence);
+			} else {
+				elements.push_value(ElementsItem::Element(element));
 			}
-
-			match &element {
-				Element::Field(_) => field_index += 1,
-				Element::ArrayUnused(_) => unused_index += 1,
-				_ => (),
-			}
-
-			elements.push_value(element);
 
 			if input.peek(Token![,]) {
 				elements.push_punct(input.parse()?);
@@ -111,8 +102,16 @@ impl ParseWithContext for Elements<'_> {
 			}
 		}
 
-		for element in &mut elements {
-			if let Element::Let(r#let) = element {
+		for item in &mut elements {
+			let r#let = if let ElementsItem::Element(Element::Let(r#let)) = item {
+				Some(r#let)
+			} else if let ElementsItem::Metabyte = item && let Some(Element::Let(r#let)) = &mut metabyte_element {
+				Some(r#let)
+			} else {
+				None
+			};
+
+			if let Some(r#let) = r#let {
 				if let Some((Args { args, .. }, _)) = &mut r#let.source.args {
 					for mut arg in args {
 						if arg.r#type.is_none() {
@@ -132,49 +131,32 @@ impl ParseWithContext for Elements<'_> {
 
 		// If the last element is an `ArrayUnused` element with `UnusedContent::Infer`,
 		// then we can set the `UnusedContent::Infer`'s `last_element` field to `true`.
-		if let Some(Element::ArrayUnused(unused)) = elements.last_mut() {
+		if let Some(ElementsItem::Element(Element::ArrayUnused(unused))) = elements.last_mut() {
 			if let UnusedContent::Infer { last_element, .. } = &mut unused.content {
 				*last_element = true;
 			}
 		}
 
+		let contains_infer = elements.iter().any(|item| {
+			if let ElementsItem::Element(Element::ArrayUnused(unused)) = &item {
+				matches!(unused.content, UnusedContent::Infer { .. })
+			} else {
+				false
+			}
+		});
+
 		Ok(Self {
-			metabyte_element,
-			sequence_field,
-
-			fields: elements
-				.pairs()
-				.filter_map(|pair| {
-					let element = match pair {
-						Pair::Punctuated(element, ..) => element,
-						Pair::End(element) => element,
-					};
-
-					match element {
-						Element::Field(field) => Some(match pair {
-							Pair::Punctuated(_, comma) => Pair::Punctuated(&**field, comma),
-							Pair::End(..) => Pair::End(&**field),
-						}),
-
-						_ => None,
-					}
-				})
-				.collect(),
-
-			contains_infer: elements.iter().any(|element| {
-				if let Element::ArrayUnused(unused) = &element {
-					matches!(unused.content, UnusedContent::Infer { .. })
-				} else {
-					false
-				}
-			}),
-
 			elements,
+
+			metabyte_element,
+			sequence_element,
+
+			contains_infer,
 		})
 	}
 }
 
-impl ParseWithContext for Element<'_> {
+impl ParseWithContext for Element {
 	type Context<'a> = (
 		(usize, usize),
 		ElementType,
@@ -301,7 +283,7 @@ impl ParseWithContext for ArrayUnused {
 		let content;
 
 		Ok(Self {
-			id: UnusedId::new(unused_index),
+			formatted: format_ident!("unused_{}", unused_index),
 
 			attributes,
 
@@ -339,7 +321,7 @@ impl ParseWithContext for UnusedContent {
 	}
 }
 
-impl ParseWithContext for Let<'_> {
+impl ParseWithContext for Let {
 	type Context<'a> = (ParsedAttributes, IdentMapMut<'a>, DefinitionType);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
@@ -374,11 +356,10 @@ impl ParseWithContext for Let<'_> {
 
 		let source = input.parse_with(((&*let_map, None), definition_type))?;
 
-		let id = LetId::new(&ident);
-		let_map.insert(id.to_string(), r#type.to_owned());
+		let_map.insert(ident.to_string(), r#type.to_owned());
 
 		Ok(Self {
-			id,
+			formatted: format_ident!("__{}__", ident),
 
 			attributes,
 			metabyte_attribute,
@@ -397,7 +378,7 @@ impl ParseWithContext for Let<'_> {
 	}
 }
 
-impl ParseWithContext for Field<'_> {
+impl ParseWithContext for Field {
 	type Context<'a> = (usize, ElementType, ParsedAttributes, IdentMapMut<'a>);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
@@ -417,20 +398,26 @@ impl ParseWithContext for Field<'_> {
 		) = context;
 
 		let visibility = input.parse()?;
-		let ident: Option<(Ident, _)> = match element_type {
-			ElementType::Named => Some((input.parse()?, input.parse()?)),
-			ElementType::Unnamed => None,
+
+		let id = match element_type {
+			ElementType::Named => FieldId::Ident(input.parse()?),
+			ElementType::Unnamed => FieldId::Index(Index::from(index)),
 		};
+		let colon_token = if let FieldId::Ident(_) = id {
+			Some(input.parse()?)
+		} else {
+			None
+		};
+
 		let r#type: Type = input.parse()?;
 
-		let id = match &ident {
-			Some((ident, _)) => FieldId::new_ident(&ident),
-			None => FieldId::new_index(index),
-		};
 		map.insert(id.to_string(), r#type.to_owned());
 
 		Ok(Self {
-			id,
+			formatted: match &id {
+				FieldId::Ident(ident) => format_ident!("field_{}", ident),
+				FieldId::Index(index) => format_ident!("field_{}", index),
+			},
 
 			attributes,
 			metabyte_attribute,
@@ -438,7 +425,8 @@ impl ParseWithContext for Field<'_> {
 			sequence_attribute,
 
 			visibility,
-			ident,
+			id,
+			colon_token,
 			r#type,
 		})
 	}

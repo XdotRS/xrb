@@ -9,7 +9,7 @@ use super::*;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 
-impl ToTokens for Definitions<'_> {
+impl ToTokens for Definitions {
 	fn to_tokens(&self, tokens: &mut TokenStream) {
 		let Self(definitions) = self;
 
@@ -19,7 +19,7 @@ impl ToTokens for Definitions<'_> {
 	}
 }
 
-impl ToTokens for Definition<'_> {
+impl ToTokens for Definition {
 	fn to_tokens(&self, tokens: &mut TokenStream) {
 		match self {
 			Self::Structlike(metadata, content, semicolon) => {
@@ -90,7 +90,7 @@ impl ToTokens for Metadata {
 	}
 }
 
-impl ToTokens for Enum<'_> {
+impl ToTokens for Enum {
 	fn to_tokens(&self, tokens: &mut TokenStream) {
 		for attribute in &self.attributes {
 			attribute.to_tokens(tokens);
@@ -107,7 +107,7 @@ impl ToTokens for Enum<'_> {
 	}
 }
 
-impl ToTokens for Variant<'_> {
+impl ToTokens for Variant {
 	fn to_tokens(&self, tokens: &mut TokenStream) {
 		for attribute in &self.attributes {
 			attribute.to_tokens(tokens);
@@ -115,9 +115,10 @@ impl ToTokens for Variant<'_> {
 
 		self.ident.to_tokens(tokens);
 		self.content.to_tokens(tokens);
-		self.discriminant.as_ref().map(|(equals, expr)| {
+
+		if let Some((equals, expr)) = self.discriminant.as_ref() {
 			equals.to_tokens(tokens);
 			expr.to_tokens(tokens);
-		});
+		}
 	}
 }

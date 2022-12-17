@@ -5,7 +5,7 @@
 use super::*;
 use crate::{definition::DefinitionType, TsExt};
 
-impl Element<'_> {
+impl Element {
 	pub fn serialize(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		match self {
 			Self::Field(field) => field.serialize(tokens),
@@ -39,9 +39,9 @@ impl Element<'_> {
 
 // Field {{{
 
-impl Field<'_> {
+impl Field {
 	pub fn serialize(&self, tokens: &mut TokenStream2) {
-		let formatted = &self.id.formatted();
+		let formatted = &self.formatted;
 		let r#type = &self.r#type;
 
 		tokens.append_tokens(|| {
@@ -52,7 +52,7 @@ impl Field<'_> {
 	}
 
 	pub fn deserialize(&self, tokens: &mut TokenStream2) {
-		let formatted = &self.id.formatted();
+		let formatted = &self.formatted;
 		let r#type = &self.r#type;
 
 		match &self.context_attribute {
@@ -88,7 +88,7 @@ impl Field<'_> {
 	pub fn add_datasize_tokens(&self, tokens: &mut TokenStream2) {
 		tokens.append_tokens(|| {
 			let r#type = &self.r#type;
-			let formatted = self.id.formatted();
+			let formatted = &self.formatted;
 
 			quote!(
 				datasize += <#r#type as cornflakes::DataSize>::data_size(#formatted);
@@ -99,9 +99,9 @@ impl Field<'_> {
 
 // }}} Let {{{
 
-impl Let<'_> {
+impl Let {
 	pub fn serialize(&self, tokens: &mut TokenStream2) {
-		let formatted = &self.id.formatted;
+		let formatted = &self.formatted;
 		let r#type = &self.r#type;
 
 		self.source
@@ -121,7 +121,7 @@ impl Let<'_> {
 	}
 
 	pub fn deserialize(&self, tokens: &mut TokenStream2) {
-		let formatted = &self.id.formatted;
+		let formatted = &self.formatted;
 		let r#type = &self.r#type;
 
 		match &self.context_attribute {
@@ -156,7 +156,7 @@ impl Let<'_> {
 
 	pub fn add_datasize_tokens(&self, tokens: &mut TokenStream2) {
 		let r#type = &self.r#type;
-		let formatted = &self.id.formatted;
+		let formatted = &self.formatted;
 
 		tokens.append_tokens(|| {
 			quote!(
@@ -198,7 +198,7 @@ impl SingleUnused {
 
 impl ArrayUnused {
 	fn r#impl(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
-		let formatted = &self.id.formatted;
+		let formatted = &self.formatted;
 
 		match &self.content {
 			UnusedContent::Infer { last_element, .. } => {
@@ -239,7 +239,7 @@ impl ArrayUnused {
 	}
 
 	pub fn serialize(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
-		let formatted = &self.id.formatted;
+		let formatted = &self.formatted;
 
 		self.r#impl(tokens, definition_type);
 
@@ -251,7 +251,7 @@ impl ArrayUnused {
 	}
 
 	pub fn deserialize(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
-		let formatted = &self.id.formatted;
+		let formatted = &self.formatted;
 
 		self.r#impl(tokens, definition_type);
 
@@ -263,7 +263,7 @@ impl ArrayUnused {
 	}
 
 	pub fn add_datasize_tokens(&self, tokens: &mut TokenStream2) {
-		let formatted = &self.id.formatted;
+		let formatted = &self.formatted;
 
 		tokens.append_tokens(|| {
 			quote!(

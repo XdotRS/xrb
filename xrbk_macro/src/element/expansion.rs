@@ -4,34 +4,20 @@
 
 mod rw;
 
+use super::*;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
-use syn::punctuated::Pair;
 
-use super::*;
-
-impl ToTokens for FieldId<'_> {
+impl ToTokens for FieldId {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		match self {
-			FieldId::Ident { ident, .. } => ident.to_tokens(tokens),
-			FieldId::Index { index, .. } => index.to_tokens(tokens),
+			Self::Ident(ident) => ident.to_tokens(tokens),
+			Self::Index(index) => index.to_tokens(tokens),
 		}
 	}
 }
 
-impl ToTokens for LetId<'_> {
-	fn to_tokens(&self, tokens: &mut TokenStream2) {
-		self.ident.to_tokens(tokens)
-	}
-}
-
-impl ToTokens for UnusedId {
-	fn to_tokens(&self, tokens: &mut TokenStream2) {
-		self.index.to_tokens(tokens)
-	}
-}
-
-impl ToTokens for Content<'_> {
+impl ToTokens for Content {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		match self {
 			Self::Struct {
@@ -57,7 +43,7 @@ impl ToTokens for Content<'_> {
 	}
 }
 
-impl Content<'_> {
+impl Content {
 	pub fn fields_to_tokens(&self, tokens: &mut TokenStream2) {
 		match self {
 			Self::Struct {
@@ -83,36 +69,35 @@ impl Content<'_> {
 	}
 }
 
-impl ToTokens for Elements<'_> {
+impl ToTokens for Elements {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
-		self.elements.to_tokens(tokens);
-	}
-}
-
-impl Elements<'_> {
-	pub fn fields_to_tokens(&self, tokens: &mut TokenStream2) {
-		for pair in self.fields.pairs() {
-			let (field, comma) = match pair {
-				Pair::Punctuated(field, comma) => (field, Some(comma)),
-				Pair::End(field) => (field, None),
-			};
-
-			match &field.id {
-				FieldId::Ident { ident, formatted } => {
-					quote!(#ident: #formatted).to_tokens(tokens);
-					comma.to_tokens(tokens);
-				},
-
-				FieldId::Index { formatted, .. } => {
-					formatted.to_tokens(tokens);
-					comma.to_tokens(tokens);
-				},
+		for (element, comma) in self.pairs() {
+			if let Element::Field(field) = element {
+				field.to_tokens(tokens);
+				comma.to_tokens(tokens);
 			}
 		}
 	}
 }
 
-impl ToTokens for Element<'_> {
+impl Elements {
+	pub fn fields_to_tokens(&self, tokens: &mut TokenStream2) {
+		for (element, comma) in self.pairs() {
+			if let Element::Field(field) = element {
+				let formatted = &field.formatted;
+
+				match &field.id {
+					FieldId::Ident(ident) => quote!(#ident: #formatted).to_tokens(tokens),
+					FieldId::Index(_) => formatted.to_tokens(tokens),
+				}
+
+				comma.to_tokens(tokens);
+			}
+		}
+	}
+}
+
+impl ToTokens for Element {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		if let Element::Field(field) = self {
 			field.to_tokens(tokens);
@@ -120,7 +105,7 @@ impl ToTokens for Element<'_> {
 	}
 }
 
-impl ToTokens for Field<'_> {
+impl ToTokens for Field {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		for attribute in &self.attributes {
 			attribute.to_tokens(tokens);
@@ -128,10 +113,10 @@ impl ToTokens for Field<'_> {
 
 		self.visibility.to_tokens(tokens);
 
-		self.ident.map(|(ident, colon)| {
+		if let FieldId::Ident(ident) = &self.id && let Some(colon) = &self.colon_token {
 			ident.to_tokens(tokens);
 			colon.to_tokens(tokens);
-		});
+		}
 
 		self.r#type.to_tokens(tokens);
 	}

@@ -14,13 +14,13 @@ use crate::{
 	source::Source,
 };
 
-pub enum Content<'a> {
+pub enum Content {
 	/// Named elements surrounded by curly brackets (`{` and `}`).
 	Struct {
 		/// A pair of curly brackets (`{` and `}`) surrounding the `elements`.
 		brace_token: token::Brace,
 		/// The [`Elements`] contained in the `Content`.
-		elements: Elements<'a>,
+		elements: Elements,
 	},
 
 	/// Elements, including unnamed fields, surrounding by normal brackets (`(`
@@ -29,14 +29,14 @@ pub enum Content<'a> {
 		/// A pair of normal brackets (`(` and `)`) surrounding the `elements`.
 		paren_token: token::Paren,
 		/// The [`Elements`] contained in the `Content`.
-		elements: Elements<'a>,
+		elements: Elements,
 	},
 
 	/// No [`Elements`] and no delimiters.
 	Unit,
 }
 
-impl Content<'_> {
+impl Content {
 	/// Whether there is an [`ArrayUnused`] element with
 	/// [`UnusedContent::Infer`] within this `Content`.
 	///
@@ -50,21 +50,20 @@ impl Content<'_> {
 	}
 }
 
-pub struct Elements<'a> {
-	/// The [`Punctuated`] (by commas) list of [`Element`]s, as parsed.
-	pub elements: Punctuated<Element<'a>, Token![,]>,
+enum ElementsItem {
+	Element(Element),
+	Metabyte,
+	Sequence,
+}
 
-	/// A [`Punctuated`] list referencing only the [`Field`]s contained within
-	/// [`elements`].
-	///
-	/// [`elements`]: Self::elements
-	pub fields: Punctuated<&'a Field<'a>, &'a Token![,]>,
-	/// A reference to the [`Element`] which has a [`MetabyteAttribute`], if
-	/// there is one.
-	pub metabyte_element: Option<&'a Element<'a>>,
-	/// A reference to the [`Field`] which has a [`SequenceAttribute`], if there
-	/// is one.
-	pub sequence_field: Option<&'a Field<'a>>,
+pub struct Elements {
+	/// The [`Punctuated`] (by commas) list of [`Element`]s, as parsed.
+	elements: Punctuated<ElementsItem, Token![,]>,
+
+	/// The [`Element`] which has a [`MetabyteAttribute`], if there is one.
+	pub metabyte_element: Option<Element>,
+	/// The [`Element`] which has a [`SequenceAttribute`], if there is one.
+	pub sequence_element: Option<Element>,
 
 	/// Whether there is an [`ArrayUnused`] element with
 	/// [`UnusedContent::Infer`] within these `Elements`.
@@ -79,12 +78,12 @@ pub struct Elements<'a> {
 // Element {{{
 
 /// An `Element` that takes the place of fields in struct and enum definitions.
-pub enum Element<'a> {
+pub enum Element {
 	/// See [`Field`] for more information.
-	Field(Box<Field<'a>>),
+	Field(Box<Field>),
 
 	/// See [`Let`] for more information.
-	Let(Box<Let<'a>>),
+	Let(Box<Let>),
 
 	/// A single unused byte that will be skipped over when reading and writing.
 	///
@@ -97,7 +96,7 @@ pub enum Element<'a> {
 	ArrayUnused(Box<ArrayUnused>),
 }
 
-impl Element<'_> {
+impl Element {
 	/// Whether this `Element` has a [`MetabyteAttribute`].
 	pub const fn is_metabyte(&self) -> bool {
 		match self {
@@ -114,7 +113,7 @@ impl Element<'_> {
 
 // }}} Field {{{
 
-pub struct Field<'a> {
+pub struct Field {
 	/// Attributes associated with the `Field`.
 	pub attributes: Vec<Attribute>,
 	/// An optional [`ContextAttribute`] to provide context for types
@@ -135,16 +134,19 @@ pub struct Field<'a> {
 
 	/// The visibility of the `Field`.
 	pub visibility: Visibility,
-	/// The name of the `Field`, followed by a colon token (`:`), for named
-	/// fields.
-	pub ident: Option<(Ident, Token![:])>,
+	/// Either the field's name, if it is named, or its index, if it is unnamed.
+	pub id: FieldId,
+	/// A colon token (`:`) following the name of the field, if there is one.
+	pub colon_token: Option<Token![:]>,
 	/// The `Field`'s type.
 	pub r#type: Type,
 
-	pub id: FieldId<'a>,
+	/// The formatted identifier used to refer to this `Field` in generated
+	/// code.
+	pub formatted: Ident,
 }
 
-impl Field<'_> {
+impl Field {
 	/// Whether this `Field` has a [`MetabyteAttribute`].
 	pub const fn is_metabyte(&self) -> bool {
 		self.metabyte_attribute.is_some()
@@ -156,69 +158,23 @@ impl Field<'_> {
 	}
 }
 
-pub enum FieldId<'a> {
-	Ident {
-		/// A reference to the [`Field`]'s [`ident`].
-		///
-		/// [`ident`]: Field::ident
-		ident: &'a Ident,
-		/// The [`Field`]'s formatted [`struct@Ident`] for use in generated
-		/// code.
-		formatted: Ident,
-	},
-
-	Index {
-		/// The [`Field`]'s index.
-		///
-		/// This counts from `0` for the first field, and increments for each
-		/// field. The presence of other elements does not increment the field
-		/// index.
-		index: Index,
-		/// The [`Field`]'s formatted [`struct@Ident`] for use in generated
-		/// code.
-		formatted: Ident,
-	},
+pub enum FieldId {
+	Ident(Ident),
+	Index(Index),
 }
 
-impl<'a> FieldId<'a> {
-	/// The [`FieldId`]'s formatted [`struct@Ident`].
-	pub const fn formatted(&self) -> &Ident {
-		match self {
-			Self::Index { formatted, .. } => formatted,
-			Self::Ident { formatted, .. } => formatted,
-		}
-	}
-
-	/// Creates a new [`FieldId::Ident`] with the given `ident`.
-	pub fn new_ident(ident: &'a Ident) -> Self {
-		Self::Ident {
-			ident,
-
-			formatted: format_ident!("field_{}", ident),
-		}
-	}
-
-	/// Creates a new [`FieldId::Index`] with the given `index`.
-	pub fn new_index(index: usize) -> Self {
-		Self::Index {
-			index: Index::from(index),
-			formatted: format_ident!("field_{}", index),
-		}
-	}
-}
-
-impl ToString for FieldId<'_> {
+impl ToString for FieldId {
 	fn to_string(&self) -> String {
 		match self {
-			Self::Ident { ident, .. } => ident.to_string(),
-			Self::Index { index, .. } => index.index.to_string(),
+			Self::Ident(ident) => ident.to_string(),
+			Self::Index(Index { index, .. }) => index.to_string(),
 		}
 	}
 }
 
 // }}} Let {{{
 
-pub struct Let<'a> {
+pub struct Let {
 	/// Attributes associated with the `Let` element.
 	pub attributes: Vec<Attribute>,
 	/// An optional [`ContextAttribute`] to provide context for reading `Let`
@@ -247,41 +203,15 @@ pub struct Let<'a> {
 	/// The [`Source`] which provides serialization for the `Let` element.
 	pub source: Source,
 
-	pub id: LetId<'a>,
+	/// The formatted identifier used to refer to this `Let` element in
+	/// generated code.
+	pub formatted: Ident,
 }
 
-impl Let<'_> {
+impl Let {
 	/// Whether this `Let` element has a [`MetabyteAttribute`].
 	pub const fn is_metabyte(&self) -> bool {
 		self.metabyte_attribute.is_some()
-	}
-}
-
-pub struct LetId<'a> {
-	/// A reference to the [`Let`] element's [`ident`].
-	///
-	/// [`ident`]: Let::ident
-	ident: &'a Ident,
-	/// The [`Let`] element's formatted [`struct@Ident`] for use in generated
-	/// code.
-	formatted: Ident,
-}
-
-impl<'a> LetId<'a> {
-	/// Creates a new `LetId` with the given `ident`.
-	pub fn new(ident: &'a Ident) -> Self {
-		Self {
-			ident,
-
-			// Create a formatted `Ident` by prepending `let_` to the let element's identifier.
-			formatted: format_ident!("let_{}", ident),
-		}
-	}
-}
-
-impl ToString for LetId<'_> {
-	fn to_string(&self) -> String {
-		self.ident.to_string()
 	}
 }
 
@@ -331,7 +261,9 @@ pub struct ArrayUnused {
 	/// See [`UnusedContent`] for more information.
 	pub content: UnusedContent,
 
-	pub id: UnusedId,
+	/// The formatted identifier used to refer to this `ArrayUnused` bytes
+	/// element in generated code.
+	pub formatted: Ident,
 }
 
 /// The content of an [`ArrayUnused`] element.
@@ -359,36 +291,6 @@ pub enum UnusedContent {
 	/// Determine the number of unused bytes by a [`Source`] which returns a
 	/// `usize` quantity.
 	Source(Box<Source>),
-}
-
-pub struct UnusedId {
-	/// The [`ArrayUnused`] bytes element's index.
-	///
-	/// This counts from `0` for the first array-type unused bytes element, and
-	/// increments for each array-type unused bytes element. The presence of
-	/// other types of element does not increment the array-type unused bytes
-	/// element index.
-	index: Index,
-	/// The [`ArrayUnused`] bytes element's formatted [`struct@Ident`] for use
-	/// in generated code.
-	formatted: Ident,
-}
-
-impl UnusedId {
-	/// Creates a new `UnusedId` with the given `index`.
-	pub fn new(index: usize) -> Self {
-		Self {
-			index: Index::from(index),
-			// Create a formatted `Ident` by prepending `unused_` to the index.
-			formatted: format_ident!("unused_{}", index),
-		}
-	}
-}
-
-impl ToString for UnusedId {
-	fn to_string(&self) -> String {
-		self.index.index.to_string()
-	}
 }
 
 // }}}

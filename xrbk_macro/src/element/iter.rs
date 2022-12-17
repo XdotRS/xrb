@@ -14,238 +14,371 @@ use syn::punctuated::{
 };
 
 /// A borrowing iterator over [`Element`]s.
-pub struct Iter<'a>(Option<PuncIter<'a, Element<'a>>>);
+pub struct Iter<'a> {
+	iter: Option<PuncIter<'a, ElementsItem>>,
+	metabyte_element: Option<&'a Element>,
+	sequence_element: Option<&'a Element>,
+}
+
 /// An owning iterator over [`Element`]s.
-pub struct IntoIter<'a>(Option<PuncIntoIter<Element<'a>>>);
+pub struct IntoIter {
+	into_iter: Option<PuncIntoIter<ElementsItem>>,
+	metabyte_element: Option<Element>,
+	sequence_element: Option<Element>,
+}
+
 /// A mutably borrowing iterator over [`Element`]s.
-pub struct IterMut<'a>(Option<PuncIterMut<'a, Element<'a>>>);
+pub struct IterMut<'a> {
+	iter_mut: Option<PuncIterMut<'a, ElementsItem>>,
+	metabyte_element: Option<&'a mut Element>,
+	sequence_element: Option<&'a mut Element>,
+}
 
 /// A borrowing iterator over pairs of [`Element`]s and possible commas.
-pub struct Pairs<'a>(Option<PuncPairs<'a, Element<'a>, Token![,]>>);
+pub struct Pairs<'a> {
+	pairs: Option<PuncPairs<'a, ElementsItem, Token![,]>>,
+	metabyte_element: Option<&'a Element>,
+	sequence_element: Option<&'a Element>,
+}
+
 /// An owning iterator over pairs of [`Element`]s and possible commas.
-pub struct IntoPairs<'a>(Option<PuncIntoPairs<Element<'a>, Token![,]>>);
+pub struct IntoPairs {
+	into_pairs: Option<PuncIntoPairs<ElementsItem, Token![,]>>,
+	metabyte_element: Option<Element>,
+	sequence_element: Option<Element>,
+}
+
 /// A mutably borrowing iterator over pairs of [`Element`]s and possible commas.
-pub struct PairsMut<'a>(Option<PuncPairsMut<'a, Element<'a>, Token![,]>>);
+pub struct PairsMut<'a> {
+	pairs_mut: Option<PuncPairsMut<'a, ElementsItem, Token![,]>>,
+	metabyte_element: Option<&'a mut Element>,
+	sequence_element: Option<&'a mut Element>,
+}
 
 // impl Iterator {{{
 
 impl<'a> Iterator for Iter<'a> {
-	type Item = &'a Element<'a>;
+	type Item = &'a Element;
 
 	fn next(&mut self) -> Option<Self::Item> {
-		if let Self(Some(iter)) = self {
-			iter.next()
+		if let Some(iter) = &mut self.iter {
+			match iter.next()? {
+				ElementsItem::Element(element) => Some(element),
+				ElementsItem::Metabyte => self.metabyte_element,
+				ElementsItem::Sequence => self.sequence_element,
+			}
 		} else {
 			None
 		}
 	}
+
+	fn size_hint(&self) -> (usize, Option<usize>) {
+		if let Some(iter) = &self.iter {
+			iter.size_hint()
+		} else {
+			(0, Some(0))
+		}
+	}
 }
 
-impl<'a> Iterator for IntoIter<'a> {
-	type Item = Element<'a>;
+impl Iterator for IntoIter {
+	type Item = Element;
 
 	fn next(&mut self) -> Option<Self::Item> {
-		if let Self(Some(into_iter)) = self {
-			into_iter.next()
+		if let Some(into_iter) = &mut self.into_iter {
+			match into_iter.next()? {
+				ElementsItem::Element(element) => Some(element),
+				ElementsItem::Metabyte => self.metabyte_element.take(),
+				ElementsItem::Sequence => self.sequence_element.take(),
+			}
 		} else {
 			None
+		}
+	}
+
+	fn size_hint(&self) -> (usize, Option<usize>) {
+		if let Some(into_iter) = &self.into_iter {
+			into_iter.size_hint()
+		} else {
+			(0, Some(0))
 		}
 	}
 }
 
 impl<'a> Iterator for IterMut<'a> {
-	type Item = &'a mut Element<'a>;
+	type Item = &'a mut Element;
 
 	fn next(&mut self) -> Option<Self::Item> {
-		if let Self(Some(iter_mut)) = self {
-			iter_mut.next()
+		if let Some(iter_mut) = &mut self.iter_mut {
+			match iter_mut.next()? {
+				ElementsItem::Element(element) => Some(element),
+				ElementsItem::Metabyte => self.metabyte_element.take(),
+				ElementsItem::Sequence => self.sequence_element.take(),
+			}
 		} else {
 			None
+		}
+	}
+
+	fn size_hint(&self) -> (usize, Option<usize>) {
+		if let Some(iter_mut) = &self.iter_mut {
+			iter_mut.size_hint()
+		} else {
+			(0, Some(0))
 		}
 	}
 }
 
 impl<'a> Iterator for Pairs<'a> {
-	type Item = (&'a Element<'a>, Option<&'a Token![,]>);
+	type Item = (&'a Element, Option<&'a Token![,]>);
 
 	fn next(&mut self) -> Option<Self::Item> {
-		if let Self(Some(pairs)) = self {
-			Some(match pairs.next()? {
-				Pair::Punctuated(element, comma) => (element, Some(comma)),
-				Pair::End(element) => (element, None),
-			})
+		if let Some(pairs) = &mut self.pairs {
+			let (item, comma) = match pairs.next()? {
+				Pair::Punctuated(item, comma) => (item, Some(comma)),
+				Pair::End(item) => (item, None),
+			};
+
+			match item {
+				ElementsItem::Element(element) => Some((element, comma)),
+
+				ElementsItem::Metabyte => {
+					self.metabyte_element.take().map(|element| (element, comma))
+				},
+				ElementsItem::Sequence => {
+					self.sequence_element.take().map(|element| (element, comma))
+				},
+			}
 		} else {
 			None
 		}
 	}
+
+	fn size_hint(&self) -> (usize, Option<usize>) {
+		if let Some(pairs) = &self.pairs {
+			pairs.size_hint()
+		} else {
+			(0, Some(0))
+		}
+	}
 }
 
-impl<'a> Iterator for IntoPairs<'a> {
-	type Item = (Element<'a>, Option<Token![,]>);
+impl Iterator for IntoPairs {
+	type Item = (Element, Option<Token![,]>);
 
 	fn next(&mut self) -> Option<Self::Item> {
-		if let Self(Some(into_pairs)) = self {
-			Some(match into_pairs.next()? {
-				Pair::Punctuated(element, comma) => (element, Some(comma)),
-				Pair::End(element) => (element, None),
-			})
+		if let Some(into_pairs) = &mut self.into_pairs {
+			let (item, comma) = match into_pairs.next()? {
+				Pair::Punctuated(item, comma) => (item, Some(comma)),
+				Pair::End(item) => (item, None),
+			};
+
+			match item {
+				ElementsItem::Element(element) => Some((element, comma)),
+
+				ElementsItem::Metabyte => {
+					self.metabyte_element.take().map(|element| (element, comma))
+				},
+				ElementsItem::Sequence => {
+					self.sequence_element.take().map(|element| (element, comma))
+				},
+			}
 		} else {
 			None
+		}
+	}
+
+	fn size_hint(&self) -> (usize, Option<usize>) {
+		if let Some(into_pairs) = &self.into_pairs {
+			into_pairs.size_hint()
+		} else {
+			(0, Some(0))
 		}
 	}
 }
 
 impl<'a> Iterator for PairsMut<'a> {
-	type Item = (&'a mut Element<'a>, Option<&'a mut Token![,]>);
+	type Item = (&'a mut Element, Option<&'a mut Token![,]>);
 
 	fn next(&mut self) -> Option<Self::Item> {
-		if let Self(Some(pairs_mut)) = self {
-			Some(match pairs_mut.next()? {
-				Pair::Punctuated(element, comma) => (element, Some(comma)),
-				Pair::End(element) => (element, None),
-			})
+		if let Some(pairs_mut) = &mut self.pairs_mut {
+			let (item, comma) = match pairs_mut.next()? {
+				Pair::Punctuated(item, comma) => (item, Some(comma)),
+				Pair::End(item) => (item, None),
+			};
+
+			match item {
+				ElementsItem::Element(element) => Some((element, comma)),
+
+				ElementsItem::Metabyte => {
+					self.metabyte_element.take().map(|element| (element, comma))
+				},
+				ElementsItem::Sequence => {
+					self.sequence_element.take().map(|element| (element, comma))
+				},
+			}
 		} else {
 			None
 		}
 	}
-}
 
-// }}} constructors {{{
-
-impl<'a> Iter<'a> {
-	fn new(iter: Option<PuncIter<'a, Element<'a>>>) -> Self {
-		Self(iter)
+	fn size_hint(&self) -> (usize, Option<usize>) {
+		if let Some(pairs_mut) = &self.pairs_mut {
+			pairs_mut.size_hint()
+		} else {
+			(0, Some(0))
+		}
 	}
 }
 
-impl<'a> IntoIter<'a> {
-	fn new(into_iter: Option<PuncIntoIter<Element<'a>>>) -> Self {
-		Self(into_iter)
+// }}} with_none {{{
+
+impl Iter<'_> {
+	fn with_none() -> Self {
+		Self {
+			iter: None,
+			metabyte_element: None,
+			sequence_element: None,
+		}
 	}
 }
 
-impl<'a> IterMut<'a> {
-	fn new(iter_mut: Option<PuncIterMut<'a, Element<'a>>>) -> Self {
-		Self(iter_mut)
+impl IntoIter {
+	fn with_none() -> Self {
+		Self {
+			into_iter: None,
+			metabyte_element: None,
+			sequence_element: None,
+		}
 	}
 }
 
-impl<'a> Pairs<'a> {
-	fn new(pairs: Option<PuncPairs<'a, Element<'a>, Token![,]>>) -> Self {
-		Self(pairs)
+impl IterMut<'_> {
+	fn with_none() -> Self {
+		Self {
+			iter_mut: None,
+			metabyte_element: None,
+			sequence_element: None,
+		}
 	}
 }
 
-impl<'a> IntoPairs<'a> {
-	fn new(into_pairs: Option<PuncIntoPairs<Element<'a>, Token![,]>>) -> Self {
-		Self(into_pairs)
+impl Pairs<'_> {
+	fn with_none() -> Self {
+		Self {
+			pairs: None,
+			metabyte_element: None,
+			sequence_element: None,
+		}
 	}
 }
 
-impl<'a> PairsMut<'a> {
-	fn new(pairs_mut: Option<PuncPairsMut<'a, Element<'a>, Token![,]>>) -> Self {
-		Self(pairs_mut)
+impl IntoPairs {
+	fn with_none() -> Self {
+		Self {
+			into_pairs: None,
+			metabyte_element: None,
+			sequence_element: None,
+		}
+	}
+}
+
+impl PairsMut<'_> {
+	fn with_none() -> Self {
+		Self {
+			pairs_mut: None,
+			metabyte_element: None,
+			sequence_element: None,
+		}
 	}
 }
 
 // }}} impl IntoIterator {{{
 
-impl<'a> IntoIterator for &'a Elements<'a> {
+impl<'a> IntoIterator for &'a Elements {
+	type Item = &'a Element;
 	type IntoIter = Iter<'a>;
-	type Item = &'a Element<'a>;
 
 	fn into_iter(self) -> Self::IntoIter {
-		Iter::new(Some(self.elements.iter()))
+		Iter {
+			iter: Some(self.elements.iter()),
+			metabyte_element: self.metabyte_element.as_ref(),
+			sequence_element: self.sequence_element.as_ref(),
+		}
 	}
 }
 
-impl<'a> IntoIterator for Elements<'a> {
-	type IntoIter = IntoIter<'a>;
-	type Item = Element<'a>;
+impl IntoIterator for Elements {
+	type Item = Element;
+	type IntoIter = IntoIter;
 
 	/// Creates an owning iterator over [`Element`]s.
 	fn into_iter(self) -> Self::IntoIter {
-		IntoIter::new(Some(self.elements.into_iter()))
+		IntoIter {
+			into_iter: Some(self.elements.into_iter()),
+			metabyte_element: self.metabyte_element,
+			sequence_element: self.sequence_element,
+		}
 	}
 }
 
-impl<'a> IntoIterator for &'a mut Elements<'a> {
+impl<'a> IntoIterator for &'a mut Elements {
+	type Item = &'a mut Element;
 	type IntoIter = IterMut<'a>;
-	type Item = &'a mut Element<'a>;
 
 	fn into_iter(self) -> Self::IntoIter {
-		IterMut::new(Some(self.elements.iter_mut()))
+		IterMut {
+			iter_mut: Some(self.elements.iter_mut()),
+			metabyte_element: self.metabyte_element.as_mut(),
+			sequence_element: self.sequence_element.as_mut(),
+		}
 	}
 }
 
-impl<'a> IntoIterator for &'a Content<'a> {
+impl<'a> IntoIterator for &'a Content {
+	type Item = &'a Element;
 	type IntoIter = Iter<'a>;
-	type Item = &'a Element<'a>;
 
 	/// Creates an owning iterator over [`Element`]s.
 	fn into_iter(self) -> Self::IntoIter {
-		Iter::new(match self {
-			Content::Struct {
-				elements: Elements { elements, .. },
-				..
-			} => Some(elements.iter()),
-
-			Content::Tuple {
-				elements: Elements { elements, .. },
-				..
-			} => Some(elements.iter()),
-
-			Content::Unit => None,
-		})
+		match self {
+			Content::Struct { elements, .. } => elements.iter(),
+			Content::Tuple { elements, .. } => elements.iter(),
+			Content::Unit => Iter::with_none(),
+		}
 	}
 }
 
-impl<'a> IntoIterator for Content<'a> {
-	type IntoIter = IntoIter<'a>;
-	type Item = Element<'a>;
+impl IntoIterator for Content {
+	type Item = Element;
+	type IntoIter = IntoIter;
 
 	/// Creates an owning iterator over any [`Element`]s contained within.
 	fn into_iter(self) -> Self::IntoIter {
-		IntoIter::new(match self {
-			Content::Struct {
-				elements: Elements { elements, .. },
-				..
-			} => Some(elements.into_iter()),
-
-			Content::Tuple {
-				elements: Elements { elements, .. },
-				..
-			} => Some(elements.into_iter()),
-
-			Content::Unit => None,
-		})
+		match self {
+			Content::Struct { elements, .. } => elements.into_iter(),
+			Content::Tuple { elements, .. } => elements.into_iter(),
+			Content::Unit => IntoIter::with_none(),
+		}
 	}
 }
 
-impl<'a> IntoIterator for &'a mut Content<'a> {
+impl<'a> IntoIterator for &'a mut Content {
+	type Item = &'a mut Element;
 	type IntoIter = IterMut<'a>;
-	type Item = &'a mut Element<'a>;
 
 	fn into_iter(self) -> Self::IntoIter {
-		IterMut::new(match self {
-			Content::Struct {
-				elements: Elements { elements, .. },
-				..
-			} => Some(elements.iter_mut()),
-
-			Content::Tuple {
-				elements: Elements { elements, .. },
-				..
-			} => Some(elements.iter_mut()),
-
-			Content::Unit => None,
-		})
+		match self {
+			Content::Struct { elements, .. } => elements.iter_mut(),
+			Content::Tuple { elements, .. } => elements.iter_mut(),
+			Content::Unit => IterMut::with_none(),
+		}
 	}
 }
 
 // }}} impl iter methods {{{
 
-impl<'a> Elements<'a> {
+impl<'a> Elements {
 	/// Creates a borrowing iterator over [`Element`]s.
 	pub fn iter(&'a self) -> Iter<'a> {
 		self.into_iter()
@@ -259,23 +392,35 @@ impl<'a> Elements<'a> {
 	/// Creates a borrowing iterator over pairs of [`Element`]s and possible
 	/// accompanying commas.
 	pub fn pairs(&'a self) -> Pairs<'a> {
-		Pairs::new(Some(self.elements.pairs()))
+		Pairs {
+			pairs: Some(self.elements.pairs()),
+			metabyte_element: self.metabyte_element.as_ref(),
+			sequence_element: self.sequence_element.as_ref(),
+		}
 	}
 
 	/// Creates an owning iterator over pairs of [`Element`]s and possible
 	/// accompanying commas.
-	pub fn into_pairs(self) -> IntoPairs<'a> {
-		IntoPairs::new(Some(self.elements.into_pairs()))
+	pub fn into_pairs(self) -> IntoPairs {
+		IntoPairs {
+			into_pairs: Some(self.elements.into_pairs()),
+			metabyte_element: self.metabyte_element,
+			sequence_element: self.sequence_element,
+		}
 	}
 
 	/// Creates a mutably borrowing iterator over pairs of [`Element`]s and
 	/// possible accompanying commas.
 	pub fn pairs_mut(&'a mut self) -> PairsMut<'a> {
-		PairsMut::new(Some(self.elements.pairs_mut()))
+		PairsMut {
+			pairs_mut: Some(self.elements.pairs_mut()),
+			metabyte_element: self.metabyte_element.as_mut(),
+			sequence_element: self.sequence_element.as_mut(),
+		}
 	}
 }
 
-impl<'a> Content<'a> {
+impl<'a> Content {
 	/// Creates a borrowing iterator over any [`Element`]s contained within.
 	pub fn iter(&'a self) -> Iter<'a> {
 		self.into_iter()
@@ -290,55 +435,31 @@ impl<'a> Content<'a> {
 	/// Creates a borrowing iterator over pairs of any [`Element`]s contained
 	/// within and possible accompanying commas.
 	pub fn pairs(&'a self) -> Pairs<'a> {
-		Pairs::new(match self {
-			Content::Struct {
-				elements: Elements { elements, .. },
-				..
-			} => Some(elements.pairs()),
-
-			Content::Tuple {
-				elements: Elements { elements, .. },
-				..
-			} => Some(elements.pairs()),
-
-			Content::Unit => None,
-		})
+		match self {
+			Content::Struct { elements, .. } => elements.pairs(),
+			Content::Tuple { elements, .. } => elements.pairs(),
+			Content::Unit => Pairs::with_none(),
+		}
 	}
 
 	/// Creates an owning iterator over pairs of any [`Element`]s contained
 	/// within and possible accompanying commas.
-	pub fn into_pairs(self) -> IntoPairs<'a> {
-		IntoPairs::new(match self {
-			Content::Struct {
-				elements: Elements { elements, .. },
-				..
-			} => Some(elements.into_pairs()),
-
-			Content::Tuple {
-				elements: Elements { elements, .. },
-				..
-			} => Some(elements.into_pairs()),
-
-			Content::Unit => None,
-		})
+	pub fn into_pairs(self) -> IntoPairs {
+		match self {
+			Content::Struct { elements, .. } => elements.into_pairs(),
+			Content::Tuple { elements, .. } => elements.into_pairs(),
+			Content::Unit => IntoPairs::with_none(),
+		}
 	}
 
 	/// Creates a mutably borrowing iterator over pairs of any [`Element`]s
 	/// contained within and possible accompanying commas.
 	pub fn pairs_mut(&'a mut self) -> PairsMut<'a> {
-		PairsMut::new(match self {
-			Content::Struct {
-				elements: Elements { elements, .. },
-				..
-			} => Some(elements.pairs_mut()),
-
-			Content::Tuple {
-				elements: Elements { elements, .. },
-				..
-			} => Some(elements.pairs_mut()),
-
-			Content::Unit => None,
-		})
+		match self {
+			Content::Struct { elements, .. } => elements.pairs_mut(),
+			Content::Tuple { elements, .. } => elements.pairs_mut(),
+			Content::Unit => PairsMut::with_none(),
+		}
 	}
 }
 

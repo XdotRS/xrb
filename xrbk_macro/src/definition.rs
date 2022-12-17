@@ -25,12 +25,12 @@ use syn::punctuated::Punctuated;
 
 use crate::element::Content;
 
-pub struct Definitions<'a>(Vec<Definition<'a>>);
+pub struct Definitions(Vec<Definition>);
 
 /// A definition within the `define!` macro.
-pub enum Definition<'a> {
-	Structlike(Metadata, Content<'a>, Option<Token![;]>),
-	Enum(Enum<'a>),
+pub enum Definition {
+	Structlike(Metadata, Content, Option<Token![;]>),
+	Enum(Enum),
 
 	/// Any other item allowed in Rust that isn't a struct nor an enum.
 	Other(syn::Item),
@@ -152,7 +152,7 @@ pub struct Event {
 /// [`Element`]s.
 ///
 /// [`Element`]: crate::element::Element
-pub struct Enum<'a> {
+pub struct Enum {
 	/// Attributes associated with the enum.
 	pub attributes: Vec<Attribute>,
 
@@ -168,20 +168,20 @@ pub struct Enum<'a> {
 	/// A pair of curly brackets (`{` and `}`) surrounding the enum `variants`.
 	pub brace_token: token::Brace,
 	/// A list of the enum's [`Variant`]s, punctuated by commas.
-	pub variants: Punctuated<Variant<'a>, Token![,]>,
+	pub variants: Punctuated<Variant, Token![,]>,
 }
 
 /// An [`Enum`] variant that may contain [`Element`]s.
 ///
 /// [`Element`]: crate::element::Element
-pub struct Variant<'a> {
+pub struct Variant {
 	/// Attributes associated with the enum variant.
 	pub attributes: Vec<Attribute>,
 
 	/// The name of the enum variant.
 	pub ident: Ident,
 	/// [`Content`] associated with the enum variant.
-	pub content: Content<'a>,
+	pub content: Content,
 
 	/// An optional discriminant expression for the enum variant.
 	pub discriminant: Option<(Token![=], Expr)>,
@@ -217,11 +217,6 @@ impl DefinitionType {
 	}
 
 	pub fn length_syntax(&self) -> bool {
-		match self {
-			Self::Request => true,
-			Self::Reply => true,
-
-			_ => false,
-		}
+		matches!(self, Self::Request | Self::Reply)
 	}
 }

@@ -11,7 +11,7 @@ use syn::{
 	Visibility,
 };
 
-impl Parse for Definitions<'_> {
+impl Parse for Definitions {
 	fn parse(input: ParseStream) -> Result<Self> {
 		let mut definitions = Vec::new();
 
@@ -23,7 +23,7 @@ impl Parse for Definitions<'_> {
 	}
 }
 
-impl Parse for Definition<'_> {
+impl Parse for Definition {
 	fn parse(input: ParseStream) -> Result<Self> {
 		let fork = &input.fork();
 
@@ -220,7 +220,7 @@ impl ParseWithContext for Event {
 	}
 }
 
-impl ParseWithContext for Enum<'_> {
+impl ParseWithContext for Enum {
 	type Context<'a> = (Vec<Attribute>, Visibility);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
@@ -242,7 +242,7 @@ impl ParseWithContext for Enum<'_> {
 	}
 }
 
-impl Parse for Variant<'_> {
+impl Parse for Variant {
 	fn parse(input: ParseStream) -> Result<Self> {
 		Ok(Self {
 			attributes: input.call(Attribute::parse_outer)?,
