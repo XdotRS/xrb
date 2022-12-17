@@ -53,6 +53,7 @@ pub struct ContextAttribute {
 	pub context: Context,
 }
 
+/// The context provided within a [`ContextAttribute`].
 pub enum Context {
 	Paren {
 		/// A pair of normal brackets (`(` and `)`) surrounding the [`source`].
