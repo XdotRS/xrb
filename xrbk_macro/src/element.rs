@@ -48,6 +48,30 @@ impl Content {
 			Self::Unit => false,
 		}
 	}
+
+	/// The [`Element`] contained within this `Content` which has a
+	/// [`MetabyteAttribute`], if there is one.
+	pub const fn metabyte_element(&self) -> &Option<Element> {
+		match self {
+			Self::Struct { elements, .. } | Self::Tuple { elements, .. } => {
+				&elements.metabyte_element
+			},
+
+			Self::Unit => &None,
+		}
+	}
+
+	/// The [`Element`] contained within this `Content` which has a
+	/// [`SequenceAttribute`], if there is one.
+	pub const fn sequence_element(&self) -> &Option<Element> {
+		match self {
+			Self::Struct { elements, .. } | Self::Tuple { elements, .. } => {
+				&elements.sequence_element
+			},
+
+			Self::Unit => &None,
+		}
+	}
 }
 
 enum ElementsItem {
@@ -107,6 +131,15 @@ impl Element {
 			Self::SingleUnused(unused) => unused.is_metabyte(),
 			// Array-type unused bytes elements cannot have metabyte attributes.
 			Self::ArrayUnused(_) => false,
+		}
+	}
+
+	/// Whether this `Element` has a [`SequenceAttribute`].
+	pub const fn is_sequence(&self) -> bool {
+		if let Element::Field(field) = self {
+			field.is_sequence()
+		} else {
+			false
 		}
 	}
 }

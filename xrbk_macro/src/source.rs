@@ -84,7 +84,7 @@ pub struct Args {
 ///         [_; ..],
 ///     }
 ///
-///     // ...snippet...
+///     // ... snippet ...
 ///     # pub struct InternAtomReply: Reply for InternAtom { [_; ..] }
 /// }
 /// ```

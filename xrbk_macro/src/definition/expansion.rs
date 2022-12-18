@@ -40,6 +40,8 @@ impl ToTokens for Definition {
 
 			Self::Other(item) => item.to_tokens(tokens),
 		}
+
+		self.impl_writable(tokens);
 	}
 }
 
