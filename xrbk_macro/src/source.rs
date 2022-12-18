@@ -118,6 +118,7 @@ pub struct Args {
 /// [`Request`]: crate::definition::Request
 /// [`Reply`]: crate::definition::Reply
 /// [`Field`]: crate::element::Field
+/// [`cornflakes::ContextualReadable::Context`]: https://docs.rs/cornflakes/0.0.5/cornflakes/trait.ContextualReadable.html#associatedtype.Context
 pub struct Source {
 	/// Optional arguments for the `Source` function, followed by a `=>`.
 	pub args: Option<(Args, Token![=>])>,
