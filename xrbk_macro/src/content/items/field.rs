@@ -7,7 +7,13 @@ use quote::{quote, ToTokens};
 use syn::{Ident, Token, Type, Visibility};
 
 use crate::{
-	AttrContent, Attribute, Context, ItemDeserializeTokens, ItemId, ItemSerializeTokens, TsExt,
+	AttrContent,
+	Attribute,
+	Context,
+	ItemDeserializeTokens,
+	ItemId,
+	ItemSerializeTokens,
+	TsExt,
 };
 
 pub struct Field {

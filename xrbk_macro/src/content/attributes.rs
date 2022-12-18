@@ -4,17 +4,27 @@
 
 use std::collections::HashMap;
 
-use crate::content::LengthMode;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::ToTokens;
 use syn::{
-	braced, bracketed, parenthesized, parse::ParseStream, spanned::Spanned, token, Error, Path,
-	Result, Token, Type,
+	braced,
+	bracketed,
+	parenthesized,
+	parse::ParseStream,
+	spanned::Spanned,
+	token,
+	Error,
+	Path,
+	Result,
+	Token,
+	Type,
 };
 
 use super::source::Source;
+use crate::content::LengthMode;
 
-/// An attribute, reimplemented to allow for [`Context`] and metabyte attributes.
+/// An attribute, reimplemented to allow for [`Context`] and metabyte
+/// attributes.
 pub struct Attribute {
 	/// A hash token: `#`.
 	pub hash_token: Token![#],
@@ -120,9 +130,7 @@ impl ToTokens for Attribute {
 
 impl Attribute {
 	pub(self) fn parse(
-		input: ParseStream,
-		map: &HashMap<String, Type>,
-		mode: LengthMode,
+		input: ParseStream, map: &HashMap<String, Type>, mode: LengthMode,
 	) -> Result<Self> {
 		let content;
 
@@ -161,9 +169,7 @@ impl Attribute {
 	}
 
 	pub fn parse_outer(
-		input: ParseStream,
-		map: &HashMap<String, Type>,
-		mode: LengthMode,
+		input: ParseStream, map: &HashMap<String, Type>, mode: LengthMode,
 	) -> Result<Vec<Self>> {
 		let mut attributes = vec![];
 
@@ -186,9 +192,7 @@ impl Attribute {
 
 	#[allow(dead_code)]
 	pub fn parse_inner(
-		input: ParseStream,
-		map: &HashMap<String, Type>,
-		mode: LengthMode,
+		input: ParseStream, map: &HashMap<String, Type>, mode: LengthMode,
 	) -> Result<Vec<Self>> {
 		let mut attributes = vec![];
 

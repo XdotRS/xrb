@@ -42,13 +42,15 @@
 
 /// The major version of the X protocol used in XRB.
 ///
-/// The X protocol major version may increment if breaking changes are introduced; seeing as this
-/// has not happened since the 80s, it's probably safe to assume it won't.
+/// The X protocol major version may increment if breaking changes are
+/// introduced; seeing as this has not happened since the 80s, it's probably
+/// safe to assume it won't.
 pub const PROTOCOL_MAJOR_VERSION: u16 = 11;
 /// The minor version of the X protocol used in XRB.
 ///
-/// The X protocol minor version may increment if non-breaking features are added to the X
-/// protocol; seeing as this has not happened since the 80s, it's probably safe to assume it won't.
+/// The X protocol minor version may increment if non-breaking features are
+/// added to the X protocol; seeing as this has not happened since the 80s, it's
+/// probably safe to assume it won't.
 pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 
 // /// Implementations for the core X11 protocol.

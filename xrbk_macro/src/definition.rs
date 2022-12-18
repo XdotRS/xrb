@@ -2,18 +2,26 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use syn::{
-	braced, parenthesized,
-	parse::{Parse, ParseStream},
-	token, Attribute, Error, Expr, Generics, Ident, Result, Token, Type, Visibility,
-};
-
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
-use syn::punctuated::Punctuated;
+use syn::{
+	braced,
+	parenthesized,
+	parse::{Parse, ParseStream},
+	punctuated::Punctuated,
+	token,
+	Attribute,
+	Error,
+	Expr,
+	Generics,
+	Ident,
+	Result,
+	Token,
+	Type,
+	Visibility,
+};
 
-use crate::content::LengthMode;
-use crate::{Item, Items, TsExt};
+use crate::{content::LengthMode, Item, Items, TsExt};
 
 /// A list of [`Definition`]s.
 pub struct Definitions(pub Vec<Definition>);
@@ -245,26 +253,26 @@ impl ToTokens for Struct {
 			match &self.items {
 				Items::Named { brace_token, items } => {
 					brace_token.surround(tokens, |tokens| to_tokens(tokens, items));
-				}
+				},
 
 				Items::Unnamed { paren_token, items } => {
 					paren_token.surround(tokens, |tokens| to_tokens(tokens, items));
-				}
+				},
 
-				Items::Unit => {}
+				Items::Unit => {},
 			}
 		};
 
 		match &self.metadata {
 			StructMetadata::Reply(Reply { sequence_token, .. }) if sequence_token.is_none() => {
 				items();
-			}
+			},
 
 			StructMetadata::Event(_) => items(),
 
 			_ => {
 				self.items.to_tokens(tokens);
-			}
+			},
 		}
 
 		self.semicolon_token.to_tokens(tokens);
@@ -674,7 +682,8 @@ impl StructMetadata {
 								if ident != "sequence" {
 									return Err(Error::new(
 										ident.span(),
-										"expected `sequence` after `?` to opt out of the `sequence` field",
+										"expected `sequence` after `?` to opt out of the \
+										 `sequence` field",
 									));
 								}
 
@@ -755,7 +764,7 @@ impl Definitions {
 					r#enum.serialize_tokens(tokens);
 					r#enum.deserialize_tokens(tokens);
 					r#enum.data_size_tokens(tokens);
-				}
+				},
 
 				Definition::Struct(r#struct) => {
 					r#struct.serialize_tokens(tokens);
@@ -763,25 +772,25 @@ impl Definitions {
 
 					match &r#struct.metadata {
 						StructMetadata::Request(request) => {
-							//request.data_size_tokens(tokens);
+							// request.data_size_tokens(tokens);
 							request.impl_request_tokens(tokens);
-						}
+						},
 
 						StructMetadata::Reply(reply) => {
-							//reply.data_size_tokens(tokens);
+							// reply.data_size_tokens(tokens);
 							reply.impl_reply_tokens(tokens);
-						}
+						},
 
 						StructMetadata::Event(event) => {
-							//event.data_size_tokens(tokens);
+							// event.data_size_tokens(tokens);
 							event.impl_event_tokens(tokens);
-						}
+						},
 
 						StructMetadata::Struct(struct_metadata) => {
 							struct_metadata.data_size_tokens(tokens, &r#struct.items);
-						}
+						},
 					}
-				}
+				},
 			}
 		}
 	}

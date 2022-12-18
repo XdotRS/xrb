@@ -94,7 +94,7 @@ jobs:
       - name: Commit changes
         # Commit changes, or, if that fails, do nothing.
         run: |
-          git pull origin main
+          git pull origin ${{ github.ref }}
           git commit -am "Applied recommended fixes ${{ github.run_number }}" || :
 
       # This sets the `commit-id` to the latest commit. If there were changes
@@ -151,7 +151,7 @@ jobs:
       - name: Commit changes
         # Commit changes, or, if that fails, do nothing.
         run: |
-          git pull origin main
+          git pull origin ${{ github.ref }}
           git commit -am "Formatted code with rustfmt ${{ github.run_number }}" || :
 
       # This sets the `commit-id` to the latest commit. If there were changes

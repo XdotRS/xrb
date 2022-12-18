@@ -9,7 +9,11 @@ use quote::{format_ident, quote, ToTokens};
 use syn::{
 	parse::{discouraged::Speculative, ParseStream, Result},
 	punctuated::Punctuated,
-	Error, Expr, Ident, Token, Type,
+	Error,
+	Expr,
+	Ident,
+	Token,
+	Type,
 };
 
 use crate::TsExt;

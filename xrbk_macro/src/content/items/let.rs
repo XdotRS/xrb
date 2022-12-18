@@ -6,10 +6,15 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
 use syn::{Ident, Token, Type};
 
-use crate::content::{AttrContent, Context};
-use crate::{Attribute, ItemDeserializeTokens, ItemId, ItemSerializeTokens, TsExt};
-
 use super::Source;
+use crate::{
+	content::{AttrContent, Context},
+	Attribute,
+	ItemDeserializeTokens,
+	ItemId,
+	ItemSerializeTokens,
+	TsExt,
+};
 
 pub struct Let {
 	/// Attributes associated with the let item and its [`Source`]'s function,

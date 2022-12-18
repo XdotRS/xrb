@@ -2,12 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use proc_macro2::TokenStream as TokenStream2;
-use quote::{quote, ToTokens};
-
 pub use attributes::*;
 pub use field::*;
 pub use items::*;
+use proc_macro2::TokenStream as TokenStream2;
+use quote::{quote, ToTokens};
 pub use r#let::*;
 pub use source::*;
 pub use unused::*;
@@ -68,10 +67,7 @@ impl Item {
 	}
 
 	pub fn datasize_tokens(
-		&self,
-		tokens: &mut TokenStream2,
-		id: &ItemId,
-		min_length: Option<usize>,
+		&self, tokens: &mut TokenStream2, id: &ItemId, min_length: Option<usize>,
 	) {
 		match self {
 			Self::Unused(Unused::Single { .. }) => {
@@ -82,7 +78,7 @@ impl Item {
 						)
 					});
 				}
-			}
+			},
 
 			Self::Unused(Unused::Array(array)) => {
 				let ident = id.formatted();
@@ -125,7 +121,7 @@ impl Item {
 						}
 					}
 				});
-			}
+			},
 
 			Self::Let(r#let) => {
 				let ident = id.formatted();
@@ -136,7 +132,7 @@ impl Item {
 						datasize += <#r#type as cornflakes::DataSize>::data_size(&#ident);
 					)
 				});
-			}
+			},
 
 			Self::Field(field) => {
 				let ident = id.formatted();
@@ -147,7 +143,7 @@ impl Item {
 						datasize += <#r#type as cornflakes::DataSize>::data_size(&#ident);
 					)
 				});
-			}
+			},
 		}
 	}
 }
@@ -171,10 +167,7 @@ impl ToTokens for Item {
 
 impl Item {
 	pub(crate) fn serialize_tokens(
-		&self,
-		tokens: &mut TokenStream2,
-		id: &ItemId,
-		min_length: Option<usize>,
+		&self, tokens: &mut TokenStream2, id: &ItemId, min_length: Option<usize>,
 	) {
 		match self {
 			Item::Field(field) => field.serialize_tokens(tokens, id),
@@ -188,10 +181,7 @@ impl Item {
 
 impl Item {
 	pub(crate) fn deserialize_tokens(
-		&self,
-		tokens: &mut TokenStream2,
-		id: &ItemId,
-		min_length: Option<usize>,
+		&self, tokens: &mut TokenStream2, id: &ItemId, min_length: Option<usize>,
 	) {
 		match self {
 			Item::Field(field) => field.deserialize_tokens(tokens, id),
