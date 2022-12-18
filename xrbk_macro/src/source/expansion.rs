@@ -46,7 +46,7 @@ impl ToTokens for Args {
 impl Args {
 	pub fn formatted_tokens(&self, tokens: &mut TokenStream2) {
 		if let Some((length_arg, _)) = &self.length_arg {
-			let formatted = &length_arg.formatted_length_token;
+			let formatted = &length_arg.formatted;
 			quote!(#formatted,).to_tokens(tokens);
 		}
 
@@ -56,7 +56,7 @@ impl Args {
 				Pair::End(arg) => (arg, None),
 			};
 
-			arg.formatted_ident.to_tokens(tokens);
+			arg.formatted.to_tokens(tokens);
 			comma.to_tokens(tokens);
 		}
 	}

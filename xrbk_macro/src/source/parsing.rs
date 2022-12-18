@@ -43,7 +43,7 @@ impl ParseWithContext for Arg {
 
 		Ok(Self {
 			ident,
-			formatted_ident,
+			formatted: formatted_ident,
 			r#type,
 		})
 	}
@@ -70,7 +70,7 @@ impl Parse for LengthArg {
 			double_colon_token,
 			length_token,
 
-			formatted_length_token,
+			formatted: formatted_length_token,
 		})
 	}
 }
