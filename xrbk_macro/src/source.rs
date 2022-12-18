@@ -110,6 +110,14 @@ pub struct Args {
 /// `Source`: the `[_; ..]` syntax is a special syntax for [`ArrayUnused`] bytes
 /// elements to infer the number of unused bytes. It does not generate a
 /// `Source` function.
+///
+/// [`ArrayUnused`]: crate::element::ArrayUnused
+/// [`UnusedContent::Source`]: crate::element::UnusedContent::Source
+/// [`ContextAttribute`]: crate::attribute::ContextAttribute
+/// [`Let`]: crate::element::Let
+/// [`Request`]: crate::definition::Request
+/// [`Reply`]: crate::definition::Reply
+/// [`Field`]: crate::element::Field
 pub struct Source {
 	/// Optional arguments for the `Source` function, followed by a `=>`.
 	pub args: Option<(Args, Token![=>])>,
