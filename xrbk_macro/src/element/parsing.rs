@@ -117,6 +117,7 @@ impl ParseWithContext for Elements {
 						if arg.r#type.is_none() {
 							if let Some(r#type) = field_map.get(&arg.ident.to_string()) {
 								arg.r#type = Some(r#type.to_owned());
+								arg.formatted = Some(format_ident!("field_{}", arg.ident))
 							} else {
 								return Err(Error::new(
 									arg.ident.span(),
@@ -359,7 +360,7 @@ impl ParseWithContext for Let {
 		let_map.insert(ident.to_string(), r#type.to_owned());
 
 		Ok(Self {
-			formatted: format_ident!("__{}__", ident),
+			formatted: format_ident!("let_{}", ident),
 
 			attributes,
 			metabyte_attribute,

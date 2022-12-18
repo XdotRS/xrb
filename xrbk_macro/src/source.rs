@@ -15,15 +15,13 @@ pub struct Arg {
 	pub ident: Ident,
 	pub r#type: Option<Type>,
 
-	pub formatted: Ident,
+	pub formatted: Option<Ident>,
 }
 
 pub struct LengthArg {
 	pub self_token: Token![self],
 	pub double_colon_token: Token![::],
 	pub length_token: Ident,
-
-	pub formatted: Ident,
 }
 
 pub struct Args {

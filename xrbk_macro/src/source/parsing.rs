@@ -23,13 +23,18 @@ impl ParseWithContext for Arg {
 		let (let_map, field_map) = maps;
 
 		let ident: Ident = input.parse()?;
-		let formatted_ident = format_ident!("__{}__", ident);
 
-		let r#type = if let Some(r#type) = let_map.get(&ident.to_string()) {
-			Some(r#type.to_owned())
+		let (r#type, formatted) = if let Some(r#type) = let_map.get(&ident.to_string()) {
+			(
+				Some(r#type.to_owned()),
+				Some(format_ident!("let_{}", ident)),
+			)
 		} else if let Some(field_map) = field_map {
 			match field_map.get(&ident.to_string()) {
-				Some(r#type) => Some(r#type.to_owned()),
+				Some(r#type) => (
+					Some(r#type.to_owned()),
+					Some(format_ident!("field_{}", ident)),
+				),
 				None => {
 					return Err(Error::new(
 						ident.span(),
@@ -38,12 +43,12 @@ impl ParseWithContext for Arg {
 				},
 			}
 		} else {
-			None
+			(None, None)
 		};
 
 		Ok(Self {
 			ident,
-			formatted: formatted_ident,
+			formatted,
 			r#type,
 		})
 	}
@@ -63,14 +68,11 @@ impl Parse for LengthArg {
 
 			ident
 		};
-		let formatted_length_token = format_ident!("_{}_", length_token);
 
 		Ok(Self {
 			self_token,
 			double_colon_token,
 			length_token,
-
-			formatted: formatted_length_token,
 		})
 	}
 }

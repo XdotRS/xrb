@@ -17,7 +17,11 @@ impl Definition {
 				metadata.impl_writable(tokens, content);
 			},
 
-			Self::Enum(_enum) => todo!(),
+			Self::Enum(_enum) =>
+			// todo!
+			{
+				()
+			},
 
 			Self::Other(_) => {},
 		}

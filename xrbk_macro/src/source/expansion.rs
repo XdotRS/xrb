@@ -45,9 +45,8 @@ impl ToTokens for Args {
 
 impl Args {
 	pub fn formatted_tokens(&self, tokens: &mut TokenStream2) {
-		if let Some((length_arg, _)) = &self.length_arg {
-			let formatted = &length_arg.formatted;
-			quote!(#formatted,).to_tokens(tokens);
+		if let Some((LengthArg { length_token, .. }, ..)) = &self.length_arg {
+			quote!(#length_token,).to_tokens(tokens);
 		}
 
 		for pair in self.args.pairs() {
