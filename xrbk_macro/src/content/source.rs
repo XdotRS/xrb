@@ -9,7 +9,11 @@ use quote::{format_ident, quote, ToTokens};
 use syn::{
 	parse::{discouraged::Speculative, ParseStream, Result},
 	punctuated::Punctuated,
-	Error, Expr, Ident, Token, Type,
+	Error,
+	Expr,
+	Ident,
+	Token,
+	Type,
 };
 
 use crate::TsExt;
@@ -159,7 +163,7 @@ impl Arg {
 			// Parse the `length` identifier following `self::`.
 			let ident: Ident = input.parse()?;
 			// If the `ident` is not `length`, generate an error.
-			if ident.to_string() != "length" {
+			if ident != "length" {
 				return Err(Error::new(
 					ident.span(),
 					"only `self::length` syntax is allowed with `self::`",

@@ -4,7 +4,6 @@
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
-use syn::token::Token;
 use syn::{parse_quote, Generics, TypeParamBound};
 
 use crate::{ts_ext::TsExt, *};
@@ -454,7 +453,7 @@ impl BasicStructMetadata {
 								)
 							});
 						}
-					}
+					},
 
 					Item::Let(r#let) => {
 						let ident = id.formatted();
@@ -483,9 +482,9 @@ impl BasicStructMetadata {
 								let #ident = #ident(#formatted_args);
 							)
 						});
-					}
+					},
 
-					_ => {}
+					_ => {},
 				}
 
 				item.datasize_tokens(tokens, id, None);
@@ -657,21 +656,21 @@ impl DeserializeMessageTokens for Request {
 
 impl Request {
 	pub fn data_size_tokens(&self, _tokens: &mut TokenStream2, _items: &Items) {
-		//tokens.append_tokens(|| {
+		// tokens.append_tokens(|| {
 		// TODO: complete this, also for replies. (need to take unused
 		//       bytes, let items into account, and filter out metabyte)
-		//quote!(
-		//	impl #impl_generics cornflakes::DataSize for #name #type_generics #where_clause {
-		//		#[allow(clippy::unused_underscore_binding)]
-		//		fn data_size(&self) -> usize {
-		//			let mut datasize: usize = 4;
-		//			let Self #pat = self;
+		// quote!(
+		// 	impl #impl_generics cornflakes::DataSize for #name #type_generics
+		// #where_clause { 		#[allow(clippy::unused_underscore_binding)]
+		// 		fn data_size(&self) -> usize {
+		// 			let mut datasize: usize = 4;
+		// 			let Self #pat = self;
 		//
-		//			#inner
+		// 			#inner
 		//
-		//			datasize
-		//		}
-		//	}
+		// 			datasize
+		// 		}
+		// 	}
 		//)
 		//});
 	}

@@ -4,21 +4,26 @@
 
 use std::collections::HashMap;
 
+pub use field::*;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
+pub use r#let::*;
 use syn::{
-	braced, bracketed, parenthesized,
+	braced,
+	bracketed,
+	parenthesized,
 	parse::{ParseStream, Result},
 	punctuated::{Pair, Punctuated},
 	spanned::Spanned,
-	token, Error, Ident, Token, Type,
+	token,
+	Error,
+	Ident,
+	Token,
+	Type,
 };
+pub use unused::*;
 
 use crate::*;
-
-pub use field::*;
-pub use r#let::*;
-pub use unused::*;
 
 pub mod field;
 pub mod r#let;
@@ -120,12 +125,12 @@ impl ToTokens for Items {
 			// Surround named items with their curly brackets.
 			Self::Named { brace_token, items } => {
 				brace_token.surround(tokens, |tokens| items_to_tokens(items, tokens));
-			}
+			},
 
 			// Surround unnamed items with their normal brackets.
 			Self::Unnamed { paren_token, items } => {
 				paren_token.surround(tokens, |tokens| items_to_tokens(items, tokens));
-			}
+			},
 
 			// Don't convert `Self::Unit` to any tokens at all.
 			Self::Unit => (),
@@ -173,11 +178,11 @@ impl Items {
 					if has_sequence {
 						tokens.append_tokens(|| quote!(_sequence_,));
 					}
-				}
+				},
 
 				ExpandMode::Event => tokens.append_tokens(|| quote!(_sequence_,)),
 
-				_ => {}
+				_ => {},
 			}
 
 			for (id, _) in items.pairs() {
@@ -203,15 +208,15 @@ impl Items {
 			// Surround named fields with the curly brackets.
 			Self::Named { brace_token, .. } => {
 				brace_token.surround(tokens, |tokens| fields(tokens, self, mode));
-			}
+			},
 
 			// Surround unnamed fields with the normal brackets.
 			Self::Unnamed { paren_token, .. } => {
 				paren_token.surround(tokens, |tokens| fields(tokens, self, mode))
-			}
+			},
 
 			// Don't expand anything for `Self::Unit`.
-			Self::Unit => {}
+			Self::Unit => {},
 		}
 	}
 
@@ -250,9 +255,7 @@ impl Items {
 
 impl Items {
 	pub(self) fn parse_items(
-		input: ParseStream,
-		named: bool,
-		mode: LengthMode,
+		input: ParseStream, named: bool, mode: LengthMode,
 	) -> Result<Punctuated<ItemWithId, Token![,]>> {
 		let mut unused_index: usize = 0;
 		let mut field_index: usize = 0;
@@ -282,7 +285,8 @@ impl Items {
 						if !attr.is_metabyte() {
 							return Err(Error::new(
 								attr.span(),
-								"only a metabyte attribute is allowed for unit-type unused bytes items",
+								"only a metabyte attribute is allowed for unit-type unused bytes \
+								 items",
 							));
 						}
 					}
@@ -290,7 +294,8 @@ impl Items {
 					if let Some(attr) = attributes.get(1) {
 						return Err(Error::new(
 							attr.span(),
-							"only zero or one (metabyte) attributes are allowed for unit-type unused bytes items",
+							"only zero or one (metabyte) attributes are allowed for unit-type \
+							 unused bytes items",
 						));
 					}
 
