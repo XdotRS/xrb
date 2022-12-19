@@ -17,11 +17,8 @@ impl Definition {
 				metadata.impl_writable(tokens, content);
 			},
 
-			Self::Enum(_enum) =>
-			// todo!
-			{
-				()
-			},
+			// TODO
+			Self::Enum(_enum) => {},
 
 			Self::Other(_) => {},
 		}
@@ -69,11 +66,11 @@ impl Struct {
 
 		tokens.append_tokens(|| {
 			quote!(
+				#[automatically_derived]
 				impl #impl_generics cornflakes::Writable for #ident #type_generics #where_clause {
 					fn write_to(
 						&self,
-						// TODO: re-export `Buf` and `BufMut` in `cornflakes`
-						buf: &mut impl bytes::BufMut,
+						buf: &mut impl cornflakes::BufMut,
 					) -> Result<(), cornflakes::WriteError> {
 						#declare_datasize
 						// Destructure the struct's fields, if any.
@@ -136,11 +133,11 @@ impl Request {
 
 		tokens.append_tokens(|| {
 			quote!(
+				#[automatically_derived]
 				impl #impl_generics cornflakes::Writable for #ident #type_generics #where_clause {
 					fn write_to(
 						&self,
-						// TODO: re-export `Buf` and `BufMut` in `cornflakes`
-						buf: &mut impl bytes::BufMut,
+						buf: &mut impl cornflakes::BufMut,
 					) -> Result<(), cornflakes::WriteError> {
 						#declare_datasize
 						// Destructure the request struct's fields, if any.
@@ -210,11 +207,11 @@ impl Reply {
 
 		tokens.append_tokens(|| {
 			quote!(
+				#[automatically_derived]
 				impl #impl_generics cornflakes::Writable for #ident #type_generics #where_clause {
 					fn write_to(
 						&self,
-						// TODO: re-export `Buf` and `BufMut` in `cornflakes`
-						buf: &mut impl bytes::BufMut,
+						buf: &mut impl cornflakes::BufMut,
 					) -> Result<(), cornflakes::WriteError> {
 						#declare_datasize
 						// Destructure the reply struct's fields, if any.
@@ -295,11 +292,11 @@ impl Event {
 
 		tokens.append_tokens(|| {
 			quote!(
+				#[automatically_derived]
 				impl #impl_generics cornflakes::Writable for #ident #type_generics #where_clause {
 					fn write_to(
 						&self,
-						// TODO: re-export `Buf` and `BufMut` in `cornflakes`
-						buf: &mut impl bytes::BufMut,
+						buf: &mut impl cornflakes::BufMut,
 					) -> Result<(), cornflakes::WriteError> {
 						#declare_datasize
 						// Destructure the event struct's fields, if any.
