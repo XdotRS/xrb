@@ -3,12 +3,12 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use crate::{
-	definition::{Definition, DefinitionType, Event, Metadata, Reply, Request, Struct},
+	definition::{Definition, DefinitionType, Enum, Event, Metadata, Reply, Request, Struct},
 	element::{Content, Element},
 	ext::TsExt,
 };
 use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
+use quote::{quote, ToTokens};
 
 impl Definition {
 	pub fn impl_writable(&self, tokens: &mut TokenStream2) {
@@ -17,8 +17,7 @@ impl Definition {
 				metadata.impl_writable(tokens, content);
 			},
 
-			// TODO
-			Self::Enum(_enum) => {},
+			Self::Enum(r#enum) => r#enum.impl_writable(tokens),
 
 			Self::Other(_) => {},
 		}
@@ -311,6 +310,81 @@ impl Event {
 
 						// Other elements
 						#writes
+
+						Ok(())
+					}
+				}
+			)
+		});
+	}
+}
+
+impl Enum {
+	pub fn impl_writable(&self, tokens: &mut TokenStream2) {
+		let ident = &self.ident;
+
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let arms = TokenStream2::with_tokens(|tokens| {
+			let mut discrim = quote!(0);
+
+			for variant in &self.variants {
+				let ident = &variant.ident;
+
+				let declare_datasize = if variant.content.contains_infer() {
+					Some(quote!(let mut datasize: usize = 1;))
+				} else {
+					None
+				};
+
+				if let Some((_, expr)) = &variant.discriminant {
+					discrim = quote!((#expr));
+				}
+
+				let pat = TokenStream2::with_tokens(|tokens| {
+					variant.content.fields_to_tokens(tokens);
+				});
+
+				let writes = TokenStream2::with_tokens(|tokens| {
+					for element in &variant.content {
+						element.serialize(tokens, DefinitionType::Basic);
+
+						if variant.content.contains_infer() {
+							element.add_datasize_tokens(tokens);
+						}
+					}
+				});
+
+				tokens.append_tokens(|| {
+					quote!(
+						#ident #pat => {
+							#declare_datasize
+							// TODO: define a function for discriminators,
+							//       rather than inserting their expressions
+							//       directly (just as we have functions for
+							//       sources)
+							buf.put_u8(#discrim);
+
+							#writes
+						},
+					)
+				});
+
+				quote!(/* discrim */ + 1).to_tokens(&mut discrim);
+			}
+		});
+
+		tokens.append_tokens(|| {
+			quote!(
+				#[automatically_derived]
+				impl #impl_generics cornflakes::Writable for #ident #type_generics #where_clause {
+					fn write_to(
+						&self,
+						buf: &mut impl cornflakes::BufMut,
+					) -> Result<(), cornflakes::WriteError> {
+						match self {
+							#arms
+						}
 
 						Ok(())
 					}
