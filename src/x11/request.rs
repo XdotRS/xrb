@@ -420,7 +420,7 @@ define! {
 		#[sequence]
 		pub sequence: u16,
 
-		let event_len: u32 = events => events.len() as u32,
+		let events_len: u32 = events => events.len() as u32,
 		[_; 20],
 
 		#[context(events_len => *events_len as usize)]
