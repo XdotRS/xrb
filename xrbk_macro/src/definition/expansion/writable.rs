@@ -8,7 +8,7 @@ use crate::{
 	ext::TsExt,
 };
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{quote, ToTokens};
+use quote::{format_ident, quote, ToTokens};
 
 impl Definition {
 	pub fn impl_writable(&self, tokens: &mut TokenStream2) {
@@ -325,6 +325,32 @@ impl Enum {
 
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
+		let discriminants = TokenStream2::with_tokens(|tokens| {
+			for variant in &self.variants {
+				if let Some((_, expr)) = &variant.discriminant {
+					let ident = format_ident!("discrim_{}", variant.ident);
+
+					tokens.append_tokens(|| {
+						quote!(
+							// Isolate the discriminant's expression in a
+							// function so that it doesn't have access to
+							// identifiers used in the surrounding generated
+							// code.
+							#[allow(non_snake_case)]
+							fn #ident() -> u8 {
+								#expr
+							}
+
+							// Call the discriminant's function just once and
+							// store it in a variable for later use.
+							#[allow(non_snake_case)]
+							let #ident = #ident();
+						)
+					});
+				}
+			}
+		});
+
 		let arms = TokenStream2::with_tokens(|tokens| {
 			let mut discrim = quote!(0);
 
@@ -337,8 +363,10 @@ impl Enum {
 					None
 				};
 
-				if let Some((_, expr)) = &variant.discriminant {
-					discrim = quote!((#expr));
+				if variant.discriminant.is_some() {
+					let discrim_ident = format_ident!("discrim_{}", ident);
+
+					discrim = quote!(#discrim_ident);
 				}
 
 				let pat = TokenStream2::with_tokens(|tokens| {
@@ -357,12 +385,8 @@ impl Enum {
 
 				tokens.append_tokens(|| {
 					quote!(
-						#ident #pat => {
+						Self::#ident #pat => {
 							#declare_datasize
-							// TODO: define a function for discriminators,
-							//       rather than inserting their expressions
-							//       directly (just as we have functions for
-							//       sources)
 							buf.put_u8(#discrim);
 
 							#writes
@@ -382,6 +406,10 @@ impl Enum {
 						&self,
 						buf: &mut impl cornflakes::BufMut,
 					) -> Result<(), cornflakes::WriteError> {
+						// Define functions and variables for variants which
+						// have custom discriminant expressions.
+						#discriminants
+
 						match self {
 							#arms
 						}
