@@ -29,6 +29,7 @@
 #![allow(clippy::doc_markdown)]
 #![allow(clippy::wildcard_imports)]
 #![allow(clippy::module_name_repetitions)]
+#![warn(missing_docs)]
 
 //! # X Rust Bindings
 //! X Rust Bindings is a Rust library directly implementing the types and
