@@ -29,6 +29,7 @@ impl Request {
 
 		tokens.append_tokens(|| {
 			quote!(
+				#[automatically_derived]
 				impl #impl_generics xrb::Request for #name #type_generics #where_clause {
 					type Reply = #reply;
 
@@ -86,6 +87,7 @@ impl Reply {
 
 		tokens.append_tokens(|| {
 			quote!(
+				#[automatically_derived]
 				impl #impl_generics xrb::Reply for #name #type_generics #where_clause {
 					type Req = #request;
 
@@ -133,6 +135,7 @@ impl Event {
 
 		tokens.append_tokens(|| {
 			quote!(
+				#[automatically_derived]
 				impl #impl_generics xrb::Event for #name #type_generics #where_clause {
 					fn code() -> u8 {
 						#code
