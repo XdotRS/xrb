@@ -167,7 +167,7 @@ define! {
 	}
 
 	pub struct GetGeometry: Request(14) -> GetGeometryReply {
-		pub target: Box<dyn Drawable>,
+		pub target: Drawable,
 	}
 
 	pub struct GetGeometryReply: Reply for GetGeometry {
@@ -501,7 +501,7 @@ define! {
 	}
 
 	pub struct QueryFont: Request(47) -> QueryFontReply {
-		pub font: Box<dyn Fontable>,
+		pub font: Fontable,
 	}
 
 	pub struct QueryFontReply: Reply for QueryFont {
@@ -534,7 +534,7 @@ define! {
 		#[metabyte]
 		pub odd_length: bool,
 
-		pub font: Box<dyn Fontable>,
+		pub font: Fontable,
 		#[context(self::length => (*length as usize) - 8)]
 		pub string: String16,
 		[_; ..],
@@ -598,18 +598,18 @@ define! {
 		pub depth: u8,
 
 		pub pixmap_id: Pixmap,
-		pub drawable: Box<dyn Drawable>,
+		pub drawable: Drawable,
 		pub width: u16,
 		pub height: u16,
 	}
 
-	pub struct FreePixmap: Request(54){
+	pub struct FreePixmap: Request(54) {
 		pub pixmap: Pixmap,
 	}
 
 	pub struct CreateGraphicsContext: Request(55) {
 		pub context_id: GraphicsContext,
-		pub drawable: Box<dyn Drawable>,
+		pub drawable: Drawable,
 		pub value_mask: GraphicsContextMask,
 		// TODO: context attribute
 		pub values: Vec<GraphicsContextValue>,
@@ -648,7 +648,7 @@ define! {
 		pub rectangles: Vec<Rectangle>,
 	}
 
-	pub struct FreeGraphicsContext: Request(60){
+	pub struct FreeGraphicsContext: Request(60) {
 		pub context: GraphicsContext,
 	}
 
@@ -664,8 +664,8 @@ define! {
 	}
 
 	pub struct CopyArea: Request(62) {
-		pub source: Box<dyn Drawable>,
-		pub destination: Box<dyn Drawable>,
+		pub source: Drawable,
+		pub destination: Drawable,
 		pub context: GraphicsContext,
 		pub src_x: i16,
 		pub src_y: i16,
@@ -676,8 +676,8 @@ define! {
 	}
 
 	pub struct CopyPlane: Request(63) {
-		pub source: Box<dyn Drawable>,
-		pub destination: Box<dyn Drawable>,
+		pub source: Drawable,
+		pub destination: Drawable,
 		pub context: GraphicsContext,
 		pub src_x: i16,
 		pub src_y: i16,
@@ -692,7 +692,7 @@ define! {
 		#[metabyte]
 		pub coordinate_mode: CoordinateMode,
 
-		pub drawable: Box<dyn Drawable>,
+		pub drawable: Drawable,
 		pub context: GraphicsContext,
 		// TODO: context attribute
 		pub points: Vec<(i16, i16)>,
@@ -702,35 +702,35 @@ define! {
 		#[metabyte]
 		pub coordinate_mode: CoordinateMode,
 
-		pub drawable: Box<dyn Drawable>,
+		pub drawable: Drawable,
 		pub context: GraphicsContext,
 		// TODO: context attribute
 		pub points: Vec<(i16, i16)>,
 	}
 
 	pub struct PolySegment: Request(66) {
-		pub drawable: Box<dyn Drawable>,
+		pub drawable: Drawable,
 		pub context: GraphicsContext,
 		// TODO: context attribute
 		pub segments: Vec<Segment>,
 	}
 
 	pub struct PolyRectangle: Request(67) {
-		pub drawable: Box<dyn Drawable>,
+		pub drawable: Drawable,
 		pub context: GraphicsContext,
 		// TODO: context attribute
 		pub rectangles: Vec<Rectangle>,
 	}
 
 	pub struct PolyArc: Request(68) {
-		pub drawable: Box<dyn Drawable>,
+		pub drawable: Drawable,
 		pub context: GraphicsContext,
 		// TODO: context attribute
 		pub arcs: Vec<GeomArc>,
 	}
 
 	pub struct FillPoly: Request(69) {
-		pub drawable: Box<dyn Drawable>,
+		pub drawable: Drawable,
 		pub context: GraphicsContext,
 		pub shape: Shape,
 		pub coordinate_mode: CoordinateMode,
@@ -741,14 +741,14 @@ define! {
 	}
 
 	pub struct PolyFillRectangle: Request(70) {
-		pub drawable: Box<dyn Drawable>,
+		pub drawable: Drawable,
 		pub context: GraphicsContext,
 		// TODO: context attribute
 		pub rectangles: Vec<Rectangle>,
 	}
 
 	pub struct PolyFillArc: Request(71) {
-		pub drawable: Box<dyn Drawable>,
+		pub drawable: Drawable,
 		pub context: GraphicsContext,
 		// TODO: context attribute
 		pub arcs: Vec<GeomArc>,
@@ -758,7 +758,7 @@ define! {
 		#[metabyte]
 		pub format: BitmapFormat,
 
-		pub drawable: Box<dyn Drawable>,
+		pub drawable: Drawable,
 		pub context: GraphicsContext,
 		pub width: u16,
 		pub height: u16,
@@ -777,7 +777,7 @@ define! {
 		#[metabyte]
 		pub format: Format,
 
-		pub drawable: Box<dyn Drawable>,
+		pub drawable: Drawable,
 		pub x: i16,
 		pub y: i16,
 		pub width: u16,
@@ -800,7 +800,7 @@ define! {
 	}
 
 	pub struct PolyText8: Request(74) {
-		pub drawable: Box<dyn Drawable>,
+		pub drawable: Drawable,
 		pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
@@ -809,7 +809,7 @@ define! {
 	}
 
 	pub struct PolyText16: Request(75) {
-		pub drawable: Box<dyn Drawable>,
+		pub drawable: Drawable,
 		pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
@@ -818,7 +818,7 @@ define! {
 	}
 
 	pub struct ImageText8: Request(76) {
-		pub drawable: Box<dyn Drawable>,
+		pub drawable: Drawable,
 		pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
@@ -828,7 +828,7 @@ define! {
 	}
 
 	pub struct ImageText16: Request(77) {
-		pub drawable: Box<dyn Drawable>,
+		pub drawable: Drawable,
 		pub context: GraphicsContext,
 		pub x: i16,
 		pub y: i16,
@@ -846,7 +846,7 @@ define! {
 		pub visual: VisualId,
 	}
 
-	pub struct FreeColormap: Request(79){
+	pub struct FreeColormap: Request(79) {
 		pub colormap: Colormap,
 	}
 
@@ -855,11 +855,11 @@ define! {
 		pub source: Colormap,
 	}
 
-	pub struct InstallColormap: Request(81){
+	pub struct InstallColormap: Request(81) {
 		pub colormap: Colormap,
 	}
 
-	pub struct UninstallColormap: Request(82){
+	pub struct UninstallColormap: Request(82) {
 		pub colormap: Colormap,
 	}
 
@@ -1031,7 +1031,7 @@ define! {
 		pub background_color: (u16, u16, u16),
 	}
 
-	pub struct FreeCursor: Request(95){
+	pub struct FreeCursor: Request(95) {
 		pub cursor: Cursor,
 	}
 
@@ -1096,7 +1096,7 @@ define! {
 		/// [`Tile`]: query_best_size::Class::Tile
 		/// [`Stipple`]: query_best_size::Class::Stipple
 		/// [`InputOnly`]: query_best_size::Class::InputOnly
-		pub drawable: Box<dyn Drawable>,
+		pub drawable: Drawable,
 		/// The given width to find an ideal size for.
 		pub width: u16,
 		/// The given height to find an ideal size for.
@@ -1182,7 +1182,7 @@ define! {
 		pub auto_repeats: [u8; 32],
 	}
 
-	pub struct Bell: Request(104){
+	pub struct Bell: Request(104) {
 		#[metabyte]
 		pub percent: i8,
 	}
@@ -1255,12 +1255,12 @@ define! {
 		pub hosts: Vec<Host>,
 	}
 
-	pub struct SetAccessControl: Request(111){
+	pub struct SetAccessControl: Request(111) {
 		#[metabyte]
 		pub enabled: bool,
 	}
 
-	pub struct SetCloseDownMode: Request(112){
+	pub struct SetCloseDownMode: Request(112) {
 		#[metabyte]
 		pub mode: CloseDownMode,
 	}
@@ -1275,7 +1275,7 @@ define! {
 		pub properties: Vec<Atom>,
 	}
 
-	pub struct ForceScreenSaver: Request(115){
+	pub struct ForceScreenSaver: Request(115) {
 		#[metabyte]
 		pub mode: ScreenSaverMode,
 	}
