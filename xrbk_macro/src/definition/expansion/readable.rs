@@ -390,7 +390,7 @@ impl Enum {
 						// have custom discriminant expressions.
 						#discriminants
 
-						match self {
+						match buf.get_u8() {
 							#arms
 
 							other_discrim => Err(
