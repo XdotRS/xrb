@@ -60,7 +60,7 @@ pub struct Args {
 /// [`Request`] or [`Reply`].
 ///
 /// # Examples
-/// ```
+/// ```ignore
 /// # extern crate cornflakes;
 /// # extern crate xrb;
 /// #
