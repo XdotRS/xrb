@@ -21,7 +21,7 @@ impl ToTokens for Arg {
 		let ident = &self.ident;
 		let r#type = &self.r#type;
 
-		quote!(#ident: #r#type).to_tokens(tokens);
+		quote!(#ident: &#r#type).to_tokens(tokens);
 	}
 }
 
@@ -55,7 +55,9 @@ impl Args {
 				Pair::End(arg) => (arg, None),
 			};
 
-			arg.formatted.to_tokens(tokens);
+			let formatted = &arg.formatted;
+
+			quote!(&#formatted).to_tokens(tokens);
 			comma.to_tokens(tokens);
 		}
 	}
@@ -64,7 +66,7 @@ impl Args {
 impl Source {
 	pub fn function_to_tokens(
 		&self, tokens: &mut TokenStream2, attributes: Option<&Vec<Attribute>>, ident: &Ident,
-		return_type: &Type,
+		return_type: TokenStream2,
 	) {
 		let args = self.args.as_ref().map(|(args, ..)| args);
 		let expr = &self.expr;

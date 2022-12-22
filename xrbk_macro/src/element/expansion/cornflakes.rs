@@ -56,7 +56,7 @@ impl Field {
 
 		tokens.append_tokens(|| {
 			quote!(
-				<#r#type as cornflakes::Writable>::write_to(#formatted, buf)?;
+				<#r#type as cornflakes::Writable>::write_to(&#formatted, buf)?;
 			)
 		});
 	}
@@ -71,9 +71,12 @@ impl Field {
 
 		match &self.context_attribute {
 			Some(ContextAttribute { context, .. }) => {
-				context
-					.source()
-					.function_to_tokens(tokens, None, formatted, r#type);
+				context.source().function_to_tokens(
+					tokens,
+					None,
+					formatted,
+					quote!(<#r#type as cornflakes::ContextualReadable>::Context),
+				);
 
 				let function_call = TokenStream2::with_tokens(|tokens| {
 					context.source().call_to_tokens(tokens, formatted);
@@ -83,7 +86,7 @@ impl Field {
 					quote!(
 						let #formatted = <#r#type as cornflakes::ContextualReadable>::read_with(
 							buf,
-							#function_call,
+							&#function_call,
 						)?;
 					)
 				});
@@ -105,7 +108,7 @@ impl Field {
 			let formatted = &self.formatted;
 
 			quote!(
-				datasize += <#r#type as cornflakes::DataSize>::data_size(#formatted);
+				datasize += <#r#type as cornflakes::DataSize>::data_size(&#formatted);
 			)
 		});
 	}
@@ -118,8 +121,12 @@ impl Let {
 		let formatted = &self.formatted;
 		let r#type = &self.r#type;
 
-		self.source
-			.function_to_tokens(tokens, Some(&self.attributes), formatted, r#type);
+		self.source.function_to_tokens(
+			tokens,
+			Some(&self.attributes),
+			formatted,
+			r#type.into_token_stream(),
+		);
 
 		let function_call = TokenStream2::with_tokens(|tokens| {
 			self.source.call_to_tokens(tokens, formatted);
@@ -129,7 +136,7 @@ impl Let {
 			quote!(
 				let #formatted = #function_call;
 
-				<#r#type as cornflakes::Writable>::write_to(#formatted, buf)?;
+				<#r#type as cornflakes::Writable>::write_to(&#formatted, buf)?;
 			)
 		});
 	}
@@ -137,8 +144,12 @@ impl Let {
 	pub fn datasize_tokens(&self, tokens: &mut TokenStream2) {
 		let formatted = &self.formatted;
 
-		self.source
-			.function_to_tokens(tokens, Some(&self.attributes), formatted, &self.r#type);
+		self.source.function_to_tokens(
+			tokens,
+			Some(&self.attributes),
+			formatted,
+			self.r#type.to_token_stream(),
+		);
 
 		let function_call = TokenStream2::with_tokens(|tokens| {
 			self.source.call_to_tokens(tokens, formatted);
@@ -159,9 +170,12 @@ impl Let {
 
 		match &self.context_attribute {
 			Some(ContextAttribute { context, .. }) => {
-				context
-					.source()
-					.function_to_tokens(tokens, None, formatted, r#type);
+				context.source().function_to_tokens(
+					tokens,
+					None,
+					formatted,
+					quote!(<#r#type as cornflakes::ContextualReadable>::Context),
+				);
 
 				let function_call = TokenStream2::with_tokens(|tokens| {
 					context.source().call_to_tokens(tokens, formatted);
@@ -193,7 +207,7 @@ impl Let {
 
 		tokens.append_tokens(|| {
 			quote!(
-				datasize += <#r#type as cornflakes::DataSize>::data_size(#formatted);
+				datasize += <#r#type as cornflakes::DataSize>::data_size(&#formatted);
 			)
 		});
 	}
@@ -259,12 +273,7 @@ impl ArrayUnused {
 			},
 
 			UnusedContent::Source(source) => {
-				source.function_to_tokens(
-					tokens,
-					Some(&self.attributes),
-					formatted,
-					&Type::Verbatim(quote!(usize)),
-				);
+				source.function_to_tokens(tokens, Some(&self.attributes), formatted, quote!(usize));
 
 				tokens.append_tokens(|| {
 					quote!(
