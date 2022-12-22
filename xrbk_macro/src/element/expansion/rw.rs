@@ -6,7 +6,7 @@ use super::*;
 use crate::{definition::DefinitionType, TsExt};
 
 impl Element {
-	pub fn serialize(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
+	pub fn write_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		match self {
 			Self::Field(field) => field.serialize(tokens),
 			Self::Let(r#let) => r#let.serialize(tokens),
@@ -16,7 +16,7 @@ impl Element {
 		}
 	}
 
-	pub fn deserialize(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
+	pub fn read_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		match self {
 			Self::Field(field) => field.deserialize(tokens),
 			Self::Let(r#let) => r#let.deserialize(tokens),

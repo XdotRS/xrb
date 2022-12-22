@@ -2,22 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::{
-	definition::{Definition, DefinitionType, Enum, Event, Metadata, Reply, Request, Struct},
-	element::{Content, Element},
-	ext::TsExt,
-};
+use super::*;
+use crate::{element::Element, TsExt};
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{format_ident, quote, ToTokens};
+use quote::format_ident;
 
 impl Definition {
-	pub fn impl_writable(&self, tokens: &mut TokenStream2) {
+	pub fn impl_readable(&self, tokens: &mut TokenStream2) {
 		match self {
-			Self::Structlike(metadata, content, ..) => {
-				metadata.impl_writable(tokens, content);
-			},
+			Self::Structlike(metadata, content, ..) => metadata.impl_readable(tokens, content),
 
-			Self::Enum(r#enum) => r#enum.impl_writable(tokens),
+			Self::Enum(r#enum) => r#enum.impl_readable(tokens),
 
 			Self::Other(_) => {},
 		}
@@ -25,37 +20,41 @@ impl Definition {
 }
 
 impl Metadata {
-	pub fn impl_writable(&self, tokens: &mut TokenStream2, content: &Content) {
+	pub fn impl_readable(&self, tokens: &mut TokenStream2, content: &Content) {
 		match self {
-			Self::Struct(r#struct) => r#struct.impl_writable(tokens, content),
+			Self::Struct(r#struct) => r#struct.impl_readable(tokens, content),
 
-			Self::Request(request) => request.impl_writable(tokens, content),
-			Self::Reply(reply) => reply.impl_writable(tokens, content),
-			Self::Event(event) => event.impl_writable(tokens, content),
+			Self::Request(request) => request.impl_readable(tokens, content),
+			Self::Reply(reply) => reply.impl_readable(tokens, content),
+			Self::Event(event) => event.impl_readable(tokens, content),
 		}
 	}
 }
 
 impl Struct {
-	pub fn impl_writable(&self, tokens: &mut TokenStream2, content: &Content) {
+	pub fn impl_readable(&self, tokens: &mut TokenStream2, content: &Content) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
+		// Expand the tokens to declare the datasize variable if there is an
+		// UnusedContent::Infer unused bytes element to use it.
 		let declare_datasize = if content.contains_infer() {
 			Some(quote!(let mut datasize: usize = 0;))
 		} else {
 			None
 		};
 
-		let pat = TokenStream2::with_tokens(|tokens| {
+		// Expand the tokens to call Self's constructor.
+		let cons = TokenStream2::with_tokens(|tokens| {
 			content.fields_to_tokens(tokens);
 		});
 
-		let writes = TokenStream2::with_tokens(|tokens| {
+		// Expand the tokens to read each element.
+		let reads = TokenStream2::with_tokens(|tokens| {
 			for element in content {
-				element.write_tokens(tokens, DefinitionType::Basic);
+				element.read_tokens(tokens, DefinitionType::Basic);
 
 				if content.contains_infer() {
 					element.add_datasize_tokens(tokens);
@@ -66,18 +65,19 @@ impl Struct {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics cornflakes::Writable for #ident #type_generics #where_clause {
-					fn write_to(
-						&self,
-						buf: &mut impl cornflakes::BufMut,
-					) -> Result<(), cornflakes::WriteError> {
+				impl #impl_generics cornflakes::Readable for #ident #type_generics #where_clause {
+					fn read_from(
+						buf: &mut impl cornflakes::Buf,
+					) -> Result<Self, cornflakes::ReadError> {
+						// Declare a datasize variable if it is going to be
+						// used in an infer unused bytes element.
 						#declare_datasize
-						// Destructure the struct's fields, if any.
-						let Self #pat = self;
 
-						#writes
+						// Read each element.
+						#reads
 
-						Ok(())
+						// Construct and return `Self`.
+						Ok(Self #cons)
 					}
 				}
 			)
@@ -86,7 +86,7 @@ impl Struct {
 }
 
 impl Request {
-	pub fn impl_writable(&self, tokens: &mut TokenStream2, content: &Content) {
+	pub fn impl_readable(&self, tokens: &mut TokenStream2, content: &Content) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
@@ -100,14 +100,14 @@ impl Request {
 			None
 		};
 
-		let pat = TokenStream2::with_tokens(|tokens| {
+		let cons = TokenStream2::with_tokens(|tokens| {
 			content.fields_to_tokens(tokens);
 		});
 
-		let writes = TokenStream2::with_tokens(|tokens| {
+		let reads = TokenStream2::with_tokens(|tokens| {
 			for element in content {
 				if !element.is_metabyte() && !element.is_sequence() {
-					element.write_tokens(tokens, DefinitionType::Request);
+					element.read_tokens(tokens, DefinitionType::Request);
 
 					if content.contains_infer() {
 						element.add_datasize_tokens(tokens);
@@ -117,42 +117,39 @@ impl Request {
 		});
 
 		let metabyte = if self.minor_opcode.is_some() {
-			quote!(
-				buf.put_u8(<Self as xrb::Request>::minor_opcode().unwrap());
-			)
+			// If there is a minor opcode, then it has already been read in order to
+			// determine that this is the request to read.
+			None
 		} else if let Some(element) = content.metabyte_element() {
-			TokenStream2::with_tokens(|tokens| {
-				element.write_tokens(tokens, DefinitionType::Request);
-			})
+			Some(TokenStream2::with_tokens(|tokens| {
+				element.read_tokens(tokens, DefinitionType::Request);
+			}))
 		} else {
-			quote!(
-				buf.put_u8(0);
-			)
+			Some(quote!(buf.advance(1);))
 		};
 
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics cornflakes::Writable for #ident #type_generics #where_clause {
-					fn write_to(
-						&self,
-						buf: &mut impl cornflakes::BufMut,
-					) -> Result<(), cornflakes::WriteError> {
+				impl #impl_generics cornflakes::Readable for #ident #type_generics #where_clause {
+					fn read_from(
+						buf: &mut impl cornflakes::Buf,
+					) -> Result<(), cornflakes::ReadError> {
 						#declare_datasize
-						// Destructure the request struct's fields, if any.
-						let Self #pat = self;
 
-						// Major opcode
-						buf.put_u8(<Self as xrb::Request>::major_opcode());
-						// Metabyte position
+						// If there is a metabyte element, read it, if not and
+						// there is no minor opcode, skip one byte. If there
+						// is a minor opcode, do nothing - it has already been
+						// read.
 						#metabyte
-						// Length
-						buf.put_u16(<Self as xrb::Request>::length(&self));
+						// Read the request's length.
+						let length = buf.get_u16();
 
-						// Other elements
-						#writes
+						// Read other elements.
+						#reads
 
-						Ok(())
+						// Construct and return Self.
+						Ok(Self #cons)
 					}
 				}
 			)
@@ -161,7 +158,7 @@ impl Request {
 }
 
 impl Reply {
-	pub fn impl_writable(&self, tokens: &mut TokenStream2, content: &Content) {
+	pub fn impl_readable(&self, tokens: &mut TokenStream2, content: &Content) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
@@ -173,14 +170,14 @@ impl Reply {
 			None
 		};
 
-		let pat = TokenStream2::with_tokens(|tokens| {
+		let cons = TokenStream2::with_tokens(|tokens| {
 			content.fields_to_tokens(tokens);
 		});
 
-		let writes = TokenStream2::with_tokens(|tokens| {
+		let reads = TokenStream2::with_tokens(|tokens| {
 			for element in content {
 				if !element.is_metabyte() && !element.is_sequence() {
-					element.write_tokens(tokens, DefinitionType::Reply);
+					element.read_tokens(tokens, DefinitionType::Reply);
 
 					if content.contains_infer() {
 						element.add_datasize_tokens(tokens);
@@ -191,12 +188,10 @@ impl Reply {
 
 		let metabyte = if let Some(element) = content.metabyte_element() {
 			TokenStream2::with_tokens(|tokens| {
-				element.write_tokens(tokens, DefinitionType::Reply);
+				element.read_tokens(tokens, DefinitionType::Reply);
 			})
 		} else {
-			quote!(
-				buf.put_u8(0);
-			)
+			quote!(buf.advance(1))
 		};
 
 		let sequence = match content.sequence_element() {
@@ -207,28 +202,24 @@ impl Reply {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics cornflakes::Writable for #ident #type_generics #where_clause {
-					fn write_to(
-						&self,
-						buf: &mut impl cornflakes::BufMut,
-					) -> Result<(), cornflakes::WriteError> {
+				impl #impl_generics cornflakes::Readable for #ident #type_generics #where_clause {
+					fn read_from(
+						buf: &mut impl cornflakes::Buf,
+					) -> Result<(), cornflakes::ReadError> {
 						#declare_datasize
-						// Destructure the reply struct's fields, if any.
-						let Self #pat = self;
 
-						// `1` - indicates this is a reply
-						buf.put_u8(1);
 						// Metabyte position
 						#metabyte
 						// Sequence field
-						buf.put_u16(#sequence);
+						let #sequence = buf.get_u16();
 						// Length
-						buf.put_u32(<Self as xrb::Reply>::length(&self));
+						let length = buf.get_u32();
 
 						// Other elements
-						#writes
+						#reads
 
-						Ok(())
+						// Construct and return Self.
+						Ok(Self #cons)
 					}
 				}
 			)
@@ -237,7 +228,7 @@ impl Reply {
 }
 
 impl Event {
-	pub fn impl_writable(&self, tokens: &mut TokenStream2, content: &Content) {
+	pub fn impl_readable(&self, tokens: &mut TokenStream2, content: &Content) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
@@ -255,14 +246,14 @@ impl Event {
 			None
 		};
 
-		let pat = TokenStream2::with_tokens(|tokens| {
+		let cons = TokenStream2::with_tokens(|tokens| {
 			content.fields_to_tokens(tokens);
 		});
 
-		let writes = TokenStream2::with_tokens(|tokens| {
+		let reads = TokenStream2::with_tokens(|tokens| {
 			for element in content {
 				if !element.is_metabyte() && !element.is_sequence() {
-					element.write_tokens(tokens, DefinitionType::Event);
+					element.read_tokens(tokens, DefinitionType::Event);
 
 					if content.contains_infer() {
 						element.add_datasize_tokens(tokens);
@@ -275,18 +266,18 @@ impl Event {
 			None
 		} else if let Some(element) = content.metabyte_element() {
 			Some(TokenStream2::with_tokens(|tokens| {
-				element.write_tokens(tokens, DefinitionType::Event);
+				element.read_tokens(tokens, DefinitionType::Event);
 			}))
 		} else {
 			Some(quote!(
-				buf.put_u8(0);
+				buf.advance(1);
 			))
 		};
 
 		let sequence = if let Some(Element::Field(field)) = content.sequence_element() {
 			let formatted = &field.formatted;
 
-			Some(quote!(buf.put_u16(#formatted);))
+			Some(quote!(let #formatted = buf.get_u16();))
 		} else {
 			None
 		};
@@ -294,26 +285,22 @@ impl Event {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics cornflakes::Writable for #ident #type_generics #where_clause {
-					fn write_to(
-						&self,
-						buf: &mut impl cornflakes::BufMut,
-					) -> Result<(), cornflakes::WriteError> {
+				impl #impl_generics cornflakes::Readable for #ident #type_generics #where_clause {
+					fn read_from(
+						buf: &mut impl cornflakes::Buf,
+					) -> Result<(), cornflakes::ReadError> {
 						#declare_datasize
-						// Destructure the event struct's fields, if any.
-						let Self #pat = self;
 
-						// Event code
-						buf.put_u8(<Self as xrb::Event>::code());
 						// Metabyte position
 						#metabyte
 						// Sequence field
 						#sequence
 
 						// Other elements
-						#writes
+						#reads
 
-						Ok(())
+						// Construct and return Self.
+						Ok(Self #cons)
 					}
 				}
 			)
@@ -322,7 +309,7 @@ impl Event {
 }
 
 impl Enum {
-	pub fn impl_writable(&self, tokens: &mut TokenStream2) {
+	pub fn impl_readable(&self, tokens: &mut TokenStream2) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
@@ -372,13 +359,13 @@ impl Enum {
 					discrim = discrim_ident.into_token_stream();
 				}
 
-				let pat = TokenStream2::with_tokens(|tokens| {
+				let cons = TokenStream2::with_tokens(|tokens| {
 					variant.content.fields_to_tokens(tokens);
 				});
 
-				let writes = TokenStream2::with_tokens(|tokens| {
+				let reads = TokenStream2::with_tokens(|tokens| {
 					for element in &variant.content {
-						element.write_tokens(tokens, DefinitionType::Basic);
+						element.read_tokens(tokens, DefinitionType::Basic);
 
 						if variant.content.contains_infer() {
 							element.add_datasize_tokens(tokens);
@@ -388,12 +375,13 @@ impl Enum {
 
 				tokens.append_tokens(|| {
 					quote!(
-						Self::#ident #pat => {
+						discrim if discrim == #discrim => {
 							#declare_datasize
-							buf.put_u8(#discrim);
 
-							#writes
-						},
+							#reads
+
+							Ok(Self::#ident #cons)
+						}
 					)
 				});
 
@@ -404,20 +392,21 @@ impl Enum {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics cornflakes::Writable for #ident #type_generics #where_clause {
-					fn write_to(
-						&self,
-						buf: &mut impl cornflakes::BufMut,
-					) -> Result<(), cornflakes::WriteError> {
+				impl #impl_generics cornflakes::Readable for #ident #type_generics #where_clause {
+					fn read_from(
+						buf: &mut impl cornflakes::Buf,
+					) -> Result<(), cornflakes::ReadError> {
 						// Define functions and variables for variants which
 						// have custom discriminant expressions.
 						#discriminants
 
 						match self {
 							#arms
-						}
 
-						Ok(())
+							other_discrim => Err(
+								cornflakes::ReadError::UnrecognizedDiscriminant(other_discrim),
+							),
+						}
 					}
 				}
 			)

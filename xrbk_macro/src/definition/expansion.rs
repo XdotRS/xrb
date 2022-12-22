@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+mod readable;
 mod r#trait;
 mod writable;
 
@@ -42,6 +43,7 @@ impl ToTokens for Definition {
 		}
 
 		self.impl_writable(tokens);
+		self.impl_readable(tokens);
 	}
 }
 
