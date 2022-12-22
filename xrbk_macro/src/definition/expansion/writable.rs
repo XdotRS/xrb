@@ -2,27 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use super::*;
 use crate::{
-	definition::{Definition, DefinitionType, Enum, Event, Metadata, Reply, Request, Struct},
 	element::{Content, Element},
-	ext::TsExt,
+	TsExt,
 };
+
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
-
-impl Definition {
-	pub fn impl_writable(&self, tokens: &mut TokenStream2) {
-		match self {
-			Self::Structlike(metadata, content, ..) => {
-				metadata.impl_writable(tokens, content);
-			},
-
-			Self::Enum(r#enum) => r#enum.impl_writable(tokens),
-
-			Self::Other(_) => {},
-		}
-	}
-}
 
 impl Metadata {
 	pub fn impl_writable(&self, tokens: &mut TokenStream2, content: &Content) {
@@ -168,6 +155,8 @@ impl Reply {
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		let declare_datasize = if content.contains_infer() {
+			// The datasize starts at `8` to account for the size of a reply's\
+			// header being 8 bytes.
 			Some(quote!(let mut datasize: usize = 8;))
 		} else {
 			None

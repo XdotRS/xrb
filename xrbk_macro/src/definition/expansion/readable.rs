@@ -7,18 +7,6 @@ use crate::{element::Element, TsExt};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::format_ident;
 
-impl Definition {
-	pub fn impl_readable(&self, tokens: &mut TokenStream2) {
-		match self {
-			Self::Structlike(metadata, content, ..) => metadata.impl_readable(tokens, content),
-
-			Self::Enum(r#enum) => r#enum.impl_readable(tokens),
-
-			Self::Other(_) => {},
-		}
-	}
-}
-
 impl Metadata {
 	pub fn impl_readable(&self, tokens: &mut TokenStream2, content: &Content) {
 		match self {

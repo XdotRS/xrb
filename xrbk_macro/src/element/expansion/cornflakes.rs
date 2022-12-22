@@ -8,21 +8,31 @@ use crate::{definition::DefinitionType, TsExt};
 impl Element {
 	pub fn write_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		match self {
-			Self::Field(field) => field.serialize(tokens),
-			Self::Let(r#let) => r#let.serialize(tokens),
+			Self::Field(field) => field.write_tokens(tokens),
+			Self::Let(r#let) => r#let.write_tokens(tokens),
 
-			Self::SingleUnused(unused) => unused.serialize(tokens),
-			Self::ArrayUnused(unused) => unused.serialize(tokens, definition_type),
+			Self::SingleUnused(unused) => unused.write_tokens(tokens),
+			Self::ArrayUnused(unused) => unused.write_tokens(tokens, definition_type),
+		}
+	}
+
+	pub fn datasize_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
+		match self {
+			Self::Field(field) => field.datasize_tokens(tokens),
+			Self::Let(r#let) => r#let.datasize_tokens(tokens),
+
+			Self::SingleUnused(unused) => unused.datasize_tokens(tokens),
+			Self::ArrayUnused(unused) => unused.datasize_tokens(tokens, definition_type),
 		}
 	}
 
 	pub fn read_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		match self {
-			Self::Field(field) => field.deserialize(tokens),
-			Self::Let(r#let) => r#let.deserialize(tokens),
+			Self::Field(field) => field.read_tokens(tokens),
+			Self::Let(r#let) => r#let.read_tokens(tokens),
 
-			Self::SingleUnused(unused) => unused.deserialize(tokens),
-			Self::ArrayUnused(unused) => unused.deserialize(tokens, definition_type),
+			Self::SingleUnused(unused) => unused.read_tokens(tokens),
+			Self::ArrayUnused(unused) => unused.read_tokens(tokens, definition_type),
 		}
 	}
 
@@ -40,7 +50,7 @@ impl Element {
 // Field {{{
 
 impl Field {
-	pub fn serialize(&self, tokens: &mut TokenStream2) {
+	pub fn write_tokens(&self, tokens: &mut TokenStream2) {
 		let formatted = &self.formatted;
 		let r#type = &self.r#type;
 
@@ -51,7 +61,11 @@ impl Field {
 		});
 	}
 
-	pub fn deserialize(&self, tokens: &mut TokenStream2) {
+	pub fn datasize_tokens(&self, tokens: &mut TokenStream2) {
+		self.add_datasize_tokens(tokens);
+	}
+
+	pub fn read_tokens(&self, tokens: &mut TokenStream2) {
 		let formatted = &self.formatted;
 		let r#type = &self.r#type;
 
@@ -100,12 +114,12 @@ impl Field {
 // }}} Let {{{
 
 impl Let {
-	pub fn serialize(&self, tokens: &mut TokenStream2) {
+	pub fn write_tokens(&self, tokens: &mut TokenStream2) {
 		let formatted = &self.formatted;
 		let r#type = &self.r#type;
 
 		self.source
-			.function_to_tokens(tokens, Some(&self.attributes), formatted, &self.r#type);
+			.function_to_tokens(tokens, Some(&self.attributes), formatted, r#type);
 
 		let function_call = TokenStream2::with_tokens(|tokens| {
 			self.source.call_to_tokens(tokens, formatted);
@@ -120,7 +134,26 @@ impl Let {
 		});
 	}
 
-	pub fn deserialize(&self, tokens: &mut TokenStream2) {
+	pub fn datasize_tokens(&self, tokens: &mut TokenStream2) {
+		let formatted = &self.formatted;
+
+		self.source
+			.function_to_tokens(tokens, Some(&self.attributes), formatted, &self.r#type);
+
+		let function_call = TokenStream2::with_tokens(|tokens| {
+			self.source.call_to_tokens(tokens, formatted);
+		});
+
+		tokens.append_tokens(|| {
+			quote!(
+				let #formatted = #function_call;
+			)
+		});
+
+		self.add_datasize_tokens(tokens);
+	}
+
+	pub fn read_tokens(&self, tokens: &mut TokenStream2) {
 		let formatted = &self.formatted;
 		let r#type = &self.r#type;
 
@@ -169,7 +202,7 @@ impl Let {
 // }}} Single unused byte {{{
 
 impl SingleUnused {
-	pub fn serialize(&self, tokens: &mut TokenStream2) {
+	pub fn write_tokens(&self, tokens: &mut TokenStream2) {
 		tokens.append_tokens(|| {
 			quote!(
 				buf.put_u8(0);
@@ -177,7 +210,11 @@ impl SingleUnused {
 		});
 	}
 
-	pub fn deserialize(&self, tokens: &mut TokenStream2) {
+	pub fn datasize_tokens(&self, tokens: &mut TokenStream2) {
+		self.add_datasize_tokens(tokens);
+	}
+
+	pub fn read_tokens(&self, tokens: &mut TokenStream2) {
 		tokens.append_tokens(|| {
 			quote!(
 				buf.advance(1);
@@ -238,7 +275,7 @@ impl ArrayUnused {
 		}
 	}
 
-	pub fn serialize(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
+	pub fn write_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		let formatted = &self.formatted;
 
 		self.r#impl(tokens, definition_type);
@@ -250,7 +287,12 @@ impl ArrayUnused {
 		});
 	}
 
-	pub fn deserialize(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
+	pub fn datasize_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
+		self.r#impl(tokens, definition_type);
+		self.add_datasize_tokens(tokens);
+	}
+
+	pub fn read_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		let formatted = &self.formatted;
 
 		self.r#impl(tokens, definition_type);

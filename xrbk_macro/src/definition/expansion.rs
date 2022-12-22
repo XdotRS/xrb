@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+mod datasize;
 mod readable;
 mod r#trait;
 mod writable;
@@ -35,15 +36,22 @@ impl ToTokens for Definition {
 
 					_ => (),
 				}
+
+				metadata.impl_writable(tokens, content);
+				metadata.impl_readable(tokens, content);
+				metadata.impl_datasize(tokens, content);
 			},
 
-			Self::Enum(r#enum) => r#enum.to_tokens(tokens),
+			Self::Enum(r#enum) => {
+				r#enum.to_tokens(tokens);
+
+				r#enum.impl_writable(tokens);
+				r#enum.impl_readable(tokens);
+				// TODO: r#enum.impl_datasize(tokens);
+			},
 
 			Self::Other(item) => item.to_tokens(tokens),
 		}
-
-		self.impl_writable(tokens);
-		self.impl_readable(tokens);
 	}
 }
 
