@@ -336,6 +336,8 @@ impl Enum {
 				let ident = &variant.ident;
 
 				let declare_datasize = if variant.content.contains_infer() {
+					// The datasize starts at `1` to account for the
+					// discriminant.
 					Some(quote!(let mut datasize: usize = 1;))
 				} else {
 					None
@@ -369,7 +371,7 @@ impl Enum {
 							#reads
 
 							Ok(Self::#ident #cons)
-						}
+						},
 					)
 				});
 

@@ -190,3 +190,57 @@ impl Event {
 		});
 	}
 }
+
+impl Enum {
+	pub fn impl_datasize(&self, tokens: &mut TokenStream2) {
+		let ident = &self.ident;
+
+		// TODO: add generic bounds
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let arms = TokenStream2::with_tokens(|tokens| {
+			for variant in &self.variants {
+				let ident = &variant.ident;
+
+				let pat = TokenStream2::with_tokens(|tokens| {
+					variant.content.fields_to_tokens(tokens);
+				});
+
+				let datasizes = TokenStream2::with_tokens(|tokens| {
+					for element in &variant.content {
+						element.datasize_tokens(tokens, DefinitionType::Basic);
+					}
+				});
+
+				tokens.append_tokens(|| {
+					quote!(
+						Self::#ident #pat => {
+							// Add the datasize of each element.
+							#datasizes
+						},
+					)
+				});
+			}
+		});
+
+		tokens.append_tokens(|| {
+			quote!(
+				#[automatically_derived]
+				impl #impl_generics cornflakes::DataSize for #ident #type_generics #where_clause {
+					fn data_size(&self) -> usize {
+						// The datasize starts at `1` to account for the
+						// discriminant.
+						let mut datasize: usize = 1;
+
+						match self {
+							#arms
+						}
+
+						// Return the cumulative datasize.
+						datasize
+					}
+				}
+			)
+		});
+	}
+}
