@@ -9,20 +9,72 @@ pub mod mask;
 use xrbk_macro::define;
 
 define! {
+	/// A resource ID referring to either a [`Window`] or a [`Pixmap`].
+	pub struct Drawable(u32);
+
+	impl From<Window> for Drawable {
+		fn from(window: Window) -> Self {
+			let Window(id) = window;
+			Self(id)
+		}
+	}
+
+	impl From<Pixmap> for Drawable {
+		fn from(pixmap: Pixmap) -> Self {
+			let Pixmap(id) = pixmap;
+		Self(id)
+		}
+	}
+
 	/// A resource ID referring to a particular window resource.
 	pub struct Window(u32);
+
+	impl From<Drawable> for Window {
+		fn from(drawable: Drawable) -> Self {
+			let Drawable(id) = drawable;
+			Self(id)
+		}
+	}
 
 	/// A resource ID referring to a particular pixmap resource.
 	pub struct Pixmap(u32);
 
-	/// A resource ID referring to either a [`Window`] or a [`Pixmap`].
-	pub struct Drawable(u32);
+	impl From<Drawable> for Pixmap {
+		fn from(drawable: Drawable) -> Self {
+			let Drawable(id) = drawable;
+			Self(id)
+		}
+	}
 
 	/// A resource ID referring to a particular cursor resource.
 	pub struct Cursor(u32);
 
+	/// A resource ID referring to either a [`Font`] or a [`GraphicsContext`].
+	pub struct Fontable(u32);
+
+	impl From<Font> for Fontable {
+		fn from(font: Font) -> Self {
+			let Font(id) = font;
+			Self(id)
+		}
+	}
+
+	impl From<GraphicsContext> for Fontable {
+		fn from(context: GraphicsContext) -> Self {
+			let GraphicsContext(id) = context;
+			Self(id)
+		}
+	}
+
 	/// A resource ID referring to a particular font resource.
 	pub struct Font(u32);
+
+	impl From<Fontable> for Font {
+		fn from(fontable: Fontable) -> Self {
+			let Fontable(id) = fontable;
+			Self(id)
+		}
+	}
 
 	/// A resource ID referring to a particular graphics context resource.
 	///
@@ -33,8 +85,12 @@ define! {
 	/// `GraphicsContext`.
 	pub struct GraphicsContext(u32);
 
-	/// A resource ID referring to either a [`Font`] or a [`GraphicsContext`].
-	pub struct Fontable(u32);
+	impl From<Fontable> for GraphicsContext {
+		fn from(fontable: Fontable) -> Self {
+			let Fontable(id) = fontable;
+			Self(id)
+		}
+	}
 
 	/// A resource ID referring to a particular colormap resource.
 	pub struct Colormap(u32);
@@ -135,61 +191,5 @@ define! {
 		#[context(address_len => *address_len as usize)]
 		pub address: Vec<u8>,
 		[_; ..],
-	}
-}
-
-impl From<Window> for Drawable {
-	fn from(window: Window) -> Self {
-		let Window(id) = window;
-		Self(id)
-	}
-}
-
-impl From<Pixmap> for Drawable {
-	fn from(pixmap: Pixmap) -> Self {
-		let Pixmap(id) = pixmap;
-		Self(id)
-	}
-}
-
-impl From<Drawable> for Window {
-	fn from(drawable: Drawable) -> Self {
-		let Drawable(id) = drawable;
-		Self(id)
-	}
-}
-
-impl From<Drawable> for Pixmap {
-	fn from(drawable: Drawable) -> Self {
-		let Drawable(id) = drawable;
-		Self(id)
-	}
-}
-
-impl From<Font> for Fontable {
-	fn from(font: Font) -> Self {
-		let Font(id) = font;
-		Self(id)
-	}
-}
-
-impl From<GraphicsContext> for Fontable {
-	fn from(context: GraphicsContext) -> Self {
-		let GraphicsContext(id) = context;
-		Self(id)
-	}
-}
-
-impl From<Fontable> for Font {
-	fn from(fontable: Fontable) -> Self {
-		let Fontable(id) = fontable;
-		Self(id)
-	}
-}
-
-impl From<Fontable> for GraphicsContext {
-	fn from(fontable: Fontable) -> Self {
-		let Fontable(id) = fontable;
-		Self(id)
 	}
 }
