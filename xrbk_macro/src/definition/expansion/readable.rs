@@ -179,7 +179,7 @@ impl Reply {
 				element.read_tokens(tokens, DefinitionType::Reply);
 			})
 		} else {
-			quote!(buf.advance(1))
+			quote!(buf.advance(1);)
 		};
 
 		let sequence = match content.sequence_element() {
