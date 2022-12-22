@@ -122,7 +122,7 @@ impl Request {
 				impl #impl_generics cornflakes::Readable for #ident #type_generics #where_clause {
 					fn read_from(
 						buf: &mut impl cornflakes::Buf,
-					) -> Result<(), cornflakes::ReadError> {
+					) -> Result<Self, cornflakes::ReadError> {
 						#declare_datasize
 
 						// If there is a metabyte element, read it, if not and
@@ -193,7 +193,7 @@ impl Reply {
 				impl #impl_generics cornflakes::Readable for #ident #type_generics #where_clause {
 					fn read_from(
 						buf: &mut impl cornflakes::Buf,
-					) -> Result<(), cornflakes::ReadError> {
+					) -> Result<Self, cornflakes::ReadError> {
 						#declare_datasize
 
 						// Metabyte position
@@ -276,7 +276,7 @@ impl Event {
 				impl #impl_generics cornflakes::Readable for #ident #type_generics #where_clause {
 					fn read_from(
 						buf: &mut impl cornflakes::Buf,
-					) -> Result<(), cornflakes::ReadError> {
+					) -> Result<Self, cornflakes::ReadError> {
 						#declare_datasize
 
 						// Metabyte position
@@ -383,7 +383,7 @@ impl Enum {
 				impl #impl_generics cornflakes::Readable for #ident #type_generics #where_clause {
 					fn read_from(
 						buf: &mut impl cornflakes::Buf,
-					) -> Result<(), cornflakes::ReadError> {
+					) -> Result<Self, cornflakes::ReadError> {
 						// Define functions and variables for variants which
 						// have custom discriminant expressions.
 						#discriminants
