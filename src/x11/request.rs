@@ -95,6 +95,8 @@ define! {
 	pub struct GetWindowAttributesReply: Reply for GetWindowAttributes {
 		#[metabyte]
 		pub backing_store: BackingStore,
+		#[sequence]
+		pub sequence: u16,
 
 		pub visual: VisualId,
 		pub class: WindowClass,
@@ -171,6 +173,8 @@ define! {
 	pub struct GetGeometryReply: Reply for GetGeometry {
 		#[metabyte]
 		pub depth: u8,
+		#[sequence]
+		pub sequence: u16,
 
 		pub root: Window,
 		pub x: i16,
@@ -186,6 +190,9 @@ define! {
 	}
 
 	pub struct QueryTreeReply: Reply for QueryTree {
+		#[sequence]
+		pub sequence: u16,
+
 		pub root: Window,
 		pub parent: Option<Window>,
 		let children_len: u16 = children => children.len() as u16,
@@ -209,6 +216,9 @@ define! {
 	}
 
 	pub struct InternAtomReply: Reply for InternAtom {
+		#[sequence]
+		pub sequence: u16,
+
 		pub atom: Option<Atom>,
 		[_; ..],
 	}
@@ -218,6 +228,9 @@ define! {
 	}
 
 	pub struct GetAtomNameReply: Reply for GetAtomName {
+		#[sequence]
+		pub sequence: u16,
+
 		let name_len: u16 = name => name.len() as u16,
 		[_; 22],
 
@@ -241,6 +254,9 @@ define! {
 	}
 
 	pub struct GetSelectionOwnerReply: Reply for GetSelectionOwner {
+		#[sequence]
+		pub sequence: u16,
+
 		pub owner: Option<Window>,
 		[_; ..],
 	}
@@ -278,6 +294,8 @@ define! {
 	pub struct GrabPointerReply: Reply for GrabPointer {
 		#[metabyte]
 		pub status: GrabStatus,
+		#[sequence]
+		pub sequence: u16,
 
 		[_; ..],
 	}
@@ -331,6 +349,8 @@ define! {
 	pub struct GrabKeyboardReply: Reply for GrabKeyboard {
 		#[metabyte]
 		pub status: GrabStatus,
+		#[sequence]
+		pub sequence: u16,
 
 		[_; ..],
 	}
@@ -377,6 +397,8 @@ define! {
 	pub struct QueryPointerReply: Reply for QueryPointer {
 		#[metabyte]
 		pub same_screen: bool,
+		#[sequence]
+		pub sequence: u16,
 
 		pub root: Window,
 		pub child: Option<Window>,
@@ -395,6 +417,9 @@ define! {
 	}
 
 	pub struct GetMotionEventsReply: Reply for GetMotionEvents {
+		#[sequence]
+		pub sequence: u16,
+
 		let event_len: u32 = events => events.len() as u32,
 		[_; 20],
 
@@ -412,6 +437,8 @@ define! {
 	pub struct TranslateCoordinatesReply: Reply for TranslateCoordinates {
 		#[metabyte]
 		pub same_screen: bool,
+		#[sequence]
+		pub sequence: u16,
 
 		pub child: Option<Window>,
 		pub dest_x: i16,
@@ -443,6 +470,8 @@ define! {
 	pub struct GetInputFocusReply: Reply for GetInputFocus {
 		#[metabyte]
 		pub revert_to: RevertTo,
+		#[sequence]
+		pub sequence: u16,
 
 		pub focus: Option<InputFocus>,
 		[_; ..],
@@ -451,6 +480,9 @@ define! {
 	pub struct QueryKeymap: Request(44) -> QueryKeymapReply;
 
 	pub struct QueryKeymapReply: Reply for QueryKeymap {
+		#[sequence]
+		pub sequence: u16,
+
 		pub keys: [u8; 32],
 	}
 
@@ -473,6 +505,9 @@ define! {
 	}
 
 	pub struct QueryFontReply: Reply for QueryFont {
+		#[sequence]
+		pub sequence: u16,
+
 		pub min_bounds: CharInfo,
 		[_; 4],
 
@@ -500,7 +535,7 @@ define! {
 		pub odd_length: bool,
 
 		pub font: Box<dyn Fontable>,
-		// TODO: #[context(self::length => (*length as usize) - 8)]
+		#[context(self::length => (*length as usize) - 8)]
 		pub string: String16,
 		[_; ..],
 	}
@@ -508,6 +543,8 @@ define! {
 	pub struct QueryTextExtentsReply: Reply for QueryTextExtents {
 		#[metabyte]
 		pub draw_direction: DrawDirection,
+		#[sequence]
+		pub sequence: u16,
 
 		pub font_ascent: i16,
 		pub font_descent: i16,
@@ -528,6 +565,9 @@ define! {
 	}
 
 	pub struct ListFontsReply: Reply for ListFonts {
+		#[sequence]
+		pub sequence: u16,
+
 		let names_len: u16 = names => names.len() as u16,
 		[_; 22],
 
@@ -748,6 +788,8 @@ define! {
 	pub struct GetImageReply: Reply for GetImage {
 		#[metabyte]
 		pub depth: u8,
+		#[sequence]
+		pub sequence: u16,
 
 		pub visual: Option<VisualId>,
 		[_; 20],
@@ -826,6 +868,9 @@ define! {
 	}
 
 	pub struct ListInstalledColormapsReply: Reply for ListInstalledColormaps {
+		#[sequence]
+		pub sequence: u16,
+
 		let colormaps_len: u16 = colormaps => colormaps.len() as u16,
 		[_; 22],
 
@@ -840,6 +885,9 @@ define! {
 	}
 
 	pub struct AllocColorReply: Reply for AllocColor {
+		#[sequence]
+		pub sequence: u16,
+
 		pub color: (u16, u16, u16),
 		[_; 2],
 
@@ -858,6 +906,9 @@ define! {
 	}
 
 	pub struct AllocNamedColorReply: Reply for AllocNamedColor {
+		#[sequence]
+		pub sequence: u16,
+
 		pub pixel: u32,
 		pub exact_color: (u16, u16, u16),
 		pub visual_color: (u16, u16, u16),
@@ -874,6 +925,9 @@ define! {
 	}
 
 	pub struct AllocColorCellsReply: Reply for AllocColorCells {
+		#[sequence]
+		pub sequence: u16,
+
 		let pixels_len: u16 = pixels => pixels.len() as u16,
 		let masks_len: u16 = masks => masks.len() as u16,
 		[_; 20],
@@ -894,6 +948,9 @@ define! {
 	}
 
 	pub struct AllocColorPlanesReply: Reply for AllocColorPlanes {
+		#[sequence]
+		pub sequence: u16,
+
 		let pixels_len: u16 = pixels => pixels.len() as u16,
 		[_; 2],
 
@@ -946,6 +1003,9 @@ define! {
 	}
 
 	pub struct LookupColorReply: Reply for LookupColor {
+		#[sequence]
+		pub sequence: u16,
+
 		pub exact_color: (u16, u16, u16),
 		pub visual_color: (u16, u16, u16),
 		[_; ..],
@@ -1048,7 +1108,10 @@ define! {
 	/// This contains the closest ideal size to the `width` and `height` that
 	/// was given in the [`QueryBestSize`] request. See the request's docs for
 	/// more information.
-	pub struct QueryBestSizeReply: Reply for QueryBestSize<'_> {
+	pub struct QueryBestSizeReply: Reply for QueryBestSize {
+		#[sequence]
+		pub sequence: u16,
+
 		/// The width of the ideal size found.
 		pub width: u16,
 		/// The height of the ideal size found.
@@ -1068,6 +1131,8 @@ define! {
 	pub struct QueryExtensionReply: Reply for QueryExtension {
 		#[metabyte]
 		pub present: bool,
+		#[sequence]
+		pub sequence: u16,
 
 		pub major_opcode: u8,
 		pub first_event: u8,
@@ -1080,6 +1145,9 @@ define! {
 	pub struct ListExtensionsReply: Reply for ListExtensions {
 		#[metabyte]
 		let names_len: u8 = names => names.len() as u8,
+		#[sequence]
+		pub sequence: u16,
+
 		[_; 24],
 
 		#[context(names_len => *names_len as usize)]
@@ -1101,6 +1169,8 @@ define! {
 	pub struct GetKeyboardControlReply: Reply for GetKeyboardControl {
 		#[metabyte]
 		pub global_auto_repeat: bool,
+		#[sequence]
+		pub sequence: u16,
 
 		pub led_mask: u32,
 		pub key_click_percent: u8,
@@ -1128,6 +1198,9 @@ define! {
 	pub struct GetPointerControl: Request(106) -> GetPointerControlReply;
 
 	pub struct GetPointerControlReply: Reply for GetPointerControl {
+		#[sequence]
+		pub sequence: u16,
+
 		pub acceleration_numerator: i16,
 		pub acceleration_denominator: u16,
 		pub threshold: u16,
@@ -1145,6 +1218,9 @@ define! {
 	pub struct GetScreenSaver: Request(108) -> GetScreenSaverReply;
 
 	pub struct GetScreenSaverReply: Reply for GetScreenSaver {
+		#[sequence]
+		pub sequence: u16,
+
 		pub timeout: i16,
 		pub interval: i16,
 		pub prefer_blanking: bool,
@@ -1170,6 +1246,8 @@ define! {
 	pub struct ListHostsReply: Reply for ListHosts {
 		#[metabyte]
 		pub enabled: bool,
+		#[sequence]
+		pub sequence: u16,
 
 		let hosts_len: u16 = hosts => hosts.len() as u16,
 		[_; 22],
@@ -1214,6 +1292,9 @@ define! {
 	pub struct SetPointerMappingReply: Reply for SetPointerMapping<'_> {
 		#[metabyte]
 		pub status: Status,
+		#[sequence]
+		pub sequence: u16,
+
 		[_; ..],
 	}
 
@@ -1222,6 +1303,8 @@ define! {
 	pub struct GetPointerMappingReply: Reply for GetPointerMapping {
 		#[metabyte]
 		let map_len: u8 = map => map.len() as u8,
+		#[sequence]
+		pub sequence: u16,
 
 		[_; 24],
 
