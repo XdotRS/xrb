@@ -30,9 +30,9 @@ macro_rules! _errors {
 	($($t:tt)*) => {};
 }
 
-// Automatically generate error structs. This is not an enum: external errors can
-// always be added at any time. It's just a convenience macro for defining many
-// errors.
+// Automatically generate error structs. This is not an enum: external errors
+// can always be added at any time. It's just a convenience macro for defining
+// many errors.
 _errors! {
 	#[error("the major or minor opcode does not specify a valid request")]
 	pub struct RequestXerror(1) {}
