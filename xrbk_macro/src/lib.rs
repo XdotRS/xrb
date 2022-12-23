@@ -21,7 +21,7 @@ pub(crate) use ext::*;
 pub(crate) use source::*;
 
 #[proc_macro]
-pub fn define(input: TokenStream) -> TokenStream {
+pub fn derive_xrb(input: TokenStream) -> TokenStream {
 	let definitions = parse_macro_input!(input as Definitions);
 
 	let expanded = definitions.into_token_stream();

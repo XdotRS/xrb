@@ -68,7 +68,7 @@ pub struct SourceArgs {
 ///
 /// > **<sup>Syntax</sup>**\
 /// > _Source_ :\
-/// > &nbsp;&nbsp; ([_SourceArgs_] `=>`)<sup>?</sup> [_Expression_]
+/// > &nbsp;&nbsp; ( [_SourceArgs_] `=>` )<sup>?</sup> [_Expression_]
 /// >
 /// > [_SourceArgs_]: SourceArgs
 /// > [_Expression_]: https://doc.rust-lang.org/reference/expressions.html

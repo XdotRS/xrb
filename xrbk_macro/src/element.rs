@@ -93,7 +93,7 @@ impl TupleContent {
 /// > **<sup>Syntax</sup>**\
 /// > _Content_ :\
 /// > &nbsp;&nbsp;
-/// > (&nbsp;[_RegularContent_]&nbsp;|&nbsp;[_TupleContent_]]&nbsp;)<sup>?</sup>
+/// > (&nbsp;[_RegularContent_]&nbsp;|&nbsp;[_TupleContent_]&nbsp;)<sup>?</sup>
 /// >
 /// > [_RegularContent_]: RegularContent
 /// > [_TupleContent_]: TupleContent

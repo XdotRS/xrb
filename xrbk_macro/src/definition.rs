@@ -34,7 +34,7 @@ use crate::element::{Content, StructlikeContent};
 /// > [_Definition_]: Definition
 pub struct Definitions(Vec<Definition>);
 
-/// A definition within the `define!` macro.
+/// A definition within the [`derive_xrb!`] macro.
 ///
 /// > **<sup>Syntax</sup>**\
 /// > _Definition_ :\
@@ -58,6 +58,8 @@ pub struct Definitions(Vec<Definition>);
 /// >
 /// > [_Struct_]: https://doc.rust-lang.org/reference/items/structs.html
 /// > [_Enumeration_]: https://doc.rust-lang.org/reference/items/enumerations.html
+///
+/// [`derive_xrb!`]: crate::derive_xrb
 pub enum Definition {
 	Struct(Struct),
 	Enum(Enum),
