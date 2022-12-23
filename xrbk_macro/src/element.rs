@@ -7,44 +7,103 @@ mod iter;
 mod parsing;
 
 use quote::format_ident;
-use syn::{punctuated::Punctuated, token, Attribute, Ident, Index, Token, Type, Visibility};
+use syn::{
+	punctuated::Punctuated,
+	token,
+	Attribute,
+	Ident,
+	Index,
+	Token,
+	Type,
+	Visibility,
+	WhereClause,
+};
 
 use crate::{
 	attribute::{ContextAttribute, MetabyteAttribute, SequenceAttribute},
 	source::Source,
 };
 
+/// > **<sup>Syntax</sup>**\
+/// > _RegularContent_ :\
+/// > &nbsp;&nbsp; `{`&nbsp;[_NamedElement_]<sup>\*</sup>&nbsp;`}`
+/// >
+/// > [_NamedElement_]: Element
+pub struct RegularContent {
+	brace_token: token::Brace,
+	elements: Elements,
+}
+
+impl RegularContent {
+	/// Whether there is an [`ArrayUnused`] element with
+	/// [`UnusedContent::Infer`] within this `RegularContent`.
+	///
+	/// See [`Elements::contains_infer`] for more information.
+	pub const fn contains_infer(&self) -> bool {
+		self.elements.contains_infer
+	}
+
+	/// The [`Element`] contained within this `RegularContent` which has a
+	/// [`MetabyteAttribute`], if there is one.
+	pub const fn metabyte_element(&self) -> &Option<Element> {
+		&self.elements.metabyte_element
+	}
+
+	/// The [`Element`] contained within this `RegularContent` which has a
+	/// [`SequenceAttribute`], if there is one.
+	pub const fn sequence_element(&self) -> &Option<Element> {
+		&self.elements.sequence_element
+	}
+}
+
+/// > **<sup>Syntax</sup>**\
+/// > _TupleContent_ :\
+/// > &nbsp;&nbsp; `(`&nbsp;[_UnnamedElement_]<sup>\*</sup>&nbsp;`)`
+/// >
+/// > [_UnnamedElement_]: Element
+pub struct TupleContent {
+	paren_token: token::Paren,
+	elements: Elements,
+}
+
+impl TupleContent {
+	/// Whether there is an [`ArrayUnused`] element with
+	/// [`UnusedContent::Infer`] within this `TupleContent`.
+	///
+	/// See [`Elements::contains_infer`] for more information.
+	pub const fn contains_infer(&self) -> bool {
+		self.elements.contains_infer
+	}
+
+	/// The [`Element`] contained within this `TupleContent` which has a
+	/// [`MetabyteAttribute`], if there is one.
+	pub const fn metabyte_element(&self) -> &Option<Element> {
+		&self.elements.metabyte_element
+	}
+
+	/// The [`Element`] contained within this `TupleContent` which has a
+	/// [`SequenceAttribute`], if there is one.
+	pub const fn sequence_element(&self) -> &Option<Element> {
+		&self.elements.sequence_element
+	}
+}
+
 /// Content (possibly) containing [`Elements`].
 ///
 /// > **<sup>Syntax</sup>**\
 /// > _Content_ :\
-/// > &nbsp;&nbsp; (_StructContent_ | _TupleContent_)<sup>?</sup>
+/// > &nbsp;&nbsp;
+/// > (&nbsp;[_RegularContent_]&nbsp;|&nbsp;[_TupleContent_]]&nbsp;)<sup>?</sup>
 /// >
-/// > _StructContent_ :\
-/// > &nbsp;&nbsp; `{` [_NamedElement_]<sup>\*</sup> `}`
-/// >
-/// > _TupleContent_ :\
-/// > &nbsp;&nbsp; `(` [_UnnamedElement_]<sup>\*</sup> `)`
-/// >
-/// > [_NamedElement_]: Element
-/// > [_UnnamedElement_]: Element
+/// > [_RegularContent_]: RegularContent
+/// > [_TupleContent_]: TupleContent
 pub enum Content {
 	/// Named elements surrounded by curly brackets (`{` and `}`).
-	Struct {
-		/// A pair of curly brackets (`{` and `}`) surrounding the `elements`.
-		brace_token: token::Brace,
-		/// The [`Elements`] contained in the `Content`.
-		elements: Elements,
-	},
+	Regular(RegularContent),
 
 	/// Elements, including unnamed fields, surrounding by normal brackets (`(`
 	/// and `)`).
-	Tuple {
-		/// A pair of normal brackets (`(` and `)`) surrounding the `elements`.
-		paren_token: token::Paren,
-		/// The [`Elements`] contained in the `Content`.
-		elements: Elements,
-	},
+	Tuple(TupleContent),
 
 	/// No [`Elements`] and no delimiters.
 	Unit,
@@ -57,7 +116,8 @@ impl Content {
 	/// See [`Elements::contains_infer`] for more information.
 	pub const fn contains_infer(&self) -> bool {
 		match self {
-			Self::Struct { elements, .. } | Self::Tuple { elements, .. } => elements.contains_infer,
+			Self::Regular(content) => content.contains_infer(),
+			Self::Tuple(content) => content.contains_infer(),
 
 			Self::Unit => false,
 		}
@@ -67,9 +127,8 @@ impl Content {
 	/// [`MetabyteAttribute`], if there is one.
 	pub const fn metabyte_element(&self) -> &Option<Element> {
 		match self {
-			Self::Struct { elements, .. } | Self::Tuple { elements, .. } => {
-				&elements.metabyte_element
-			},
+			Self::Regular(content) => content.metabyte_element(),
+			Self::Tuple(content) => content.metabyte_element(),
 
 			Self::Unit => &None,
 		}
@@ -79,11 +138,85 @@ impl Content {
 	/// [`SequenceAttribute`], if there is one.
 	pub const fn sequence_element(&self) -> &Option<Element> {
 		match self {
-			Self::Struct { elements, .. } | Self::Tuple { elements, .. } => {
-				&elements.sequence_element
-			},
+			Self::Regular(content) => content.sequence_element(),
+			Self::Tuple(content) => content.sequence_element(),
 
 			Self::Unit => &None,
+		}
+	}
+}
+
+/// Content used in a structlike definition (possibly) containing [`Elements`].
+///
+/// > **<sup>Syntax</sup>**\
+/// > _StructlikeContent_ :\
+/// > &nbsp;&nbsp; &nbsp;&nbsp; _RegularStructlikeContent_\
+/// > &nbsp;&nbsp; | _TupleStructlikeContent_\
+/// > &nbsp;&nbsp; | _UnitStructlikeContent_
+/// >
+/// > _RegularStructlikeContent_ :\
+/// > &nbsp;&nbsp; [_WhereClause_]<sup>?</sup>&nbsp;[_RegularContent_]
+/// >
+/// > _TupleStructlikeContent_ :\
+/// > &nbsp;&nbsp; [_TupleContent_]&nbsp;[_WhereClause_]<sup>?</sup>&nbsp;`;`
+/// >
+/// > _UnitStructlikeContent_ :\
+/// > &nbsp;&nbsp; [_WhereClause_]<sup>?</sup>&nbsp;`;`
+/// >
+/// > [_WhereClause_]: https://doc.rust-lang.org/reference/items/generics.html#where-clauses
+/// > [_RegularContent_]: RegularContent
+/// > [_TupleContent_]: TupleContent
+pub enum StructlikeContent {
+	Regular {
+		where_clause: Option<WhereClause>,
+		content: RegularContent,
+	},
+
+	Tuple {
+		content: TupleContent,
+		where_clause: Option<WhereClause>,
+		semicolon: Token![;],
+	},
+
+	Unit {
+		where_clause: Option<WhereClause>,
+		semicolon: Token![;],
+	},
+}
+
+impl StructlikeContent {
+	/// Whether there is an [`ArrayUnused`] element with
+	/// [`UnusedContent::Infer`] within this `StructlikeContent`.
+	///
+	/// See [`Elements::contains_infer`] for more information.
+	pub const fn contains_infer(&self) -> bool {
+		match self {
+			Self::Regular { content, .. } => content.contains_infer(),
+			Self::Tuple { content, .. } => content.contains_infer(),
+
+			Self::Unit { .. } => false,
+		}
+	}
+
+	/// The [`Element`] contained within this `StructlikeContent` which has a
+	/// [`MetabyteAttribute`], if there is one.
+	pub const fn metabyte_element(&self) -> &Option<Element> {
+		match self {
+			Self::Regular { content, .. } => content.metabyte_element(),
+			Self::Tuple { content, .. } => content.metabyte_element(),
+
+			Self::Unit { .. } => &None,
+		}
+	}
+
+	/// The [`Element`]  contained within this `StructlikeContent` which has a
+	/// [`MetabyteAttribute`], if there is one.
+	pub const fn sequence_element(&self) -> &Option<Element> {
+		match self {
+			Self::Regular { content, .. } => content.sequence_element(),
+			Self::Tuple { content, .. } => content.sequence_element(),
+
+			Self::Unit { .. } => &None,
 		}
 	}
 }
@@ -131,12 +264,15 @@ pub struct Elements {
 /// > &nbsp;&nbsp; _NamedElement_ | _UnnamedElement_
 /// >
 /// > _NamedElement_ :\
-/// > &nbsp;&nbsp; [_NamedField_] | [_LetElement_] | [_SingleUnusedElement_] |
-/// > [_ArrayUnusedElement_]
+/// > &nbsp;&nbsp; [_NamedField_] | _XrbkElement_
 /// >
 /// > _UnnamedElement_ :\
-/// > &nbsp;&nbsp; [_UnnamedField_] | [_LetElement_] | [_SingleUnusedElement_] |
-/// > [_ArrayUnusedElement_]
+/// > &nbsp;&nbsp; [_UnnamedField_] | _XrbkElement_
+/// >
+/// > _XrbkElement_ :\
+/// > &nbsp;&nbsp; &nbsp;&nbsp; [_LetElement_]\
+/// > &nbsp;&nbsp; | [_SingleUnusedElement_]\
+/// > &nbsp;&nbsp; | [_ArrayUnusedElement_]
 /// >
 /// > [_NamedField_]: Field
 /// > [_UnnamedField_]: Field

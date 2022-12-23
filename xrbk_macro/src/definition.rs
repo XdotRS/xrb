@@ -23,7 +23,7 @@ use syn::{
 use quote::quote;
 use syn::punctuated::Punctuated;
 
-use crate::element::Content;
+use crate::element::{Content, StructlikeContent};
 
 /// Multiple [`Definition`]s.
 ///
@@ -38,63 +38,57 @@ pub struct Definitions(Vec<Definition>);
 ///
 /// > **<sup>Syntax</sup>**\
 /// > _Definition_ :\
-/// > &nbsp;&nbsp; _Structlike_ | [_Enum_] | [_Item_][^other]
-/// >
-/// > _Structlike_ :\
-/// > &nbsp;&nbsp; [_Metadata_] [_Content_] `;`<sup>?</sup>[^semicolon]
+/// > &nbsp;&nbsp; &nbsp;&nbsp; [_Struct_](Struct)\
+/// > &nbsp;&nbsp; | [_Enum_]\
+/// > &nbsp;&nbsp; | [_Request_]\
+/// > &nbsp;&nbsp; | [_Reply_]\
+/// > &nbsp;&nbsp; | [_Event_]\
+/// > &nbsp;&nbsp; | [_Item_][^other]
 /// >
 /// > [_Enum_]: Enum
+/// > [_Request_]: Request
+/// > [_Reply_]: Reply
+/// > [_Event_]: Event
 /// >
-/// > [_Item_]: syn::Item
+/// > [_Item_]: https://doc.rust-lang.org/reference/items.html
 /// > [^other]: Except [_Struct_]s and [_Enumeration_]s.
 /// >
 /// > [_Metadata_]: Metadata
 /// > [_Content_]: Content
 /// >
-/// > [^semicolon]: The semicolon is present for [`Content::Tuple`] and
-/// > [`Content::Unit`], but not for [`Content::Struct`].
-/// >
-/// > [_Struct_]: Struct
+/// > [_Struct_]: https://doc.rust-lang.org/reference/items/structs.html
 /// > [_Enumeration_]: https://doc.rust-lang.org/reference/items/enumerations.html
 pub enum Definition {
-	Structlike(Metadata, Content, Option<Token![;]>),
+	Struct(Struct),
 	Enum(Enum),
+
+	Request(Request),
+	Reply(Reply),
+	Event(Event),
 
 	/// Any other item allowed in Rust that isn't a struct nor an enum.
 	Other(syn::Item),
 }
 
-/// Metadata associated with a [`Structlike` `Definition`].
-///
-/// > **<sup>Syntax</sup>**\
-/// > _Metadata_ :\
-/// > &nbsp;&nbsp; [_Struct_] | [_Request_] | [_Reply_] | [_Event_]
-/// >
-/// > [_Struct_]: Struct
-/// > [_Request_]: Request
-/// > [_Reply_]: Reply
-/// > [_Event_]: Event
-///
-/// [`Structlike` `Definition`]: Definition::Structlike
-pub enum Metadata {
-	Struct(Box<Struct>),
-
-	Request(Box<Request>),
-	Reply(Box<Reply>),
-	Event(Box<Event>),
-}
-
-/// Metadata for a struct.
+/// A struct with support for [`Element`]s.
 ///
 /// > **<sup>Syntax</sup>**\
 /// > _Struct_ :\
-/// > &nbsp;&nbsp; [_OuterAttribute_]<sup>\*</sup> [_Visibility_]<sup>?</sup>
-/// > `struct` [IDENTIFIER] [_GenericParams_]
+/// > &nbsp;&nbsp;
+/// > [_OuterAttribute_]<sup>\*</sup>&nbsp;[_Visibility_]<sup>?</sup>
+/// > _StructMetadata_\
+/// > &nbsp;&nbsp; [_StructlikeContent_]
+/// >
+/// > _StructMetadata_ :\
+/// > &nbsp;&nbsp; `struct`&nbsp;[IDENTIFIER]&nbsp;[_GenericParams_]<sup>?</sup>
 /// >
 /// > [_OuterAttribute_]: https://doc.rust-lang.org/reference/attributes.html
 /// > [_Visibility_]: https://doc.rust-lang.org/reference/visibility-and-privacy.html
 /// > [_GenericParams_]: https://doc.rust-lang.org/reference/items/generics.html
 /// > [IDENTIFIER]: https://doc.rust-lang.org/reference/identifiers.html
+/// > [_StructlikeContent_]: StructlikeContent
+///
+/// [`Element`]: crate::element::Element
 pub struct Struct {
 	/// Attributes associated with the struct, including doc comments.
 	pub attributes: Vec<Attribute>,
@@ -107,28 +101,38 @@ pub struct Struct {
 	pub ident: Ident,
 	/// Generics (lifetimes and/or generic types) associated with the struct.
 	pub generics: Generics,
+
+	/// The content of the `Struct`, containing its elements.
+	pub content: StructlikeContent,
 }
 
-/// Metadata for a request struct.
+/// A struct with metadata for request messages and support for [`Element`]s.
 ///
 /// > **<sup>Syntax</sup>**\
 /// > _Request_ :\
-/// > &nbsp;&nbsp; [_OuterAttribute_]<sup>\*</sup> [_Visibility_]<sup>?</sup>
-/// > `struct` [IDENTIFIER] [_GenericParams_]<sup>?</sup>\
-/// > &nbsp;&nbsp; `:` `Request` `(` _Opcodes_ `)` _ReplyType_<sup>?</sup>
+/// > &nbsp;&nbsp;
+/// > [_OuterAttribute_]<sup>\*</sup>&nbsp;[_Visibility_]<sup>?</sup>
+/// > [_StructMetadata_]\
+/// > &nbsp;&nbsp;
+/// > `:`&nbsp;`Request`&nbsp;`(`&nbsp;_Opcodes_&nbsp;`)`&nbsp;_ReplyType_<sup>?
+/// > </sup>\
+/// > &nbsp;&nbsp; [_StructlikeContent_]
 /// >
 /// > _Opcodes_ :\
-/// > &nbsp;&nbsp; [_Expression_] (`,` [_Expression_])<sup>?</sup>
+/// > &nbsp;&nbsp;
+/// > [_Expression_]&nbsp;(&nbsp;`,`&nbsp;[_Expression_]&nbsp;)<sup>?</sup>
 /// >
 /// > _ReplyType_ :\
 /// > &nbsp;&nbsp; `->` [_Type_]
 /// >
 /// > [_OuterAttribute_]: https://doc.rust-lang.org/reference/attributes.html
 /// > [_Visibility_]: https://doc.rust-lang.org/reference/visibility-and-privacy.html
-/// > [IDENTIFIER]: https://doc.rust-lang.org/reference/identifiers.html
-/// > [_GenericParams_]: https://doc.rust-lang.org/reference/items/generics.html
+/// > [_StructMetadata_]: Struct
 /// > [_Expression_]: https://doc.rust-lang.org/reference/expressions.html
 /// > [_Type_]: https://doc.rust-lang.org/reference/types.html
+/// > [_StructlikeContent_]: StructlikeContent
+///
+/// [`Element`]: crate::element::Element
 pub struct Request {
 	/// Attributes associated with the request's struct, including doc comments.
 	pub attributes: Vec<Attribute>,
@@ -160,21 +164,28 @@ pub struct Request {
 	/// An optional arrow followed by a type representing replies generated by
 	/// the request.
 	pub reply: Option<(Token![->], Type)>,
+
+	/// The content of the `Request`, containing its elements.
+	pub content: StructlikeContent,
 }
 
-/// Metadata for a reply struct.
+/// A struct with metadata for reply messages and support for [`Element`]s.
 ///
 /// > **<sup>Syntax</sup>**\
 /// > _Reply_ :\
-/// > &nbsp;&nbsp; [_OuterAttribute_]<sup>\*</sup> [_Visibility_]<sup>?</sup>
-/// > `struct` [IDENTIFIER] [_GenericParams_]<sup>?</sup>\
-/// > &nbsp;&nbsp; `:` `Reply` `for` [_Type_]
+/// > &nbsp;&nbsp;
+/// > [_OuterAttribute_]<sup>\*</sup>&nbsp;[_Visibility_]<sup>?</sup>
+/// > [_StructMetadata_]\
+/// > &nbsp;&nbsp; `:`&nbsp;`Reply`&nbsp;`for`&nbsp;[_Type_]\
+/// > &nbsp;&nbsp; [_StructlikeContent_]
 /// >
 /// > [_OuterAttribute_]: https://doc.rust-lang.org/reference/attributes.html
 /// > [_Visibility_]: https://doc.rust-lang.org/reference/visibility-and-privacy.html
-/// > [IDENTIFIER]: https://doc.rust-lang.org/reference/identifiers.html
-/// > [_GenericParams_]: https://doc.rust-lang.org/reference/items/generics.html
+/// > [_StructMetadata_]: Struct
 /// > [_Type_]: https://doc.rust-lang.org/reference/types.html
+/// > [_StructlikeContent_]: StructlikeContent
+///
+/// [`Element`]: crate::element::Element
 pub struct Reply {
 	/// Attributes associated with the reply's struct.
 	pub attributes: Vec<Attribute>,
@@ -198,21 +209,28 @@ pub struct Reply {
 	pub for_token: Token![for],
 	/// The type of request that generates this reply.
 	pub request: Type,
+
+	/// The content of the `Reply`, containing its elements.
+	pub content: StructlikeContent,
 }
 
-/// Metadata for an event struct.
+/// A struct with metadata for event messages and support for [`Element`]s.
 ///
 /// > **<sup>Syntax</sup>**\
 /// > _Event_ :\
-/// > &nbsp;&nbsp; [_OuterAttribute_]<sup>\*</sup> [_Visibility_]<sup>?</sup>
-/// > `struct` [IDENTIFIER] [_GenericParams_]<sup>?</sup>\
-/// > &nbsp;&nbsp; `:` `Event` `(` [_Expression_] `)`
+/// > &nbsp;&nbsp;
+/// > [_OuterAttribute_]<sup>\*</sup>&nbsp;[_Visibility_]<sup>?</sup>
+/// > [_StructMetadata_]\
+/// > &nbsp;&nbsp; `:`&nbsp;`Event`&nbsp;`(`&nbsp;[_Expression_]&nbsp;`)`\
+/// > &nbsp;&nbsp; [_StructlikeContent_]
 /// >
 /// > [_OuterAttribute_]: https://doc.rust-lang.org/reference/attributes.html
 /// > [_Visibility_]: https://doc.rust-lang.org/reference/visibility-and-privacy.html
-/// > [IDENTIFIER]: https://doc.rust-lang.org/reference/identifiers.html
-/// > [_GenericParams_]: https://doc.rust-lang.org/reference/items/generics.html
+/// > [_StructMetadata_]: Struct
 /// > [_Expression_]: https://doc.rust-lang.org/reference/expressions.html
+/// > [_StructlikeContent_]: StructlikeContent
+///
+/// [`Element`]: crate::element::Element
 pub struct Event {
 	/// Attributes associated with the event's struct, including doc comments.
 	pub attributes: Vec<Attribute>,
@@ -236,27 +254,31 @@ pub struct Event {
 	pub paren_token: token::Paren,
 	/// An expression that evaluates to the code associated with the event.
 	pub code: Expr,
+
+	/// The content of the `Event`, containing its elements.
+	pub content: StructlikeContent,
 }
 
-/// An enum definition that contains [`Variant`]s which may contain
-/// [`Element`]s.
+/// An enum with support for [`Element`]s.
 ///
 /// > **<sup>Syntax</sup>**\
 /// > _Enum_ :\
-/// > &nbsp;&nbsp; [_OuterAttribute_]<sup>\*</sup> [_Visibility_]<sup>?</sup>
-/// > `enum` [IDENTIFIER] [_GenericParams_]<sup>?</sup>
+/// > &nbsp;&nbsp;
+/// > [_OuterAttribute_]<sup>\*</sup>&nbsp;[_Visibility_]<sup>?</sup>
+/// > `enum`&nbsp;[IDENTIFIER]&nbsp;[_GenericParams_]<sup>?</sup>
 /// > [_WhereClause_]<sup>?</sup>\
-/// > &nbsp;&nbsp;_Variants_
+/// > &nbsp;&nbsp; `{` _Variants_ `}`
 /// >
 /// > _Variants_ :\
-/// > &nbsp;&nbsp; `{` [_Variant_] ([_Variant_] `,`)<sup>\*</sup>
-/// > `,`<sup>?</sup> `}`
+/// > &nbsp;&nbsp;
+/// > [_Variant_]&nbsp;(&nbsp;`,`&nbsp;[_Variant_]&nbsp;)<sup>\*</sup>&nbsp;`,`
+/// > <sup>?</sup>
 /// >
 /// > [_OuterAttribute_]: https://doc.rust-lang.org/reference/attributes.html
 /// > [_Visibility_]: https://doc.rust-lang.org/reference/visibility-and-privacy.html
 /// > [IDENTIFIER]: https://doc.rust-lang.org/reference/identifiers.html
 /// > [_GenericParams_]: https://doc.rust-lang.org/reference/items/generics.html
-/// > [_WhereClause_]: https://doc.rust-lang.org/reference/items/generics.html
+/// > [_WhereClause_]: https://doc.rust-lang.org/reference/items/generics.html#where-clauses
 /// > [_Variant_]: Variant
 ///
 /// [`Element`]: crate::element::Element
@@ -283,7 +305,8 @@ pub struct Enum {
 ///
 /// > **<sup>Syntax</sup>**\
 /// > _Variant_ :\
-/// > &nbsp;&nbsp; [_OuterAttribute_]<sup>\*</sup> [IDENTIFIER] [_Content_]
+/// > &nbsp;&nbsp;
+/// > [_OuterAttribute_]<sup>\*</sup>&nbsp;[IDENTIFIER]&nbsp;[_Content_]
 /// > _Discriminant_<sup>?</sup>
 /// >
 /// > _Discriminant_ :\

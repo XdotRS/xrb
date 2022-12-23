@@ -7,20 +7,8 @@ use crate::{element::Element, TsExt};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::format_ident;
 
-impl Metadata {
-	pub fn impl_readable(&self, tokens: &mut TokenStream2, content: &Content) {
-		match self {
-			Self::Struct(r#struct) => r#struct.impl_readable(tokens, content),
-
-			Self::Request(request) => request.impl_readable(tokens, content),
-			Self::Reply(reply) => reply.impl_readable(tokens, content),
-			Self::Event(event) => event.impl_readable(tokens, content),
-		}
-	}
-}
-
 impl Struct {
-	pub fn impl_readable(&self, tokens: &mut TokenStream2, content: &Content) {
+	pub fn impl_readable(&self, tokens: &mut TokenStream2) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
@@ -28,7 +16,7 @@ impl Struct {
 
 		// Expand the tokens to declare the datasize variable if there is an
 		// UnusedContent::Infer unused bytes element to use it.
-		let declare_datasize = if content.contains_infer() {
+		let declare_datasize = if self.content.contains_infer() {
 			Some(quote!(let mut datasize: usize = 0;))
 		} else {
 			None
@@ -36,15 +24,15 @@ impl Struct {
 
 		// Expand the tokens to call Self's constructor.
 		let cons = TokenStream2::with_tokens(|tokens| {
-			content.fields_to_tokens(tokens);
+			self.content.pat_cons_to_tokens(tokens);
 		});
 
 		// Expand the tokens to read each element.
 		let reads = TokenStream2::with_tokens(|tokens| {
-			for element in content {
+			for element in &self.content {
 				element.read_tokens(tokens, DefinitionType::Basic);
 
-				if content.contains_infer() {
+				if self.content.contains_infer() {
 					element.add_datasize_tokens(tokens);
 				}
 			}
@@ -74,13 +62,13 @@ impl Struct {
 }
 
 impl Request {
-	pub fn impl_readable(&self, tokens: &mut TokenStream2, content: &Content) {
+	pub fn impl_readable(&self, tokens: &mut TokenStream2) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
-		let declare_datasize = if content.contains_infer() {
+		let declare_datasize = if self.content.contains_infer() {
 			// The datasize starts at `4` to account for the size of a request's header
 			// being 4 bytes.
 			Some(quote!(let mut datasize: usize = 4;))
@@ -89,15 +77,15 @@ impl Request {
 		};
 
 		let cons = TokenStream2::with_tokens(|tokens| {
-			content.fields_to_tokens(tokens);
+			self.content.pat_cons_to_tokens(tokens);
 		});
 
 		let reads = TokenStream2::with_tokens(|tokens| {
-			for element in content {
+			for element in &self.content {
 				if !element.is_metabyte() && !element.is_sequence() {
 					element.read_tokens(tokens, DefinitionType::Request);
 
-					if content.contains_infer() {
+					if self.content.contains_infer() {
 						element.add_datasize_tokens(tokens);
 					}
 				}
@@ -108,7 +96,7 @@ impl Request {
 			// If there is a minor opcode, then it has already been read in order to
 			// determine that this is the request to read.
 			None
-		} else if let Some(element) = content.metabyte_element() {
+		} else if let Some(element) = self.content.metabyte_element() {
 			Some(TokenStream2::with_tokens(|tokens| {
 				element.read_tokens(tokens, DefinitionType::Request);
 			}))
@@ -146,35 +134,35 @@ impl Request {
 }
 
 impl Reply {
-	pub fn impl_readable(&self, tokens: &mut TokenStream2, content: &Content) {
+	pub fn impl_readable(&self, tokens: &mut TokenStream2) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
-		let declare_datasize = if content.contains_infer() {
+		let declare_datasize = if self.content.contains_infer() {
 			Some(quote!(let mut datasize: usize = 8;))
 		} else {
 			None
 		};
 
 		let cons = TokenStream2::with_tokens(|tokens| {
-			content.fields_to_tokens(tokens);
+			self.content.pat_cons_to_tokens(tokens);
 		});
 
 		let reads = TokenStream2::with_tokens(|tokens| {
-			for element in content {
+			for element in &self.content {
 				if !element.is_metabyte() && !element.is_sequence() {
 					element.read_tokens(tokens, DefinitionType::Reply);
 
-					if content.contains_infer() {
+					if self.content.contains_infer() {
 						element.add_datasize_tokens(tokens);
 					}
 				}
 			}
 		});
 
-		let metabyte = if let Some(element) = content.metabyte_element() {
+		let metabyte = if let Some(element) = self.content.metabyte_element() {
 			TokenStream2::with_tokens(|tokens| {
 				element.read_tokens(tokens, DefinitionType::Reply);
 			})
@@ -182,7 +170,7 @@ impl Reply {
 			quote!(buf.advance(1);)
 		};
 
-		let sequence = match content.sequence_element() {
+		let sequence = match self.content.sequence_element() {
 			Some(Element::Field(field)) => &field.formatted,
 			_ => panic!("replies must have a sequence field"),
 		};
@@ -216,14 +204,14 @@ impl Reply {
 }
 
 impl Event {
-	pub fn impl_readable(&self, tokens: &mut TokenStream2, content: &Content) {
+	pub fn impl_readable(&self, tokens: &mut TokenStream2) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
-		let declare_datasize = if content.contains_infer() {
-			let datasize: usize = if content.sequence_element().is_some() {
+		let declare_datasize = if self.content.contains_infer() {
+			let datasize: usize = if self.content.sequence_element().is_some() {
 				4
 			} else {
 				1
@@ -235,24 +223,24 @@ impl Event {
 		};
 
 		let cons = TokenStream2::with_tokens(|tokens| {
-			content.fields_to_tokens(tokens);
+			self.content.pat_cons_to_tokens(tokens);
 		});
 
 		let reads = TokenStream2::with_tokens(|tokens| {
-			for element in content {
+			for element in &self.content {
 				if !element.is_metabyte() && !element.is_sequence() {
 					element.read_tokens(tokens, DefinitionType::Event);
 
-					if content.contains_infer() {
+					if self.content.contains_infer() {
 						element.add_datasize_tokens(tokens);
 					}
 				}
 			}
 		});
 
-		let metabyte = if content.sequence_element().is_none() {
+		let metabyte = if self.content.sequence_element().is_none() {
 			None
-		} else if let Some(element) = content.metabyte_element() {
+		} else if let Some(element) = self.content.metabyte_element() {
 			Some(TokenStream2::with_tokens(|tokens| {
 				element.read_tokens(tokens, DefinitionType::Event);
 			}))
@@ -262,7 +250,7 @@ impl Event {
 			))
 		};
 
-		let sequence = if let Some(Element::Field(field)) = content.sequence_element() {
+		let sequence = if let Some(Element::Field(field)) = self.content.sequence_element() {
 			let formatted = &field.formatted;
 
 			Some(quote!(let #formatted = buf.get_u16();))
@@ -350,7 +338,7 @@ impl Enum {
 				}
 
 				let cons = TokenStream2::with_tokens(|tokens| {
-					variant.content.fields_to_tokens(tokens);
+					variant.content.pat_cons_to_tokens(tokens);
 				});
 
 				let reads = TokenStream2::with_tokens(|tokens| {

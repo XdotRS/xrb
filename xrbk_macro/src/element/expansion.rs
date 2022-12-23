@@ -17,26 +17,43 @@ impl ToTokens for FieldId {
 	}
 }
 
+impl ToTokens for RegularContent {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		self.brace_token.surround(tokens, |tokens| {
+			self.elements.to_tokens(tokens);
+		});
+	}
+}
+
+impl RegularContent {
+	pub fn pat_cons_to_tokens(&self, tokens: &mut TokenStream2) {
+		self.brace_token.surround(tokens, |tokens| {
+			self.elements.pat_cons_to_tokens(tokens);
+		});
+	}
+}
+
+impl ToTokens for TupleContent {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		self.paren_token.surround(tokens, |tokens| {
+			self.elements.to_tokens(tokens);
+		});
+	}
+}
+
+impl TupleContent {
+	pub fn pat_cons_to_tokens(&self, tokens: &mut TokenStream2) {
+		self.paren_token.surround(tokens, |tokens| {
+			self.elements.pat_cons_to_tokens(tokens);
+		});
+	}
+}
+
 impl ToTokens for Content {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		match self {
-			Self::Struct {
-				brace_token,
-				elements,
-			} => {
-				brace_token.surround(tokens, |tokens| {
-					elements.to_tokens(tokens);
-				});
-			},
-
-			Self::Tuple {
-				paren_token,
-				elements,
-			} => {
-				paren_token.surround(tokens, |tokens| {
-					elements.to_tokens(tokens);
-				});
-			},
+			Self::Regular(content) => content.to_tokens(tokens),
+			Self::Tuple(content) => content.to_tokens(tokens),
 
 			Self::Unit => {},
 		}
@@ -44,27 +61,58 @@ impl ToTokens for Content {
 }
 
 impl Content {
-	pub fn fields_to_tokens(&self, tokens: &mut TokenStream2) {
+	pub fn pat_cons_to_tokens(&self, tokens: &mut TokenStream2) {
 		match self {
-			Self::Struct {
-				brace_token,
-				elements,
+			Self::Regular(content) => content.pat_cons_to_tokens(tokens),
+			Self::Tuple(content) => content.pat_cons_to_tokens(tokens),
+
+			Self::Unit => {},
+		}
+	}
+}
+
+impl ToTokens for StructlikeContent {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		match self {
+			Self::Regular {
+				where_clause,
+				content,
 			} => {
-				brace_token.surround(tokens, |tokens| {
-					elements.fields_to_tokens(tokens);
-				});
+				// TODO: where is the place to add generic bounds?
+				where_clause.to_tokens(tokens);
+				content.to_tokens(tokens);
 			},
 
 			Self::Tuple {
-				paren_token,
-				elements,
+				content,
+				where_clause,
+				semicolon,
 			} => {
-				paren_token.surround(tokens, |tokens| {
-					elements.fields_to_tokens(tokens);
-				});
+				content.to_tokens(tokens);
+				// TODO: where is the place to add generic bounds?
+				where_clause.to_tokens(tokens);
+				semicolon.to_tokens(tokens);
 			},
 
-			Self::Unit => {},
+			Self::Unit {
+				where_clause,
+				semicolon,
+			} => {
+				// TODO: where is the place to add generic bounds?
+				where_clause.to_tokens(tokens);
+				semicolon.to_tokens(tokens);
+			},
+		}
+	}
+}
+
+impl StructlikeContent {
+	pub fn pat_cons_to_tokens(&self, tokens: &mut TokenStream2) {
+		match self {
+			Self::Regular { content, .. } => content.pat_cons_to_tokens(tokens),
+			Self::Tuple { content, .. } => content.pat_cons_to_tokens(tokens),
+
+			Self::Unit { .. } => {},
 		}
 	}
 }
@@ -81,7 +129,7 @@ impl ToTokens for Elements {
 }
 
 impl Elements {
-	pub fn fields_to_tokens(&self, tokens: &mut TokenStream2) {
+	pub fn pat_cons_to_tokens(&self, tokens: &mut TokenStream2) {
 		for (element, comma) in self.pairs() {
 			if let Element::Field(field) = element {
 				let formatted = &field.formatted;

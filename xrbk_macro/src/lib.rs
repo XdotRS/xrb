@@ -3,6 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 #![feature(let_chains)]
+#![feature(if_let_guard)]
 #![allow(rustdoc::private_intra_doc_links)]
 
 mod attribute;

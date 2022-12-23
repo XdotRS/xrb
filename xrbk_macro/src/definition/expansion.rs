@@ -24,22 +24,12 @@ impl ToTokens for Definitions {
 impl ToTokens for Definition {
 	fn to_tokens(&self, tokens: &mut TokenStream) {
 		match self {
-			Self::Structlike(metadata, content, semicolon) => {
-				metadata.to_tokens(tokens);
-				content.to_tokens(tokens);
-				semicolon.to_tokens(tokens);
+			Self::Struct(r#struct) => {
+				r#struct.to_tokens(tokens);
 
-				match metadata {
-					Metadata::Request(request) => request.impl_trait(tokens),
-					Metadata::Reply(reply) => reply.impl_trait(tokens, content),
-					Metadata::Event(event) => event.impl_trait(tokens, content),
-
-					_ => (),
-				}
-
-				metadata.impl_writable(tokens, content);
-				metadata.impl_readable(tokens, content);
-				metadata.impl_datasize(tokens, content);
+				r#struct.impl_writable(tokens);
+				r#struct.impl_readable(tokens);
+				r#struct.impl_datasize(tokens);
 			},
 
 			Self::Enum(r#enum) => {
@@ -51,57 +41,60 @@ impl ToTokens for Definition {
 				r#enum.impl_datasize(tokens);
 			},
 
+			Self::Request(request) => {
+				request.to_tokens(tokens);
+				request.impl_trait(tokens);
+
+				request.impl_writable(tokens);
+				request.impl_readable(tokens);
+				request.impl_datasize(tokens);
+			},
+
+			Self::Reply(reply) => {
+				reply.to_tokens(tokens);
+				reply.impl_trait(tokens);
+
+				reply.impl_writable(tokens);
+				reply.impl_readable(tokens);
+				reply.impl_datasize(tokens);
+			},
+
+			Self::Event(event) => {
+				event.to_tokens(tokens);
+				event.impl_trait(tokens);
+
+				event.impl_writable(tokens);
+				event.impl_readable(tokens);
+				event.impl_datasize(tokens);
+			},
+
 			Self::Other(item) => item.to_tokens(tokens),
 		}
 	}
 }
 
-impl ToTokens for Metadata {
-	fn to_tokens(&self, tokens: &mut TokenStream) {
-		let (attributes, visibility, struct_token, ident, generics) = match self {
-			Self::Struct(r#struct) => (
-				&r#struct.attributes,
-				&r#struct.visibility,
-				&r#struct.struct_token,
-				&r#struct.ident,
-				&r#struct.generics,
-			),
+macro_rules! structlike_to_tokens {
+	($Struct:ty) => {
+		impl ToTokens for $Struct {
+			fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+				for attribute in &self.attributes {
+					attribute.to_tokens(tokens);
+				}
 
-			Self::Request(request) => (
-				&request.attributes,
-				&request.visibility,
-				&request.struct_token,
-				&request.ident,
-				&request.generics,
-			),
-
-			Self::Reply(reply) => (
-				&reply.attributes,
-				&reply.visibility,
-				&reply.struct_token,
-				&reply.ident,
-				&reply.generics,
-			),
-
-			Self::Event(event) => (
-				&event.attributes,
-				&event.visibility,
-				&event.struct_token,
-				&event.ident,
-				&event.generics,
-			),
-		};
-
-		for attribute in attributes {
-			attribute.to_tokens(tokens);
+				self.visibility.to_tokens(tokens);
+				self.struct_token.to_tokens(tokens);
+				self.ident.to_tokens(tokens);
+				self.generics.to_tokens(tokens);
+				self.content.to_tokens(tokens);
+			}
 		}
-
-		visibility.to_tokens(tokens);
-		struct_token.to_tokens(tokens);
-		ident.to_tokens(tokens);
-		generics.to_tokens(tokens);
-	}
+	};
 }
+
+structlike_to_tokens!(Struct);
+structlike_to_tokens!(Request);
+structlike_to_tokens!(Reply);
+structlike_to_tokens!(Event);
 
 impl ToTokens for Enum {
 	fn to_tokens(&self, tokens: &mut TokenStream) {
