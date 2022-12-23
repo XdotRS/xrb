@@ -59,7 +59,7 @@ pub struct Definitions(Vec<Definition>);
 /// > [_Struct_]: https://doc.rust-lang.org/reference/items/structs.html
 /// > [_Enumeration_]: https://doc.rust-lang.org/reference/items/enumerations.html
 ///
-/// [`derive_xrb!`]: crate::derive_xrb
+/// [`derive_xrb!`]: crate::derive_xrb!
 pub enum Definition {
 	Struct(Struct),
 	Enum(Enum),

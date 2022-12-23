@@ -47,7 +47,7 @@ pub struct SourceLengthArg {
 ///
 /// > **<sup>Syntax</sup>**\
 /// > _SourceArgs_ :\
-/// > &nbsp;&nbsp; _Arg_ (`,` _Arg_)<sup>\*</sup> `,`<sup>?</sup>
+/// > &nbsp;&nbsp; _Arg_ ( `,` _Arg_ )<sup>\*</sup> `,`<sup>?</sup>
 /// >
 /// > _Arg_ :\
 /// > &nbsp;&nbsp; [_SourceArg_] | [_SourceLengthArg_][^usage]

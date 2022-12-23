@@ -72,7 +72,12 @@ pub struct ContextAttribute {
 ///
 /// > **<sup>Syntax</sup>**\
 /// > _Context_ :\
-/// > &nbsp;&nbsp; (`(` [_Source_] `)`) | (`=` [_Source_])
+/// > &nbsp;&nbsp; ( `=` [_Source_] ) | _DelimitedContext_
+/// >
+/// > _DelimitedContext_ :\
+/// > &nbsp;&nbsp; &nbsp;&nbsp; ( `(` [_Source_] `)` )
+/// > &nbsp;&nbsp; | ( `{` [_Source_] `}` )
+/// > &nbsp;&nbsp; | ( `[` [_Source_] `]` )
 /// >
 /// > [_Source_]: Source
 pub enum Context {
@@ -81,6 +86,24 @@ pub enum Context {
 		///
 		/// [`source`]: Context::Paren::source
 		paren_token: token::Paren,
+		/// The [`Source`] providing the `Context`.
+		source: Source,
+	},
+
+	Brace {
+		/// A pair of curly brackets (`{` and `}`) surrounding the [`source`].
+		///
+		/// [`source`]: Context::Brace::source
+		brace_token: token::Brace,
+		/// The [`Source`] providing the `Context`.
+		source: Source,
+	},
+
+	Bracket {
+		/// A pair of square brackets (`[` and `]`) surrounding the [`source`].
+		///
+		/// [`source`]: Context::Bracket::source
+		bracket_token: token::Bracket,
 		/// The [`Source`] providing the `Context`.
 		source: Source,
 	},
@@ -98,8 +121,11 @@ pub enum Context {
 impl Context {
 	pub const fn source(&self) -> &Source {
 		match self {
-			Self::Paren { source, .. } => source,
 			Self::Equals { source, .. } => source,
+
+			Self::Paren { source, .. } => source,
+			Self::Brace { source, .. } => source,
+			Self::Bracket { source, .. } => source,
 		}
 	}
 }
