@@ -7,11 +7,11 @@ use syn::{braced, bracketed, parenthesized, parse::ParseStream, spanned::Spanned
 
 use super::*;
 use crate::{
-	attribute::parsing::ParsedAttributes,
-	definition::DefinitionType,
-	source::{Args, IdentMap, IdentMapMut},
-	ParseWithContext,
-	PsExt,
+    attribute::parsing::ParsedAttributes,
+    definition::DefinitionType,
+    source::{SourceArgs, IdentMap, IdentMapMut},
+    ParseWithContext,
+    PsExt,
 };
 
 impl ParseWithContext for Content {
@@ -112,7 +112,7 @@ impl ParseWithContext for Elements {
 			};
 
 			if let Some(r#let) = r#let {
-				if let Some((Args { args, .. }, _)) = &mut r#let.source.args {
+				if let Some((SourceArgs { args, .. }, _)) = &mut r#let.source.args {
 					for mut arg in args {
 						if arg.r#type.is_none() {
 							if let Some(r#type) = field_map.get(&arg.ident.to_string()) {

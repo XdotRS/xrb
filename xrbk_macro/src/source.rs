@@ -11,29 +11,73 @@ use syn::{punctuated::Punctuated, Expr, Ident, Token, Type};
 pub type IdentMap<'a> = &'a HashMap<String, Type>;
 pub type IdentMapMut<'a> = &'a mut HashMap<String, Type>;
 
-pub struct Arg {
+/// A non-[SourceLengthArg] argument for a [`Source`].
+///
+/// > **<sup>Syntax</sup>**\
+/// > _SourceArg_: \
+/// > &nbsp;&nbsp; [IDENTIFIER][^validity]
+/// >
+/// > [IDENTIFIER]: https://doc.rust-lang.org/reference/identifiers.html
+/// > [^validity]: See [Argument name validity] for which identifiers are
+/// > allowed.
+/// >
+/// > [Argument name validity]: ../Source.html#argument-name-validity
+pub struct SourceArg {
 	pub ident: Ident,
 	pub r#type: Option<Type>,
 
 	pub formatted: Option<Ident>,
 }
 
-pub struct LengthArg {
+/// A [`Source`] argument referring to the length of a [`Request`] or [`Reply`].
+///
+/// > **<sup>Syntax</sup>**\
+/// > _SourceLengthArg_ :\
+/// > &nbsp;&nbsp; `self` `::` `length`
+///
+/// [`Request`]: crate::definition::Request
+/// [`Reply`]: crate::definition::Reply
+pub struct SourceLengthArg {
 	pub self_token: Token![self],
 	pub double_colon_token: Token![::],
 	pub length_token: Ident,
 }
 
-pub struct Args {
-	pub args: Punctuated<Arg, Token![,]>,
-	pub length_arg: Option<(LengthArg, Type)>,
+/// Arguments for a [`Source`].
+///
+/// > **<sup>Syntax</sup>**\
+/// > _SourceArgs_ :\
+/// > &nbsp;&nbsp; _Arg_ (`,` _Arg_)<sup>\*</sup> `,`<sup>?</sup>
+/// >
+/// > _Arg_ :\
+/// > &nbsp;&nbsp; [_SourceArg_] | [_SourceLengthArg_][^usage]
+/// >
+/// > [^usage]: [_SourceLengthArg_]s may only be used within [`Request`]s and
+/// > [`Reply`]s, and they may be used no more than once per _SourceArgs_.
+///
+/// [_SourceArg_]: SourceArg
+/// [_SourceLengthArg_]: SourceLengthArg
+/// [`Request`]: crate::definition::Request
+/// [`Reply`]: crate::definition::Reply
+pub struct SourceArgs {
+	pub args: Punctuated<SourceArg, Token![,]>,
+	pub length_arg: Option<(SourceLengthArg, Type)>,
 }
 
-/// An inline function to determine a particular value.
+/// An inline function.
+///
+/// > **<sup>Syntax</sup>**\
+/// > _Source_ :\
+/// > &nbsp;&nbsp; ([_SourceArgs_] `=>`)<sup>?</sup> [_Expression_]
+/// >
+/// > [_SourceArgs_]: SourceArgs
+/// > [_Expression_]: https://doc.rust-lang.org/reference/expressions.html
 ///
 /// `Source`s have optional arguments separated by commas and followed by `=>`.
 /// These arguments are taken by reference. If there are no arguments for a
 /// given `Source`, the `=>` is omitted.
+///
+/// `Source`s are converted into typical `fn`s.
 ///
 /// # Argument name validity
 /// The names of a `Source`'s arguments considered valid varies depending on
@@ -53,6 +97,7 @@ pub struct Args {
 /// deserialization, when the [`Field`]s following the sources have not yet been
 /// deserialized.
 ///
+/// # Length arguments
 /// Additionally, in a [`Request`] or a [`Reply`], a special argument referring
 /// to the length of the message (in units of 4 bytes, as defined in the X11
 /// protocol, and offset by 8 units in the case of replies) may be used:
@@ -116,10 +161,10 @@ pub struct Args {
 /// [`Request`]: crate::definition::Request
 /// [`Reply`]: crate::definition::Reply
 /// [`Field`]: crate::element::Field
-/// [`cornflakes::ContextualReadable::Context`]: https://docs.rs/cornflakes/0.0.5/cornflakes/trait.ContextualReadable.html#associatedtype.Context
+/// [`cornflakes::ContextualReadable::Context`]: https://docs.rs/cornflakes/latest/cornflakes/trait.ContextualReadable.html#associatedtype.Context
 pub struct Source {
 	/// Optional arguments for the `Source` function, followed by a `=>`.
-	pub args: Option<(Args, Token![=>])>,
+	pub args: Option<(SourceArgs, Token![=>])>,
 	/// The body of the `Source` function: its expression.
 	pub expr: Expr,
 }

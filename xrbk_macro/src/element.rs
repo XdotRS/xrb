@@ -14,6 +14,20 @@ use crate::{
 	source::Source,
 };
 
+/// Content (possibly) containing [`Elements`].
+///
+/// > **<sup>Syntax</sup>**\
+/// > _Content_ :\
+/// > &nbsp;&nbsp; (_StructContent_ | _TupleContent_)<sup>?</sup>
+/// >
+/// > _StructContent_ :\
+/// > &nbsp;&nbsp; `{` [_NamedElement_]<sup>\*</sup> `}`
+/// >
+/// > _TupleContent_ :\
+/// > &nbsp;&nbsp; `(` [_UnnamedElement_]<sup>\*</sup> `)`
+/// >
+/// > [_NamedElement_]: Element
+/// > [_UnnamedElement_]: Element
 pub enum Content {
 	/// Named elements surrounded by curly brackets (`{` and `}`).
 	Struct {
@@ -80,6 +94,15 @@ enum ElementsItem {
 	Sequence,
 }
 
+/// Multiple [`Element`]s.
+///
+/// > **<sup>Syntax</sup>**\
+/// > _Elements_ :\
+/// > &nbsp;&nbsp; [_NamedElement_]<sup>\*</sup> |
+/// > [_UnnamedElement_]<sup>\*</sup>
+/// >
+/// > [_NamedElement_]: Element
+/// > [_UnnamedElement_]: Element
 pub struct Elements {
 	/// The [`Punctuated`] (by commas) list of [`Element`]s, as parsed.
 	elements: Punctuated<ElementsItem, Token![,]>,
@@ -102,6 +125,24 @@ pub struct Elements {
 // Element {{{
 
 /// An `Element` that takes the place of fields in struct and enum definitions.
+///
+/// > **<sup>Syntax</sup>**\
+/// > _Element_ :\
+/// > &nbsp;&nbsp; _NamedElement_ | _UnnamedElement_
+/// >
+/// > _NamedElement_ :\
+/// > &nbsp;&nbsp; [_NamedField_] | [_LetElement_] | [_SingleUnusedElement_] |
+/// > [_ArrayUnusedElement_]
+/// >
+/// > _UnnamedElement_ :\
+/// > &nbsp;&nbsp; [_UnnamedField_] | [_LetElement_] | [_SingleUnusedElement_] |
+/// > [_ArrayUnusedElement_]
+/// >
+/// > [_NamedField_]: Field
+/// > [_UnnamedField_]: Field
+/// > [_LetElement_]: Let
+/// > [_SingleUnusedElement_]: SingleUnused
+/// > [_ArrayUnusedElement_]: ArrayUnused
 pub enum Element {
 	/// See [`Field`] for more information.
 	Field(Box<Field>),
@@ -146,6 +187,32 @@ impl Element {
 
 // }}} Field {{{
 
+/// A field.
+///
+/// > **<sup>Syntax</sup>**\
+/// > _Field_ :\
+/// > &nbsp;&nbsp; _NamedField_ | _UnnamedField_
+/// >
+/// > _NamedField_ :\
+/// > &nbsp;&nbsp; _FieldAttribute_<sup>\*</sup> [_Visibility_]<sup>?</sup>
+/// > [IDENTIFIER] `:` [_Type_]\
+/// >
+/// > _UnnamedField_ :\
+/// > &nbsp;&nbsp; _FieldAttribute_<sup>\*</sup> [_Visibility_]<sup>?</sup>
+/// > [_Type_]\
+/// >
+/// > _FieldAttribute_ :\
+/// > &nbsp;&nbsp; [_OuterAttribute_] | [_ContextAttribute_] |
+/// > [_MetabyteAttribute_] | [_SequenceAttribute_]
+/// >
+/// > [_Visibility_]: https://doc.rust-lang.org/reference/visibility-and-privacy.html
+/// > [IDENTIFIER]: https://doc.rust-lang.org/reference/identifiers.html
+/// > [_Type_]: https://doc.rust-lang.org/reference/types.html
+/// >
+/// > [_OuterAttribute_]: https://doc.rust-lang.org/reference/attributes.html
+/// > [_ContextAttribute_]: ContextAttribute
+/// > [_MetabyteAttribute_]: MetabyteAttribute
+/// > [_SequenceAttribute_]: SequenceAttribute
 pub struct Field {
 	/// Attributes associated with the `Field`.
 	pub attributes: Vec<Attribute>,
@@ -153,6 +220,8 @@ pub struct Field {
 	/// implementing [`cornflakes::ContextualReadable`].
 	///
 	/// See [`ContextAttribute`] for more information.
+	///
+	/// [`cornflakes::ContextualReadable`]: https://docs.rs/cornflakes/latest/cornflakes/trait.ContextualReadable.html
 	pub context_attribute: Option<ContextAttribute>,
 	/// An optional [`MetabyteAttribute`] which places this `Field` in the
 	/// metabyte position.
@@ -207,6 +276,45 @@ impl ToString for FieldId {
 
 // }}} Let {{{
 
+/// Data only used during serialization/deserialization.
+///
+/// > **<sup>Syntax</sup>**\
+/// > _LetElement_ :\
+/// > &nbsp;&nbsp; _LetAttribute_<sup>\*</sup> `let` [IDENTIFIER] `:` [_Type_]
+/// > `=` [_Source_]
+/// >
+/// > _LetAttribute_ :\
+/// > &nbsp;&nbsp; &nbsp;&nbsp; [_OuterAttribute_]\
+/// > &nbsp;&nbsp; | [_ContextAttribute_]\
+/// > &nbsp;&nbsp; | [_MetabyteAttribute_]
+/// >
+/// > [IDENTIFIER]: https://doc.rust-lang.org/reference/identifiers.html
+/// > [_Type_]: https://doc.rust-lang.org/reference/types.html
+/// > [_Source_]: Source
+/// >
+/// > [_OuterAttribute_]: https://doc.rust-lang.org/reference/attributes.html
+/// > [_ContextAttribute_]: ContextAttribute
+/// > [_MetabyteAttribute_]: MetabyteAttribute
+///
+/// `Let` elements represent data that exists in the raw byte representation of
+/// a particular construct, but not as a field in the Rust representation.
+///
+/// ## Serialization
+/// During serialization, a `Let` element's [`Source`] is used to determine the
+/// value that is written by the `Let` element's [`Type`]'s
+/// [`cornflakes::Writable`] implementation.
+///
+/// ## Deserialization
+/// During deserialization, a `Let` element with a [`ContextAttribute`] will be
+/// read with the `Let` element's `type`'s [`cornflakes::ContextualReadable`]
+/// implementation using the context given by the [`ContextAttribute`]'s
+/// [`Source`].  A `Let` element with no [`ContextAttribute`] will simply be
+/// read with the `Let` element's `type`'s [`cornflakes::Readable`]
+/// implementation.
+///
+/// [`cornflakes::Writable`]: https://docs.rs/cornflakes/latest/cornflakes/trait.Writable.html
+/// [`cornflakes::ContextualReadable`]: https://docs.rs/cornflakes/latest/cornflakes/trait.ContextualReadable.html
+/// [`cornflakes::Readable`]: https://docs.rs/cornflakes/latest/cornflakes/trait.Readable.html
 pub struct Let {
 	/// Attributes associated with the `Let` element.
 	pub attributes: Vec<Attribute>,
@@ -214,6 +322,8 @@ pub struct Let {
 	/// element types which implement [`cornflakes::ContextualReadable`].
 	///
 	/// See [`ContextAttribute`] for more information.
+	///
+	/// [`cornflakes::ContextualReadable`]: https://docs.rs/cornflakes/latest/cornflakes/trait.ContextualReadable.html
 	pub context_attribute: Option<ContextAttribute>,
 	/// An optional [`MetabyteAttribute`] which places this `Let` element in the
 	/// metabyte position.
@@ -250,6 +360,13 @@ impl Let {
 
 // }}} Single unused byte {{{
 
+/// A single unused byte.
+///
+/// > **<sup>Syntax</sup>**\
+/// > _SingleUnusedElement_ :\
+/// > &nbsp;&nbsp; [_MetabyteAttribute_]<sup>?</sup> `_`
+/// >
+/// > [_MetabyteAttribute_]: MetabyteAttribute
 pub struct SingleUnused {
 	/// An optional [`MetabyteAttribute`] which places this `SingleUnused` byte
 	/// element in the metabyte position.
@@ -273,6 +390,15 @@ impl SingleUnused {
 
 // }}} Array-type unused bytes {{{
 
+/// Multiple unused bytes.
+///
+/// > **<sup>Syntax</sup>**\
+/// > _ArrayUnusedElement_ :\
+/// > &nbsp;&nbsp; [_OuterAttribute_]<sup>\*</sup> `[` `_` `;` [_UnusedContent_]
+/// > `]`
+/// >
+/// > [_OuterAttribute_]: https://doc.rust-lang.org/reference/attributes.html
+/// > [_UnusedContent_]: UnusedContent
 pub struct ArrayUnused {
 	/// Attributes associated with the `ArrayUnused` bytes element's
 	/// [`Source`] function, if there is one.
@@ -300,6 +426,12 @@ pub struct ArrayUnused {
 }
 
 /// The content of an [`ArrayUnused`] element.
+///
+/// > **<sup>Syntax</sup>**\
+/// > _UnusedContent_ :\
+/// > &nbsp;&nbsp; `..` | [_Source_]
+/// >
+/// > [_Source_]: Source
 pub enum UnusedContent {
 	/// Infer the number of unused bytes.
 	///
