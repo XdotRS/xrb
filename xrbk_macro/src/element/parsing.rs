@@ -7,11 +7,11 @@ use syn::{braced, bracketed, parenthesized, parse::ParseStream, spanned::Spanned
 
 use super::*;
 use crate::{
-    attribute::parsing::ParsedAttributes,
-    definition::DefinitionType,
-    source::{SourceArgs, IdentMap, IdentMapMut},
-    ParseWithContext,
-    PsExt,
+	attribute::parsing::ParsedAttributes,
+	definition::DefinitionType,
+	source::{IdentMap, IdentMapMut, SourceArgs},
+	ParseWithContext,
+	PsExt,
 };
 
 impl ParseWithContext for Content {
