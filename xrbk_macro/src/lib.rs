@@ -32,10 +32,11 @@ pub(crate) use source::*;
 /// > &nbsp;&nbsp; | _Request_\
 /// > &nbsp;&nbsp; | _Reply_\
 /// > &nbsp;&nbsp; | _Event_\
-/// > &nbsp;&nbsp; | _Item_[^other-items]
+/// > &nbsp;&nbsp; | [_Item_][^other-items]
 /// >
 /// > [^other-items]: Except [_Struct_]s and [_Enumeration_]s.
 /// >
+/// > [_Item_]: https://doc.rust-lang.org/reference/items.html
 /// > [_Struct_]: https://doc.rust-lang.org/reference/items/structs.html
 /// > [_Enumeration_]: https://doc.rust-lang.org/reference/items/enumerations.html
 /// >
@@ -48,7 +49,7 @@ pub(crate) use source::*;
 /// > &nbsp;&nbsp; `struct` [IDENTIFIER] [_GenericParams_]<sup>?</sup>
 /// >
 /// > _Request_ :\
-/// > &nbsp;&nbsp; [_OuterAttribute_]<sup>/*</sup> [_Visibility_]<sup>?</sup>
+/// > &nbsp;&nbsp; [_OuterAttribute_]<sup>\*</sup> [_Visibility_]<sup>?</sup>
 /// > _StructMetadata_\
 /// > &nbsp;&nbsp; `:` `Request` _Opcodes_ _ReplyType_<sup>?</sup>\
 /// > &nbsp;&nbsp; _StructlikeContent_
@@ -66,29 +67,25 @@ pub(crate) use source::*;
 /// > &nbsp;&nbsp; _StructlikeContent_
 /// >
 /// > _RequestType_ :\
-/// > &nbsp;&nbsp; `->` [_Type_]
+/// > &nbsp;&nbsp; `for` [_Type_]
 /// >
 /// > _Event_ :\
 /// > &nbsp;&nbsp; [_OuterAttribute_]<sup>\*</sup> [_Visibility_]<sup>?</sup>
 /// > _StructMetadata_\
-/// > &nbsp;&nbsp; `:` `Event` _EventCode_\
+/// > &nbsp;&nbsp; `:` `Event` `(` [_Expression_] `)`\
 /// > &nbsp;&nbsp; _StructlikeContent_
-/// >
-/// > _EventCode_ :\
-/// > &nbsp;&nbsp; `(` [_Expression_] `)`
 /// >
 /// > _Enum_ :\
 /// > &nbsp;&nbsp; [_OuterAttribute_]<sup>\*</sup> [_Visibility_]<sup>?</sup>
 /// > _EnumMetadata_\
-/// > &nbsp;&nbsp; _Variants_
+/// > &nbsp;&nbsp; `{` _Variants_ `}`
 /// >
 /// > _EnumMetadata_ :\
 /// > &nbsp;&nbsp; `enum` [IDENTIFIER] [_GenericParams_]<sup>?</sup>
 /// > [_WhereClause_]<sup>?</sup>
 /// >
 /// > _Variants_ :\
-/// > &nbsp;&nbsp; `{` _Variant_ ( `,` _Variant_ )<sup>\*</sup> `,`<sup>?</sup>
-/// > `}`
+/// > &nbsp;&nbsp; _Variant_ ( `,` _Variant_ )<sup>\*</sup> `,`<sup>?</sup>
 /// >
 /// > _Variant_ :\
 /// > &nbsp;&nbsp; [_OuterAttribute_]<sup>\*</sup> [IDENTIFIER] _Content_
@@ -170,10 +167,8 @@ pub(crate) use source::*;
 /// > &nbsp;&nbsp; `#` `[` `context` _Context_ `]`
 /// >
 /// > _Context_ :\
-/// > &nbsp;&nbsp; ( `=` _Source_ ) | _DelimitedContext_
-/// >
-/// > _DelimitedContext_ :\
-/// > &nbsp;&nbsp; &nbsp;&nbsp; ( `(` _Source_ `)` )\
+/// > &nbsp;&nbsp; &nbsp;&nbsp; ( `=` _Source_ )\
+/// > &nbsp;&nbsp; | ( `(` _Source_ `)` )\
 /// > &nbsp;&nbsp; | ( `{` _Source_ `}` )\
 /// > &nbsp;&nbsp; | ( `[` _Source_ `]` )
 /// >
@@ -181,25 +176,23 @@ pub(crate) use source::*;
 /// > &nbsp;&nbsp; `#` `[` `metabyte` `]`
 /// >
 /// > _SequenceAttribute_ :\
-/// > &nbsp;&nbsp; `#` `[` `metabyte` `]`
+/// > &nbsp;&nbsp; `#` `[` `sequence` `]`
 /// >
 /// > _Source_ :\
-/// > &nbsp;&nbsp; _SourceArgs_<sup>?</sup> [_Expression_]
+/// > &nbsp;&nbsp; ( _SourceArgs_ `=>` )<sup>?</sup> [_Expression_]
 /// >
 /// > _SourceArgs_ :\
-/// > &nbsp;&nbsp; _Arg_ ( `,` _Arg_ )<sup>\*</sup> `,`<sup>?</sup> `=>`
+/// > &nbsp;&nbsp; _SourceArg_ ( `,` _SourceArg_ )<sup>\*</sup> `,`<sup>?</sup>
 /// >
-/// > _Arg_ :\
-/// > &nbsp;&nbsp; _SourceArg_ |
+/// > _SourceArg_ :\
+/// > &nbsp;&nbsp; [IDENTIFIER][^validity] |
 /// > _SourceLengthArg_[^length-arg-once][^length-arg]
 /// >
 /// > [^length-arg-once]: *SourceLengthArg*s may not be used more than once per
 /// > _SourceArgs_.
 /// >
-/// > [^length-arg]: Length arguments may only be used in requests and replies.
-/// >
-/// > _SourceArg_ :\
-/// > &nbsp;&nbsp; [IDENTIFIER][^validity]
+/// > [^length-arg]: *SourceLengthArg*s may only be used in requests and
+/// > replies.
 /// >
 /// > [^validity]: Which identifiers are valid for use as source arguments
 /// > depends on where the source is used. See [`Source`] for more information.
