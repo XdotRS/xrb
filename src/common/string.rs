@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use cornflakes::*;
-use xrb_proc_macros::ByteSize;
+use cornflakes::derive::DataSize;
 
 use std::io::Error;
 use std::string::{FromUtf8Error, String};
@@ -12,13 +12,13 @@ use std::string::{FromUtf8Error, String};
 ///
 /// This is different from the built-in [`String`] in that Rust's [`String`]
 /// is encoded with 4 bytes per character.
-#[derive(Clone, Eq, PartialEq, Hash, Debug, ByteSize)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, DataSize)]
 pub struct String8(Vec<u8>);
 /// A string of text with 2-byte characters.
 ///
 /// This is different from the built-in [`String`] in that Rust's [`String`]
 /// is encoded with 4 bytes per character.
-#[derive(Clone, Eq, PartialEq, Hash, Debug, ByteSize)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, DataSize)]
 pub struct String16(Vec<(u8, u8)>);
 
 /// A string of text with 1-byte characters, encoded with its length.
@@ -29,33 +29,38 @@ pub struct String16(Vec<(u8, u8)>);
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct LenString8(Vec<u8>);
 
-impl ByteSize for LenString8 {
-	fn byte_size(&self) -> usize {
+impl DataSize for LenString8 {
+	fn data_size(&self) -> usize {
 		// 1 byte for the length
 		1 + self.0.byte_size()
 	}
 }
 
-impl FromBytes for LenString8 {
-	fn read_from(reader: &mut impl ByteReader) -> Result<Self, Error> {
+impl Readable for LenString8 {
+	fn read_from(reader: &mut impl Buf) -> ReadResult<Self> {
 		// read the length of the list
-		let len = reader.read_u8() as usize;
+		let len = reader.get_u8() as usize;
 		// read `len` bytes, because the list is a list of bytes
-		Ok(Self(reader.read_with_size(len)?))
+		let out = Vec::new();
+		for _ in 0..len {
+			out.push(reader.get_u8());
+		}
+		Ok(Self(out))
 	}
 }
 
-impl ToBytes for LenString8 {
+impl Writable for LenString8 {
 	#[allow(
 		clippy::cast_possible_truncation,
 		reason = "`LenString8`'s length must fit in a `u8` value by definition"
 	)]
-	fn write_to(&self, writer: &mut impl ByteWriter) -> Result<(), Error>
+	fn write_to(&self, writer: &mut impl BufMut) -> Result<(), Error>
 	where
 		Self: Sized,
 	{
-		writer.write(self.0.len() as u8)?;
-		writer.write_all(&self.0)?;
+		// writer.write(self.0.len() as u8)?;
+		writer.put_u8(self.0.len() as u8);
+		writer.put_slice(self.0.as_slice());
 
 		Ok(())
 	}

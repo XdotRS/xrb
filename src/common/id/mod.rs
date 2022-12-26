@@ -2,11 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use cornflakes::derive::StaticDataSize;
+
 pub mod atoms;
 
-use xrb_proc_macros::{ByteSize, StaticByteSize};
-
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticDataSize)]
 pub struct VisualId(u32);
 
 impl VisualId {
@@ -50,32 +50,32 @@ pub trait ResId {
 	fn res_id(&self) -> u32;
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticDataSize)]
 pub struct Window {
 	id: u32,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticDataSize)]
 pub struct Pixmap {
 	id: u32,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticDataSize)]
 pub struct Cursor {
 	id: u32,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticDataSize)]
 pub struct Font {
 	id: u32,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticDataSize)]
 pub struct GraphicsContext {
 	id: u32,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticDataSize)]
 pub struct Colormap {
 	id: u32,
 }

@@ -2,10 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::x11::*;
-use xrb_proc_macros::{ByteSize, StaticByteSize};
+use cornflakes::derive::StaticDataSize;
 
-#[derive(StaticByteSize, ByteSize)]
+use crate::common::*;
+
+#[derive(StaticDataSize)]
 pub enum Attribute {
 	BackgroundPixmap(Option<Relatable<Pixmap>>),
 	BackgroundPixel(u32),
@@ -24,7 +25,7 @@ pub enum Attribute {
 	Cursor(Option<Cursor>),
 }
 
-#[derive(StaticByteSize, ByteSize)]
+#[derive(StaticDataSize)]
 pub enum GraphicsContextValue {
 	Function(Function), // TODO: 1 byte?
 	PlaneMask(u32),
@@ -51,7 +52,7 @@ pub enum GraphicsContextValue {
 	ArcMode(ArcMode), // TODO: 1 byte?
 }
 
-#[derive(StaticByteSize, ByteSize)]
+#[derive(StaticDataSize)]
 pub enum ConfigureWindowValue {
 	X(i16),
 	Y(i16),
@@ -62,7 +63,7 @@ pub enum ConfigureWindowValue {
 	StackMode(StackMode),
 }
 
-#[derive(StaticByteSize, ByteSize)]
+#[derive(StaticDataSize)]
 pub enum Function {
 	Clear,
 	And,
@@ -88,7 +89,7 @@ impl Default for Function {
 	}
 }
 
-#[derive(StaticByteSize, ByteSize)]
+#[derive(StaticDataSize)]
 pub enum LineStyle {
 	Solid,
 	OnOffDash,
@@ -101,7 +102,7 @@ impl Default for LineStyle {
 	}
 }
 
-#[derive(StaticByteSize, ByteSize)]
+#[derive(StaticDataSize)]
 pub enum CapStyle {
 	NotLast,
 	Butt,
@@ -115,7 +116,7 @@ impl Default for CapStyle {
 	}
 }
 
-#[derive(StaticByteSize, ByteSize)]
+#[derive(StaticDataSize)]
 pub enum JoinStyle {
 	Miter,
 	Round,
@@ -128,7 +129,7 @@ impl Default for JoinStyle {
 	}
 }
 
-#[derive(StaticByteSize, ByteSize)]
+#[derive(StaticDataSize)]
 pub enum FillStyle {
 	Solid,
 	Tiled,
@@ -142,7 +143,7 @@ impl Default for FillStyle {
 	}
 }
 
-#[derive(StaticByteSize, ByteSize)]
+#[derive(StaticDataSize)]
 pub enum FillRule {
 	EvenOdd,
 	Winding,
@@ -154,7 +155,7 @@ impl Default for FillRule {
 	}
 }
 
-#[derive(StaticByteSize, ByteSize)]
+#[derive(StaticDataSize)]
 pub enum SubwindowMode {
 	ClipByChildren,
 	IncludeInferiors,
@@ -166,7 +167,7 @@ impl Default for SubwindowMode {
 	}
 }
 
-#[derive(StaticByteSize, ByteSize)]
+#[derive(StaticDataSize)]
 pub enum ArcMode {
 	Chord,
 	PieSlice,

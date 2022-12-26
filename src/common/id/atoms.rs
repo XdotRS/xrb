@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use xrb_proc_macros::{ByteSize, StaticByteSize};
+use cornflakes::derive::StaticDataSize;
 
 /// A unique ID corresponding to a defined string name.
 ///
@@ -14,7 +14,7 @@ use xrb_proc_macros::{ByteSize, StaticByteSize};
 ///
 /// # Examples
 /// [`WM_NAME`] is an `Atom` representing a property used for a window's title.
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticByteSize, ByteSize)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, StaticDataSize)]
 pub struct Atom {
 	/// The ID for the `Atom`.
 	pub id: u32,

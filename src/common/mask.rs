@@ -3,9 +3,10 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use bitflags::bitflags;
+use cornflakes::derive::StaticDataSize;
 
 bitflags! {
-	#[derive(Default)]
+	#[derive(Default, StaticDataSize)]
 	pub struct ColorChannelMask: u8 {
 		/// Whether the red color channel is enabled.
 		const DO_RED = 0x01;
@@ -16,7 +17,7 @@ bitflags! {
 	}
 
 	/// A mask of events.
-	#[derive(Default)]
+	#[derive(Default, StaticDataSize)]
 	pub struct EventMask: u32 {
 		/// Key press events.
 		const KEY_PRESS = 0x0000_0001;
@@ -143,7 +144,7 @@ bitflags! {
 	/// - `PROPERTY_CHANGE`
 	/// - `COLORMAP_CHANGE`
 	/// - `OWNER_GRAB_BUTTON`
-	#[derive(Default)]
+	#[derive(Default, StaticDataSize)]
 	pub struct PointerEventMask: u32 {
 		// removes KEY_PRESS and KEY_RELEASE
 		/// Mouse button press events.
@@ -217,7 +218,7 @@ bitflags! {
 	/// - `PROPERTY_CHANGE`
 	/// - `COLORMAP_CHANGE`
 	/// - `OWNER_GRAB_BUTTON`
-	#[derive(Default)]
+	#[derive(Default, StaticDataSize)]
 	pub struct DeviceEventMask: u32 {
 		/// Key press events.
 		const KEY_PRESS = 0x0000_0001;
@@ -258,7 +259,7 @@ bitflags! {
 	///
 	/// This is the same as [`ModifierKeyMask`], but with masks for currently
 	/// held mouse buttons.
-	#[derive(Default)]
+	#[derive(Default, StaticDataSize)]
 	pub struct ModifierMask: u16 {
 		/// Whether `Shift` is held.
 		const SHIFT = 0x0001;
@@ -306,7 +307,7 @@ bitflags! {
 	/// mask for [`ANY_MODIFIER`].
 	///
 	/// [`ANY_MODIFIER`]: AnyModifierKeyMask::ANY_MODIFIER
-	#[derive(Default)]
+	#[derive(Default, StaticDataSize)]
 	pub struct ModifierKeyMask: u16 {
 		/// Whether `Shift` is held.
 		const SHIFT = 0x0001;
@@ -336,7 +337,7 @@ bitflags! {
 	/// [`ANY_MODIFIER`].
 	///
 	/// [`ANY_MODIFIER`]: AnyModifierKeyMask::ANY_MODIFIER
-	#[derive(Default)]
+	#[derive(Default, StaticDataSize)]
 	pub struct AnyModifierKeyMask: u16 {
 		/// Whether `Shift` is held.
 		const SHIFT = 0x0001;
@@ -363,7 +364,7 @@ bitflags! {
 		const ANY_MODIFIER = 0x8000;
 	}
 
-	#[derive(Default)]
+	#[derive(Default, StaticDataSize)]
 	pub struct GraphicsContextMask: u32 {
 		const FUNCTION = 0x0000_0001;
 		const PLANE_MASK = 0x0000_0002;
@@ -431,7 +432,7 @@ bitflags! {
 	/// [Cursor]: crate::x11::Attribute::Cursor
 	/// [`EventMask::none()`]: EventMask::none
 	/// [`DeviceEventMask::none()`]: DeviceEventMask::none
-	#[derive(Default)]
+	#[derive(Default, StaticDataSize)]
 	pub struct AttributeMask: u32 {
 		/// See also: [`BackgroundPixmap`]
 		///
@@ -495,7 +496,7 @@ bitflags! {
 		const CURSOR = 0x0000_4000;
 	}
 
-	#[derive(Default)]
+	#[derive(Default, StaticDataSize)]
 	pub struct ConfigureWindowMask: u16 {
 		const X = 0x0001;
 		const Y = 0x0002;
