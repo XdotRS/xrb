@@ -7,31 +7,19 @@ use crate::TsExt;
 
 use proc_macro2::TokenStream as TokenStream2;
 
-impl Metadata {
-	pub fn impl_datasize(&self, tokens: &mut TokenStream2, content: &Content) {
-		match self {
-			Self::Struct(r#struct) => r#struct.impl_datasize(tokens, content),
-
-			Self::Request(request) => request.impl_datasize(tokens, content),
-			Self::Reply(reply) => reply.impl_datasize(tokens, content),
-			Self::Event(event) => event.impl_datasize(tokens, content),
-		}
-	}
-}
-
 impl Struct {
-	pub fn impl_datasize(&self, tokens: &mut TokenStream2, content: &Content) {
+	pub fn impl_datasize(&self, tokens: &mut TokenStream2) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		let pat = TokenStream2::with_tokens(|tokens| {
-			content.fields_to_tokens(tokens);
+			self.content.pat_cons_to_tokens(tokens);
 		});
 
 		let datasizes = TokenStream2::with_tokens(|tokens| {
-			for element in content {
+			for element in &self.content {
 				element.datasize_tokens(tokens, DefinitionType::Basic);
 			}
 		});
@@ -58,18 +46,18 @@ impl Struct {
 }
 
 impl Request {
-	pub fn impl_datasize(&self, tokens: &mut TokenStream2, content: &Content) {
+	pub fn impl_datasize(&self, tokens: &mut TokenStream2) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		let pat = TokenStream2::with_tokens(|tokens| {
-			content.fields_to_tokens(tokens);
+			self.content.pat_cons_to_tokens(tokens);
 		});
 
 		let datasizes = TokenStream2::with_tokens(|tokens| {
-			for element in content {
+			for element in &self.content {
 				if !element.is_metabyte() && !element.is_sequence() {
 					element.datasize_tokens(tokens, DefinitionType::Request);
 				}
@@ -100,18 +88,18 @@ impl Request {
 }
 
 impl Reply {
-	pub fn impl_datasize(&self, tokens: &mut TokenStream2, content: &Content) {
+	pub fn impl_datasize(&self, tokens: &mut TokenStream2) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		let pat = TokenStream2::with_tokens(|tokens| {
-			content.fields_to_tokens(tokens);
+			self.content.pat_cons_to_tokens(tokens);
 		});
 
 		let datasizes = TokenStream2::with_tokens(|tokens| {
-			for element in content {
+			for element in &self.content {
 				if !element.is_metabyte() && !element.is_sequence() {
 					element.datasize_tokens(tokens, DefinitionType::Reply);
 				}
@@ -142,24 +130,24 @@ impl Reply {
 }
 
 impl Event {
-	pub fn impl_datasize(&self, tokens: &mut TokenStream2, content: &Content) {
+	pub fn impl_datasize(&self, tokens: &mut TokenStream2) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
-		let datasize: usize = if content.sequence_element().is_some() {
+		let datasize: usize = if self.content.sequence_element().is_some() {
 			4
 		} else {
 			1
 		};
 
 		let pat = TokenStream2::with_tokens(|tokens| {
-			content.fields_to_tokens(tokens);
+			self.content.pat_cons_to_tokens(tokens);
 		});
 
 		let datasizes = TokenStream2::with_tokens(|tokens| {
-			for element in content {
+			for element in &self.content {
 				if !element.is_metabyte() && !element.is_sequence() {
 					element.datasize_tokens(tokens, DefinitionType::Event);
 				}
@@ -203,7 +191,7 @@ impl Enum {
 				let ident = &variant.ident;
 
 				let pat = TokenStream2::with_tokens(|tokens| {
-					variant.content.fields_to_tokens(tokens);
+					variant.content.pat_cons_to_tokens(tokens);
 				});
 
 				let datasizes = TokenStream2::with_tokens(|tokens| {

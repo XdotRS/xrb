@@ -13,7 +13,7 @@ use syn::{
 use super::*;
 use crate::ext::{ParseWithContext, PsExt};
 
-impl ParseWithContext for Arg {
+impl ParseWithContext for SourceArg {
 	type Context<'a> = (IdentMap<'a>, Option<IdentMap<'a>>);
 
 	fn parse_with(input: ParseStream, maps: Self::Context<'_>) -> syn::Result<Self>
@@ -54,7 +54,7 @@ impl ParseWithContext for Arg {
 	}
 }
 
-impl Parse for LengthArg {
+impl Parse for SourceLengthArg {
 	fn parse(input: ParseStream) -> syn::Result<Self> {
 		let self_token = input.parse()?;
 		let double_colon_token = input.parse()?;
@@ -77,7 +77,7 @@ impl Parse for LengthArg {
 	}
 }
 
-impl ParseWithContext for Args {
+impl ParseWithContext for SourceArgs {
 	type Context<'a> = ((IdentMap<'a>, Option<IdentMap<'a>>), DefinitionType);
 
 	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> syn::Result<Self>
@@ -92,7 +92,7 @@ impl ParseWithContext for Args {
 		while input.peek(Ident) || (definition_type.length_syntax() && input.peek(Token![self])) {
 			if let Some(r#type) = definition_type.length_type() && input.peek(Token![self]) {
 				if length_arg.is_some() {
-					let length_arg2: LengthArg = input.parse()?;
+					let length_arg2: SourceLengthArg = input.parse()?;
 
 					return Err(Error::new(
 						length_arg2.span(),

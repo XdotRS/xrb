@@ -8,7 +8,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
 use syn::{punctuated::Pair, Attribute};
 
-impl ToTokens for LengthArg {
+impl ToTokens for SourceLengthArg {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		self.self_token.to_tokens(tokens);
 		self.double_colon_token.to_tokens(tokens);
@@ -16,7 +16,7 @@ impl ToTokens for LengthArg {
 	}
 }
 
-impl ToTokens for Arg {
+impl ToTokens for SourceArg {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		let ident = &self.ident;
 		let r#type = &self.r#type;
@@ -25,7 +25,7 @@ impl ToTokens for Arg {
 	}
 }
 
-impl ToTokens for Args {
+impl ToTokens for SourceArgs {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		if let Some((_, r#type)) = &self.length_arg {
 			tokens.append_tokens(|| quote!(length: #r#type, ));
@@ -43,9 +43,9 @@ impl ToTokens for Args {
 	}
 }
 
-impl Args {
+impl SourceArgs {
 	pub fn formatted_tokens(&self, tokens: &mut TokenStream2) {
-		if let Some((LengthArg { length_token, .. }, ..)) = &self.length_arg {
+		if let Some((SourceLengthArg { length_token, .. }, ..)) = &self.length_arg {
 			quote!(#length_token,).to_tokens(tokens);
 		}
 

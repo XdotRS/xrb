@@ -49,6 +49,16 @@ impl ToTokens for Context {
 				paren_token.surround(tokens, |_| {});
 			},
 
+			Self::Brace { brace_token, .. } => {
+				// The curly brackets (but not the source, unfortunately).
+				brace_token.surround(tokens, |_| {});
+			},
+
+			Self::Bracket { bracket_token, .. } => {
+				// The square brackets (but not the source, unfortunately).
+				bracket_token.surround(tokens, |_| {});
+			},
+
 			Self::Equals { equals_token, .. } => {
 				// The equals token (but not the source, unfortunately).
 				equals_token.to_tokens(tokens);

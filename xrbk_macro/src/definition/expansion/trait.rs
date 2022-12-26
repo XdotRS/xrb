@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::element::{Element, Elements};
+use crate::element::Element;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 
@@ -29,6 +29,7 @@ impl Request {
 
 		tokens.append_tokens(|| {
 			quote!(
+				#[automatically_derived]
 				impl #impl_generics xrb::Request for #name #type_generics #where_clause {
 					type Reply = #reply;
 
@@ -51,32 +52,24 @@ impl Request {
 }
 
 impl Reply {
-	pub fn impl_trait(&self, tokens: &mut TokenStream2, content: &Content) {
+	pub fn impl_trait(&self, tokens: &mut TokenStream2) {
 		let name = &self.ident;
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		let request = &self.request;
-		let sequence = match content {
-			Content::Struct {
-				elements:
-					Elements {
-						sequence_element: Some(Element::Field(field)),
-						..
-					},
+		let sequence = match &self.content {
+			StructlikeContent::Regular {
+				content,
 				..
-			} => {
+			} if let Some(Element::Field(field)) = content.sequence_element() => {
 				let id = &field.id;
 				quote!(Some(self.#id))
 			},
 
-			Content::Tuple {
-				elements:
-					Elements {
-						sequence_element: Some(Element::Field(field)),
-						..
-					},
+			StructlikeContent::Tuple {
+				content,
 				..
-			} => {
+			} if let Some(Element::Field(field)) = content.sequence_element() => {
 				let id = &field.id;
 				quote!(Some(self.#id))
 			},
@@ -86,6 +79,7 @@ impl Reply {
 
 		tokens.append_tokens(|| {
 			quote!(
+				#[automatically_derived]
 				impl #impl_generics xrb::Reply for #name #type_generics #where_clause {
 					type Req = #request;
 
@@ -104,35 +98,28 @@ impl Reply {
 }
 
 impl Event {
-	pub fn impl_trait(&self, tokens: &mut TokenStream2, content: &Content) {
+	pub fn impl_trait(&self, tokens: &mut TokenStream2) {
 		let name = &self.ident;
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		let code = &self.code;
-		let sequence = match content {
-			Content::Struct {
-				elements:
-					Elements {
-						sequence_element: Some(Element::Field(field)),
-						..
-					},
+		let sequence = match &self.content {
+			StructlikeContent::Regular {
+				content,
 				..
-			} => &field.id,
+			} if let Some(Element::Field(field)) = content.sequence_element() => &field.id,
 
-			Content::Tuple {
-				elements:
-					Elements {
-						sequence_element: Some(Element::Field(field)),
-						..
-					},
+			StructlikeContent::Tuple {
+				content,
 				..
-			} => &field.id,
+			} if let Some(Element::Field(field)) = content.sequence_element() => &field.id,
 
 			_ => panic!("events must have a sequence field"),
 		};
 
 		tokens.append_tokens(|| {
 			quote!(
+				#[automatically_derived]
 				impl #impl_generics xrb::Event for #name #type_generics #where_clause {
 					fn code() -> u8 {
 						#code

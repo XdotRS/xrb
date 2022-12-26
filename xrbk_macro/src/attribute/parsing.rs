@@ -3,6 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use syn::{
+	braced,
 	bracketed,
 	parenthesized,
 	parse::{ParseStream, Result},
@@ -138,6 +139,24 @@ impl ParseWithContext for Context {
 
 			Self::Paren {
 				paren_token: parenthesized!(content in input),
+				source: content.parse_with(((let_map, Some(field_map)), definition_type))?,
+			}
+		} else if look.peek(token::Brace) {
+			// Curly brackets.
+
+			let content;
+
+			Self::Brace {
+				brace_token: braced!(content in input),
+				source: content.parse_with(((let_map, Some(field_map)), definition_type))?,
+			}
+		} else if look.peek(token::Bracket) {
+			// Square brackets.
+
+			let content;
+
+			Self::Bracket {
+				bracket_token: bracketed!(content in input),
 				source: content.parse_with(((let_map, Some(field_map)), definition_type))?,
 			}
 		} else if look.peek(Token![=]) {

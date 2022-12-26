@@ -9,31 +9,121 @@ use super::*;
 use crate::{
 	attribute::parsing::ParsedAttributes,
 	definition::DefinitionType,
-	source::{Args, IdentMap, IdentMapMut},
+	source::{IdentMap, IdentMapMut, SourceArgs},
 	ParseWithContext,
 	PsExt,
 };
+
+impl ParseWithContext for RegularContent {
+	type Context<'a> = DefinitionType;
+
+	fn parse_with(input: ParseStream, definition_type: DefinitionType) -> Result<Self>
+	where
+		Self: Sized,
+	{
+		let content;
+
+		Ok(Self {
+			brace_token: braced!(content in input),
+			elements: content.parse_with((ElementType::Named, definition_type))?,
+		})
+	}
+}
+
+impl ParseWithContext for TupleContent {
+	type Context<'a> = DefinitionType;
+
+	fn parse_with(input: ParseStream, definition_type: DefinitionType) -> Result<Self>
+	where
+		Self: Sized,
+	{
+		let content;
+
+		Ok(Self {
+			paren_token: parenthesized!(content in input),
+			elements: content.parse_with((ElementType::Unnamed, definition_type))?,
+		})
+	}
+}
 
 impl ParseWithContext for Content {
 	type Context<'a> = DefinitionType;
 
 	fn parse_with(input: ParseStream, definition_type: DefinitionType) -> Result<Self> {
 		Ok(if input.peek(token::Brace) {
-			let content;
-
-			Self::Struct {
-				brace_token: braced!(content in input),
-				elements: content.parse_with((ElementType::Named, definition_type))?,
-			}
+			Self::Regular(input.parse_with(definition_type)?)
 		} else if input.peek(token::Paren) {
-			let content;
-
-			Self::Tuple {
-				paren_token: parenthesized!(content in input),
-				elements: content.parse_with((ElementType::Unnamed, definition_type))?,
-			}
+			Self::Tuple(input.parse_with(definition_type)?)
 		} else {
 			Self::Unit
+		})
+	}
+}
+
+impl ParseWithContext for StructlikeContent {
+	type Context<'a> = DefinitionType;
+
+	fn parse_with(input: ParseStream, definition_type: DefinitionType) -> Result<Self>
+	where
+		Self: Sized,
+	{
+		// Look at the next token.
+		let look = input.lookahead1();
+
+		// If the next token is `where`, then there is a where clause preceding the
+		// content.
+		Ok(if look.peek(Token![where]) {
+			let where_clause = Some(input.parse()?);
+			// Look at the token after the where clause.
+			let look = input.lookahead1();
+
+			// If the where clause precedes the content, then it can't be a tuple content.
+
+			// If the next token is `{`, this is a regular content.
+			if look.peek(token::Brace) {
+				Self::Regular {
+					where_clause,
+					content: input.parse_with(definition_type)?,
+				}
+			// If the next token is `;`, this is a unit content.
+			} else if look.peek(Token![;]) {
+				Self::Unit {
+					where_clause,
+					semicolon: input.parse()?,
+				}
+			// Otherwise, if the next token is neither `{` nor `;`, then this is
+			// a parsing error.
+			} else {
+				return Err(look.error());
+			}
+		// Otherwise, if the next token is `{`, then this is a regular content
+		// with no where clause.
+		} else if look.peek(token::Brace) {
+			Self::Regular {
+				where_clause: None,
+				content: input.parse_with(definition_type)?,
+			}
+		// Otherwise, if the next token is `(`, then this is a tuple content.
+		} else if look.peek(token::Paren) {
+			Self::Tuple {
+				content: input.parse_with(definition_type)?,
+				where_clause: if input.peek(Token![where]) {
+					Some(input.parse()?)
+				} else {
+					None
+				},
+				semicolon: input.parse()?,
+			}
+		// Otherwise, if the next token is `;`, then this is a unit content.
+		} else if look.peek(Token![;]) {
+			Self::Unit {
+				where_clause: None,
+				semicolon: input.parse()?,
+			}
+		// Otherwise, if the next token is not `where`, `{`, `(`, nor `;`, then
+		// this is a parsing error.
+		} else {
+			return Err(look.error());
 		})
 	}
 }
@@ -41,12 +131,12 @@ impl ParseWithContext for Content {
 impl ParseWithContext for Elements {
 	type Context<'a> = (ElementType, DefinitionType);
 
-	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
+	fn parse_with(
+		input: ParseStream, (element_type, definition_type): (ElementType, DefinitionType),
+	) -> Result<Self>
 	where
 		Self: Sized,
 	{
-		let (element_type, definition_type) = context;
-
 		let mut let_map = HashMap::new();
 		let mut field_map = HashMap::new();
 
@@ -112,7 +202,7 @@ impl ParseWithContext for Elements {
 			};
 
 			if let Some(r#let) = r#let {
-				if let Some((Args { args, .. }, _)) = &mut r#let.source.args {
+				if let Some((SourceArgs { args, .. }, _)) = &mut r#let.source.args {
 					for mut arg in args {
 						if arg.r#type.is_none() {
 							if let Some(r#type) = field_map.get(&arg.ident.to_string()) {
@@ -165,9 +255,10 @@ impl ParseWithContext for Element {
 		(IdentMapMut<'a>, IdentMapMut<'a>),
 	);
 
-	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self> {
-		let ((field_index, unused_index), element_type, definition_type, (let_map, field_map)) =
-			context;
+	fn parse_with(
+		input: ParseStream,
+		((field_index, unused_index), element_type, definition_type, (let_map, field_map)): Self::Context<'_>,
+	) -> Result<Self> {
 		let parsed_attributes = input.parse_with(((&*let_map, &*field_map), definition_type))?;
 
 		Ok(if input.peek(Token![_]) {
@@ -199,15 +290,15 @@ impl ParseWithContext for Element {
 impl ParseWithContext for SingleUnused {
 	type Context<'a> = ParsedAttributes;
 
-	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self> {
-		let ParsedAttributes {
+	fn parse_with(
+		input: ParseStream,
+		ParsedAttributes {
 			attributes,
-
 			context_attribute,
 			metabyte_attribute,
 			sequence_attribute,
-		} = context;
-
+		}: ParsedAttributes,
+	) -> Result<Self> {
 		if let Some(attribute) = attributes.first() {
 			return Err(Error::new(
 				attribute.span(),
@@ -244,11 +335,9 @@ impl ParseWithContext for ArrayUnused {
 		DefinitionType,
 	);
 
-	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
-	where
-		Self: Sized,
-	{
-		let (
+	fn parse_with(
+		input: ParseStream,
+		(
 			unused_index,
 			ParsedAttributes {
 				attributes,
@@ -258,8 +347,11 @@ impl ParseWithContext for ArrayUnused {
 			},
 			maps,
 			definition_type,
-		) = context;
-
+		): Self::Context<'_>,
+	) -> Result<Self>
+	where
+		Self: Sized,
+	{
 		if let Some(attribute) = metabyte_attribute {
 			return Err(Error::new(
 				attribute.span(),
@@ -299,12 +391,12 @@ impl ParseWithContext for ArrayUnused {
 impl ParseWithContext for UnusedContent {
 	type Context<'a> = ((IdentMap<'a>, IdentMap<'a>), DefinitionType);
 
-	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
+	fn parse_with(
+		input: ParseStream, ((let_map, field_map), definition_type): Self::Context<'_>,
+	) -> Result<Self>
 	where
 		Self: Sized,
 	{
-		let ((let_map, field_map), definition_type) = context;
-
 		Ok(if input.peek(Token![..]) {
 			Self::Infer {
 				double_dot_token: input.parse()?,
@@ -325,11 +417,9 @@ impl ParseWithContext for UnusedContent {
 impl ParseWithContext for Let {
 	type Context<'a> = (ParsedAttributes, IdentMapMut<'a>, DefinitionType);
 
-	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
-	where
-		Self: Sized,
-	{
-		let (
+	fn parse_with(
+		input: ParseStream,
+		(
 			ParsedAttributes {
 				attributes,
 				metabyte_attribute,
@@ -338,8 +428,11 @@ impl ParseWithContext for Let {
 			},
 			let_map,
 			definition_type,
-		) = context;
-
+		): Self::Context<'_>,
+	) -> Result<Self>
+	where
+		Self: Sized,
+	{
 		if let Some(attribute) = sequence_attribute {
 			return Err(Error::new(
 				attribute.span(),
@@ -382,11 +475,9 @@ impl ParseWithContext for Let {
 impl ParseWithContext for Field {
 	type Context<'a> = (usize, ElementType, ParsedAttributes, IdentMapMut<'a>);
 
-	fn parse_with(input: ParseStream, context: Self::Context<'_>) -> Result<Self>
-	where
-		Self: Sized,
-	{
-		let (
+	fn parse_with(
+		input: ParseStream,
+		(
 			index,
 			element_type,
 			ParsedAttributes {
@@ -396,8 +487,11 @@ impl ParseWithContext for Field {
 				sequence_attribute,
 			},
 			map,
-		) = context;
-
+		): Self::Context<'_>,
+	) -> Result<Self>
+	where
+		Self: Sized,
+	{
 		let visibility = input.parse()?;
 
 		let id = match element_type {

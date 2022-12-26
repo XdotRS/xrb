@@ -6,9 +6,9 @@ extern crate self as xrb;
 
 pub mod mask;
 
-use xrbk_macro::define;
+use xrbk_macro::derive_xrb;
 
-define! {
+derive_xrb! {
 	/// A resource ID referring to either a [`Window`] or a [`Pixmap`].
 	pub struct Drawable(u32);
 

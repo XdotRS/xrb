@@ -335,15 +335,79 @@ impl<'a> IntoIterator for &'a mut Elements {
 	}
 }
 
+macro_rules! impl_content {
+	($content:ty) => {
+		impl<'a> IntoIterator for &'a $content {
+			type Item = &'a Element;
+			type IntoIter = Iter<'a>;
+
+			fn into_iter(self) -> Self::IntoIter {
+				self.elements.iter()
+			}
+		}
+
+		impl IntoIterator for $content {
+			type Item = Element;
+			type IntoIter = IntoIter;
+
+			/// Creates an owning iterator over [`Element`]s.
+			fn into_iter(self) -> Self::IntoIter {
+				self.elements.into_iter()
+			}
+		}
+
+		impl<'a> IntoIterator for &'a mut $content {
+			type Item = &'a mut Element;
+			type IntoIter = IterMut<'a>;
+
+			fn into_iter(self) -> Self::IntoIter {
+				self.elements.iter_mut()
+			}
+		}
+
+		impl<'a> $content {
+			/// Creates a borrowing iterator over [`Element`]s.
+			pub fn iter(&'a self) -> Iter<'a> {
+				self.into_iter()
+			}
+
+			/// Creates a mutably borrowing iterator over [`Element`]s.
+			pub fn iter_mut(&'a mut self) -> IterMut<'a> {
+				self.into_iter()
+			}
+
+			/// Creates a borrowing iterator over pairs of [`Elements`]s and possible
+			/// accompanying commas.
+			pub fn pairs(&'a self) -> Pairs<'a> {
+				self.elements.pairs()
+			}
+
+			/// Creates an owning iterator over pairs of [`Element`]s and possible
+			/// accompanying commas.
+			pub fn into_pairs(self) -> IntoPairs {
+				self.elements.into_pairs()
+			}
+
+			/// Creates a mutably borrowing iterator over pairs of [`Element`]s and
+			/// possible accompanying commas.
+			pub fn pairs_mut(&'a mut self) -> PairsMut<'a> {
+				self.elements.pairs_mut()
+			}
+		}
+	};
+}
+
+impl_content!(RegularContent);
+impl_content!(TupleContent);
+
 impl<'a> IntoIterator for &'a Content {
 	type Item = &'a Element;
 	type IntoIter = Iter<'a>;
 
-	/// Creates an owning iterator over [`Element`]s.
 	fn into_iter(self) -> Self::IntoIter {
 		match self {
-			Content::Struct { elements, .. } => elements.iter(),
-			Content::Tuple { elements, .. } => elements.iter(),
+			Content::Regular(content) => content.iter(),
+			Content::Tuple(content) => content.iter(),
 			Content::Unit => Iter::with_none(),
 		}
 	}
@@ -356,8 +420,8 @@ impl IntoIterator for Content {
 	/// Creates an owning iterator over any [`Element`]s contained within.
 	fn into_iter(self) -> Self::IntoIter {
 		match self {
-			Content::Struct { elements, .. } => elements.into_iter(),
-			Content::Tuple { elements, .. } => elements.into_iter(),
+			Content::Regular(content) => content.into_iter(),
+			Content::Tuple(content) => content.into_iter(),
 			Content::Unit => IntoIter::with_none(),
 		}
 	}
@@ -369,9 +433,49 @@ impl<'a> IntoIterator for &'a mut Content {
 
 	fn into_iter(self) -> Self::IntoIter {
 		match self {
-			Content::Struct { elements, .. } => elements.iter_mut(),
-			Content::Tuple { elements, .. } => elements.iter_mut(),
+			Content::Regular(content) => content.iter_mut(),
+			Content::Tuple(content) => content.iter_mut(),
 			Content::Unit => IterMut::with_none(),
+		}
+	}
+}
+
+impl<'a> IntoIterator for &'a StructlikeContent {
+	type Item = &'a Element;
+	type IntoIter = Iter<'a>;
+
+	fn into_iter(self) -> Self::IntoIter {
+		match self {
+			StructlikeContent::Regular { content, .. } => content.iter(),
+			StructlikeContent::Tuple { content, .. } => content.iter(),
+			StructlikeContent::Unit { .. } => Iter::with_none(),
+		}
+	}
+}
+
+impl IntoIterator for StructlikeContent {
+	type Item = Element;
+	type IntoIter = IntoIter;
+
+	/// Creates an owning iterator over any [`Element`]s contained within.
+	fn into_iter(self) -> Self::IntoIter {
+		match self {
+			StructlikeContent::Regular { content, .. } => content.into_iter(),
+			StructlikeContent::Tuple { content, .. } => content.into_iter(),
+			StructlikeContent::Unit { .. } => IntoIter::with_none(),
+		}
+	}
+}
+
+impl<'a> IntoIterator for &'a mut StructlikeContent {
+	type Item = &'a mut Element;
+	type IntoIter = IterMut<'a>;
+
+	fn into_iter(self) -> Self::IntoIter {
+		match self {
+			StructlikeContent::Regular { content, .. } => content.iter_mut(),
+			StructlikeContent::Tuple { content, .. } => content.iter_mut(),
+			StructlikeContent::Unit { .. } => IterMut::with_none(),
 		}
 	}
 }
@@ -436,8 +540,8 @@ impl<'a> Content {
 	/// within and possible accompanying commas.
 	pub fn pairs(&'a self) -> Pairs<'a> {
 		match self {
-			Content::Struct { elements, .. } => elements.pairs(),
-			Content::Tuple { elements, .. } => elements.pairs(),
+			Content::Regular(content) => content.pairs(),
+			Content::Tuple(content) => content.pairs(),
 			Content::Unit => Pairs::with_none(),
 		}
 	}
@@ -446,8 +550,8 @@ impl<'a> Content {
 	/// within and possible accompanying commas.
 	pub fn into_pairs(self) -> IntoPairs {
 		match self {
-			Content::Struct { elements, .. } => elements.into_pairs(),
-			Content::Tuple { elements, .. } => elements.into_pairs(),
+			Content::Regular(content) => content.into_pairs(),
+			Content::Tuple(content) => content.into_pairs(),
 			Content::Unit => IntoPairs::with_none(),
 		}
 	}
@@ -456,9 +560,52 @@ impl<'a> Content {
 	/// contained within and possible accompanying commas.
 	pub fn pairs_mut(&'a mut self) -> PairsMut<'a> {
 		match self {
-			Content::Struct { elements, .. } => elements.pairs_mut(),
-			Content::Tuple { elements, .. } => elements.pairs_mut(),
+			Content::Regular(content) => content.pairs_mut(),
+			Content::Tuple(content) => content.pairs_mut(),
 			Content::Unit => PairsMut::with_none(),
+		}
+	}
+}
+
+impl<'a> StructlikeContent {
+	/// Creates a borrowing iterator over [`Element`]s contained within.
+	pub fn iter(&'a self) -> Iter<'a> {
+		self.into_iter()
+	}
+
+	/// Creates a mutably borrowing iterator over any [`Element`]s contained
+	/// within.
+	pub fn iter_mut(&'a mut self) -> IterMut<'a> {
+		self.into_iter()
+	}
+
+	/// Creates a borrowing iterator over pairs of any [`Element`]s contained
+	/// within and possible accompanying commas.
+	pub fn pairs(&'a self) -> Pairs<'a> {
+		match self {
+			StructlikeContent::Regular { content, .. } => content.pairs(),
+			StructlikeContent::Tuple { content, .. } => content.pairs(),
+			StructlikeContent::Unit { .. } => Pairs::with_none(),
+		}
+	}
+
+	/// Creates an owning iterator over pairs of any [`Element`]s contained
+	/// within and possible accompanying commas.
+	pub fn into_pairs(self) -> IntoPairs {
+		match self {
+			StructlikeContent::Regular { content, .. } => content.into_pairs(),
+			StructlikeContent::Tuple { content, .. } => content.into_pairs(),
+			StructlikeContent::Unit { .. } => IntoPairs::with_none(),
+		}
+	}
+
+	/// Creates a mutably borrowing iterator over pairs of any [`Element`]s
+	/// contained within and possible accompanying commas.
+	pub fn pairs_mut(&'a mut self) -> PairsMut<'a> {
+		match self {
+			StructlikeContent::Regular { content, .. } => content.pairs_mut(),
+			StructlikeContent::Tuple { content, .. } => content.pairs_mut(),
+			StructlikeContent::Unit { .. } => PairsMut::with_none(),
 		}
 	}
 }
