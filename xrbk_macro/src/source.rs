@@ -112,7 +112,7 @@ pub struct SourceArgs {
 /// use xrbk_macro::define;
 /// use xrb::String8;
 ///
-/// define! {
+/// derive_xrb! {
 ///     // ... snippet ...
 ///
 ///     pub struct InternAtom: Request(16) -> InternAtomReply {
