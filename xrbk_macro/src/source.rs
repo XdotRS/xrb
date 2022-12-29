@@ -106,24 +106,45 @@ pub struct SourceArgs {
 /// function's parameters to destructure the argument; it does not affect what
 /// type of value is provided for that argument when the function is called.
 ///
-/// For example, take the following [`Let`] element which uses a `Source`
-/// (assume `width` and `height` are of type `u32` and `rectangle` is of type
-/// `Rectangle`):
+/// For example, take the following struct containing a [`Let`] element which
+/// uses a `Source` (assume `width` and `height` are of type `u32`):
 /// ```ignore
-/// let area: u32 = rectangle: Rectangle { width, height, .. } => width * height
+/// # extern crate cornflakes;
+/// use xrbk_macro::derive_xrb;
+///
+/// derive_xrb! {
+///     # pub struct Rectangle {
+///     #     x: i32,
+///     #     y: i32,
+///     #     width: u32,
+///     #     height: u32,
+///     # }
+///     #
+///     pub struct Courtyard {
+///         pub shape: Rectangle,
+///
+///         let area: u32 = shape: Rectangle {
+///             width,
+///             height,
+///             ..
+///         } => width * height,
+///
+///         [_; 2],
+///     }
+/// }
 /// ```
-/// This would be converted into a `Source` function like so:
+/// `area` would have a `Source` function like so:
 /// ```
 /// # struct Rectangle { width: u32, height: u32, x: i32, y: i32 }
-/// # let rectangle = Rectangle { width: 30, height: 30, x: 10, y: 15 };
+/// # let shape = Rectangle { width: 30, height: 30, x: 10, y: 15 };
 /// #
 /// fn area(Rectangle { width, height, .. }: Rectangle) -> u32 {
 ///     width * height
 /// }
 ///
-/// let area = area(rectangle);
+/// let area = area(shape);
 /// ```
-/// Note that using the name `rectangle` was necessary to retrieve the type of
+/// Note that using the name `shape` was necessary to retrieve the type of
 /// the argument from the definition the [`Let`] element is contained within,
 /// even though it doesn't appear in the generated `Source` function. It is also
 /// used when calling the `Source` function as the argument that is passed.
@@ -132,8 +153,8 @@ pub struct SourceArgs {
 /// argument in the `Source`'s expression if a pattern is provided: that pattern
 /// is used to destructure the argument.
 ///
-/// [^pattern-use-name]: Unless that pattern simply repeats the name name, like
-/// `rectangle: rectangle`.
+/// [^pattern-use-name]: Unless that pattern simply repeats the same name, like
+/// `shape: shape`.
 ///
 /// # Length arguments
 /// Additionally, in a [`Request`] or a [`Reply`], a special argument referring

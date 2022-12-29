@@ -4,6 +4,7 @@
 
 extern crate self as xrb;
 
+#[allow(missing_docs)]
 pub mod mask;
 
 use xrbk_macro::derive_xrb;
