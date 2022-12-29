@@ -46,10 +46,17 @@ impl ParseWithContext for SourceArg {
 			(None, None)
 		};
 
+		let pattern = if input.peek(Token![:]) {
+			Some((input.parse::<Token![:]>()?, input.parse::<Pat>()?))
+		} else {
+			None
+		};
+
 		Ok(Self {
 			ident,
 			formatted,
 			r#type,
+			pattern,
 		})
 	}
 }

@@ -18,10 +18,15 @@ impl ToTokens for SourceLengthArg {
 
 impl ToTokens for SourceArg {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
-		let ident = &self.ident;
 		let r#type = &self.r#type;
 
-		quote!(#ident: &#r#type).to_tokens(tokens);
+		if let Some((_, pattern)) = &self.pattern {
+			quote!(#pattern: &#r#type).to_tokens(tokens);
+		} else {
+			let ident = &self.ident;
+
+			quote!(#ident: &#r#type).to_tokens(tokens);
+		}
 	}
 }
 

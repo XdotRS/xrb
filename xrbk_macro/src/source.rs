@@ -6,7 +6,7 @@ mod expansion;
 mod parsing;
 
 use std::collections::HashMap;
-use syn::{punctuated::Punctuated, Expr, Ident, Token, Type};
+use syn::{punctuated::Punctuated, Expr, Ident, Pat, Token, Type};
 
 pub type IdentMap<'a> = &'a HashMap<String, Type>;
 pub type IdentMapMut<'a> = &'a mut HashMap<String, Type>;
@@ -15,17 +15,20 @@ pub type IdentMapMut<'a> = &'a mut HashMap<String, Type>;
 ///
 /// > **<sup>Syntax</sup>**\
 /// > _SourceArg_: \
-/// > &nbsp;&nbsp; [IDENTIFIER][^validity]
+/// > &nbsp;&nbsp; [IDENTIFIER][^validity] ( `:` [_Pattern_] )<sup>?</sup>
 /// >
 /// > [IDENTIFIER]: https://doc.rust-lang.org/reference/identifiers.html
 /// > [^validity]: See [Argument name validity] for which identifiers are
 /// > allowed.
 /// >
 /// > [Argument name validity]: ../Source.html#argument-name-validity
+/// >
+/// > [_Pattern_]: https://doc.rust-lang.org/reference/patterns.html
 pub struct SourceArg {
 	pub ident: Ident,
-	pub r#type: Option<Type>,
+	pub pattern: Option<(Token![:], Pat)>,
 
+	pub r#type: Option<Type>,
 	pub formatted: Option<Ident>,
 }
 
@@ -96,6 +99,41 @@ pub struct SourceArgs {
 /// arguments to the `Source`. This is because these `Source`s are called during
 /// deserialization, when the [`Field`]s following the sources have not yet been
 /// deserialized.
+///
+/// # Argument patterns
+/// A `Source`'s arguments may optionally specify a pattern by adding a `:` and
+/// that pattern after the argument's name. This pattern is used in the `Source`
+/// function's parameters to destructure the argument; it does not affect what
+/// type of value is provided for that argument when the function is called.
+///
+/// For example, take the following [`Let`] element which uses a `Source`
+/// (assume `width` and `height` are of type `u32` and `rectangle` is of type
+/// `Rectangle`):
+/// ```ignore
+/// let area: u32 = rectangle: Rectangle { width, height, .. } => width * height
+/// ```
+/// This would be converted into a `Source` function like so:
+/// ```
+/// # struct Rectangle { width: u32, height: u32, x: i32, y: i32 }
+/// # let rectangle = Rectangle { width: 30, height: 30, x: 10, y: 15 };
+/// #
+/// fn area(Rectangle { width, height, .. }: Rectangle) -> u32 {
+///     width * height
+/// }
+///
+/// let area = area(rectangle);
+/// ```
+/// Note that using the name `rectangle` was necessary to retrieve the type of
+/// the argument from the definition the [`Let`] element is contained within,
+/// even though it doesn't appear in the generated `Source` function. It is also
+/// used when calling the `Source` function as the argument that is passed.
+///
+/// Also note that it is not possible[^pattern-use-name] to use the name of the
+/// argument in the `Source`'s expression if a pattern is provided: that pattern
+/// is used to destructure the argument.
+///
+/// [^pattern-use-name]: Unless that pattern simply repeats the name name, like
+/// `rectangle: rectangle`.
 ///
 /// # Length arguments
 /// Additionally, in a [`Request`] or a [`Reply`], a special argument referring
