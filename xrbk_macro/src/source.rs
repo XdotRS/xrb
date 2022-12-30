@@ -14,7 +14,7 @@ pub type IdentMapMut<'a> = &'a mut HashMap<String, Type>;
 /// A non-[SourceLengthArg] argument for a [`Source`].
 ///
 /// > **<sup>Syntax</sup>**\
-/// > _SourceArg_: \
+/// > _SourceArg_ :\
 /// > &nbsp;&nbsp; [IDENTIFIER][^validity] ( `:` [_Pattern_] )<sup>?</sup>
 /// >
 /// > [IDENTIFIER]: https://doc.rust-lang.org/reference/identifiers.html
@@ -73,8 +73,26 @@ pub struct SourceArgs {
 /// > _Source_ :\
 /// > &nbsp;&nbsp; ( [_SourceArgs_] `=>` )<sup>?</sup> [_Expression_]
 /// >
+/// > [_SourceArgs_] :\
+/// > &nbsp;&nbsp; [_Arg_] ( `,` [_Arg_] )<sup>\*</sup> `,`<sup>?</sup>
+/// >
+/// > [_Arg_] :\
+/// > &nbsp;&nbsp; [_SourceArg_] | [_SourceLengthArg_]
+/// >
+/// > [_SourceArg_] :\
+/// > &nbsp;&nbsp; [IDENTIFIER] ( `:` [_Pattern_] )<sup>?</sup>
+/// >
+/// > [_SourceLengthArg_] :\
+/// > &nbsp;&nbsp; `self` `::` `length`
+/// >
 /// > [_SourceArgs_]: SourceArgs
+/// > [_Arg_]: SourceArgs
+/// > [_SourceArg_]: SourceArg
+/// > [_SourceLengthArg_]: SourceLengthArg
+/// >
 /// > [_Expression_]: https://doc.rust-lang.org/reference/expressions.html
+/// > [IDENTIFIER]: https://doc.rust-lang.org/reference/identifiers.html
+/// > [_Pattern_]: https://doc.rust-lang.org/reference/patterns.html
 ///
 /// `Source`s have optional arguments separated by commas and followed by `=>`.
 /// These arguments are taken by reference. If there are no arguments for a
@@ -111,15 +129,9 @@ pub struct SourceArgs {
 /// ```ignore
 /// # extern crate cornflakes;
 /// use xrbk_macro::derive_xrb;
+/// use xrb::Rectangle;
 ///
 /// derive_xrb! {
-///     # pub struct Rectangle {
-///     #     x: i32,
-///     #     y: i32,
-///     #     width: u32,
-///     #     height: u32,
-///     # }
-///     #
 ///     pub struct Courtyard {
 ///         pub shape: Rectangle,
 ///
@@ -138,12 +150,13 @@ pub struct SourceArgs {
 /// # struct Rectangle { width: u32, height: u32, x: i32, y: i32 }
 /// # let shape = Rectangle { width: 30, height: 30, x: 10, y: 15 };
 /// #
-/// fn area(Rectangle { width, height, .. }: Rectangle) -> u32 {
+/// fn area(Rectangle { width, height, .. }: &Rectangle) -> u32 {
 ///     width * height
 /// }
 ///
-/// let area = area(shape);
+/// let area = area(&shape);
 /// ```
+///
 /// Note that using the name `shape` was necessary to retrieve the type of
 /// the argument from the definition the [`Let`] element is contained within,
 /// even though it doesn't appear in the generated `Source` function. It is also
@@ -164,11 +177,12 @@ pub struct SourceArgs {
 /// [`Request`] or [`Reply`].
 ///
 /// # Examples
+/// ## Typical sources
 /// ```ignore
 /// # extern crate cornflakes;
 /// # extern crate xrb;
 /// #
-/// use xrbk_macro::define;
+/// use xrbk_macro::derive_xrb;
 /// use xrb::String8;
 ///
 /// derive_xrb! {
@@ -210,8 +224,49 @@ pub struct SourceArgs {
 ///
 /// The second [`ArrayUnused`] bytes element in this example _does not_ use a
 /// `Source`: the `[_; ..]` syntax is a special syntax for [`ArrayUnused`] bytes
-/// elements to infer the number of unused bytes. It does not generate a
-/// `Source` function.
+/// elements to infer the number of unused bytes. It generates no function.
+///
+/// -----
+///
+/// ## Length arguments
+/// ```ignore
+/// # extern crate cornflakes;
+/// # extern crate xrb;
+/// #
+/// use xrbk_macro::derive_xrb;
+/// use xrb::{GraphicsContext, Rectangle};
+///
+/// derive_xrb! {
+///     pub enum Ordering {
+///         Unsorted,
+///         YSorted,
+///         YxSorted,
+///         YxBanded,
+///     }
+///
+///     pub struct SetClipRectangles: Request(59) {
+///         #[metabyte]
+///         pub ordering: Ordering,
+///
+///         pub context: GraphicsContext,
+///         pub clip_origin: Point,
+///
+///         #[context(self::length => {
+///             (
+///                 // Each length unit is four bytes.
+///                 (length * 4)
+///                 // The request header is four bytes.
+///                 - 4
+///                 // The elements before the `rectangles` field are eight bytes.
+///                 - 8
+///             )
+///             // Each rectangle is eight bytes.
+///             / 8
+///         })]
+///         pub rectangles: Vec<Rectangle>,
+///     }
+/// }
+/// ```
 ///
 /// [`ArrayUnused`]: crate::element::ArrayUnused
 /// [`UnusedContent::Source`]: crate::element::UnusedContent::Source
