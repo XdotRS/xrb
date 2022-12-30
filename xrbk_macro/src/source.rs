@@ -100,6 +100,11 @@ pub struct SourceArgs {
 ///
 /// `Source`s are converted into typical `fn`s.
 ///
+/// `Source`s are used in [`ContextAttribute`]s to provide context when reading
+/// a [`Field`] or [`Let`] element, [`Let`] elements to write their values, and
+/// in [`ArrayUnused`] bytes elements with [`UnusedContent::Source`]s to
+/// determine the number of unused bytes to skip.
+///
 /// # Argument name validity
 /// The names of a `Source`'s arguments considered valid varies depending on
 /// where the `Source` is being used.
@@ -177,17 +182,14 @@ pub struct SourceArgs {
 /// [`Request`] or [`Reply`].
 ///
 /// # Examples
-/// ## Typical sources
 /// ```ignore
 /// # extern crate cornflakes;
 /// # extern crate xrb;
 /// #
 /// use xrbk_macro::derive_xrb;
-/// use xrb::String8;
+/// use xrb::{String8, Atom};
 ///
 /// derive_xrb! {
-///     // ... snippet ...
-///
 ///     pub struct InternAtom: Request(16) -> InternAtomReply {
 ///         #[metabyte]
 ///         pub only_if_exists: bool,
@@ -200,8 +202,13 @@ pub struct SourceArgs {
 ///         [_; ..],
 ///     }
 ///
-///     // ... snippet ...
-///     # pub struct InternAtomReply: Reply for InternAtom { [_; ..] }
+///     pub struct InternAtomReply: Reply for InternAtom {
+///         #[sequence]
+///         pub sequence: u16,
+///
+///         pub atom: Option<Atom>,
+///         [_; ..],
+///     }
 /// }
 /// ```
 /// In this example, `Source` syntax is used three times within the [`Request`].
@@ -222,11 +229,10 @@ pub struct SourceArgs {
 /// [`cornflakes::ContextualReadable::Context`] associated type, which happens
 /// to be `usize` for a `String8`.
 ///
-/// The second [`ArrayUnused`] bytes element in this example _does not_ use a
-/// `Source`: the `[_; ..]` syntax is a special syntax for [`ArrayUnused`] bytes
-/// elements to infer the number of unused bytes. It generates no function.
-///
-/// -----
+/// Neither the second [`ArrayUnused`] bytes element in the [`Request`] nor the
+/// [`ArrayUnused`] bytes element within its [`Reply`] use a `Source`: the
+/// `[_; ..]` syntax is a special syntax for [`ArrayUnused`] bytes elements to
+/// infer the number of unused bytes. It generates no function.
 ///
 /// ## Length arguments
 /// ```ignore
@@ -234,7 +240,7 @@ pub struct SourceArgs {
 /// # extern crate xrb;
 /// #
 /// use xrbk_macro::derive_xrb;
-/// use xrb::{GraphicsContext, Rectangle};
+/// use xrb::{GraphicsContext, Rectangle, Point};
 ///
 /// derive_xrb! {
 ///     pub enum Ordering {
