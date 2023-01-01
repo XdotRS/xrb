@@ -8,15 +8,17 @@
 
 mod attribute;
 mod definition;
+mod derive;
 mod element;
 mod ext;
 mod source;
 
 use proc_macro::TokenStream;
-use quote::ToTokens;
-use syn::parse_macro_input;
+use quote::{quote, ToTokens};
+use syn::{parse_macro_input, DeriveInput};
 
 pub(crate) use definition::*;
+use derive::*;
 pub(crate) use ext::*;
 pub(crate) use source::*;
 
@@ -214,4 +216,76 @@ pub fn derive_xrb(input: TokenStream) -> TokenStream {
 	let expanded = definitions.into_token_stream();
 
 	expanded.into()
+}
+
+// Potential idea: source attribute to use a source to serialize a field...?
+#[proc_macro_derive(Writable)]
+pub fn derive_writable(item: TokenStream) -> TokenStream {
+	let item = parse_macro_input!(item as DeriveInput);
+
+	let ident = &item.ident;
+	// TODO: add generic bounds
+	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
+
+	let writes = derive_writes(&item.data);
+
+	quote!(
+		#[automatically_derived]
+		impl #impl_generics cornflakes::Writable for #ident #type_generics #where_clause {
+			fn write_to(
+				&self,
+				buf: &mut impl cornflakes::BufMut,
+			) -> Result<(), cornflakes::WriteError> {
+				#writes
+
+				Ok(())
+			}
+		}
+	)
+	.into()
+}
+
+// TODO: context attribute support
+#[proc_macro_derive(Readable)]
+pub fn derive_readable(item: TokenStream) -> TokenStream {
+	let item = parse_macro_input!(item as DeriveInput);
+
+	let ident = &item.ident;
+	// TODO: add generic bounds
+	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
+
+	let reads = derive_reads(&item.data);
+
+	quote!(
+		#[automatically_derived]
+		impl #impl_generics cornflakes::Readable for #ident #type_generics #where_clause {
+			fn read_from(
+				buf: &mut impl cornflakes::Buf,
+			) -> Result<Self, cornflakes::ReadError> {
+				#reads
+			}
+		}
+	)
+	.into()
+}
+
+#[proc_macro_derive(DataSize)]
+pub fn derive_datasize(item: TokenStream) -> TokenStream {
+	let item = parse_macro_input!(item as DeriveInput);
+
+	let ident = &item.ident;
+	// TODO: add generic bounds
+	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
+
+	let datasizes = derive_datasizes(&item.data);
+
+	quote!(
+		#[automatically_derived]
+		impl #impl_generics cornflakes::DataSize for #ident #type_generics #where_clause {
+			fn data_size(&self) -> usize {
+				#datasizes
+			}
+		}
+	)
+	.into()
 }
