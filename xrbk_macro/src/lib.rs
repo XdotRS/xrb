@@ -268,3 +268,24 @@ pub fn derive_readable(item: TokenStream) -> TokenStream {
 	)
 	.into()
 }
+
+#[proc_macro_derive(DataSize)]
+pub fn derive_datasize(item: TokenStream) -> TokenStream {
+	let item = parse_macro_input!(item as DeriveInput);
+
+	let ident = &item.ident;
+	// TODO: add generic bounds
+	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
+
+	let datasizes = derive_datasizes(&item.data);
+
+	quote!(
+		#[automatically_derived]
+		impl #impl_generics cornflakes::DataSize for #ident #type_generics #where_clause {
+			fn data_size(&self) -> usize {
+				#datasizes
+			}
+		}
+	)
+	.into()
+}
