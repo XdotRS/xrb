@@ -244,3 +244,27 @@ pub fn derive_writable(item: TokenStream) -> TokenStream {
 	)
 	.into()
 }
+
+// TODO: context attribute support
+#[proc_macro_derive(Readable)]
+pub fn derive_readable(item: TokenStream) -> TokenStream {
+	let item = parse_macro_input!(item as DeriveInput);
+
+	let ident = &item.ident;
+	// TODO: add generic bounds
+	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
+
+	let reads = derive_reads(&item.data);
+
+	quote!(
+		#[automatically_derived]
+		impl #impl_generics cornflakes::Readable for #ident #type_generics #where_clause {
+			fn read_from(
+				buf: &mut impl cornflakes::Buf,
+			) -> Result<Self, cornflakes::ReadError> {
+				#reads
+			}
+		}
+	)
+	.into()
+}
