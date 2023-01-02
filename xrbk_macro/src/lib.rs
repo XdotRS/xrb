@@ -15,7 +15,7 @@ mod source;
 
 use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
-use syn::{parse_macro_input, DeriveInput};
+use syn::{parse_macro_input, Data, DataEnum, DeriveInput};
 
 pub(crate) use definition::*;
 use derive::*;
@@ -219,7 +219,8 @@ pub fn derive_xrb(input: TokenStream) -> TokenStream {
 }
 
 // Potential idea: source attribute to use a source to serialize a field...?
-#[proc_macro_derive(Writable)]
+// TODO: pad other enum variants if #[wrapper] is found
+#[proc_macro_derive(Writable, attributes(wrapper))]
 pub fn derive_writable(item: TokenStream) -> TokenStream {
 	let item = parse_macro_input!(item as DeriveInput);
 
@@ -231,11 +232,11 @@ pub fn derive_writable(item: TokenStream) -> TokenStream {
 
 	quote!(
 		#[automatically_derived]
-		impl #impl_generics cornflakes::Writable for #ident #type_generics #where_clause {
+		impl #impl_generics ::cornflakes::Writable for #ident #type_generics #where_clause {
 			fn write_to(
 				&self,
-				buf: &mut impl cornflakes::BufMut,
-			) -> Result<(), cornflakes::WriteError> {
+				buf: &mut impl ::cornflakes::BufMut,
+			) -> Result<(), ::cornflakes::WriteError> {
 				#writes
 
 				Ok(())
@@ -246,7 +247,8 @@ pub fn derive_writable(item: TokenStream) -> TokenStream {
 }
 
 // TODO: context attribute support
-#[proc_macro_derive(Readable)]
+// TODO: pad other enum variants if #[wrapper] is found
+#[proc_macro_derive(Readable, attributes(context, wrapper))]
 pub fn derive_readable(item: TokenStream) -> TokenStream {
 	let item = parse_macro_input!(item as DeriveInput);
 
@@ -258,10 +260,10 @@ pub fn derive_readable(item: TokenStream) -> TokenStream {
 
 	quote!(
 		#[automatically_derived]
-		impl #impl_generics cornflakes::Readable for #ident #type_generics #where_clause {
+		impl #impl_generics ::cornflakes::Readable for #ident #type_generics #where_clause {
 			fn read_from(
-				buf: &mut impl cornflakes::Buf,
-			) -> Result<Self, cornflakes::ReadError> {
+				buf: &mut impl ::cornflakes::Buf,
+			) -> Result<Self, ::cornflakes::ReadError> {
 				#reads
 			}
 		}
@@ -269,20 +271,53 @@ pub fn derive_readable(item: TokenStream) -> TokenStream {
 	.into()
 }
 
-#[proc_macro_derive(DataSize)]
+#[proc_macro_derive(DataSize, attributes(wrapper))]
 pub fn derive_datasize(item: TokenStream) -> TokenStream {
+	let item = parse_macro_input!(item as DeriveInput);
+
+	let ident = &item.ident;
+	// TODO: add generic bounds
+	//       add Self: StaticDataSize bound if #[wrapper] is found?
+	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
+
+	let datasize = match &item.data {
+		// If there are any #[wrapper] attributes, use the StaticDataSize impl
+		Data::Enum(DataEnum { variants, .. })
+			if variants.iter().any(|syn::Variant { attrs, .. }| {
+				attrs.iter().any(|attr| attr.path.is_ident("wrapper"))
+			}) =>
+		{
+			quote!(<Self as ::cornflakes::StaticDataSize>::static_data_size())
+		},
+
+		_ => derive_datasizes(&item.data),
+	};
+
+	quote!(
+		#[automatically_derived]
+		impl #impl_generics ::cornflakes::DataSize for #ident #type_generics #where_clause {
+			fn data_size(&self) -> usize {
+				#datasize
+			}
+		}
+	)
+	.into()
+}
+
+#[proc_macro_derive(StaticDataSize, attributes(wrapper))]
+pub fn derive_static_datasize(item: TokenStream) -> TokenStream {
 	let item = parse_macro_input!(item as DeriveInput);
 
 	let ident = &item.ident;
 	// TODO: add generic bounds
 	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
 
-	let datasizes = derive_datasizes(&item.data);
+	let datasizes = derive_static_datasizes(&item.data);
 
 	quote!(
 		#[automatically_derived]
-		impl #impl_generics cornflakes::DataSize for #ident #type_generics #where_clause {
-			fn data_size(&self) -> usize {
+		impl #impl_generics ::cornflakes::StaticDataSize for #ident #type_generics #where_clause {
+			fn static_data_size() -> usize {
 				#datasizes
 			}
 		}

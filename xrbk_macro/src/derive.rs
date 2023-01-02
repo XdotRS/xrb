@@ -50,8 +50,8 @@ fn pat_cons(fields: &Fields) -> TokenStream2 {
 }
 
 pub fn derive_writes(data: &Data) -> TokenStream2 {
-	fn derive_for_fields(tokens: &mut TokenStream2, fields: &Fields) {
-		match &fields {
+	fn derive_for_fields(fields: &Fields) -> TokenStream2 {
+		TokenStream2::with_tokens(|tokens| match &fields {
 			Fields::Named(fields) => {
 				for field in &fields.named {
 					let ident = &field.ident;
@@ -79,15 +79,13 @@ pub fn derive_writes(data: &Data) -> TokenStream2 {
 			},
 
 			Fields::Unit => {},
-		}
+		})
 	}
 
 	match data {
 		Data::Struct(r#struct) => {
 			let pat = pat_cons(&r#struct.fields);
-			let writes = TokenStream2::with_tokens(|tokens| {
-				derive_for_fields(tokens, &r#struct.fields);
-			});
+			let writes = derive_for_fields(&r#struct.fields);
 
 			quote!(
 				let Self #pat = &self;
@@ -101,15 +99,13 @@ pub fn derive_writes(data: &Data) -> TokenStream2 {
 
 			let arms = r#enum.variants.iter().map(|variant| {
 				let ident = &variant.ident;
-				let pat = pat_cons(&variant.fields);
 
 				if let Some((_, expr)) = &variant.discriminant {
 					discrim = quote!((#expr));
 				}
 
-				let mut writes = TokenStream2::new();
-
-				derive_for_fields(&mut writes, &variant.fields);
+				let pat = pat_cons(&variant.fields);
+				let writes = derive_for_fields(&variant.fields);
 
 				let arm = quote!(
 					Self::#ident #pat => {
@@ -136,8 +132,8 @@ pub fn derive_writes(data: &Data) -> TokenStream2 {
 }
 
 pub fn derive_reads(data: &Data) -> TokenStream2 {
-	fn derive_for_fields(tokens: &mut TokenStream2, fields: &Fields) {
-		match &fields {
+	fn derive_for_fields(fields: &Fields) -> TokenStream2 {
+		TokenStream2::with_tokens(|tokens| match &fields {
 			Fields::Named(fields) => {
 				for field in &fields.named {
 					let ident = &field.ident;
@@ -165,15 +161,13 @@ pub fn derive_reads(data: &Data) -> TokenStream2 {
 			},
 
 			Fields::Unit => {},
-		}
+		})
 	}
 
 	match data {
 		Data::Struct(r#struct) => {
 			let cons = pat_cons(&r#struct.fields);
-			let reads = TokenStream2::with_tokens(|tokens| {
-				derive_for_fields(tokens, &r#struct.fields);
-			});
+			let reads = derive_for_fields(&r#struct.fields);
 
 			quote!(
 				#reads
@@ -188,14 +182,12 @@ pub fn derive_reads(data: &Data) -> TokenStream2 {
 			let arms = r#enum.variants.iter().map(|variant| {
 				let ident = &variant.ident;
 
+				let cons = pat_cons(&variant.fields);
+				let reads = derive_for_fields(&variant.fields);
+
 				if let Some((_, expr)) = &variant.discriminant {
 					discrim = quote!((#expr));
 				}
-
-				let cons = pat_cons(&variant.fields);
-				let mut reads = TokenStream2::new();
-
-				derive_for_fields(&mut reads, &variant.fields);
 
 				let arm = quote!(
 					discrim if discrim == (#discrim) as u8 => {
@@ -226,8 +218,8 @@ pub fn derive_reads(data: &Data) -> TokenStream2 {
 }
 
 pub fn derive_datasizes(data: &Data) -> TokenStream2 {
-	fn derive_for_fields(tokens: &mut TokenStream2, fields: &Fields) {
-		match &fields {
+	fn derive_for_fields(fields: &Fields) -> TokenStream2 {
+		TokenStream2::with_tokens(|tokens| match &fields {
 			Fields::Named(fields) => {
 				for field in &fields.named {
 					let ident = &field.ident;
@@ -255,16 +247,13 @@ pub fn derive_datasizes(data: &Data) -> TokenStream2 {
 			},
 
 			Fields::Unit => {},
-		}
+		})
 	}
 
 	match data {
 		Data::Struct(r#struct) => {
 			let pat = pat_cons(&r#struct.fields);
-
-			let datasizes = TokenStream2::with_tokens(|tokens| {
-				derive_for_fields(tokens, &r#struct.fields);
-			});
+			let datasizes = derive_for_fields(&r#struct.fields);
 
 			quote!(
 				let Self #pat = &self;
@@ -279,11 +268,9 @@ pub fn derive_datasizes(data: &Data) -> TokenStream2 {
 		Data::Enum(r#enum) => {
 			let arms = r#enum.variants.iter().map(|variant| {
 				let ident = &variant.ident;
-				let pat = pat_cons(&variant.fields);
 
-				let datasizes = TokenStream2::with_tokens(|tokens| {
-					derive_for_fields(tokens, &variant.fields);
-				});
+				let pat = pat_cons(&variant.fields);
+				let datasizes = derive_for_fields(&variant.fields);
 
 				quote!(
 					Self::#ident #pat => {
@@ -300,6 +287,66 @@ pub fn derive_datasizes(data: &Data) -> TokenStream2 {
 				match &self {
 					#(#arms)*
 				}
+			)
+		},
+
+		Data::Union(_) => unimplemented!(),
+	}
+}
+
+pub fn derive_static_datasizes(data: &Data) -> TokenStream2 {
+	fn derive_for_fields(fields: &Fields) -> TokenStream2 {
+		TokenStream2::with_tokens(|tokens| match fields {
+			Fields::Named(FieldsNamed { named: fields, .. })
+			| Fields::Unnamed(FieldsUnnamed {
+				unnamed: fields, ..
+			}) => {
+				for field in fields {
+					let r#type = &field.ty;
+
+					tokens.append_tokens(|| {
+						quote!(
+							datasize += <#r#type as cornflakes::StaticDataSize>::static_data_size();
+						)
+					});
+				}
+			},
+
+			Fields::Unit => {},
+		})
+	}
+
+	match data {
+		Data::Struct(r#struct) => {
+			let datasizes = derive_for_fields(&r#struct.fields);
+
+			quote!(
+				let mut datasize = 0;
+
+				#datasizes
+
+				datasize
+			)
+		},
+
+		Data::Enum(r#enum) => {
+			let variant = r#enum
+				.variants
+				.iter()
+				.find(|syn::Variant { attrs, .. }| {
+					attrs.iter().any(|attr| attr.path.is_ident("wrapper"))
+				})
+				.expect("expected #[wrapper] on an enum variant");
+
+			let datasizes = derive_for_fields(&variant.fields);
+
+			quote!(
+				// Enum wrappers don't write the discriminant.
+				let mut datasize = 0;
+
+				#datasizes
+
+				datasize
 			)
 		},
 
