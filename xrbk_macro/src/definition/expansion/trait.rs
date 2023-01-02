@@ -27,10 +27,12 @@ impl Request {
 			quote!(None)
 		};
 
+		let r#trait = &self.request_token;
+
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics xrb::Request for #name #type_generics #where_clause {
+				impl #impl_generics ::xrb::#r#trait for #name #type_generics #where_clause {
 					type Reply = #reply;
 
 					fn major_opcode() -> u8 {
@@ -43,7 +45,7 @@ impl Request {
 
 					#[allow(clippy::cast_possible_truncation)]
 					fn length(&self) -> u16 {
-						(<Self as cornflakes::DataSize>::data_size(&self) / 4) as u16
+						(<Self as ::cornflakes::DataSize>::data_size(&self) / 4) as u16
 					}
 				}
 			)
@@ -77,15 +79,17 @@ impl Reply {
 			_ => quote!(None),
 		};
 
+		let r#trait = &self.reply_token;
+
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics xrb::Reply for #name #type_generics #where_clause {
+				impl #impl_generics ::xrb::#r#trait for #name #type_generics #where_clause {
 					type Req = #request;
 
 					#[allow(clippy::cast_possible_truncation)]
 					fn length(&self) -> u32 {
-						((<Self as cornflakes::DataSize>::data_size(&self) / 4) - 8) as u32
+						((<Self as ::cornflakes::DataSize>::data_size(&self) / 4) - 8) as u32
 					}
 
 					fn sequence(&self) -> Option<u16> {
@@ -117,10 +121,12 @@ impl Event {
 			_ => panic!("events must have a sequence field"),
 		};
 
+		let r#trait = &self.event_token;
+
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics xrb::Event for #name #type_generics #where_clause {
+				impl #impl_generics ::xrb::#r#trait for #name #type_generics #where_clause {
 					fn code() -> u8 {
 						#code
 					}
