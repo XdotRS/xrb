@@ -38,11 +38,11 @@ impl Struct {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics cornflakes::Writable for #ident #type_generics #where_clause {
+				impl #impl_generics ::cornflakes::Writable for #ident #type_generics #where_clause {
 					fn write_to(
 						&self,
-						buf: &mut impl cornflakes::BufMut,
-					) -> Result<(), cornflakes::WriteError> {
+						buf: &mut impl ::cornflakes::BufMut,
+					) -> Result<(), ::cornflakes::WriteError> {
 						#declare_datasize
 						// Destructure the struct's fields, if any.
 						let Self #pat = self;
@@ -90,7 +90,7 @@ impl Request {
 
 		let metabyte = if self.minor_opcode.is_some() {
 			quote!(
-				buf.put_u8(<Self as xrb::Request>::minor_opcode().unwrap());
+				buf.put_u8(<Self as ::xrb::Request>::minor_opcode().unwrap());
 			)
 		} else if let Some(element) = self.content.metabyte_element() {
 			TokenStream2::with_tokens(|tokens| {
@@ -105,21 +105,21 @@ impl Request {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics cornflakes::Writable for #ident #type_generics #where_clause {
+				impl #impl_generics ::cornflakes::Writable for #ident #type_generics #where_clause {
 					fn write_to(
 						&self,
-						buf: &mut impl cornflakes::BufMut,
-					) -> Result<(), cornflakes::WriteError> {
+						buf: &mut impl ::cornflakes::BufMut,
+					) -> Result<(), ::cornflakes::WriteError> {
 						#declare_datasize
 						// Destructure the request struct's fields, if any.
 						let Self #pat = self;
 
 						// Major opcode
-						buf.put_u8(<Self as xrb::Request>::major_opcode());
+						buf.put_u8(<Self as ::xrb::Request>::major_opcode());
 						// Metabyte position
 						#metabyte
 						// Length
-						buf.put_u16(<Self as xrb::Request>::length(&self));
+						buf.put_u16(<Self as ::xrb::Request>::length(&self));
 
 						// Other elements
 						#writes
@@ -181,11 +181,11 @@ impl Reply {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics cornflakes::Writable for #ident #type_generics #where_clause {
+				impl #impl_generics ::cornflakes::Writable for #ident #type_generics #where_clause {
 					fn write_to(
 						&self,
-						buf: &mut impl cornflakes::BufMut,
-					) -> Result<(), cornflakes::WriteError> {
+						buf: &mut impl ::cornflakes::BufMut,
+					) -> Result<(), ::cornflakes::WriteError> {
 						#declare_datasize
 						// Destructure the reply struct's fields, if any.
 						let Self #pat = self;
@@ -197,7 +197,7 @@ impl Reply {
 						// Sequence field
 						buf.put_u16(#sequence);
 						// Length
-						buf.put_u32(<Self as xrb::Reply>::length(&self));
+						buf.put_u32(<Self as ::xrb::Reply>::length(&self));
 
 						// Other elements
 						#writes
@@ -268,17 +268,17 @@ impl Event {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics cornflakes::Writable for #ident #type_generics #where_clause {
+				impl #impl_generics ::cornflakes::Writable for #ident #type_generics #where_clause {
 					fn write_to(
 						&self,
-						buf: &mut impl cornflakes::BufMut,
-					) -> Result<(), cornflakes::WriteError> {
+						buf: &mut impl ::cornflakes::BufMut,
+					) -> Result<(), ::cornflakes::WriteError> {
 						#declare_datasize
 						// Destructure the event struct's fields, if any.
 						let Self #pat = self;
 
 						// Event code
-						buf.put_u8(<Self as xrb::Event>::code());
+						buf.put_u8(<Self as ::xrb::Event>::code());
 						// Metabyte position
 						#metabyte
 						// Sequence field
@@ -378,11 +378,11 @@ impl Enum {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics cornflakes::Writable for #ident #type_generics #where_clause {
+				impl #impl_generics ::cornflakes::Writable for #ident #type_generics #where_clause {
 					fn write_to(
 						&self,
-						buf: &mut impl cornflakes::BufMut,
-					) -> Result<(), cornflakes::WriteError> {
+						buf: &mut impl ::cornflakes::BufMut,
+					) -> Result<(), ::cornflakes::WriteError> {
 						// Define functions and variables for variants which
 						// have custom discriminant expressions.
 						#discriminants
