@@ -59,7 +59,7 @@ pub fn derive_writes(data: &Data) -> TokenStream2 {
 
 					tokens.append_tokens(|| {
 						quote!(
-							<#r#type as cornflakes::Writable>::write_to(#ident, buf)?;
+							<#r#type as xrbk::Writable>::write_to(#ident, buf)?;
 						)
 					});
 				}
@@ -72,7 +72,7 @@ pub fn derive_writes(data: &Data) -> TokenStream2 {
 
 					tokens.append_tokens(|| {
 						quote!(
-							<#r#type as cornflakes::Writable>::write_to(#formatted, buf)?;
+							<#r#type as xrbk::Writable>::write_to(#formatted, buf)?;
 						)
 					});
 				}
@@ -141,7 +141,7 @@ pub fn derive_reads(data: &Data) -> TokenStream2 {
 
 					tokens.append_tokens(|| {
 						quote!(
-							let #ident = <#r#type as cornflakes::Readable>::read_from(buf)?;
+							let #ident = <#r#type as xrbk::Readable>::read_from(buf)?;
 						)
 					});
 				}
@@ -154,7 +154,7 @@ pub fn derive_reads(data: &Data) -> TokenStream2 {
 
 					tokens.append_tokens(|| {
 						quote!(
-							let #formatted = <#r#type as cornflakes::Readable>::read_from(buf)?;
+							let #formatted = <#r#type as xrbk::Readable>::read_from(buf)?;
 						)
 					});
 				}
@@ -207,7 +207,7 @@ pub fn derive_reads(data: &Data) -> TokenStream2 {
 					#(#arms)*
 
 					other_discrim => Err(
-						cornflakes::ReadError::UnrecognizedDiscriminant(other_discrim),
+						xrbk::ReadError::UnrecognizedDiscriminant(other_discrim),
 					),
 				}
 			)
@@ -227,7 +227,7 @@ pub fn derive_datasizes(data: &Data) -> TokenStream2 {
 
 					tokens.append_tokens(|| {
 						quote!(
-							datasize += <#r#type as cornflakes::DataSize>::data_size(#ident);
+							datasize += <#r#type as xrbk::DataSize>::data_size(#ident);
 						)
 					});
 				}
@@ -240,7 +240,7 @@ pub fn derive_datasizes(data: &Data) -> TokenStream2 {
 
 					tokens.append_tokens(|| {
 						quote!(
-							datasize += <#r#type as cornflakes::DataSize>::data_size(#formatted);
+							datasize += <#r#type as xrbk::DataSize>::data_size(#formatted);
 						)
 					});
 				}
@@ -306,7 +306,7 @@ pub fn derive_static_datasizes(data: &Data) -> TokenStream2 {
 
 					tokens.append_tokens(|| {
 						quote!(
-							datasize += <#r#type as cornflakes::StaticDataSize>::static_data_size();
+							datasize += <#r#type as xrbk::StaticDataSize>::static_data_size();
 						)
 					});
 				}
