@@ -58,6 +58,7 @@ pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 // mod x11;
 mod common;
 mod r#trait;
+mod connection;
 
 pub use common::*;
 pub use r#trait::*;
