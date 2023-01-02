@@ -54,7 +54,7 @@ pub enum ImageEndianness {
 }
 
 derive_xrb! {
-	#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, From, Into)]
+	#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 	pub struct Format {
 		pub depth: u8,
 		pub bits_per_pixel: u8,
@@ -65,7 +65,7 @@ derive_xrb! {
 	#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, From, Into)]
 	pub struct Millimeters(u16);
 
-	#[derive(Clone, Eq, PartialEq, Hash, Debug, From, Into)]
+	#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 	pub struct Screen {
 		pub root: Window,
 		pub default_colormap: Colormap,
@@ -94,7 +94,7 @@ derive_xrb! {
 		pub allowed_depths: Vec<Depth>,
 	}
 
-	#[derive(Clone, Eq, PartialEq, Hash, Debug, From, Into)]
+	#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 	pub struct Depth {
 		pub depth: u8,
 		_,
@@ -117,7 +117,7 @@ derive_xrb! {
 		DirectColor,
 	}
 
-	#[derive(Clone, Eq, PartialEq, Hash, Debug, From, Into)]
+	#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 	pub struct VisualType {
 		pub visual_id: VisualId,
 		pub class: VisualClass,
