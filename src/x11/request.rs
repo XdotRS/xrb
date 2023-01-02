@@ -5,9 +5,9 @@
 extern crate self as xrb;
 
 use xrb::common::*;
-use xrbk_macro::define;
+use xrbk_macro::derive_xrb;
 
-define! {
+derive_xrb! {
 	/// Creates an unmapped window with the given `window_id`.
 	///
 	/// # Events
