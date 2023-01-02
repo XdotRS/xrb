@@ -39,7 +39,7 @@ implement! {
 	n: &f32 => BufMut::put_f32(*n),
 	n: &f64 => BufMut::put_f64(*n),
 
-	b: &bool => BufMut::put_u8(*b as u8),
+	b: &bool => BufMut::put_u8(u8::from(*b)),
 }
 
 impl<T: Writable> Writable for &[T] {

@@ -59,7 +59,7 @@ impl<T: Readable> Readable for Box<T> {
 	where
 		Self: Sized,
 	{
-		Ok(Box::new(T::read_from(reader)?))
+		Ok(Self::new(T::read_from(reader)?))
 	}
 }
 
@@ -70,7 +70,7 @@ impl<T: Readable> ContextualReadable for Vec<T> {
 	where
 		Self: Sized,
 	{
-		let mut vec = Vec::new();
+		let mut vec = Self::new();
 
 		for _ in 0..*context {
 			vec.push(T::read_from(reader)?);

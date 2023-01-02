@@ -45,7 +45,7 @@ static_data_size! {
 
 impl<T: DataSize> DataSize for Vec<T> {
 	fn data_size(&self) -> usize {
-		self.iter().map(|v| v.data_size()).sum()
+		self.iter().map(DataSize::data_size).sum()
 	}
 }
 
@@ -106,7 +106,7 @@ impl<T: StaticDataSize> StaticDataSize for Option<T> {
 
 impl<T: DataSize> DataSize for &T {
 	default fn data_size(&self) -> usize {
-		0usize + <T as DataSize>::data_size(&self)
+		<T as DataSize>::data_size(self)
 	}
 }
 
@@ -124,7 +124,7 @@ impl<T: StaticDataSize> StaticDataSize for &T {
 
 impl<T: DataSize> DataSize for &mut T {
 	default fn data_size(&self) -> usize {
-		0usize + <T as DataSize>::data_size(&self)
+		<T as DataSize>::data_size(self)
 	}
 }
 
@@ -142,7 +142,7 @@ impl<T: StaticDataSize> StaticDataSize for &mut T {
 
 impl<T: DataSize> DataSize for Box<T> {
 	default fn data_size(&self) -> usize {
-		0usize + <T as DataSize>::data_size(&self)
+		<T as DataSize>::data_size(self)
 	}
 }
 
