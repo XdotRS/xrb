@@ -367,11 +367,13 @@ pub struct Char8(u8);
 pub struct String8(Vec<Char8>);
 
 impl String8 {
-	#[must_use] pub fn len(&self) -> usize {
+	#[must_use]
+	pub fn len(&self) -> usize {
 		self.0.len()
 	}
 
-	#[must_use] pub fn is_empty(&self) -> bool {
+	#[must_use]
+	pub fn is_empty(&self) -> bool {
 		self.0.is_empty()
 	}
 }
@@ -408,11 +410,13 @@ pub struct Char16(u8, u8);
 pub struct String16(Vec<Char16>);
 
 impl String16 {
-	#[must_use] pub fn len(&self) -> usize {
+	#[must_use]
+	pub fn len(&self) -> usize {
 		self.0.len()
 	}
 
-	#[must_use] pub fn is_empty(&self) -> bool {
+	#[must_use]
+	pub fn is_empty(&self) -> bool {
 		self.0.is_empty()
 	}
 }
