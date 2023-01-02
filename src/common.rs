@@ -387,29 +387,29 @@ pub struct Char16(u8, u8);
 	Writable,
 )]
 pub struct Point {
-	x: i16,
-	y: i16,
+	pub x: i16,
+	pub y: i16,
 }
 
 /// A rectangle with coordinates and dimensions.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, DataSize, StaticDataSize, Readable, Writable)]
 pub struct Rectangle {
 	/// The `x` coordinate of the upper left corner of the `Rectangle`.
-	x: i16,
+	pub x: i16,
 	/// The `y` coordinate of the upper left corner of the `Rectangle`.
-	y: i16,
+	pub y: i16,
 	/// The `width` of the `Rectangle`.
-	width: u16,
+	pub width: u16,
 	/// The `height` of the `Rectangle`.
-	height: u16,
+	pub height: u16,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug, DataSize, StaticDataSize, Readable, Writable)]
 pub struct Arc {
-	x: i16,
-	y: i16,
-	width: u16,
-	height: u16,
+	pub x: i16,
+	pub y: i16,
+	pub width: u16,
+	pub height: u16,
 
 	/// Specifies the start of the `Arc`.
 	///
@@ -417,12 +417,12 @@ pub struct Arc {
 	/// counterclockwise motion and negative indicates clockwise motion.
 	/// The angle is measured relative to the three-o'clock position from
 	/// the center of the rectangle.
-	start_angle: i16,
+	pub start_angle: i16,
 	/// Specifies the extent of the `Arc` relative to the `start_angle`.
 	///
 	/// The angle is measured in degrees scaled by 64. If greater than 360
 	/// degrees, this angle is truncated to 360 degrees.
-	end_angle: i16,
+	pub end_angle: i16,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
