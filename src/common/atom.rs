@@ -1,38 +1,41 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-use xrbk_macro::derive_xrb;
 
-derive_xrb! {
-	/// A unique ID corresponding to a string name.
-	///
-	/// `Atom`s are used to identify properties, types, and selections.
-	pub struct Atom(u32);
+use derive_more::{From, Into};
+use xrbk_macro::{DataSize, Readable, StaticDataSize, Writable};
 
-	impl Atom {
-		/// Creates a new `Atom`, wrapping the given `id`.
-		#[must_use]
-		pub const fn new(id: u32) -> Self {
-			Self(id)
-		}
+/// A unique ID corresponding to a string name.
+///
+/// `Atom`s are used to identify properties, types, and selections.
+#[derive(
+	Copy,
+	Clone,
+	Eq,
+	PartialEq,
+	Hash,
+	Debug,
+	From,
+	Into,
+	// XRBK traits
+	DataSize,
+	StaticDataSize,
+	Readable,
+	Writable,
+)]
+pub struct Atom(u32);
 
-		/// Unwraps the wrapped numerical `id`.
-		#[must_use]
-		pub const fn unwrap(self) -> u32 {
-			self.0
-		}
+impl Atom {
+	/// Creates a new `Atom`, wrapping the given `id`.
+	#[must_use]
+	pub const fn new(id: u32) -> Self {
+		Self(id)
 	}
 
-	impl From<u32> for Atom {
-		fn from(id: u32) -> Self {
-			Self(id)
-		}
-	}
-
-	impl From<Atom> for u32 {
-		fn from(atom: Atom) -> Self {
-			atom.0
-		}
+	/// Unwraps the wrapped numerical `id`.
+	#[must_use]
+	pub const fn unwrap(self) -> u32 {
+		self.0
 	}
 }
 
