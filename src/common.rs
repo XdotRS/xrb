@@ -4,10 +4,12 @@
 
 extern crate self as xrb;
 
-#[allow(missing_docs)]
+use xrbk_macro::derive_xrb;
+
+pub mod atom;
 pub mod mask;
 
-use xrbk_macro::derive_xrb;
+pub use atom::Atom;
 
 derive_xrb! {
 	/// A resource ID referring to either a [`Window`] or a [`Pixmap`].
@@ -96,10 +98,11 @@ derive_xrb! {
 	/// A resource ID referring to a particular colormap resource.
 	pub struct Colormap(u32);
 
-	/// A unique ID corresponding to a string name.
+	/// Represents a particular time, expressed in milliseconds.
 	///
-	/// `Atom`s are used to identify properties, types, and selections.
-	pub struct Atom(u32);
+	/// Timestamps are typically the time since the last server reset. After approximately 49.7 days, the time will wrap around back to 0.
+	pub struct Timestamp(u32);
+
 	pub struct VisualId(u32);
 
 	pub enum BitGravity {
