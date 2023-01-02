@@ -128,100 +128,157 @@ derive_xrb! {
 	}
 
 	#[derive(Debug)]
-	pub enum InitConnectionResponse {
+	pub enum ConnectionResponse {
 		/// There was a failure in attempting the connection.
-		Failed {
-			#[allow(clippy::cast_possible_truncation)]
-			let reason_len: u8 = reason => reason.len() as u8,
-
-			/// The major version of the X11 protocol used by the X server.
-			protocol_major_version: u16,
-			/// The minor version of the X11 protocol used by the X server.
-			protocol_minor_version: u16,
-
-			// Length in 4-byte units of "additional data".
-			#[allow(clippy::cast_possible_truncation)]
-			let additional_data_len: u16 = reason => {
-				let len = reason.len() + pad(reason.len());
-				(len / 4) as u16
-			},
-
-			/// The reason for the failure.
-			#[context(reason_len => *reason_len as usize)]
-			reason: String8,
-			[_; ..],
-		},
-
+		Failed(ConnectionFailure),
 		/// The connection was successfully established.
-		Success {
-			_,
-			/// The major version of the X11 protocol used by the X server.
-			protocol_major_version: u16,
-			/// The minor version of the X11 protocol used by the X server.
-			protocol_minor_version: u16,
-
-			#[allow(clippy::cast_possible_truncation)]
-			let additional_data_len: u16 = pixmap_formats, vendor, roots => {
-				let vendor_len = vendor.len() + pad(vendor.len());
-				let len = 32 + pixmap_formats.data_size() + vendor_len + roots.data_size();
-
-				(len / 4) as u16
-			},
-
-			release_number: u32,
-
-			resource_id_base: u32,
-			resource_id_mask: u32,
-
-			motion_buffer_size: u32,
-
-			#[allow(clippy::cast_possible_truncation)]
-			let vendor_len: u16 = vendor => vendor.len() as u16,
-
-			maximum_request_length: u16,
-
-			#[allow(clippy::cast_possible_truncation)]
-			let roots_len: u8 = roots => roots.len() as u8,
-			#[allow(clippy::cast_possible_truncation)]
-			let pixmap_formats_len: u8 = pixmap_formats => pixmap_formats.len() as u8,
-
-			image_byte_order: ImageEndianness,
-			bitmap_format_bit_order: ImageEndianness,
-			bitmap_format_scanline_unit: u8,
-			bitmap_format_scanline_pad: u8,
-
-			min_keycode: Keycode,
-			max_keycode: Keycode,
-			[_; 4],
-
-			#[context(vendor_len => *vendor_len as usize)]
-			vendor: String8,
-			[_; ..],
-
-			#[context(pixmap_formats_len => *pixmap_formats_len as usize)]
-			pixmap_formats: Vec<Format>,
-			#[context(roots_len => *roots_len as usize)]
-			roots: Vec<Screen>,
-		},
-
+		Success(ConnectionSuccess),
 		/// The connection was refused because authentication was not successful.
-		Authenticate {
-			[_; 5],
+		Authenticate(ConnectionAuthenticationError),
+	}
+}
 
-			// Length in 4-byte units of "additional data".
-			#[allow(clippy::cast_possible_truncation)]
-			let additional_data_len: u16 = reason => {
-				let len = reason.len() + pad(reason.len());
-				(len / 4) as u16
-			},
+pub enum ConnError {
+	Failed(ConnectionFailure),
+	AuthenticationError(ConnectionAuthenticationError),
+}
 
-			/// The reason that authentication is required.
-			#[context(additional_data_len => {
-				// FIXME: but... how do you separate the reason and padding?
-				(*additional_data_len as usize) * 4
-			})]
-			reason: String8,
-			[_; ..],
+impl ConnectionResponse {
+	// false negative for this lint here, so we allow it
+	#[allow(clippy::missing_const_for_fn)]
+	pub fn ok(self) -> Result<ConnectionSuccess, ConnError> {
+		match self {
+			Self::Failed(failure) => Err(ConnError::Failed(failure)),
+			Self::Success(success) => Ok(success),
+			Self::Authenticate(auth_error) => Err(ConnError::AuthenticationError(auth_error)),
+		}
+	}
+}
+
+derive_xrb! {
+	/// There was a failure in attempting the connection.
+	#[derive(Debug)]
+	pub struct ConnectionFailure {
+		#[allow(clippy::cast_possible_truncation)]
+		let reason_len: u8 = reason => reason.len() as u8,
+
+		/// The major version of the X11 protocol used by the X server.
+		protocol_major_version: u16,
+		/// The minor version of the X11 protocol used by the X server.
+		protocol_minor_version: u16,
+
+		// Length in 4-byte units of "additional data".
+		#[allow(clippy::cast_possible_truncation)]
+		let additional_data_len: u16 = reason => {
+			let len = reason.len() + pad(reason.len());
+			(len / 4) as u16
 		},
+
+		/// The reason for the failure.
+		#[context(reason_len => *reason_len as usize)]
+		reason: String8,
+		[_; ..],
+	}
+
+	/// The connection was successfully established.
+	#[derive(Debug)]
+	pub struct ConnectionSuccess {
+		_,
+		/// The major version of the X11 protocol used by the X server.
+		protocol_major_version: u16,
+		/// The minor version of the X11 protocol used by the X server.
+		protocol_minor_version: u16,
+
+		#[allow(clippy::cast_possible_truncation)]
+		let additional_data_len: u16 = pixmap_formats, vendor, roots => {
+			let vendor_len = vendor.len() + pad(vendor.len());
+			let len = 32 + pixmap_formats.data_size() + vendor_len + roots.data_size();
+
+			(len / 4) as u16
+		},
+
+		release_number: u32,
+
+		resource_id_base: u32,
+		resource_id_mask: u32,
+
+		motion_buffer_size: u32,
+
+		#[allow(clippy::cast_possible_truncation)]
+		let vendor_len: u16 = vendor => vendor.len() as u16,
+
+		maximum_request_length: u16,
+
+		#[allow(clippy::cast_possible_truncation)]
+		let roots_len: u8 = roots => roots.len() as u8,
+		#[allow(clippy::cast_possible_truncation)]
+		let pixmap_formats_len: u8 = pixmap_formats => pixmap_formats.len() as u8,
+
+		image_byte_order: ImageEndianness,
+		bitmap_format_bit_order: ImageEndianness,
+		bitmap_format_scanline_unit: u8,
+		bitmap_format_scanline_pad: u8,
+
+		min_keycode: Keycode,
+		max_keycode: Keycode,
+		[_; 4],
+
+		#[context(vendor_len => *vendor_len as usize)]
+		vendor: String8,
+		[_; ..],
+
+		#[context(pixmap_formats_len => *pixmap_formats_len as usize)]
+		pixmap_formats: Vec<Format>,
+		#[context(roots_len => *roots_len as usize)]
+		roots: Vec<Screen>,
+	}
+
+	/// The connection was refused because authentication was unsuccessful.
+	#[derive(Debug)]
+	pub struct ConnectionAuthenticationError {
+		[_; 5],
+
+		// Length in 4-byte units of "additional data".
+		#[allow(clippy::cast_possible_truncation)]
+		let additional_data_len: u16 = reason => {
+			let len = reason.len() + pad(reason.len());
+			(len / 4) as u16
+		},
+
+		#[context(additional_data_len => {
+			// FIXME: but... how do you separate the reason and padding?
+			(*additional_data_len as usize) * 4
+		})]
+		reason: String8,
+		[_; ..],
+	}
+}
+
+#[cfg(feature = "try")]
+mod r#try {
+	use super::*;
+	use std::ops::{ControlFlow, FromResidual, Try};
+
+	impl FromResidual for ConnectionResponse {
+		fn from_residual(residual: <Self as Try>::Residual) -> Self {
+			residual
+		}
+	}
+
+	impl Try for ConnectionResponse {
+		type Output = ConnectionSuccess;
+		type Residual = Self;
+
+		fn from_output(output: Self::Output) -> Self {
+			Self::Success(output)
+		}
+
+		fn branch(self) -> ControlFlow<Self::Residual, Self::Output> {
+			match self {
+				Self::Success(success) => ControlFlow::Continue(success),
+
+				Self::Failed(_) | Self::Authenticate(_) => ControlFlow::Break(self),
+			}
+		}
 	}
 }

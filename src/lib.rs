@@ -13,6 +13,7 @@
 // This is so we can provide a reason when we ignore a particular lint with
 // `allow`.
 #![feature(lint_reasons)]
+#![cfg_attr(feature = "try", feature(try_trait_v2))]
 // Deny the following clippy lints to enforce them:
 #![deny(clippy::complexity)]
 #![deny(clippy::correctness)]
