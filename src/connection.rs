@@ -6,15 +6,7 @@ use cornflakes::DataSize;
 use derive_more::{From, Into};
 use xrbk_macro::{derive_xrb, DataSize, Readable, Writable};
 
-use crate::{
-	mask::{ColorChannelMask, EventMask},
-	BackingStores,
-	Colormap,
-	Keycode,
-	String8,
-	VisualId,
-	Window,
-};
+use crate::{mask::EventMask, BackingStores, Color, Colormap, Keycode, String8, VisualId, Window};
 
 /// Calculates the number of bytes used to reach the next 4-byte boundary.
 const fn pad(n: usize) -> usize {
@@ -131,7 +123,7 @@ derive_xrb! {
 		pub class: VisualClass,
 		pub bits_per_rgb_value: u8,
 		pub colormap_entries: u16,
-		pub color_mask: ColorChannelMask,
+		pub color_mask: Color,
 		[_; 4],
 	}
 

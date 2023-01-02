@@ -14,6 +14,30 @@ pub mod mask;
 
 pub use atom::Atom;
 
+#[derive(
+	Copy,
+	Clone,
+	Eq,
+	PartialEq,
+	Hash,
+	Debug,
+	From,
+	Into,
+	// XRBK traits
+	DataSize,
+	StaticDataSize,
+	Readable,
+	Writable,
+)]
+pub struct Color(
+	/// Red.
+	u32,
+	/// Green.
+	u32,
+	/// Blue.
+	u32,
+);
+
 /// A resource ID referring to either a [`Window`] or a [`Pixmap`].
 #[derive(
 	Copy,
