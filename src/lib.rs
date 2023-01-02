@@ -61,4 +61,5 @@ mod connection;
 mod r#trait;
 
 pub use common::*;
+pub use connection::*;
 pub use r#trait::*;
