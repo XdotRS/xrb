@@ -56,7 +56,7 @@ impl Field {
 
 		tokens.append_tokens(|| {
 			quote!(
-				<#r#type as cornflakes::Writable>::write_to(&#formatted, buf)?;
+				<#r#type as ::cornflakes::Writable>::write_to(&#formatted, buf)?;
 			)
 		});
 	}
@@ -75,7 +75,7 @@ impl Field {
 					tokens,
 					None,
 					formatted,
-					quote!(<#r#type as cornflakes::ContextualReadable>::Context),
+					quote!(<#r#type as ::cornflakes::ContextualReadable>::Context),
 				);
 
 				let function_call = TokenStream2::with_tokens(|tokens| {
@@ -84,7 +84,7 @@ impl Field {
 
 				tokens.append_tokens(|| {
 					quote!(
-						let #formatted = <#r#type as cornflakes::ContextualReadable>::read_with(
+						let #formatted = <#r#type as ::cornflakes::ContextualReadable>::read_with(
 							buf,
 							&#function_call,
 						)?;
@@ -95,7 +95,7 @@ impl Field {
 			None => {
 				tokens.append_tokens(|| {
 					quote!(
-						let #formatted = <#r#type as cornflakes::Readable>::read_from(buf)?;
+						let #formatted = <#r#type as ::cornflakes::Readable>::read_from(buf)?;
 					)
 				});
 			},
@@ -108,7 +108,7 @@ impl Field {
 			let formatted = &self.formatted;
 
 			quote!(
-				datasize += <#r#type as cornflakes::DataSize>::data_size(&#formatted);
+				datasize += <#r#type as ::cornflakes::DataSize>::data_size(&#formatted);
 			)
 		});
 	}
@@ -136,7 +136,7 @@ impl Let {
 			quote!(
 				let #formatted = #function_call;
 
-				<#r#type as cornflakes::Writable>::write_to(&#formatted, buf)?;
+				<#r#type as ::cornflakes::Writable>::write_to(&#formatted, buf)?;
 			)
 		});
 	}
@@ -174,7 +174,7 @@ impl Let {
 					tokens,
 					None,
 					formatted,
-					quote!(<#r#type as cornflakes::ContextualReadable>::Context),
+					quote!(<#r#type as ::cornflakes::ContextualReadable>::Context),
 				);
 
 				let function_call = TokenStream2::with_tokens(|tokens| {
@@ -183,7 +183,7 @@ impl Let {
 
 				tokens.append_tokens(|| {
 					quote!(
-						let #formatted = <#r#type as cornflakes::ContextualReadable>::read_with(
+						let #formatted = <#r#type as ::cornflakes::ContextualReadable>::read_with(
 							buf,
 							#function_call,
 						)?;
@@ -194,7 +194,7 @@ impl Let {
 			None => {
 				tokens.append_tokens(|| {
 					quote!(
-						let #formatted = <#r#type as cornflakes::Readable>::read_from(buf)?;
+						let #formatted = <#r#type as ::cornflakes::Readable>::read_from(buf)?;
 					)
 				});
 			},
@@ -207,7 +207,7 @@ impl Let {
 
 		tokens.append_tokens(|| {
 			quote!(
-				datasize += <#r#type as cornflakes::DataSize>::data_size(&#formatted);
+				datasize += <#r#type as ::cornflakes::DataSize>::data_size(&#formatted);
 			)
 		});
 	}

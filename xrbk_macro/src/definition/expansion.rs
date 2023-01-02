@@ -37,7 +37,6 @@ impl ToTokens for Definition {
 
 				r#enum.impl_writable(tokens);
 				r#enum.impl_readable(tokens);
-				// TODO: datasize for enum 'wrapper types'
 				r#enum.impl_datasize(tokens);
 			},
 

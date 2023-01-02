@@ -41,10 +41,10 @@ impl Struct {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics cornflakes::Readable for #ident #type_generics #where_clause {
+				impl #impl_generics ::cornflakes::Readable for #ident #type_generics #where_clause {
 					fn read_from(
-						buf: &mut impl cornflakes::Buf,
-					) -> Result<Self, cornflakes::ReadError> {
+						buf: &mut impl ::cornflakes::Buf,
+					) -> Result<Self, ::cornflakes::ReadError> {
 						// Declare a datasize variable if it is going to be
 						// used in an infer unused bytes element.
 						#declare_datasize
@@ -107,10 +107,10 @@ impl Request {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics cornflakes::Readable for #ident #type_generics #where_clause {
+				impl #impl_generics ::cornflakes::Readable for #ident #type_generics #where_clause {
 					fn read_from(
-						buf: &mut impl cornflakes::Buf,
-					) -> Result<Self, cornflakes::ReadError> {
+						buf: &mut impl ::cornflakes::Buf,
+					) -> Result<Self, ::cornflakes::ReadError> {
 						#declare_datasize
 
 						// If there is a metabyte element, read it, if not and
@@ -178,10 +178,10 @@ impl Reply {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics cornflakes::Readable for #ident #type_generics #where_clause {
+				impl #impl_generics ::cornflakes::Readable for #ident #type_generics #where_clause {
 					fn read_from(
-						buf: &mut impl cornflakes::Buf,
-					) -> Result<Self, cornflakes::ReadError> {
+						buf: &mut impl ::cornflakes::Buf,
+					) -> Result<Self, ::cornflakes::ReadError> {
 						#declare_datasize
 
 						// Metabyte position
@@ -261,10 +261,10 @@ impl Event {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics cornflakes::Readable for #ident #type_generics #where_clause {
+				impl #impl_generics ::cornflakes::Readable for #ident #type_generics #where_clause {
 					fn read_from(
-						buf: &mut impl cornflakes::Buf,
-					) -> Result<Self, cornflakes::ReadError> {
+						buf: &mut impl ::cornflakes::Buf,
+					) -> Result<Self, ::cornflakes::ReadError> {
 						#declare_datasize
 
 						// Metabyte position
@@ -370,10 +370,10 @@ impl Enum {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics cornflakes::Readable for #ident #type_generics #where_clause {
+				impl #impl_generics ::cornflakes::Readable for #ident #type_generics #where_clause {
 					fn read_from(
-						buf: &mut impl cornflakes::Buf,
-					) -> Result<Self, cornflakes::ReadError> {
+						buf: &mut impl ::cornflakes::Buf,
+					) -> Result<Self, ::cornflakes::ReadError> {
 						// Define functions and variables for variants which
 						// have custom discriminant expressions.
 						#discriminants
@@ -382,7 +382,7 @@ impl Enum {
 							#arms
 
 							other_discrim => Err(
-								cornflakes::ReadError::UnrecognizedDiscriminant(other_discrim),
+								::cornflakes::ReadError::UnrecognizedDiscriminant(other_discrim),
 							),
 						}
 					}

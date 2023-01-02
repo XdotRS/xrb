@@ -33,7 +33,7 @@ derive_xrb! {
 	impl From<Pixmap> for Drawable {
 		fn from(pixmap: Pixmap) -> Self {
 			let Pixmap(id) = pixmap;
-		Self(id)
+			Self(id)
 		}
 	}
 
