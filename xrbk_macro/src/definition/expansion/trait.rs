@@ -32,7 +32,7 @@ impl Request {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics ::xrb::#r#trait for #name #type_generics #where_clause {
+				impl #impl_generics xrb::#r#trait for #name #type_generics #where_clause {
 					type Reply = #reply;
 
 					fn major_opcode() -> u8 {
@@ -84,7 +84,7 @@ impl Reply {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics ::xrb::#r#trait for #name #type_generics #where_clause {
+				impl #impl_generics xrb::#r#trait for #name #type_generics #where_clause {
 					type Req = #request;
 
 					#[allow(clippy::cast_possible_truncation)]
@@ -126,7 +126,7 @@ impl Event {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics ::xrb::#r#trait for #name #type_generics #where_clause {
+				impl #impl_generics xrb::#r#trait for #name #type_generics #where_clause {
 					fn code() -> u8 {
 						#code
 					}
