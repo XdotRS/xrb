@@ -4,6 +4,8 @@
 
 extern crate self as xrb;
 
+use bytes::Buf;
+use cornflakes::{ContextualReadable, ReadResult};
 use derive_more::{From, Into};
 use xrbk_macro::{derive_xrb, DataSize, Readable, StaticDataSize, Writable};
 
@@ -286,6 +288,13 @@ pub enum WinGravity {
 	SouthEast,
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+pub enum BackingStores {
+	Never,
+	WhenMapped,
+	Always,
+}
+
 #[derive(
 	Copy,
 	Clone,
@@ -354,6 +363,30 @@ pub struct Button(u8);
 )]
 pub struct Char8(u8);
 
+#[derive(Clone, Eq, PartialEq, Hash, Debug, From, Into, DataSize, Writable)]
+pub struct String8(Vec<Char8>);
+
+impl String8 {
+	pub fn len(&self) -> usize {
+		self.0.len()
+	}
+
+	pub fn is_empty(&self) -> bool {
+		self.0.is_empty()
+	}
+}
+
+impl ContextualReadable for String8 {
+	type Context = usize;
+
+	fn read_with(reader: &mut impl Buf, length: &usize) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		Ok(Self(<Vec<Char8>>::read_with(reader, length)?))
+	}
+}
+
 #[derive(
 	Copy,
 	Clone,
@@ -370,6 +403,30 @@ pub struct Char8(u8);
 	Writable,
 )]
 pub struct Char16(u8, u8);
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug, From, Into, DataSize, Writable)]
+pub struct String16(Vec<Char16>);
+
+impl String16 {
+	pub fn len(&self) -> usize {
+		self.0.len()
+	}
+
+	pub fn is_empty(&self) -> bool {
+		self.0.is_empty()
+	}
+}
+
+impl ContextualReadable for String16 {
+	type Context = usize;
+
+	fn read_with(reader: &mut impl Buf, length: &usize) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		Ok(Self(<Vec<Char16>>::read_with(reader, length)?))
+	}
+}
 
 #[derive(
 	Copy,
