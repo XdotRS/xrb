@@ -11,8 +11,10 @@ use xrbk_macro::{derive_xrb, DataSize, Readable, StaticDataSize, Writable};
 
 pub mod atom;
 pub mod mask;
+mod wrapper;
 
 pub use atom::Atom;
+pub use wrapper::*;
 
 #[derive(
 	Copy,
@@ -265,6 +267,16 @@ pub struct Colormap(u32);
 )]
 pub struct Timestamp(u32);
 
+impl Timestamp {
+	pub const fn new(timestamp: u32) -> Self {
+		Self(timestamp)
+	}
+
+	pub const fn unwrap(self) -> u32 {
+		self.0
+	}
+}
+
 #[derive(
 	Copy,
 	Clone,
@@ -281,6 +293,16 @@ pub struct Timestamp(u32);
 	Writable,
 )]
 pub struct VisualId(u32);
+
+impl VisualId {
+	pub const fn new(id: u32) -> Self {
+		Self(id)
+	}
+
+	pub const fn unwrap(self) -> u32 {
+		self.0
+	}
+}
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
 pub enum BitGravity {
