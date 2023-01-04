@@ -59,7 +59,7 @@ mod common;
 mod connection;
 mod r#trait;
 /// Implementations for the core X11 protocol.
-mod x11;
+pub mod x11;
 
 pub use common::*;
 pub use connection::*;
