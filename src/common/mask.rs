@@ -304,7 +304,7 @@ bitflags! {
 
 	/// A mask of currently held modifier keys.
 	///
-	/// This is the same as [`ButtonsModifierKeyMask`], but without mouse
+	/// This is the same as [`ModifierKeyMask`], but without mouse
 	/// button masks. Unlike [`AnyModifierKeyMask`], this does not include a
 	/// mask for [`ANY_MODIFIER`].
 	///
