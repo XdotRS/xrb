@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use proc_macro2::Span;
 use std::collections::HashMap;
 use syn::{braced, bracketed, parenthesized, parse::ParseStream, spanned::Spanned, Error, Result};
 
@@ -235,6 +236,24 @@ impl ParseWithContext for Elements {
 				false
 			}
 		});
+
+		match (&definition_type, &sequence_element) {
+			(DefinitionType::Basic | DefinitionType::Request, Some(sequence)) => {
+				return Err(Error::new(
+					sequence.span(),
+					"sequence fields are only allowed for events and replies",
+				))
+			},
+
+			(DefinitionType::Reply, None) => {
+				return Err(Error::new(
+					Span::call_site(),
+					"replies must have a sequence field of type `u32`",
+				))
+			},
+
+			_ => {},
+		}
 
 		Ok(Self {
 			elements,
