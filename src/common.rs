@@ -341,6 +341,22 @@ pub enum BackingStores {
 	Always,
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+pub enum GrabMode {
+	Normal,
+	Grab,
+	Ungrab,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+pub enum StackMode {
+	Above,
+	Below,
+	TopIf,
+	BottomIf,
+	Opposite,
+}
+
 #[derive(
 	Copy,
 	Clone,
