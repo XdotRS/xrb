@@ -268,11 +268,11 @@ pub struct Colormap(pub(crate) u32);
 pub struct Timestamp(pub(crate) u32);
 
 impl Timestamp {
-	pub const fn new(timestamp: u32) -> Self {
+	#[must_use] pub const fn new(timestamp: u32) -> Self {
 		Self(timestamp)
 	}
 
-	pub const fn unwrap(self) -> u32 {
+	#[must_use] pub const fn unwrap(self) -> u32 {
 		self.0
 	}
 }
@@ -295,11 +295,11 @@ impl Timestamp {
 pub struct VisualId(pub(crate) u32);
 
 impl VisualId {
-	pub const fn new(id: u32) -> Self {
+	#[must_use] pub const fn new(id: u32) -> Self {
 		Self(id)
 	}
 
-	pub const fn unwrap(self) -> u32 {
+	#[must_use] pub const fn unwrap(self) -> u32 {
 		self.0
 	}
 }
