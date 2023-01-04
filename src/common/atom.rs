@@ -23,7 +23,7 @@ use xrbk_macro::{DataSize, Readable, StaticDataSize, Writable};
 	Readable,
 	Writable,
 )]
-pub struct Atom(u32);
+pub struct Atom(pub(crate) u32);
 
 impl Atom {
 	/// Creates a new `Atom`, wrapping the given `id`.

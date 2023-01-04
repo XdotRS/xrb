@@ -56,7 +56,7 @@ pub struct Color(
 	Readable,
 	Writable,
 )]
-pub struct Drawable(u32);
+pub struct Drawable(pub(crate) u32);
 
 impl From<Window> for Drawable {
 	fn from(window: Window) -> Self {
@@ -88,7 +88,7 @@ impl From<Pixmap> for Drawable {
 	Readable,
 	Writable,
 )]
-pub struct Window(u32);
+pub struct Window(pub(crate) u32);
 
 impl From<Drawable> for Window {
 	fn from(drawable: Drawable) -> Self {
@@ -113,7 +113,7 @@ impl From<Drawable> for Window {
 	Readable,
 	Writable,
 )]
-pub struct Pixmap(u32);
+pub struct Pixmap(pub(crate) u32);
 
 impl From<Drawable> for Pixmap {
 	fn from(drawable: Drawable) -> Self {
@@ -138,7 +138,7 @@ impl From<Drawable> for Pixmap {
 	Readable,
 	Writable,
 )]
-pub struct Cursor(u32);
+pub struct Cursor(pub(crate) u32);
 
 /// A resource ID referring to either a [`Font`] or a [`GraphicsContext`].
 #[derive(
@@ -156,7 +156,7 @@ pub struct Cursor(u32);
 	Readable,
 	Writable,
 )]
-pub struct Fontable(u32);
+pub struct Fontable(pub(crate) u32);
 
 impl From<Font> for Fontable {
 	fn from(font: Font) -> Self {
@@ -188,7 +188,7 @@ impl From<GraphicsContext> for Fontable {
 	Readable,
 	Writable,
 )]
-pub struct Font(u32);
+pub struct Font(pub(crate) u32);
 
 impl From<Fontable> for Font {
 	fn from(fontable: Fontable) -> Self {
@@ -219,7 +219,7 @@ impl From<Fontable> for Font {
 	Readable,
 	Writable,
 )]
-pub struct GraphicsContext(u32);
+pub struct GraphicsContext(pub(crate) u32);
 
 impl From<Fontable> for GraphicsContext {
 	fn from(fontable: Fontable) -> Self {
@@ -244,7 +244,7 @@ impl From<Fontable> for GraphicsContext {
 	Readable,
 	Writable,
 )]
-pub struct Colormap(u32);
+pub struct Colormap(pub(crate) u32);
 
 /// Represents a particular time, expressed in milliseconds.
 ///
@@ -265,7 +265,7 @@ pub struct Colormap(u32);
 	Readable,
 	Writable,
 )]
-pub struct Timestamp(u32);
+pub struct Timestamp(pub(crate) u32);
 
 impl Timestamp {
 	pub const fn new(timestamp: u32) -> Self {
@@ -292,7 +292,7 @@ impl Timestamp {
 	Readable,
 	Writable,
 )]
-pub struct VisualId(u32);
+pub struct VisualId(pub(crate) u32);
 
 impl VisualId {
 	pub const fn new(id: u32) -> Self {
@@ -356,7 +356,7 @@ pub enum BackingStores {
 	Readable,
 	Writable,
 )]
-pub struct Keysym(u32);
+pub struct Keysym(pub(crate) u32);
 
 #[derive(
 	Copy,
@@ -373,7 +373,7 @@ pub struct Keysym(u32);
 	Readable,
 	Writable,
 )]
-pub struct Keycode(u8);
+pub struct Keycode(pub(crate) u8);
 
 #[derive(
 	Copy,
@@ -390,7 +390,7 @@ pub struct Keycode(u8);
 	Readable,
 	Writable,
 )]
-pub struct Button(u8);
+pub struct Button(pub(crate) u8);
 
 #[derive(
 	Copy,
@@ -407,7 +407,7 @@ pub struct Button(u8);
 	Readable,
 	Writable,
 )]
-pub struct Char8(u8);
+pub struct Char8(pub(crate) u8);
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug, From, Into, DataSize, Writable)]
 pub struct String8(Vec<Char8>);
@@ -450,7 +450,7 @@ impl ContextualReadable for String8 {
 	Readable,
 	Writable,
 )]
-pub struct Char16(u8, u8);
+pub struct Char16(pub(crate) u8, pub(crate) u8);
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug, From, Into, DataSize, Writable)]
 pub struct String16(Vec<Char16>);
