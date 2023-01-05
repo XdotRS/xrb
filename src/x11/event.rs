@@ -83,6 +83,8 @@ derive_xrb! {
 		/// The logical state of mouse buttons and modifier keys immediately
 		/// before this event was generated.
 		pub modifiers: ModifierMask,
+
+		/// Whether the cursor is on the same screen as the `event_window`.
 		pub same_screen: bool,
 		_,
 	}
@@ -148,6 +150,8 @@ derive_xrb! {
 		/// The logical state of mouse buttons and modifier keys immediately
 		/// before this event was generated.
 		pub modifiers: ModifierMask,
+
+		/// Whether the cursor is on the same screen as the `event_window`.
 		pub same_screen: bool,
 		_,
 	}
@@ -210,6 +214,8 @@ derive_xrb! {
 		/// The logical state of mouse buttons and modifier keys immediately
 		/// before this event was generated.
 		pub modifiers: ModifierMask,
+
+		/// Whether the cursor is on the same screen as the `event_window`.
 		pub same_screen: bool,
 		_,
 	}
@@ -272,34 +278,115 @@ derive_xrb! {
 		/// The logical state of mouse buttons and modifier keys immediately
 		/// before this event was generated.
 		pub modifiers: ModifierMask,
+
+		/// Whether the cursor is on the same screen as the `event_window`.
 		pub same_screen: bool,
 		_,
 	}
 }
 
+/// The type of [`Motion`] event sent.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
-pub enum MotionNotifyType {
+pub enum MotionNotificationType {
+	/// The [`Motion`] event was not one generated for a client selecting
+	/// `MOTION_HINT`.
 	Normal,
+
+	/// The [`Motion`] event was generated for a client selecting `MOTION_HINT`.
+	///
+	/// The X server is free to send only one [`Motion`] event to the client
+	/// until:
+	/// - a mouse button or key is pressed or released; or
+	/// - the pointer leaves the `event_window`; or
+	/// - the client sends a [`QueryCursor`] or [`GetMotionEvents`] request.
+	///
+	/// [`QueryCursor`]: super::request::QueryCursor
+	/// [`GetMotionEvents`]: super::request::GetMotionEvents
 	Hint,
 }
 
 derive_xrb! {
-	pub struct MotionNotify: Event(6) {
+	/// An event generated when the cursor moves within a [`Window`].
+	///
+	/// Motion events are only generated when the cursor motion begins and ends
+	/// in the same window. If the cursor leaves the window, a [`LeaveWindow`] event
+	/// will be generated instead, accompanied by an [`EnterWindow`] event for the
+	/// window which it moves into.
+	///
+	/// Selecting for `ANY_MOTION` events means `Motion` events will be received
+	/// independently of the currently pressed mouse buttons. Selecting for
+	/// button motion events (`BUTTON_1_MOTION`..`BUTTON_5_MOTION` and
+	/// `ANY_BUTTON_MOTION`), however, means `Motion` events will only be
+	/// received while at least one of the selected mouse buttons is pressed.
+	///
+	/// If `MOTION_HINT` is selected, the server is free to send only one
+	/// `Motion` event with a [`MotionNotificationType`] of [`Hint`] until:
+	/// - a mouse button or key is pressed or released; or
+	/// - the pointer leaves the `event_window`; or
+	/// - the client sends a [`QueryCursor`] or [`GetMotionEvents`] request.
+	///
+	/// [`Hint`]: MotionNotificationType::Hint
+	/// [`QueryCursor`]: super::request::QueryCursor
+	/// [`GetMotionEvents`]: super::request::GetMotionEvents
+	pub struct Motion: Event(6) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
-		#[metabyte]
-		pub notification_type: MotionNotifyType,
 
+		#[metabyte]
+		/// The type of `Motion` event sent.
+		pub notification_type: MotionNotificationType,
+
+		/// The time at which this event was generated.
 		pub time: Timestamp,
 
+		/// The root window containing the window in which the cursor was
+		/// located when this event was generated.
 		pub root: Window,
-		pub window: Window,
+		/// The window which this event was generated in relation to.
+		///
+		/// This window is found by beginning with the window which the cursor
+		/// is located within, then looking up the window hierarchy for the
+		/// first window on which any client has selected interest in this
+		/// event (provided no window between the two prohibits this event from
+		/// generating in its `do_not_propagate_mask`).
+		///
+		/// Active grabs may modify how the `event_window` is chosen.
+		pub event_window: Window,
+		/// The direct child of the `event_window` which is an ancestor of the
+		/// window in which the cursor was located when this event was
+		/// generated, if one exists.
+		///
+		/// If the window in which the cursor was located within (the source
+		/// window) when this event was generated is a descendant of the
+		/// `event_window` (that is, it was a child of it, or a child of a
+		/// child of it, or a child of a child of a child of it, etc.), then
+		/// this is set to the direct child of the `event_window` which is the
+		/// ancestor, or is, the source window. Otherwise, if the source window
+		/// was not a descendent of the `event_window`, then this is set to
+		/// `None`.
+		///
+		/// That means if the source window was a child of a child of the
+		/// `event_window`, then this would be set to the source window's
+		/// parent, as that is an ancestor of the source window and a direct
+		/// child of the `event_window`.
 		pub child_window: Option<Window>,
 
+		/// The coordinates of the cursor at the time this event was generated,
+		/// relative to the `root` window's origin.
 		pub root_coords: Point,
-		pub window_coords: Point,
+		/// The coordinates of the cursor at the time this event was generated,
+		/// relative to the `event_window`'s origin.
+		pub event_coords: Point,
 
+		/// The logical state of mouse buttons and modifier keys immediately
+		/// before this event was generated.
 		pub modifiers: ModifierMask,
+
+		/// Whether the cursor is on the same screen as the `event_window`.
 		pub same_screen: bool,
 		_,
 	}
@@ -323,7 +410,7 @@ bitflags! {
 }
 
 derive_xrb! {
-	pub struct EnterNotify: Event(7) {
+	pub struct EnterWindow: Event(7) {
 		#[sequence]
 		pub sequence: u16,
 		#[metabyte]
@@ -343,7 +430,7 @@ derive_xrb! {
 		pub mask: EnterLeaveMask,
 	}
 
-	pub struct LeaveNotify: Event(8) {
+	pub struct LeaveWindow: Event(8) {
 		#[sequence]
 		pub sequence: u16,
 		#[metabyte]
