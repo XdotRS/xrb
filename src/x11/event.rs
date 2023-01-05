@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use crate::{
-	mask::{ConfigureWindowMask, ModifierKeyMask},
+	mask::{ConfigureWindowMask, ModifierMask},
 	Atom,
 	Button,
 	Colormap,
@@ -37,7 +37,7 @@ derive_xrb! {
 		pub root_coords: Point,
 		pub window_coords: Point,
 
-		pub key_state: ModifierKeyMask,
+		pub modifiers: ModifierMask,
 		pub same_screen: bool,
 		_,
 	}
@@ -57,7 +57,7 @@ derive_xrb! {
 		pub root_coords: Point,
 		pub window_coords: Point,
 
-		pub key_state: ModifierKeyMask,
+		pub modifiers: ModifierMask,
 		pub same_screen: bool,
 		_,
 	}
@@ -77,7 +77,7 @@ derive_xrb! {
 		pub root_coords: Point,
 		pub window_coords: Point,
 
-		pub key_state: ModifierKeyMask,
+		pub modifiers: ModifierMask,
 		pub same_screen: bool,
 		_,
 	}
@@ -97,7 +97,7 @@ derive_xrb! {
 		pub root_coords: Point,
 		pub window_coords: Point,
 
-		pub key_state: ModifierKeyMask,
+		pub modifiers: ModifierMask,
 		pub same_screen: bool,
 		_,
 	}
@@ -125,7 +125,7 @@ derive_xrb! {
 		pub root_coords: Point,
 		pub window_coords: Point,
 
-		pub key_state: ModifierKeyMask,
+		pub modifiers: ModifierMask,
 		pub same_screen: bool,
 		_,
 	}
@@ -164,7 +164,7 @@ derive_xrb! {
 		pub root_coords: Point,
 		pub window_coords: Point,
 
-		pub key_state: ModifierKeyMask,
+		pub modifiers: ModifierMask,
 		pub grab_mode: GrabMode,
 		pub mask: EnterLeaveMask,
 	}
@@ -184,7 +184,7 @@ derive_xrb! {
 		pub root_coords: Point,
 		pub window_coords: Point,
 
-		pub key_state: ModifierKeyMask,
+		pub modifiers: ModifierMask,
 		pub grab_mode: GrabMode,
 		pub mask: EnterLeaveMask,
 	}
