@@ -23,10 +23,10 @@ extern crate self as xrb;
 
 derive_xrb! {
 	pub struct KeyPress: Event(2) {
-		#[metabyte]
-		pub keycode: Keycode,
 		#[sequence]
 		pub sequence: u16,
+		#[metabyte]
+		pub keycode: Keycode,
 
 		pub time: Timestamp,
 
@@ -43,10 +43,10 @@ derive_xrb! {
 	}
 
 	pub struct KeyRelease: Event(3) {
-		#[metabyte]
-		pub keycode: Keycode,
 		#[sequence]
 		pub sequence: u16,
+		#[metabyte]
+		pub keycode: Keycode,
 
 		pub time: Timestamp,
 
@@ -63,10 +63,10 @@ derive_xrb! {
 	}
 
 	pub struct ButtonPress: Event(4) {
-		#[metabyte]
-		pub button: Button,
 		#[sequence]
 		pub sequence: u16,
+		#[metabyte]
+		pub button: Button,
 
 		pub time: Timestamp,
 
@@ -83,10 +83,10 @@ derive_xrb! {
 	}
 
 	pub struct ButtonRelease: Event(5) {
-		#[metabyte]
-		pub button: Button,
 		#[sequence]
 		pub sequence: u16,
+		#[metabyte]
+		pub button: Button,
 
 		pub time: Timestamp,
 
@@ -111,10 +111,10 @@ pub enum MotionNotifyType {
 
 derive_xrb! {
 	pub struct MotionNotify: Event(6) {
-		#[metabyte]
-		pub notification_type: MotionNotifyType,
 		#[sequence]
 		pub sequence: u16,
+		#[metabyte]
+		pub notification_type: MotionNotifyType,
 
 		pub time: Timestamp,
 
@@ -150,10 +150,10 @@ bitflags! {
 
 derive_xrb! {
 	pub struct EnterNotify: Event(7) {
-		#[metabyte]
-		pub detail: EnterLeaveDetail,
 		#[sequence]
 		pub sequence: u16,
+		#[metabyte]
+		pub detail: EnterLeaveDetail,
 
 		pub time: Timestamp,
 
@@ -170,10 +170,10 @@ derive_xrb! {
 	}
 
 	pub struct LeaveNotify: Event(8) {
-		#[metabyte]
-		pub detail: EnterLeaveDetail,
 		#[sequence]
 		pub sequence: u16,
+		#[metabyte]
+		pub detail: EnterLeaveDetail,
 
 		pub time: Timestamp,
 
@@ -212,10 +212,10 @@ pub enum FocusGrabMode {
 
 derive_xrb! {
 	pub struct FocusIn: Event(9) {
-		#[metabyte]
-		pub detail: FocusDetail,
 		#[sequence]
 		pub sequence: u16,
+		#[metabyte]
+		pub detail: FocusDetail,
 
 		pub window: Window,
 		pub grab_mode: FocusGrabMode,
@@ -223,10 +223,10 @@ derive_xrb! {
 	}
 
 	pub struct FocusOut: Event(10) {
-		#[metabyte]
-		pub detail: FocusDetail,
 		#[sequence]
 		pub sequence: u16,
+		#[metabyte]
+		pub detail: FocusDetail,
 
 		pub window: Window,
 		pub grab_mode: FocusGrabMode,
@@ -394,10 +394,10 @@ derive_xrb! {
 	}
 
 	pub struct ConfigureRequest: Event(23) {
-		#[metabyte]
-		pub stack_mode: StackMode,
 		#[sequence]
 		pub sequence: u16,
+		#[metabyte]
+		pub stack_mode: StackMode,
 
 		pub parent: Window,
 		pub window: Window,
@@ -541,10 +541,10 @@ derive_xrb! {
 	}
 
 	pub struct ClientMessage: Event(33) {
-		#[metabyte]
-		pub format: u8,
 		#[sequence]
 		pub sequence: u16,
+		#[metabyte]
+		pub format: u8,
 
 		pub window: Window,
 		pub r#type: Atom,
