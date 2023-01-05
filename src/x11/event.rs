@@ -22,81 +22,255 @@ use xrbk_macro::{derive_xrb, DataSize, Readable, StaticDataSize, Writable};
 extern crate self as xrb;
 
 derive_xrb! {
+	/// An event generated when a key is pressed.
+	///
+	/// This event is generated for all keys: that includes modifier keys.
 	pub struct KeyPress: Event(2) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
+
 		#[metabyte]
+		/// The keycode of the key which was pressed.
 		pub keycode: Keycode,
 
+		/// The time at which this event was generated.
 		pub time: Timestamp,
 
+		/// The root window containing the window in which the cursor was
+		/// located when this event was generated.
 		pub root: Window,
-		pub window: Window,
+		/// The window which this event was generated in relation to.
+		///
+		/// This window is found by beginning with the window which the cursor
+		/// is located within, then looking up the window hierarchy for the
+		/// first window on which any client has selected interest in this
+		/// event (provided no window between the two prohibits this event from
+		/// generating in its `do_not_propagate_mask`).
+		///
+		/// Active grabs or the currently focused window may modify how the
+		/// `event_window` is chosen.
+		pub event_window: Window,
+		/// The direct child of the `event_window` which is an ancestor of the
+		/// window in which the cursor was located when this event was
+		/// generated, if one exists.
+		///
+		/// If the window in which the cursor was located within (the source
+		/// window) when this event was generated is a descendant of the
+		/// `event_window` (that is, it was a child of it, or a child of a
+		/// child of it, or a child of a child of a child of it, etc.), then
+		/// this is set to the direct child of the `event_window` which is the
+		/// ancestor, or is, the source window. Otherwise, if the source window
+		/// was not a descendent of the `event_window`, then this is set to
+		/// `None`.
+		///
+		/// That means if the source window was a child of a child of the
+		/// `event_window`, then this would be set to the source window's
+		/// parent, as that is an ancestor of the source window and a direct
+		/// child of the `event_window`.
 		pub child_window: Option<Window>,
 
+		/// The coordinates of the cursor at the time this event was
+		/// generated, relative to the `root` window's origin.
 		pub root_coords: Point,
-		pub window_coords: Point,
+		/// The coordinates of the cursor at the time this event was
+		/// generated, relative to the `event_window`'s origin.
+		pub event_coords: Point,
 
+		/// The logical state of mouse buttons and modifier keys immediately
+		/// before this event was generated.
 		pub modifiers: ModifierMask,
 		pub same_screen: bool,
 		_,
 	}
 
+	/// An event generated when a key is released.
+	///
+	/// This event is generated for all keys: that includes modifier keys.
 	pub struct KeyRelease: Event(3) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
+
 		#[metabyte]
+		/// The keycode of the key which was released.
 		pub keycode: Keycode,
 
+		/// The time at which this event was generated.
 		pub time: Timestamp,
 
+		/// The root window containing the window in which the cursor was located
+		/// within when this event was generated.
 		pub root: Window,
-		pub window: Window,
+		/// The window which this event was generated in relation to.
+		///
+		/// This window is found by beginning with the window which the cursor
+		/// is located within, then looking up the window hierarchy for the
+		/// first window on which any client has selected interest in this
+		/// event (provided no window between the two prohibits this event from
+		/// generating in its `do_not_propagate_mask`).
+		///
+		/// Active grabs or the currently focused window may modify how the
+		/// `event_window` is chosen.
+		pub event_window: Window,
+		/// The direct child of the `event_window` which is an ancestor of the
+		/// window in which the cursor was located when this event was
+		/// generated, if one exists.
+		///
+		/// If the window in which the cursor was located within (the source
+		/// window) when this event was generated is a descendant of the
+		/// `event_window` (that is, it was a child of it, or a child of a
+		/// child of it, or a child of a child of a child of it, etc.), then
+		/// this is set to the direct child of the `event_window` which is the
+		/// ancestor, or is, the source window. Otherwise, if the source window
+		/// was not a descendent of the `event_window`, then this is set to
+		/// `None`.
+		///
+		/// That means if the source window was a child of a child of the
+		/// `event_window`, then this would be set to the source window's
+		/// parent, as that is an ancestor of the source window and a direct
+		/// child of the `event_window`.
 		pub child_window: Option<Window>,
 
+		/// The coordinates of the cursor at the time this event was
+		/// generated, relative to the `root` window's origin.
 		pub root_coords: Point,
-		pub window_coords: Point,
+		/// The coordinates of the cursor at the time this event was
+		/// generated, relative to the `event_window`'s origin.
+		pub event_coords: Point,
 
+		/// The logical state of mouse buttons and modifier keys immediately
+		/// before this event was generated.
 		pub modifiers: ModifierMask,
 		pub same_screen: bool,
 		_,
 	}
 
+	/// An event generated when a mouse button is pressed.
 	pub struct ButtonPress: Event(4) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
+
 		#[metabyte]
+		/// The mouse button which was pressed.
 		pub button: Button,
 
+		/// The time at which this event was generated.
 		pub time: Timestamp,
 
+		/// The root window containing the window in which the cursor was
+		/// located when this event was generated.
 		pub root: Window,
-		pub window: Window,
+		/// The window which this event was generated in relation to.
+		///
+		/// This window is found by beginning with the window which the cursor
+		/// is located within, then looking up the window hierarchy for the
+		/// first window on which any client has selected interest in this
+		/// event (provided no window between the two prohibits this event from
+		/// generating in its `do_not_propagate_mask`).
+		///
+		/// Active grabs may modify how the `event_window` is chosen.
+		pub event_window: Window,
+		/// The direct child of the `event_window` which is an ancestor of the
+		/// window in which the cursor was located when this event was
+		/// generated, if one exists.
+		///
+		/// If the window in which the cursor was located within (the source
+		/// window) when this event was generated is a descendant of the
+		/// `event_window` (that is, it was a child of it, or a child of a
+		/// child of it, or a child of a child of a child of it, etc.), then
+		/// this is set to the direct child of the `event_window` which is the
+		/// ancestor, or is, the source window. Otherwise, if the source window
+		/// was not a descendent of the `event_window`, then this is set to
+		/// `None`.
+		///
+		/// That means if the source window was a child of a child of the
+		/// `event_window`, then this would be set to the source window's
+		/// parent, as that is an ancestor of the source window and a direct
+		/// child of the `event_window`.
 		pub child_window: Option<Window>,
 
+		/// The coordinates of the cursor at the time this event was generated,
+		/// relative to the `root` window's origin.
 		pub root_coords: Point,
-		pub window_coords: Point,
+		/// The coordinates of the cursor at the time this event was generated,
+		/// relative to the `event_window`'s origin.
+		pub event_coords: Point,
 
+		/// The logical state of mouse buttons and modifier keys immediately
+		/// before this event was generated.
 		pub modifiers: ModifierMask,
 		pub same_screen: bool,
 		_,
 	}
 
+	/// An event generated when a mouse button is released.
 	pub struct ButtonRelease: Event(5) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
+
 		#[metabyte]
+		/// The mouse button which was released.
 		pub button: Button,
 
+		/// The time at which this event was generated.
 		pub time: Timestamp,
 
+		/// The root window containing the window in which the cursor was
+		/// located when this event was generated.
 		pub root: Window,
-		pub window: Window,
+		/// The window which this event was generated in relation to.
+		///
+		/// This window is found by beginning with the window which the cursor
+		/// is located within, then looking up the window hierarchy for the
+		/// first window on which any client has selected interest in this
+		/// event (provided no window between the two prohibits this event from
+		/// generating in its `do_not_propagate_mask`).
+		///
+		/// Active grabs may modify how the `event_window` is chosen.
+		pub event_window: Window,
+		/// The direct child of the `event_window` which is an ancestor of the
+		/// window in which the cursor was located when this event was
+		/// generated, if one exists.
+		///
+		/// If the window in which the cursor was located within (the source
+		/// window) when this event was generated is a descendant of the
+		/// `event_window` (that is, it was a child of it, or a child of a
+		/// child of it, or a child of a child of a child of it, etc.), then
+		/// this is set to the direct child of the `event_window` which is the
+		/// ancestor, or is, the source window. Otherwise, if the source window
+		/// was not a descendent of the `event_window`, then this is set to
+		/// `None`.
+		///
+		/// That means if the source window was a child of a child of the
+		/// `event_window`, then this would be set to the source window's
+		/// parent, as that is an ancestor of the source window and a direct
+		/// child of the `event_window`.
 		pub child_window: Option<Window>,
 
+		/// The coordinates of the cursor at the time this event was generated,
+		/// relative to the `root` window's origin.
 		pub root_coords: Point,
-		pub window_coords: Point,
+		/// The coordinates of the cursor at the time this event was generated,
+		/// relative to the `event_window`'s origin.
+		pub event_coords: Point,
 
+		/// The logical state of mouse buttons and modifier keys immediately
+		/// before this event was generated.
 		pub modifiers: ModifierMask,
 		pub same_screen: bool,
 		_,
