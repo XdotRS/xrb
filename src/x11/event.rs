@@ -80,7 +80,7 @@ derive_xrb! {
 		/// generated, relative to the `event_window`'s origin.
 		pub event_coords: Point,
 
-		/// The logical state of mouse buttons and modifier keys immediately
+		/// The state of mouse buttons and modifier keys immediately
 		/// before this event was generated.
 		pub modifiers: ModifierMask,
 
@@ -147,7 +147,7 @@ derive_xrb! {
 		/// generated, relative to the `event_window`'s origin.
 		pub event_coords: Point,
 
-		/// The logical state of mouse buttons and modifier keys immediately
+		/// The state of mouse buttons and modifier keys immediately
 		/// before this event was generated.
 		pub modifiers: ModifierMask,
 
@@ -211,7 +211,7 @@ derive_xrb! {
 		/// relative to the `event_window`'s origin.
 		pub event_coords: Point,
 
-		/// The logical state of mouse buttons and modifier keys immediately
+		/// The state of mouse buttons and modifier keys immediately
 		/// before this event was generated.
 		pub modifiers: ModifierMask,
 
@@ -275,7 +275,7 @@ derive_xrb! {
 		/// relative to the `event_window`'s origin.
 		pub event_coords: Point,
 
-		/// The logical state of mouse buttons and modifier keys immediately
+		/// The state of mouse buttons and modifier keys immediately
 		/// before this event was generated.
 		pub modifiers: ModifierMask,
 
@@ -382,7 +382,7 @@ derive_xrb! {
 		/// relative to the `event_window`'s origin.
 		pub event_coords: Point,
 
-		/// The logical state of mouse buttons and modifier keys immediately
+		/// The state of mouse buttons and modifier keys immediately
 		/// before this event was generated.
 		pub modifiers: ModifierMask,
 
@@ -392,61 +392,260 @@ derive_xrb! {
 	}
 }
 
+/// Detail that describes how a window receiving a [`LeaveWindow`] or
+/// [`EnterWindow`] event relates to the event which took place.
+///
+/// If the cursor moves from window A to window B and A is a descendent of B:
+/// - A [`LeaveWindow`] event is generated on A with a detail of [`Ancestor`].
+/// - A [`LeaveWindow`] event is generated on each window between A and B
+///   exclusive (in that order) with a detail of [`Intermediate`].
+/// - An [`EnterWindow`] event is generated on B with a detail of
+///   [`Descendent`].
+///
+/// If the cursor moves from window A to window B and A is an ancestor of B:
+/// - A [`LeaveWindow`] event is generated on A with a detail of [`Descendent`].
+/// - An [`EnterWindow`] event is generated on each window between A and B
+///   exclusive (in that order) with a detail of [`Intermediate`]
+/// - An [`EnterWindow`] event is generated on B with a detail of [`Ancestor`].
+///
+/// If the cursor moves from window A to window B and window C is their least
+/// common ancestor:
+/// - A [`LeaveWindow`] event is generated on A with a detail of [`Nonlinear`].
+/// - A [`LeaveWindow`] event is generated on each window between A and C
+///   exclusive (in that order) with a detail of [`NonlinearIntermediate`].
+/// - An [`EnterWindow`] event is generated on each window between C and B
+///   exclusive (in that order) with a detail of [`NonlinearIntermediate`].
+/// - An [`EnterWindow`] event is generated on B with a detail of [`Nonlinear`].
+///
+/// If the cursor moves from window A to window B and A and B are on different
+/// screens:
+/// - A [`LeaveWindow`] event is generated on A with a detail of [`Nonlinear`].
+/// - If A is not a root window, a [`LeaveWindow`] event is generated on each
+///   ancestor of A including its root, in order from A's parent to its root,
+///   with a detail of [`NonlinearIntermediate`].
+/// - If B is not a root window, an [`EnterWindow`] event is generated on each
+///   ancestor of B including its root, in order from B's root to B's parent,
+///   with a detail of [`NonlinearIntermediate`].
+/// - An [`EnterWindow`] event is generated on B with a detail of [`Nonlinear`].
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
 pub enum EnterLeaveDetail {
+	/// Used for [`LeaveWindow`] events when the cursor leaves a window and
+	/// enters an ancestor of that window, and for [`EnterWindow`] events
+	/// when the cursor enters a window and leaves an ancestor of that window.
 	Ancestor,
-	Virtual,
-	Inferior,
+	/// Used in [`LeaveWindow`] and [`EnterWindow`] events for all windows
+	/// between the newly entered window and the previous window if one is a
+	/// descendent of the other.
+	Intermediate,
+	/// Used for [`LeaveWindow`] events when the cursor leaves a window and
+	/// enters a descendent of that window, and for [`EnterWindow`] events
+	/// when the cursor enters a window and leaves a descendent of that window.
+	Descendant,
+
+	/// Used for [`LeaveWindow`] and [`EnterWindow`] events for the newly
+	/// entered window and the previous window if neither is a descendent of the
+	/// other.
 	Nonlinear,
-	NonlinearVirtual,
+	/// Used for [`LeaveWindow`] and [`EnterWindow`] events when neither the
+	/// window that was left nor the window that was entered are a descendent of
+	/// the other.
+	///
+	/// This is the detail for the [`LeaveWindow`] events generated for all the
+	/// windows between the window that was left and the least common ancestor
+	/// of that window and the window that was entered (exclusive).
+	///
+	/// This is the detail for the [`EnterWindow`] events generated for all the
+	/// windows between the window that was entered and the least common
+	/// ancestor of that window and the window that was left (exclusive).
+	NonlinearIntermediate,
 }
 
 bitflags! {
+	/// A bitmask used in the [`EnterWindow`] and [`LeaveWindow`] events.
 	#[derive(Default, DataSize, Readable, StaticDataSize, Writable)]
 	pub struct EnterLeaveMask: u8 {
+		/// Whether the `event_window` is the focused window or a descendant
+		/// of the focused window.
 		const FOCUS = 0x01;
+		/// Whether the cursor is on the same screen as the `event_window`.
 		const SAME_SCREEN = 0x02;
 	}
 }
 
 derive_xrb! {
+	/// An event generated when the cursor enters a [`Window`].
+	///
+	/// This event is triggered both when the cursor moves to be in a different
+	/// window than it was before, as well as when the window under the cursor
+	/// changes due to a change in the window hierarchy (i.e. [`WindowUnmapped`],
+	/// [`WindowMapped`], [`WindowConfigured`], [`GravityChanged`],
+	/// [`WindowCirculated`]).
+	///
+	/// This event is received only be clients selecting `ENTER_WINDOW` on a
+	/// window.
+	///
+	/// `EnterWindow` events caused by a hierarchy change are generated after
+	/// that hierarchy change event (see above), but there is no restriction
+	/// as to whether `EnterWindow` events should be generated before or
+	/// after [`WindowUnfocused`], [`VisibilityChanged`], or [`Expose`] events.
 	pub struct EnterWindow: Event(7) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
+
 		#[metabyte]
+		/// Detail about how the event was generated.
+		///
+		/// See [`EnterLeaveDetail`] for more information.
 		pub detail: EnterLeaveDetail,
 
+		/// The time at which this event was generated.
 		pub time: Timestamp,
 
+		/// The root window containing the window in which the cursor was
+		/// located when this event was generated.
 		pub root: Window,
-		pub window: Window,
+		/// The window which this event was generated in relation to.
+		///
+		/// This window is found by beginning with the window which the cursor
+		/// is located within, then looking up the window hierarchy for the
+		/// first window on which any client has selected interest in this
+		/// event (provided no window between the two prohibits this event from
+		/// generating in its `do_not_propagate_mask`).
+		///
+		/// Active grabs may modify how the `event_window` is chosen.
+		pub event_window: Window,
+		/// If a child of the `event_window` contains the final cursor position
+		/// (`event_coords`), this is that child.
+		///
+		/// Otherwise, this is [`None`].
 		pub child_window: Option<Window>,
 
+		/// The position of the cursor at the time this event was generated,
+		/// relative to the `root` window's origin.
+		///
+		/// This is always the final position of the cursor, not its initial
+		/// position.
 		pub root_coords: Point,
-		pub window_coords: Point,
+		/// The position of the cursor at the time this event was generated,
+		/// relative to the `event_window`'s origin, if the `event_window` is on
+		/// the [`SAME_SCREEN`].
+		///
+		/// If the `event_window` is on a different screen, these coordinates
+		/// are zero.
+		///
+		/// This is always the final position of the cursor, not its initial
+		/// position.
+		///
+		/// [`SAME_SCREEN`]: EnterLeaveMask::SAME_SCREEN
+		pub event_coords: Point,
 
+		/// The state of mouse buttons and modifier keys immediately
+		/// before this event was generated.
 		pub modifiers: ModifierMask,
+		/// [`Normal`] for normal `EnterWindow` events, [`Grab`] and
+		/// [`Ungrab`] for events generated by grabs and ungrabs.
+		///
+		/// [`Normal`]: GrabMode::Normal
+		/// [`Grab`]: GrabMode::Grab
+		/// [`Ungrab`]: GrabMode::Ungrab
 		pub grab_mode: GrabMode,
+
+		/// A bitmask containing two boolean fields, [`FOCUS`] and [`SAME_SCREEN`].
+		///
+		/// [`FOCUS`]: EnterLeaveMask::FOCUS
+		/// [`SAME_SCREEN`]: EnterLeaveMask::SAME_SCREEN
 		pub mask: EnterLeaveMask,
 	}
 
+	/// An event generated when the cursor leaves a [`Window`].
+	///
+	/// This event is triggered both when the cursor moves to be in a different
+	/// window than it was before, as well as when the window under the cursor
+	/// changes due to a change in the window hierarchy (i.e. [`WindowUnmapped`],
+	/// [`WindowMapped`], [`WindowConfigured`], [`GravityChanged`],
+	/// [`WindowCirculated`]).
+	///
+	/// This event is received only be clients selecting `LEAVE_WINDOW` on a
+	/// window.
+	///
+	/// `LeaveWindow` events caused by a hierarchy change are generated after
+	/// that hierarchy change event (see above), but there is no restriction
+	/// as to whether `LeaveWindow` events should be generated before or
+	/// after [`WindowUnfocused`], [`VisibilityChanged`], or [`Expose`] events.
 	pub struct LeaveWindow: Event(8) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
+
 		#[metabyte]
+		/// Detail about how the event was generated.
+		///
+		/// See [`EnterLeaveDetail`] for more information.
 		pub detail: EnterLeaveDetail,
 
+		/// The time at which this event was generated.
 		pub time: Timestamp,
 
+		/// The root window containing the window in which the cursor was
+		/// located when this event was generated.
 		pub root: Window,
-		pub window: Window,
+		/// The window which this event was generated in relation to.
+		///
+		/// This window is found by beginning with the window which the cursor
+		/// is located within, then looking up the window hierarchy for the
+		/// first window on which any client has selected interest in this
+		/// event (provided no window between the two prohibits this event from
+		/// generating in its `do_not_propagate_mask`).
+		///
+		/// Active grabs may modify how the `event_window` is chosen.
+		pub event_window: Window,
+		/// If a child of the `event_window` contains the initial cursor position
+		/// (`event_coords`), this is that child.
+		///
+		/// Otherwise, this is [`None`].
 		pub child_window: Option<Window>,
 
+		/// The position of the cursor at the time this event was generated,
+		/// relative to the `root` window's origin.
+		///
+		/// This is always the final position of the cursor, not its initial
+		/// position.
 		pub root_coords: Point,
-		pub window_coords: Point,
+		/// The position of the cursor at the time this event was generated,
+		/// relative to the `event_window`'s origin, if the `event_window` is on
+		/// the [`SAME_SCREEN`].
+		///
+		/// If the `event_window` is on a different screen, these coordinates
+		/// are zero.
+		///
+		/// This is always the final position of the cursor, not its initial
+		/// position.
+		///
+		/// [`SAME_SCREEN`]: EnterLeaveMask::SAME_SCREEN
+		pub event_coords: Point,
 
+		/// The state of mouse buttons and modifier keys immediately
+		/// before this event was generated.
 		pub modifiers: ModifierMask,
+		/// [`Normal`] for normal `LeaveWindow` events, [`Grab`] and
+		/// [`Ungrab`] for events generated by grabs and ungrabs.
+		///
+		/// [`Normal`]: GrabMode::Normal
+		/// [`Grab`]: GrabMode::Grab
+		/// [`Ungrab`]: GrabMode::Ungrab
 		pub grab_mode: GrabMode,
+
+		/// A bitmask containing two boolean fields, [`FOCUS`] and [`SAME_SCREEN`].
+		///
+		/// [`FOCUS`]: EnterLeaveMask::FOCUS
+		/// [`SAME_SCREEN`]: EnterLeaveMask::SAME_SCREEN
 		pub mask: EnterLeaveMask,
 	}
 }
@@ -472,7 +671,7 @@ pub enum FocusGrabMode {
 }
 
 derive_xrb! {
-	pub struct FocusIn: Event(9) {
+	pub struct WindowFocused: Event(9) {
 		#[sequence]
 		pub sequence: u16,
 		#[metabyte]
@@ -483,7 +682,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	pub struct FocusOut: Event(10) {
+	pub struct WindowUnfocused: Event(10) {
 		#[sequence]
 		pub sequence: u16,
 		#[metabyte]
@@ -494,7 +693,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	pub struct KeymapNotify: Event(11) {
+	pub struct Keymap: Event(11) {
 		pub keys: [Keycode; 31],
 	}
 
@@ -549,7 +748,7 @@ pub enum Visibility {
 }
 
 derive_xrb! {
-	pub struct VisibilityNotify: Event(15) {
+	pub struct VisibilityChanged: Event(15) {
 		#[sequence]
 		pub sequence: u16,
 
@@ -558,7 +757,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	pub struct CreateNotify: Event(16) {
+	pub struct WindowCreated: Event(16) {
 		#[sequence]
 		pub sequence: u16,
 
@@ -576,7 +775,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	pub struct DestroyNotify: Event(17) {
+	pub struct WindowDestroyed: Event(17) {
 		#[sequence]
 		pub sequence: u16,
 
@@ -585,7 +784,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	pub struct UnmapNotify: Event(18) {
+	pub struct WindowUnmapped: Event(18) {
 		#[sequence]
 		pub sequence: u16,
 
@@ -599,7 +798,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	pub struct MapNotify: Event(19) {
+	pub struct WindowMapped: Event(19) {
 		#[sequence]
 		pub sequence: u16,
 
@@ -619,7 +818,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	pub struct ReparentNotify: Event(21) {
+	pub struct WindowReparented: Event(21) {
 		#[sequence]
 		pub sequence: u16,
 
@@ -635,7 +834,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	pub struct ConfigureNotify: Event(22) {
+	pub struct WindowConfigured: Event(22) {
 		#[sequence]
 		pub sequence: u16,
 
@@ -673,7 +872,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	pub struct GravityNotify: Event(24) {
+	pub struct GravityChanged: Event(24) {
 		#[sequence]
 		pub sequence: u16,
 
@@ -686,7 +885,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	pub struct ResizeRequest: Event(25) {
+	pub struct WindowResized: Event(25) {
 		#[sequence]
 		pub sequence: u16,
 
@@ -705,7 +904,7 @@ pub enum Placement {
 }
 
 derive_xrb! {
-	pub struct CirculateNotify: Event(26) {
+	pub struct WindowCirculated: Event(26) {
 		#[sequence]
 		pub sequence: u16,
 
@@ -743,7 +942,7 @@ pub enum PropertyChange {
 }
 
 derive_xrb! {
-	pub struct PropertyNotify: Event(28) {
+	pub struct PropertyChanged: Event(28) {
 		#[sequence]
 		pub sequence: u16,
 
