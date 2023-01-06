@@ -56,11 +56,20 @@ pub const PROTOCOL_MAJOR_VERSION: u16 = 11;
 pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 
 mod common;
-mod connection;
+pub mod connection;
 mod r#trait;
 /// Implementations for the core X11 protocol.
 pub mod x11;
 
 pub use common::*;
-pub use connection::*;
+pub use connection::{
+	Depth,
+	Endianness,
+	Format,
+	ImageEndianness,
+	Millimeters,
+	Screen,
+	VisualClass,
+	VisualType,
+};
 pub use r#trait::*;
