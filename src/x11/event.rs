@@ -1115,25 +1115,75 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	/// An event generated when a [window] is created.
+	///
+	/// This event is reported to clients selecting [`SUBSTRUCTURE_NOTIFY`] on
+	/// the window's parent.
+	///
+	/// [window]: Window
+	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
 	pub struct WindowCreated: Event(16) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
+		/// The parent of the `window` that was created.
 		pub parent: Window,
+		/// The window that was created.
 		pub window: Window,
 
+		/// The geometry (coordinates and dimensions) of the window that was
+		/// created.
+		///
+		/// The window's coordinates are relative to its `parent`'s origin.
+		///
+		/// The window's dimensions exclude its border.
 		pub geometry: Rectangle,
+		/// The width of the window that was created's border.
+		///
+		/// This is zero for [`WindowClass::InputOnly`] windows.
+		///
+		/// [`WindowClass::InputOnly`]: crate::WindowClass::InputOnly
 		pub border_width: u16,
 
+		/// Whether [`MapWindow`] and [`ConfigureWindow`] requests on the newly
+		/// created window should override a [`SUBSTRUCTURE_REDIRECT`] on the
+		/// window's `parent`.
+		///
+		/// This is typically set to inform the window manager not to tamper
+		/// with the window.
+		///
+		/// [`MapWindow`]: super::request::MapWindow
+		/// [`ConfigureWindow`]: super::request::ConfigureWindow
+		///
+		/// [`SUBSTRUCTURE_REDIRECT`]: crate::mask::EventMask::SUBSTRUCTURE_REDIRECT
 		pub override_redirect: bool,
 		[_; ..],
 	}
 
+	/// An event generated when a [window] is destroyed.
+	///
+	/// This event is reported to clients selecting [`STRUCTURE_NOTIFY`] on the
+	/// window, as well as to clients selecting [`SUBSTRUCTURE_NOTIFY`] on its
+	/// parent.
+	///
+	/// [window]: Window
+	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
+	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
 	pub struct WindowDestroyed: Event(17) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
+		/// The window on which this `WindowDestroyed` was generated.
 		pub event_window: Window,
+		/// The window which was destroyed.
 		pub window: Window,
 		[_; ..],
 	}
