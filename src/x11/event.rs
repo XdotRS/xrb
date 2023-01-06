@@ -799,7 +799,7 @@ derive_xrb! {
 		#[metabyte]
 		/// Detail about how the event was generated.
 		///
-		/// See [`EnterLeaveDetail`] for more information.
+		/// See [`FocusDetail`] for more information.
 		pub detail: FocusDetail,
 
 		/// The window which was focused.
@@ -844,7 +844,7 @@ derive_xrb! {
 		#[metabyte]
 		/// Detail about how the event was generated.
 		///
-		/// See [`EnterLeaveDetail`] for more information.
+		/// See [`FocusDetail`] for more information.
 		pub detail: FocusDetail,
 
 		/// The window which was unfocused.
