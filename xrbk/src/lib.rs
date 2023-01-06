@@ -83,6 +83,11 @@ pub trait StaticDataSize: DataSize {
 /// Reads a type from bytes.
 pub trait Readable: DataSize {
 	/// Reads [`Self`] from a [`Buf`] of bytes.
+    ///
+    /// # Errors
+    ///
+    /// - [`ReadError::UnrecognizedDiscriminant`]: The value encountered is not matching any enum's variants discriminant.
+    /// - [`ReadError::Other`]: Any other error when parsing.
 	fn read_from(reader: &mut impl Buf) -> ReadResult<Self>
 	where
 		Self: Sized;
@@ -99,6 +104,11 @@ pub trait ContextualReadable: DataSize {
 
 	/// Reads [`Self`] from a [`Buf`] of bytes, given some additional
 	/// [`Context`](Self::Context).
+    ///
+    /// # Errors
+    ///
+    /// - [`ReadError::UnrecognizedDiscriminant`]: The value encountered is not matching any enum's variants discriminant.
+    /// - [`ReadError::Other`]: Any other error when parsing.
 	fn read_with(reader: &mut impl Buf, context: &Self::Context) -> ReadResult<Self>
 	where
 		Self: Sized;
@@ -107,6 +117,10 @@ pub trait ContextualReadable: DataSize {
 /// Allows a type to be written as bytes.
 pub trait Writable: DataSize {
 	/// Writes [`self`](Self) as bytes to a [`BufMut`].
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`WriteError`] if it was not able to properly write to the given `reader`.
 	fn write_to(&self, writer: &mut impl BufMut) -> WriteResult;
 }
 

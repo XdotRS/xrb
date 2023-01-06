@@ -12,7 +12,7 @@ macro_rules! static_data_size {
 		$(
 			impl StaticDataSize for $type {
 				fn static_data_size() -> usize {
-					std::mem::size_of::<$type>()
+					std::mem::size_of::<Self>()
 				}
 			}
 			impl DataSize for $type {
@@ -89,10 +89,7 @@ impl DataSize for &str {
 
 impl<T: DataSize> DataSize for Option<T> {
 	default fn data_size(&self) -> usize {
-		match &self {
-			None => 1,
-			Some(v) => v.data_size(),
-		}
+		self.as_ref().map_or(1, DataSize::data_size)
 	}
 }
 

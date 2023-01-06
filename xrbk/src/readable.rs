@@ -49,10 +49,9 @@ impl<T: Readable, const N: usize> Readable for [T; N] {
 			vec.push(T::read_from(reader)?);
 		}
 
-		Ok(match vec.try_into() {
-			Ok(array) => array,
-			Err(_) => unreachable!("we know the length of this vec is `N`"),
-		})
+		Ok(vec
+			.try_into()
+			.unwrap_or_else(|_| unreachable!("we know the length of this vec is `N`")))
 	}
 }
 
