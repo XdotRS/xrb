@@ -56,32 +56,20 @@ derive_xrb! {
 		pub root: Window,
 		/// The window which this event was generated in relation to.
 		///
-		/// This window is found by beginning with the window which the cursor
-		/// is located within, then looking up the window hierarchy for the
-		/// first window on which any client has selected interest in this
-		/// event (provided no window between the two prohibits this event from
+		/// This window is found by beginning with the window in which the
+		/// cursor is located, then searching up the window hierarchy (starting
+		/// with that window, then going to its parent, etc.) to find the first
+		/// window which any client has selected interest in this event
+		/// (provided no window between the two prohibits this event from
 		/// generating in its `do_not_propagate_mask`).
 		///
 		/// Active grabs or the currently focused window may modify how the
 		/// `event_window` is chosen.
 		pub event_window: Window,
-		/// The direct child of the `event_window` which is an ancestor of the
-		/// window in which the cursor was located when this event was
-		/// generated, if one exists.
+		/// If a child of the `event_window` contains the cursor, this is that
+		/// child.
 		///
-		/// If the window in which the cursor was located within (the source
-		/// window) when this event was generated is a descendant of the
-		/// `event_window` (that is, it was a child of it, or a child of a
-		/// child of it, or a child of a child of a child of it, etc.), then
-		/// this is set to the direct child of the `event_window` which is the
-		/// ancestor, or is, the source window. Otherwise, if the source window
-		/// was not a descendent of the `event_window`, then this is set to
-		/// `None`.
-		///
-		/// That means if the source window was a child of a child of the
-		/// `event_window`, then this would be set to the source window's
-		/// parent, as that is an ancestor of the source window and a direct
-		/// child of the `event_window`.
+		/// Otherwise, this is [`None`].
 		pub child_window: Option<Window>,
 
 		/// The coordinates of the cursor at the time this event was
@@ -123,32 +111,20 @@ derive_xrb! {
 		pub root: Window,
 		/// The window which this event was generated in relation to.
 		///
-		/// This window is found by beginning with the window which the cursor
-		/// is located within, then looking up the window hierarchy for the
-		/// first window on which any client has selected interest in this
-		/// event (provided no window between the two prohibits this event from
+		/// This window is found by beginning with the window in which the
+		/// cursor is located, then searching up the window hierarchy (starting
+		/// with that window, then going to its parent, etc.) to find the first
+		/// window which any client has selected interest in this event
+		/// (provided no window between the two prohibits this event from
 		/// generating in its `do_not_propagate_mask`).
 		///
 		/// Active grabs or the currently focused window may modify how the
 		/// `event_window` is chosen.
 		pub event_window: Window,
-		/// The direct child of the `event_window` which is an ancestor of the
-		/// window in which the cursor was located when this event was
-		/// generated, if one exists.
+		/// If a child of the `event_window` contains the cursor, this is that
+		/// child.
 		///
-		/// If the window in which the cursor was located within (the source
-		/// window) when this event was generated is a descendant of the
-		/// `event_window` (that is, it was a child of it, or a child of a
-		/// child of it, or a child of a child of a child of it, etc.), then
-		/// this is set to the direct child of the `event_window` which is the
-		/// ancestor, or is, the source window. Otherwise, if the source window
-		/// was not a descendent of the `event_window`, then this is set to
-		/// `None`.
-		///
-		/// That means if the source window was a child of a child of the
-		/// `event_window`, then this would be set to the source window's
-		/// parent, as that is an ancestor of the source window and a direct
-		/// child of the `event_window`.
+		/// Otherwise, this is [`None`].
 		pub child_window: Option<Window>,
 
 		/// The coordinates of the cursor at the time this event was
@@ -188,31 +164,19 @@ derive_xrb! {
 		pub root: Window,
 		/// The window which this event was generated in relation to.
 		///
-		/// This window is found by beginning with the window which the cursor
-		/// is located within, then looking up the window hierarchy for the
-		/// first window on which any client has selected interest in this
-		/// event (provided no window between the two prohibits this event from
+		/// This window is found by beginning with the window in which the
+		/// cursor is located, then searching up the window hierarchy (starting
+		/// with that window, then going to its parent, etc.) to find the first
+		/// window which any client has selected interest in this event
+		/// (provided no window between the two prohibits this event from
 		/// generating in its `do_not_propagate_mask`).
 		///
 		/// Active grabs may modify how the `event_window` is chosen.
 		pub event_window: Window,
-		/// The direct child of the `event_window` which is an ancestor of the
-		/// window in which the cursor was located when this event was
-		/// generated, if one exists.
+		/// If a child of the `event_window` contains the cursor, this is that
+		/// child.
 		///
-		/// If the window in which the cursor was located within (the source
-		/// window) when this event was generated is a descendant of the
-		/// `event_window` (that is, it was a child of it, or a child of a
-		/// child of it, or a child of a child of a child of it, etc.), then
-		/// this is set to the direct child of the `event_window` which is the
-		/// ancestor, or is, the source window. Otherwise, if the source window
-		/// was not a descendent of the `event_window`, then this is set to
-		/// `None`.
-		///
-		/// That means if the source window was a child of a child of the
-		/// `event_window`, then this would be set to the source window's
-		/// parent, as that is an ancestor of the source window and a direct
-		/// child of the `event_window`.
+		/// Otherwise, this is [`None`].
 		pub child_window: Option<Window>,
 
 		/// The coordinates of the cursor at the time this event was generated,
@@ -252,31 +216,19 @@ derive_xrb! {
 		pub root: Window,
 		/// The window which this event was generated in relation to.
 		///
-		/// This window is found by beginning with the window which the cursor
-		/// is located within, then looking up the window hierarchy for the
-		/// first window on which any client has selected interest in this
-		/// event (provided no window between the two prohibits this event from
+		/// This window is found by beginning with the window in which the
+		/// cursor is located, then searching up the window hierarchy (starting
+		/// with that window, then going to its parent, etc.) to find the first
+		/// window which any client has selected interest in this event
+		/// (provided no window between the two prohibits this event from
 		/// generating in its `do_not_propagate_mask`).
 		///
 		/// Active grabs may modify how the `event_window` is chosen.
 		pub event_window: Window,
-		/// The direct child of the `event_window` which is an ancestor of the
-		/// window in which the cursor was located when this event was
-		/// generated, if one exists.
+		/// If a child of the `event_window` contains the cursor, this is that
+		/// child.
 		///
-		/// If the window in which the cursor was located within (the source
-		/// window) when this event was generated is a descendant of the
-		/// `event_window` (that is, it was a child of it, or a child of a
-		/// child of it, or a child of a child of a child of it, etc.), then
-		/// this is set to the direct child of the `event_window` which is the
-		/// ancestor, or is, the source window. Otherwise, if the source window
-		/// was not a descendent of the `event_window`, then this is set to
-		/// `None`.
-		///
-		/// That means if the source window was a child of a child of the
-		/// `event_window`, then this would be set to the source window's
-		/// parent, as that is an ancestor of the source window and a direct
-		/// child of the `event_window`.
+		/// Otherwise, this is [`None`].
 		pub child_window: Option<Window>,
 
 		/// The coordinates of the cursor at the time this event was generated,
@@ -359,31 +311,19 @@ derive_xrb! {
 		pub root: Window,
 		/// The window which this event was generated in relation to.
 		///
-		/// This window is found by beginning with the window which the cursor
-		/// is located within, then looking up the window hierarchy for the
-		/// first window on which any client has selected interest in this
-		/// event (provided no window between the two prohibits this event from
+		/// This window is found by beginning with the window in which the
+		/// cursor is located, then searching up the window hierarchy (starting
+		/// with that window, then going to its parent, etc.) to find the first
+		/// window which any client has selected interest in this event
+		/// (provided no window between the two prohibits this event from
 		/// generating in its `do_not_propagate_mask`).
 		///
 		/// Active grabs may modify how the `event_window` is chosen.
 		pub event_window: Window,
-		/// The direct child of the `event_window` which is an ancestor of the
-		/// window in which the cursor was located when this event was
-		/// generated, if one exists.
+		/// If a child of the `event_window` contains the cursor, this is that
+		/// child.
 		///
-		/// If the window in which the cursor was located within (the source
-		/// window) when this event was generated is a descendant of the
-		/// `event_window` (that is, it was a child of it, or a child of a
-		/// child of it, or a child of a child of a child of it, etc.), then
-		/// this is set to the direct child of the `event_window` which is the
-		/// ancestor, or is, the source window. Otherwise, if the source window
-		/// was not a descendent of the `event_window`, then this is set to
-		/// `None`.
-		///
-		/// That means if the source window was a child of a child of the
-		/// `event_window`, then this would be set to the source window's
-		/// parent, as that is an ancestor of the source window and a direct
-		/// child of the `event_window`.
+		/// Otherwise, this is [`None`].
 		pub child_window: Option<Window>,
 
 		/// The coordinates of the cursor at the time this event was generated,
@@ -528,10 +468,11 @@ derive_xrb! {
 		pub root: Window,
 		/// The window which this event was generated in relation to.
 		///
-		/// This window is found by beginning with the window which the cursor
-		/// is located within, then looking up the window hierarchy for the
-		/// first window on which any client has selected interest in this
-		/// event (provided no window between the two prohibits this event from
+		/// This window is found by beginning with the window in which the
+		/// cursor is located, then searching up the window hierarchy (starting
+		/// with that window, then going to its parent, etc.) to find the first
+		/// window which any client has selected interest in this event
+		/// (provided no window between the two prohibits this event from
 		/// generating in its `do_not_propagate_mask`).
 		///
 		/// Active grabs may modify how the `event_window` is chosen.
@@ -616,10 +557,11 @@ derive_xrb! {
 		pub root: Window,
 		/// The window which this event was generated in relation to.
 		///
-		/// This window is found by beginning with the window which the cursor
-		/// is located within, then looking up the window hierarchy for the
-		/// first window on which any client has selected interest in this
-		/// event (provided no window between the two prohibits this event from
+		/// This window is found by beginning with the window in which the
+		/// cursor is located, then searching up the window hierarchy (starting
+		/// with that window, then going to its parent, etc.) to find the first
+		/// window which any client has selected interest in this event
+		/// (provided no window between the two prohibits this event from
 		/// generating in its `do_not_propagate_mask`).
 		///
 		/// Active grabs may modify how the `event_window` is chosen.
