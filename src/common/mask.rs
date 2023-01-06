@@ -69,14 +69,12 @@ bitflags! {
 		/// Cursor 'drag' events when any mouse button is held.
 		const ANY_BUTTON_MOTION = 0x0000_2000;
 
-		/// Events generated when the state of the keymap changes.
+		/// Events generated after every [`EnterWindow`] and [`Focus`] event
+		/// reporting the currently held keys.
 		///
-		/// "Keymap" refers to the mapping between the [`Keycode`]s interpreted
-		/// by the kernel and the [`Keysym`]s outputted by X.
-		///
-		/// [`Keycode`]: crate::Keycode
-		/// [`Keysym`]: crate::Keysym
-		const KEYMAP_STATE = 0x0000_4000;
+		/// [`EnterWindow`]: crate::x11::event::EnterWindow
+		/// [`Focus`]: crate::x11::event::Focus
+		const KEY_STATE = 0x0000_4000;
 
 		/// Events generated for arbitrary rectangular areas of windows that
 		/// need to be rendered.
@@ -201,14 +199,12 @@ bitflags! {
 		/// Cursor 'drag' events when any mouse button is held.
 		const ANY_BUTTON_MOTION = 0x0000_2000;
 
-		/// Events generated when the state of the keymap changes.
+		/// Events generated after every [`EnterWindow`] and [`Focus`] event
+		/// reporting the currently held keys.
 		///
-		/// keymap refers to the mapping between the [`Keycode`]s interpreted
-		/// by the kernel and the [`Keysym`]s outputted by X.
-		///
-		/// [`Keycode`]: crate::Keycode
-		/// [`Keysym`]: crate::Keysym
-		const KEYMAP_STATE = 0x0000_4000;
+		/// [`EnterWindow`]: crate::x11::event::EnterWindow
+		/// [`Focus`]: crate::x11::event::Focus
+		const KEY_STATE = 0x0000_4000;
 
 		// removes other events irrelevant to the cursor and buttons
 	}
