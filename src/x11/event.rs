@@ -927,7 +927,6 @@ derive_xrb! {
 
 		/// The window which this `Expose` event applies to.
 		pub window: Window,
-
 		/// The region of the `event_window` which this `Expose` event applies
 		/// to.
 		pub region: Region,
@@ -942,29 +941,79 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	/// An event generated when using graphics operations when a region of a
+	/// source [`Drawable`] is obscured.
+	///
+	/// This event is reported to a client using a [`GraphicsContext`] with
+	/// [`GRAPHICS_EXPOSURE`] selected.
+	///
+	/// This event is generated when a region of the `destination` could not be
+	/// computed because part of the `source` was obscured or out of bounds.
+	///
+	/// [`GraphicsContext`]: crate::GraphicsContext
+	/// [`GRAPHICS_EXPOSURE`]: crate::mask::GraphicsContextMask::GRAPHICS_EXPOSURE
 	pub struct GraphicsExposure: Event(13) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
+		/// The [`Drawable`] this `GraphicsExposure` event applies to.
 		pub drawable: Drawable,
+		/// The obscured or out-of-bounds source region.
+		pub region: Region,
 
-		pub x: u16,
-		pub y: u16,
-		pub width: u16,
-		pub height: u16,
-
+		/// The minor opcode identifying the graphics request used.
+		///
+		/// For the core protocol, this is always zero.
 		pub minor_opcode: u16,
+
+		/// The minimum number of `GraphicsExposure` events that follow for this
+		/// [`Drawable`].
+		///
+		/// A `count` of `0` is guaranteed to mean no more `GraphicsExposure`
+		/// events for this [`Drawable`] follow.
 		pub count: u16,
+
+		/// The major opcode identifying the graphics request used.
+		///
+		/// For the core protocol, this always refers to [`CopyArea`] or
+		/// [`CopyPlane`].
+		///
+		/// [`CopyArea`]: super::request::CopyArea
+		/// [`CopyPlane`]: super::request::CopyPlane
 		pub major_opcode: u8,
 		[_; ..],
 	}
 
+	/// An event generated when a graphics request which might generate
+	/// [`GraphicsExposure`] events doesn't generate any.
 	pub struct NoExposure: Event(14) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
+		/// The [`Drawable`] this `NoExposure` event applies to.
+		///
+		/// This is the `destination` of the graphics request.
 		pub drawable: Drawable,
+
+		/// The minor opcode identifying the graphics request used.
+		///
+		/// For the core protocol, this is always zero.
 		pub minor_opcode: u16,
+		/// The major opcode identifying the graphics request used.
+		///
+		/// For the core protocol, this always refers to [`CopyArea`] or
+		/// [`CopyPlane`].
+		///
+		/// [`CopyArea`]: super::request::CopyArea
+		/// [`CopyPlane`]: super::request::CopyPlane
 		pub major_opcode: u8,
 		[_; ..],
 	}
