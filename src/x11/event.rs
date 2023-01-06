@@ -343,7 +343,7 @@ derive_xrb! {
 	}
 }
 
-/// Detail that describes how a window receiving a [`LeaveWindow`] or
+/// Detail that describes how a [`Window`] receiving a [`LeaveWindow`] or
 /// [`EnterWindow`] event relates to the event which took place.
 ///
 /// If the cursor moves from window A to window B and A is a descendent of B:
@@ -445,7 +445,7 @@ derive_xrb! {
 	/// `EnterWindow` events caused by a hierarchy change are generated after
 	/// that hierarchy change event (see above), but there is no restriction
 	/// as to whether `EnterWindow` events should be generated before or
-	/// after [`WindowUnfocused`], [`VisibilityChanged`], or [`Expose`] events.
+	/// after [`Unfocus`], [`VisibilityChanged`], or [`Expose`] events.
 	pub struct EnterWindow: Event(7) {
 		#[sequence]
 		/// The sequence number associated with the last [`Request`] related
@@ -534,7 +534,7 @@ derive_xrb! {
 	/// `LeaveWindow` events caused by a hierarchy change are generated after
 	/// that hierarchy change event (see above), but there is no restriction
 	/// as to whether `LeaveWindow` events should be generated before or
-	/// after [`WindowUnfocused`], [`VisibilityChanged`], or [`Expose`] events.
+	/// after [`Unfocus`], [`VisibilityChanged`], or [`Expose`] events.
 	pub struct LeaveWindow: Event(8) {
 		#[sequence]
 		/// The sequence number associated with the last [`Request`] related
@@ -610,15 +610,146 @@ derive_xrb! {
 	}
 }
 
+/// Detail describing how a [`Window`] that receives a [`Focus`] or [`Unfocus`]
+/// event relates to the event that occurred.
+///
+/// If the focus moves from window A to window B, A is a descendent of B, and
+/// the cursor is in window C:
+/// - An [`Unfocus`] event is generated on A with a detail of [`Ancestor`].
+/// - An [`Unfocus`] event is generated on each window between A and B exclusive
+///   (in that order) with a detail of [`Intermediate`].
+/// - A [`Focus`] event is generated on B with a detail of [`Descendent`].
+/// - If C is a descendent of B but C is not A, nor a descendent of A, nor an
+///   ancestor of A, a [`Focus`] event is generated on each descendent of B down
+///   to and including C (in that order) with a detail of [`Cursor`].
+///
+/// If the focus moves from window A to window B, A is an ancestor of B, and the
+/// cursor is in window C:
+/// - If C is a descendent of A but C is not a descendent of B nor an ancestor
+///   of B, an [`Unfocus`] event is generated on C and each ancestor of C up to
+///   but not including A (in that order) with a detail of [`Cursor`].
+/// - An [`Unfocus`] event is generated on A with a detail of [`Descendent`].
+/// - A [`Focus`] event is generated on  each window between A and B exclusive
+///   (in that order) with a detail of [`Intermediate`].
+/// - A [`Focus`] event is generated on B with a detail of [`Ancestor`].
+///
+/// If the focus moves from with A to window B, the cursor is in window C, and
+/// window D is their least common ancestor:
+/// - If C is a descendent of A, an [`Unfocus`] event is generated on C and each
+///   ancestor of C up to and including A (in that order) with a detail of
+///   [`Cursor`].
+/// - An [`Unfocus`] event is generated on A with a detail of [`Nonlinear`].
+/// - An [`Unfocus`] event is generated on each window between A and D exclusive
+///   (in that order) with a detail of [`NonlinearIntermediate`].
+/// - A [`Focus`] event is generated on each window between D and B exclusive
+///   (in that order) with a detail of [`NonlinearIntermediate`].
+/// - A [`Focus`] event is generated on B with a detail of [`Nonlinear`].
+/// - If C is a descendent of B, a [`Focus`] event is generated on each
+///   descendent of B down to and including C (in that order) with a detail of
+///   [`Cursor`].
+///
+/// If the focus moves from window A to window B, A and B are on different
+/// screens, and the cursor is in window C:
+/// - If C is a descendent of A, an [`Unfocus`] event is generated on C and each
+///   ancestor of C up to but not including A (in that order) with a detail of
+///   [`Cursor`].
+/// - An [`Unfocus`] event is generated on A with a detail of [`Nonlinear`].
+/// - If A is not a root window, an [`Unfocus`] event is generated on each
+///   ancestor of A up to and including its root (in that order) with a detail
+///   of [`NonlinearIntermediate`].
+/// - If B is not a root window, a [`Focus`] event is generated on each ancestor
+///   of B, starting with B's root and ending with B's parent, with a detail of
+///   [`NonlinearIntermediate`].
+/// - A [`Focus`] event is generated on B with a detail of [`Nonlinear`].
+/// - If C is a descendent of B, a [`Focus`] event is generated on each
+///   descendent of B down to and including C (in that order) with a detail of
+///   [`Cursor`].
+///
+/// If the focus moves from window A to [`CursorRoot`] or [`None`] and the
+/// cursor is in window C:
+/// - If C is a descendent of A, an [`Unfocus`] event is generated on C and each
+///   ancestor of C up to but not including A (in that order) with a detail of
+///   [`Cursor`].
+/// - An [`Unfocus`] event is generated on A with a detail of [`Nonlinear`].
+/// - If A is not a root window, an [`Unfocus`] event is generated on each
+///   ancestor of A up to and including its root (in that order) with a detail
+///   of [`NonlinearIntermediate`].
+/// - A [`Focus`] event is generated on all root windows with a detail of
+///   [`CursorRoot`] or [`None`] respectively.
+/// - If the new focus is [`CursorRoot`], a [`Focus`] event is generated on C
+///   and each ancestor of C, starting with C's root and ending with C, with a
+///   detail of [`Cursor`].
+///
+/// If the focus moves from [`CursorRoot`] or [`None`] to window A and the
+/// cursor is in window C:
+/// - If the old focus is [`CursorRoot`], an [`Unfocus`] event is generated on C
+///   and each ancestor of C up to and including C's root (in that order) with a
+///   detail of [`Cursor`].
+/// - An [`Unfocus`] event is generated on all root windows with a detail of
+///   [`CursorRoot`] or [`None`] respectively.
+/// - If A is not a root window, a [`Focus`] event is generated on each ancestor
+///   of A, starting with A's root and ending with A's parent, with a detail of
+///   [`NonlinearIntermediate`].
+/// - A [`Focus`] event is generated on A with a detail of [`Nonlinear`].
+/// - If C is a descendent of A, a [`Focus`] event is generated on each
+///   descendent of A down to and including C (in that order) with a detail of
+///   [`Cursor`].
+///
+/// If the focus moves from [`CursorRoot`] to [`None`] and the cursor is in
+/// window C:
+/// - An [`Unfocus`] event is generated on C and each ancestor of C up to and
+///   including C's root (in that order) with a detail of [`Cursor`].
+/// - An [`Unfocus`] event is generated on all root windows with a detail of
+///   [`CursorRoot`].
+/// - A [`Focus`] event is generated on all root windows with a detail of
+///   [`None`].
+///
+/// If the focus moves from [`None`] to [`CursorRoot`] and the cursor is in
+/// window C:
+/// - An [`Unfocus`] event is generated on all root windows with a detail of
+///   [`None`].
+/// - A [`Focus`] event is generated on all root windows with a detail of
+///   [`CursorRoot`].
+/// - A [`Focus`] event is generated on C and each ancestor of C, starting with
+///   C's root and ending with C, with a detail of [`Cursor`].
+///
+/// [`Ancestor`]: FocusDetail::Ancestor
+/// [`Intermediate`]:  FocusDetail::Intermediate
+/// [`Descendent`]: FocusDetail::Descendent
+///
+/// [`Nonlinear`]: FocusDetail::Nonlinear
+/// [`NonlinearIntermediate`]: FocusDetail::NonlinearIntermediate
+///
+/// [`Cursor`]: FocusDetail::Cursor
+/// [`CursorRoot`]: FocusDetail::CursorRoot
+///
+/// [`None`]: FocusDetail::None
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
 pub enum FocusDetail {
+	/// Used for [`Unfocus`] events for the window which has been unfocused if
+	/// the newly focused window is an ancestor of that window, and for
+	/// [`Focus`] events for the window which has been focused if the newly
+	/// unfocused window is an ancestor of that window.
 	Ancestor,
-	Virtual,
-	Inferior,
+	/// Used for [`Unfocus`] and [`Focus`] events for each window between the
+	/// window that was unfocused and the window that was focused if one is a
+	/// descendent of the other.
+	Intermediate,
+	/// Used for [`Unfocus`] events for the window which has been unfocused if
+	/// the newly focused window is a descendent of that window, and for
+	/// [`Focus`] events for the window which has been focused if the newly
+	/// unfocused window is a descendent of that window.
+	Descendent,
+
+	/// Used for [`Unfocus`] and [`Focus`] events for both the window that was
+	/// unfocused and the window that was focused if neither window is a
+	/// descendent of the other.
 	Nonlinear,
-	NonlinearVirtual,
-	Pointer,
-	PointerRoot,
+	NonlinearIntermediate,
+
+	Cursor,
+
+	CursorRoot,
 	None,
 }
 
@@ -631,24 +762,28 @@ pub enum FocusGrabMode {
 }
 
 derive_xrb! {
-	pub struct WindowFocused: Event(9) {
+	pub struct Focus: Event(9) {
 		#[sequence]
 		pub sequence: u16,
+
 		#[metabyte]
 		pub detail: FocusDetail,
 
-		pub window: Window,
+		/// The window which was focused.
+		pub event_window: Window,
 		pub grab_mode: FocusGrabMode,
 		[_; ..],
 	}
 
-	pub struct WindowUnfocused: Event(10) {
+	pub struct Unfocus: Event(10) {
 		#[sequence]
 		pub sequence: u16,
+
 		#[metabyte]
 		pub detail: FocusDetail,
 
-		pub window: Window,
+		/// The window which was unfocused.
+		pub event_window: Window,
 		pub grab_mode: FocusGrabMode,
 		[_; ..],
 	}
