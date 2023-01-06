@@ -498,6 +498,7 @@ impl ContextualReadable for String16 {
 	}
 }
 
+/// A 2D point with an `x`-coordinate and a `y`-coordinate.
 #[derive(
 	Copy,
 	Clone,
@@ -514,20 +515,36 @@ impl ContextualReadable for String16 {
 	Writable,
 )]
 pub struct Point {
+	#[allow(missing_docs)]
 	pub x: i16,
+	#[allow(missing_docs)]
 	pub y: i16,
 }
 
 /// A rectangle with coordinates and dimensions.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, DataSize, StaticDataSize, Readable, Writable)]
 pub struct Rectangle {
-	/// The `x` coordinate of the upper left corner of the `Rectangle`.
+	/// The x-coordinate of the upper left corner of the `Rectangle`.
 	pub x: i16,
-	/// The `y` coordinate of the upper left corner of the `Rectangle`.
+	/// The y-coordinate of the upper left corner of the `Rectangle`.
 	pub y: i16,
-	/// The `width` of the `Rectangle`.
+	/// The width of the `Rectangle`.
 	pub width: u16,
-	/// The `height` of the `Rectangle`.
+	/// The height of the `Rectangle`.
+	pub height: u16,
+}
+
+/// Same as a [`Rectangle`], but with unsigned coordinates.
+#[derive(Clone, Eq, PartialEq, Hash, Debug, DataSize, StaticDataSize, Readable, Writable)]
+pub struct Region {
+	/// The x-coordinate of the upper left corner of the `Region`.
+	pub x: u16,
+	/// The y-coordinate of the upper left corner of the `Region`.
+	pub y: u16,
+
+	/// The width of the `Region`.
+	pub width: u16,
+	/// The height of the `Region`.
 	pub height: u16,
 }
 

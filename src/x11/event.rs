@@ -23,6 +23,7 @@ use crate::{
 	GrabMode,
 	Keycode,
 	Point,
+	Region,
 	StackMode,
 	Timestamp,
 	Window,
@@ -269,7 +270,7 @@ pub enum MotionNotificationType {
 }
 
 derive_xrb! {
-	/// An event generated when the cursor moves within a [`Window`].
+	/// An event generated when the cursor moves within a [window].
 	///
 	/// Motion events are only generated when the cursor motion begins and ends
 	/// in the same window. If the cursor leaves the window, a [`LeaveWindow`] event
@@ -291,6 +292,8 @@ derive_xrb! {
 	/// [`Hint`]: MotionNotificationType::Hint
 	/// [`QueryCursor`]: super::request::QueryCursor
 	/// [`GetMotionEvents`]: super::request::GetMotionEvents
+	///
+	/// [window]: Window
 	pub struct Motion: Event(6) {
 		#[sequence]
 		/// The sequence number associated with the last [`Request`] related
@@ -343,7 +346,7 @@ derive_xrb! {
 	}
 }
 
-/// Detail that describes how a [`Window`] receiving a [`LeaveWindow`] or
+/// Detail that describes how a [window] receiving a [`LeaveWindow`] or
 /// [`EnterWindow`] event relates to the event which took place.
 ///
 /// If the cursor moves from window A to window B and A is a descendent of B:
@@ -385,6 +388,8 @@ derive_xrb! {
 ///
 /// [`Nonlinear`]: EnterLeaveDetail::Nonlinear
 /// [`NonlinearIntermediate`]: EnterLeaveDetail::NonlinearIntermediate
+///
+/// [window]: Window
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
 pub enum EnterLeaveDetail {
 	/// Used for [`LeaveWindow`] events when the cursor leaves a window and
@@ -431,7 +436,7 @@ bitflags! {
 }
 
 derive_xrb! {
-	/// An event generated when the cursor enters a [`Window`].
+	/// An event generated when the cursor enters a [window].
 	///
 	/// This event is triggered both when the cursor moves to be in a different
 	/// window than it was before, as well as when the window under the cursor
@@ -446,6 +451,8 @@ derive_xrb! {
 	/// that hierarchy change event (see above), but there is no restriction
 	/// as to whether `EnterWindow` events should be generated before or
 	/// after [`Unfocus`], [`VisibilityChanged`], or [`Expose`] events.
+	///
+	/// [window]: Window
 	pub struct EnterWindow: Event(7) {
 		#[sequence]
 		/// The sequence number associated with the last [`Request`] related
@@ -520,7 +527,7 @@ derive_xrb! {
 		pub mask: EnterLeaveMask,
 	}
 
-	/// An event generated when the cursor leaves a [`Window`].
+	/// An event generated when the cursor leaves a [window].
 	///
 	/// This event is triggered both when the cursor moves to be in a different
 	/// window than it was before, as well as when the window under the cursor
@@ -535,6 +542,8 @@ derive_xrb! {
 	/// that hierarchy change event (see above), but there is no restriction
 	/// as to whether `LeaveWindow` events should be generated before or
 	/// after [`Unfocus`], [`VisibilityChanged`], or [`Expose`] events.
+	///
+	/// [window]: Window
 	pub struct LeaveWindow: Event(8) {
 		#[sequence]
 		/// The sequence number associated with the last [`Request`] related
@@ -610,7 +619,7 @@ derive_xrb! {
 	}
 }
 
-/// Detail describing how a [`Window`] that receives a [`Focus`] or [`Unfocus`]
+/// Detail describing how a [window] that receives a [`Focus`] or [`Unfocus`]
 /// event relates to the event that occurred.
 ///
 /// If the focus moves from window A to window B, A is a descendent of B, and
@@ -724,6 +733,8 @@ derive_xrb! {
 /// [`CursorRoot`]: FocusDetail::CursorRoot
 ///
 /// [`None`]: FocusDetail::None
+///
+/// [window]: Window
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
 pub enum FocusDetail {
 	/// Used for [`Unfocus`] events for the window which has been unfocused if
@@ -803,7 +814,7 @@ derive_xrb! {
 		pub detail: FocusDetail,
 
 		/// The window which was focused.
-		pub event_window: Window,
+		pub window: Window,
 
 		/// How this event was generated in relation to grabs.
 		///
@@ -848,7 +859,7 @@ derive_xrb! {
 		pub detail: FocusDetail,
 
 		/// The window which was unfocused.
-		pub event_window: Window,
+		pub window: Window,
 
 		/// How this event was generated in relation to grabs.
 		///
@@ -869,29 +880,64 @@ derive_xrb! {
 
 	/// An event describing the current state of the keyboard.
 	///
-	/// This event is reported to clients selecting `KEY_STATE` on a [`Window`]
+	/// This event is reported to clients selecting `KEY_STATE` on a [window]
 	/// immediately after every [`EnterWindow`] and [`Focus`] event.
+	///
+	/// [window]: Window
 	pub struct KeyState: Event(11) {
 		/// A bit vector representing the current keyboard state.
 		///
 		/// Each bit set to 1 indicates that the corresponding key is currently
-		/// pressed. Byte `N` (starting at 0) contains the bits for keycodes `8N`
+		/// pressed. Byte `N` (starting at 1) contains the bits for keycodes `8N`
 		/// to `8N + 7`, with the least significant bit in the byte representing
 		/// key `8N`.
 		pub keys: [u8; 31],
 	}
 
+	/// An event generated when a rectangular area of a [window] needs to be
+	/// rendered.
+	///
+	/// This event is reported to clients selecting `EXPOSURE` on a [window].
+	///
+	/// This event is generated when no valid contents are available for regions
+	/// of a window, and either:
+	/// - the regions are visible; or
+	/// - the regions are viewable and the server is maintaining a backing store
+	///   on the window; or
+	/// - the window is not viewable but the server is honoring the window's
+	///   [`BackingStore` attribute] of [`Always`] or [`WhenMapped`].
+	///
+	/// The regions are decomposed into an arbitrary set of rectangles, and an
+	/// `Expose` event is generated for each one.
+	///
+	/// **`Expose` events are never generated on [`WindowClass::InputOnly`] windows.**
+	///
+	/// [window]: Window
+	/// [`BackingStore` attribute]: crate::Attribute::BackingStore
+	/// [`Always`]: crate::BackingStores::Always
+	/// [`WhenMapped`]: crate::BackingStores::WhenMapped
+	/// [`WindowClass::InputOnly`]: crate::WindowClass::InputOnly
 	pub struct Expose: Event(12) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
+		/// The window which this `Expose` event applies to.
 		pub window: Window,
 
-		pub x: u16,
-		pub y: u16,
-		pub width: u16,
-		pub height: u16,
+		/// The region of the `event_window` which this `Expose` event applies
+		/// to.
+		pub region: Region,
 
+		/// The minimum number of `Expose` events that follow for this [window].
+		///
+		/// A `count` of `0` is guaranteed to mean no more `Expose` events for
+		/// this window follow.
+		///
+		/// [window]: Window
 		pub count: u16,
 		[_; ..],
 	}
