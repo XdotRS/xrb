@@ -74,7 +74,7 @@ where
 	/// Every request on a given connection is assigned a sequence number when
 	/// it is sent, starting with one. This sequence number can therefore be
 	/// used to keep track of exactly which request generated this reply.
-	fn sequence(&self) -> Option<u16>;
+	fn sequence(&self) -> u16;
 }
 
 // An event is sent in a SendEvent request. It is 32 bytes long.
@@ -90,5 +90,5 @@ where
 
 	// The sequence number associated with the last request sent by the X
 	// server that relates to the event.
-	fn sequence(&self) -> u16;
+	fn sequence(&self) -> Option<u16>;
 }

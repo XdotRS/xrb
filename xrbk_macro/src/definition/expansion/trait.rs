@@ -63,20 +63,14 @@ impl Reply {
 			StructlikeContent::Regular {
 				content,
 				..
-			} if let Some(Element::Field(field)) = content.sequence_element() => {
-				let id = &field.id;
-				quote!(Some(self.#id))
-			},
+			} if let Some(Element::Field(field)) = content.sequence_element() => &field.id,
 
 			StructlikeContent::Tuple {
 				content,
 				..
-			} if let Some(Element::Field(field)) = content.sequence_element() => {
-				let id = &field.id;
-				quote!(Some(self.#id))
-			},
+			} if let Some(Element::Field(field)) = content.sequence_element() => &field.id,
 
-			_ => quote!(None),
+			_ => panic!("replies must have a sequence field of type `u32`"),
 		};
 
 		let r#trait = &self.reply_token;
@@ -92,7 +86,7 @@ impl Reply {
 						((<Self as ::xrbk::DataSize>::data_size(&self) / 4) - 8) as u32
 					}
 
-					fn sequence(&self) -> Option<u16> {
+					fn sequence(&self) -> u16 {
 						#sequence
 					}
 				}
@@ -111,14 +105,20 @@ impl Event {
 			StructlikeContent::Regular {
 				content,
 				..
-			} if let Some(Element::Field(field)) = content.sequence_element() => &field.id,
+			} if let Some(Element::Field(field)) = content.sequence_element() => {
+				let id = &field.id;
+				quote!(Some(self.#id))
+			},
 
 			StructlikeContent::Tuple {
 				content,
 				..
-			} if let Some(Element::Field(field)) = content.sequence_element() => &field.id,
+			} if let Some(Element::Field(field)) = content.sequence_element() => {
+				let id = &field.id;
+				quote!(Some(self.#id))
+			},
 
-			_ => panic!("events must have a sequence field"),
+			_ => quote!(None),
 		};
 
 		let r#trait = &self.event_token;
@@ -131,8 +131,8 @@ impl Event {
 						#code
 					}
 
-					fn sequence(&self) -> u16 {
-						self.#sequence
+					fn sequence(&self) -> Option<u16> {
+						#sequence
 					}
 				}
 			)

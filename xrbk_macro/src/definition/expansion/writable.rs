@@ -260,7 +260,7 @@ impl Event {
 		let sequence = if let Some(Element::Field(field)) = self.content.sequence_element() {
 			let formatted = &field.formatted;
 
-			Some(quote!(buf.put_u16(#formatted);))
+			Some(quote!(buf.put_u16(*#formatted);))
 		} else {
 			None
 		};

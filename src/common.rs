@@ -4,13 +4,41 @@
 
 extern crate self as xrb;
 
+use bytes::Buf;
+use cornflakes::{ContextualReadable, ReadResult};
 use derive_more::{From, Into};
 use xrbk_macro::{derive_xrb, DataSize, Readable, StaticDataSize, Writable};
 
 pub mod atom;
 pub mod mask;
+mod wrapper;
 
 pub use atom::Atom;
+pub use wrapper::*;
+
+#[derive(
+	Copy,
+	Clone,
+	Eq,
+	PartialEq,
+	Hash,
+	Debug,
+	From,
+	Into,
+	// XRBK traits
+	DataSize,
+	StaticDataSize,
+	Readable,
+	Writable,
+)]
+pub struct Color(
+	/// Red.
+	u32,
+	/// Green.
+	u32,
+	/// Blue.
+	u32,
+);
 
 /// A resource ID referring to either a [`Window`] or a [`Pixmap`].
 #[derive(
@@ -28,7 +56,7 @@ pub use atom::Atom;
 	Readable,
 	Writable,
 )]
-pub struct Drawable(u32);
+pub struct Drawable(pub(crate) u32);
 
 impl From<Window> for Drawable {
 	fn from(window: Window) -> Self {
@@ -60,7 +88,7 @@ impl From<Pixmap> for Drawable {
 	Readable,
 	Writable,
 )]
-pub struct Window(u32);
+pub struct Window(pub(crate) u32);
 
 impl From<Drawable> for Window {
 	fn from(drawable: Drawable) -> Self {
@@ -85,7 +113,7 @@ impl From<Drawable> for Window {
 	Readable,
 	Writable,
 )]
-pub struct Pixmap(u32);
+pub struct Pixmap(pub(crate) u32);
 
 impl From<Drawable> for Pixmap {
 	fn from(drawable: Drawable) -> Self {
@@ -110,7 +138,7 @@ impl From<Drawable> for Pixmap {
 	Readable,
 	Writable,
 )]
-pub struct Cursor(u32);
+pub struct Cursor(pub(crate) u32);
 
 /// A resource ID referring to either a [`Font`] or a [`GraphicsContext`].
 #[derive(
@@ -128,7 +156,7 @@ pub struct Cursor(u32);
 	Readable,
 	Writable,
 )]
-pub struct Fontable(u32);
+pub struct Fontable(pub(crate) u32);
 
 impl From<Font> for Fontable {
 	fn from(font: Font) -> Self {
@@ -160,7 +188,7 @@ impl From<GraphicsContext> for Fontable {
 	Readable,
 	Writable,
 )]
-pub struct Font(u32);
+pub struct Font(pub(crate) u32);
 
 impl From<Fontable> for Font {
 	fn from(fontable: Fontable) -> Self {
@@ -191,7 +219,7 @@ impl From<Fontable> for Font {
 	Readable,
 	Writable,
 )]
-pub struct GraphicsContext(u32);
+pub struct GraphicsContext(pub(crate) u32);
 
 impl From<Fontable> for GraphicsContext {
 	fn from(fontable: Fontable) -> Self {
@@ -216,7 +244,7 @@ impl From<Fontable> for GraphicsContext {
 	Readable,
 	Writable,
 )]
-pub struct Colormap(u32);
+pub struct Colormap(pub(crate) u32);
 
 /// Represents a particular time, expressed in milliseconds.
 ///
@@ -237,7 +265,19 @@ pub struct Colormap(u32);
 	Readable,
 	Writable,
 )]
-pub struct Timestamp(u32);
+pub struct Timestamp(pub(crate) u32);
+
+impl Timestamp {
+	#[must_use]
+	pub const fn new(timestamp: u32) -> Self {
+		Self(timestamp)
+	}
+
+	#[must_use]
+	pub const fn unwrap(self) -> u32 {
+		self.0
+	}
+}
 
 #[derive(
 	Copy,
@@ -254,7 +294,19 @@ pub struct Timestamp(u32);
 	Readable,
 	Writable,
 )]
-pub struct VisualId(u32);
+pub struct VisualId(pub(crate) u32);
+
+impl VisualId {
+	#[must_use]
+	pub const fn new(id: u32) -> Self {
+		Self(id)
+	}
+
+	#[must_use]
+	pub const fn unwrap(self) -> u32 {
+		self.0
+	}
+}
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
 pub enum BitGravity {
@@ -286,22 +338,28 @@ pub enum WinGravity {
 	SouthEast,
 }
 
-#[derive(
-	Copy,
-	Clone,
-	Eq,
-	PartialEq,
-	Hash,
-	Debug,
-	From,
-	Into,
-	// XRBK traits
-	DataSize,
-	StaticDataSize,
-	Readable,
-	Writable,
-)]
-pub struct Keysym(u32);
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+pub enum BackingStores {
+	Never,
+	WhenMapped,
+	Always,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+pub enum GrabMode {
+	Normal,
+	Grab,
+	Ungrab,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+pub enum StackMode {
+	Above,
+	Below,
+	TopIf,
+	BottomIf,
+	Opposite,
+}
 
 #[derive(
 	Copy,
@@ -318,7 +376,7 @@ pub struct Keysym(u32);
 	Readable,
 	Writable,
 )]
-pub struct Keycode(u8);
+pub struct Keysym(pub(crate) u32);
 
 #[derive(
 	Copy,
@@ -335,7 +393,7 @@ pub struct Keycode(u8);
 	Readable,
 	Writable,
 )]
-pub struct Button(u8);
+pub struct Keycode(pub(crate) u8);
 
 #[derive(
 	Copy,
@@ -352,7 +410,7 @@ pub struct Button(u8);
 	Readable,
 	Writable,
 )]
-pub struct Char8(u8);
+pub struct Button(pub(crate) u8);
 
 #[derive(
 	Copy,
@@ -369,7 +427,76 @@ pub struct Char8(u8);
 	Readable,
 	Writable,
 )]
-pub struct Char16(u8, u8);
+pub struct Char8(pub(crate) u8);
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug, From, Into, DataSize, Writable)]
+pub struct String8(Vec<Char8>);
+
+impl String8 {
+	#[must_use]
+	pub fn len(&self) -> usize {
+		self.0.len()
+	}
+
+	#[must_use]
+	pub fn is_empty(&self) -> bool {
+		self.0.is_empty()
+	}
+}
+
+impl ContextualReadable for String8 {
+	type Context = usize;
+
+	fn read_with(reader: &mut impl Buf, length: &usize) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		Ok(Self(<Vec<Char8>>::read_with(reader, length)?))
+	}
+}
+
+#[derive(
+	Copy,
+	Clone,
+	Eq,
+	PartialEq,
+	Hash,
+	Debug,
+	From,
+	Into,
+	// XRBK traits
+	DataSize,
+	StaticDataSize,
+	Readable,
+	Writable,
+)]
+pub struct Char16(pub(crate) u8, pub(crate) u8);
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug, From, Into, DataSize, Writable)]
+pub struct String16(Vec<Char16>);
+
+impl String16 {
+	#[must_use]
+	pub fn len(&self) -> usize {
+		self.0.len()
+	}
+
+	#[must_use]
+	pub fn is_empty(&self) -> bool {
+		self.0.is_empty()
+	}
+}
+
+impl ContextualReadable for String16 {
+	type Context = usize;
+
+	fn read_with(reader: &mut impl Buf, length: &usize) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		Ok(Self(<Vec<Char16>>::read_with(reader, length)?))
+	}
+}
 
 #[derive(
 	Copy,
