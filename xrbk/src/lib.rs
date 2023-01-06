@@ -2,7 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-// We need specialization to implement DataSize for types with generics like Option<T>
+// We need specialization to implement DataSize for types with generics like
+// Option<T>
 #![allow(incomplete_features)]
 #![feature(specialization)]
 // Deny the following clippy lints to enforce them:
@@ -67,7 +68,8 @@ pub trait DataSize {
 /// Gives the type size in bytes.
 /// This trait can be used on types with a known size
 ///
-/// This traits requires that the type also implements [`DataSize`] for abstraction.
+/// This traits requires that the type also implements [`DataSize`] for
+/// abstraction.
 pub trait StaticDataSize: DataSize {
 	/// Returns the size of `Self` in bytes when written with [`Writable`].
 	///
