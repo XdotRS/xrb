@@ -23,6 +23,7 @@ use crate::{
 	GrabMode,
 	Keycode,
 	Point,
+	Rectangle,
 	Region,
 	StackMode,
 	Timestamp,
@@ -440,17 +441,17 @@ derive_xrb! {
 	///
 	/// This event is triggered both when the cursor moves to be in a different
 	/// window than it was before, as well as when the window under the cursor
-	/// changes due to a change in the window hierarchy (i.e. [`WindowUnmapped`],
-	/// [`WindowMapped`], [`WindowConfigured`], [`GravityChanged`],
+	/// changes due to a change in the window hierarchy (i.e. [`Unmap`],
+	/// [`Map`], [`WindowConfigured`], [`Gravity`],
 	/// [`WindowCirculated`]).
 	///
-	/// This event is received only be clients selecting `ENTER_WINDOW` on a
+	/// This event is received only by clients selecting `ENTER_WINDOW` on a
 	/// window.
 	///
 	/// `EnterWindow` events caused by a hierarchy change are generated after
 	/// that hierarchy change event (see above), but there is no restriction
 	/// as to whether `EnterWindow` events should be generated before or
-	/// after [`Unfocus`], [`VisibilityChanged`], or [`Expose`] events.
+	/// after [`Unfocus`], [`Visibility`], or [`Expose`] events.
 	///
 	/// [window]: Window
 	pub struct EnterWindow: Event(7) {
@@ -531,17 +532,17 @@ derive_xrb! {
 	///
 	/// This event is triggered both when the cursor moves to be in a different
 	/// window than it was before, as well as when the window under the cursor
-	/// changes due to a change in the window hierarchy (i.e. [`WindowUnmapped`],
-	/// [`WindowMapped`], [`WindowConfigured`], [`GravityChanged`],
+	/// changes due to a change in the window hierarchy (i.e. [`Unmap`],
+	/// [`Map`], [`WindowConfigured`], [`Gravity`],
 	/// [`WindowCirculated`]).
 	///
-	/// This event is received only be clients selecting `LEAVE_WINDOW` on a
+	/// This event is received only by clients selecting `LEAVE_WINDOW` on a
 	/// window.
 	///
 	/// `LeaveWindow` events caused by a hierarchy change are generated after
 	/// that hierarchy change event (see above), but there is no restriction
 	/// as to whether `LeaveWindow` events should be generated before or
-	/// after [`Unfocus`], [`VisibilityChanged`], or [`Expose`] events.
+	/// after [`Unfocus`], [`Visibility`], or [`Expose`] events.
 	///
 	/// [window]: Window
 	pub struct LeaveWindow: Event(8) {
@@ -1019,20 +1020,66 @@ derive_xrb! {
 	}
 }
 
+/// The state of a [window]'s visibility.
+///
+/// This is used in the [`Visibility`] event.
+///
+/// [window]: Window
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
-pub enum Visibility {
+pub enum VisibilityState {
+	/// There is nothing obscuring the window.
+	///
+	/// This is used in the [`Visibility`] event when a window changes state to
+	/// be `Unobscured`.
 	Unobscured,
+	/// The window is partially, but not fully, obscured.
+	///
+	/// This is used in the [`Visibility`] event when a window changes state to
+	/// be `PartiallyObscured`.
 	PartiallyObscured,
+	/// The window is fully obscured.
+	///
+	/// This is used in the [`Visibility`] event when a window changes state to
+	/// be `FullyObscured`.
 	FullyObscured,
 }
 
 derive_xrb! {
-	pub struct VisibilityChanged: Event(15) {
+	/// An event generated when changes to a [window]'s visibility occur.
+	///
+	/// The window's visibility is calculated ignoring all of its subwindows.
+	///
+	/// When a window changes state from not viewable, [`PartiallyObscured`],
+	/// or [`FullyObscured`] to viewable and [`Unobscured`], a `Visibility`
+	/// event with [`VisibilityState::Unobscured`] is generated.
+	///
+	/// When a window changes state from viewable and [`Unobscured`], viewable
+	/// and [`Obscured`], or not viewable, to viewable and
+	/// [`PartiallyObscured`], a `Visibility` event with
+	/// [`VisibilityState::PartiallyObscured`] is generated.
+	///
+	/// When a window changes state from viewable and [`Unobscured`], viewable
+	/// and [`PartiallyObscured`], or not viewable to viewable and
+	/// [`FullyObscured`], a `Visibility` event with
+	/// [`VisibilityState::FullyObscured`] is generated.
+	///
+	/// [window]: Window
+	///
+	/// [`Unobscured`]: VisibilityState::Unobscured
+	/// [`PartiallyObscured`]: VisibilityState::PartiallyObscured
+	/// [`FullyObscured`]: VisibilityState::FullyObscured
+	pub struct Visibility: Event(15) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
+		/// The window this `Visibility` event applies to.
 		pub window: Window,
-		pub visibility: Visibility,
+		/// The new [`VisibilityState`] of the window.
+		pub visibility: VisibilityState,
 		[_; ..],
 	}
 
@@ -1043,11 +1090,7 @@ derive_xrb! {
 		pub parent: Window,
 		pub window: Window,
 
-		pub x: i16,
-		pub y: i16,
-		pub width: u16,
-		pub height: u16,
-
+		pub geometry: Rectangle,
 		pub border_width: u16,
 
 		pub override_redirect: bool,
@@ -1058,12 +1101,12 @@ derive_xrb! {
 		#[sequence]
 		pub sequence: u16,
 
+		pub event_window: Window,
 		pub window: Window,
-		pub destroyed_window: Window,
 		[_; ..],
 	}
 
-	pub struct WindowUnmapped: Event(18) {
+	pub struct Unmap: Event(18) {
 		#[sequence]
 		pub sequence: u16,
 
@@ -1077,7 +1120,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	pub struct WindowMapped: Event(19) {
+	pub struct Map: Event(19) {
 		#[sequence]
 		pub sequence: u16,
 
@@ -1132,7 +1175,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	pub struct ConfigureRequest: Event(23) {
+	pub struct ConfigureWindowRequest: Event(23) {
 		#[sequence]
 		pub sequence: u16,
 		#[metabyte]
@@ -1151,7 +1194,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	pub struct GravityChanged: Event(24) {
+	pub struct Gravity: Event(24) {
 		#[sequence]
 		pub sequence: u16,
 
