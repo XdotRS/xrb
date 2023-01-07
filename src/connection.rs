@@ -2,8 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use xrbk::DataSize;
 use derive_more::{From, Into};
+use xrbk::DataSize;
 use xrbk_macro::{derive_xrb, DataSize, Readable, Writable};
 
 use crate::{mask::EventMask, BackingStores, Color, Colormap, Keycode, String8, VisualId, Window};
