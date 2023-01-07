@@ -950,8 +950,7 @@ derive_xrb! {
 
 		/// The window which this `Expose` event applies to.
 		pub window: Window,
-		/// The region of the `event_window` which this `Expose` event applies
-		/// to.
+		/// The region of the `window` which this `Expose` event applies to.
 		pub region: Region,
 
 		/// The minimum number of `Expose` events that follow for this [window].
@@ -1279,11 +1278,31 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	/// An event generated when an unmapped window with an
+	/// [`OverrideRedirect` attribute] of `false` sends a [`MapWindow` request].
+	///
+	/// This event is reported to clients selecting [`SUBSTRUCTURE_REDIRECT`]
+	/// on the window's parent. The window would not actually be mapped unless
+	/// the client selecting [`SUBSTRUCTURE_REDIRECT`] sends its own
+	/// [`MapWindow` request] for the window.
+	///
+	/// [`OverrideRedirect` attribute`]: crate::WinAttribute::OverrideRedirect
+	/// [`MapWindow` request]: super::request::MapWindow
+	///
+	/// [`SUBSTRUCTURE_REDIRECT`]: crate::mask::EventMask::SUBSTRUCTURE_REDIRECT
 	pub struct MapRequest: Event(20) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
+		/// The `window`'s parent.
 		pub parent: Window,
+		/// The window that sent the [`MapWindow` request].
+		///
+		/// [`MapWindow` request]: super::request::MapWindow
 		pub window: Window,
 		[_; ..],
 	}
@@ -1292,13 +1311,11 @@ derive_xrb! {
 		#[sequence]
 		pub sequence: u16,
 
-		// TODO: name these fields better; work out what they mean
+		pub event_window: Window,
 		pub window: Window,
-		pub reparented_window: Window,
 		pub parent: Window,
 
-		pub x: i16,
-		pub y: i16,
+		pub coords: Point,
 
 		pub override_redirect: bool,
 		[_; ..],
@@ -1312,11 +1329,7 @@ derive_xrb! {
 		pub window: Window,
 		pub above_sibling: Option<Window>,
 
-		pub x: i16,
-		pub y: i16,
-		pub width: u16,
-		pub height: u16,
-
+		pub geometry: Rectangle,
 		pub border_width: u16,
 
 		pub override_redirect: bool,
@@ -1326,6 +1339,7 @@ derive_xrb! {
 	pub struct ConfigureWindowRequest: Event(23) {
 		#[sequence]
 		pub sequence: u16,
+
 		#[metabyte]
 		pub stack_mode: StackMode,
 
@@ -1333,10 +1347,7 @@ derive_xrb! {
 		pub window: Window,
 		pub sibling: Option<Window>,
 
-		pub x: i16,
-		pub y: i16,
-		pub width: u16,
-		pub height: u16,
+		pub geometry: Rectangle,
 
 		pub mask: ConfigureWindowMask,
 		[_; ..],
@@ -1346,12 +1357,10 @@ derive_xrb! {
 		#[sequence]
 		pub sequence: u16,
 
-		// TODO: name these fields better
-		pub event: Window,
+		pub event_window: Window,
 		pub window: Window,
 
-		pub x: i16,
-		pub y: i16,
+		pub coords: Point,
 		[_; ..],
 	}
 
@@ -1378,12 +1387,8 @@ derive_xrb! {
 		#[sequence]
 		pub sequence: u16,
 
-		// TODO: name these better
-		pub event: Window,
+		pub event_window: Window,
 		pub window: Window,
-		// FIXME: in the protocol it says this is a window with the name
-		//        `unused`... I think that is a mistake, especially given the
-		//        next event not having such a field, but we should make sure.
 		[_; 4],
 
 		pub placement: Placement,
@@ -1394,8 +1399,7 @@ derive_xrb! {
 		#[sequence]
 		pub sequence: u16,
 
-		// TODO: name these better
-		pub event: Window,
+		pub event_window: Window,
 		pub window: Window,
 		[_; 4],
 
@@ -1417,6 +1421,7 @@ derive_xrb! {
 		pub sequence: u16,
 
 		pub window: Window,
+
 		pub property: Atom,
 		pub time: Timestamp,
 		pub change: PropertyChange,
