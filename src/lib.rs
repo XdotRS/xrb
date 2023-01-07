@@ -58,7 +58,6 @@ pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 mod common;
 pub mod connection;
 mod r#trait;
-/// Implementations for the core X11 protocol.
 pub mod x11;
 
 pub use common::*;
