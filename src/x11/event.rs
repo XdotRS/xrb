@@ -929,7 +929,8 @@ derive_xrb! {
 	/// The regions are decomposed into an arbitrary set of rectangles, and an
 	/// `Expose` event is generated for each one.
 	///
-	/// **`Expose` events are never generated on [`WindowClass::InputOnly`] windows.**
+	/// `Expose` events are never generated on [`WindowClass::InputOnly`]
+	/// windows.
 	///
 	/// [window]: Window
 	///
@@ -1182,33 +1183,98 @@ derive_xrb! {
 		pub sequence: u16,
 
 		/// The window on which this `WindowDestroyed` was generated.
+		///
+		/// For clients selecting [`STRUCTURE_NOTIFY`] on the window that was
+		/// destroyed, this is that window. For clients selecting
+		/// [`SUBSTRUCTURE_NOTIFY`] on the window's parent, this is that parent.
+		///
+		/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
+		/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
 		pub event_window: Window,
 		/// The window which was destroyed.
 		pub window: Window,
 		[_; ..],
 	}
 
+	/// An event generated when a [window] is unmapped.
+	///
+	/// This event is reported to clients selecting [`STRUCTURE_NOTIFY`] on the
+	/// window, and to clients selecting [`SUBSTRUCTURE_NOTIFY`] on its parent.
+	///
+	/// Unmapping a window is the X term for hiding it. This is commonly used to
+	/// minimize a window, for example.
+	///
+	/// [window]: Window
+	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
+	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
 	pub struct Unmap: Event(18) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
-		pub window: Window,
-		pub unmapped_window: Window,
-
-		/// Whether the window was unmapped with a [`ConfigureWindow`] request.
+		/// The window on which this `Unmap` event was generated.
 		///
-		/// [`ConfigureWindow`]: crate::x11::request::ConfigureWindow
+		/// For clients selecting [`STRUCTURE_NOTIFY`] on the window that was
+		/// unmapped, this is that window. For clients selecting
+		/// [`SUBSTRUCTURE_NOTIFY`] on the window's parent, this is that parent.
+		///
+		/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
+		/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
+		pub event_window: Window,
+		/// The window that was unmapped.
+		pub window: Window,
+
+		/// Whether this event was generated as a result of its parent being
+		/// resized when the unmapped window had [`WinGravity::Unmap`].
+		///
+		/// [`WinGravity::Unmap`]: crate::WinGravity::Unmap
 		pub from_configure: bool,
 		[_; ..],
 	}
 
+	/// An event generated when a [window] is mapped.
+	///
+	/// This event is reported to clients selecting [`STRUCTURE_NOTIFY`] on the
+	/// window and to clients selecting [`SUBSTRUCTURE_NOTIFY`] on the parent.
+	///
+	/// Mapping a window is the X term for showing it. It is the reverse of
+	/// 'minimizing' the window.
+	///
+	/// [window]: Window
 	pub struct Map: Event(19) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
+		/// The window on which this `Map` event was generated.
+		///
+		/// For clients selecting [`STRUCTURE_NOTIFY`] on the window that was
+		/// mapped, this is that window. For clients selecting
+		/// [`SUBSTRUCTURE_NOTIFY`] on the window's parent, this is that parent.
+		///
+		/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
+		/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
+		pub event_window: Window,
+		/// The window that was mapped.
 		pub window: Window,
-		pub mapped_window: Window,
 
+		/// Whether [`MapWindow`] and [`ConfigureWindow`] requests on the newly
+		/// created window should override a [`SUBSTRUCTURE_REDIRECT`] on the
+		/// window's `parent`.
+		///
+		/// This is typically set to inform the window manager not to tamper
+		/// with the window.
+		///
+		/// [`MapWindow`]: super::request::MapWindow
+		/// [`ConfigureWindow`]: super::request::ConfigureWindow
+		///
+		/// [`SUBSTRUCTURE_REDIRECT`]: crate::mask::EventMask::SUBSTRUCTURE_REDIRECT
 		pub override_redirect: bool,
 		[_; ..],
 	}
