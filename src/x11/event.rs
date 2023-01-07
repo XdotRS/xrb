@@ -13,7 +13,6 @@ use crate::{
 	mask::{ConfigureWindowMask, ModifierMask},
 	Atom,
 	Button,
-	Colormap,
 	CurrentableTime,
 	Drawable,
 	GrabMode,
@@ -450,8 +449,8 @@ derive_xrb! {
 	/// This event is triggered both when the cursor moves to be in a different
 	/// window than it was before, as well as when the window under the cursor
 	/// changes due to a change in the window hierarchy (i.e. [`Unmap`],
-	/// [`Map`], [`WindowConfigured`], [`Gravity`],
-	/// [`WindowCirculated`]).
+	/// [`Map`], [`Configure`], [`Gravity`],
+	/// [`Circulate`]).
 	///
 	/// This event is received only by clients selecting [`ENTER_WINDOW`] on a
 	/// window.
@@ -542,8 +541,8 @@ derive_xrb! {
 	/// This event is triggered both when the cursor moves to be in a different
 	/// window than it was before, as well as when the window under the cursor
 	/// changes due to a change in the window hierarchy (i.e. [`Unmap`],
-	/// [`Map`], [`WindowConfigured`], [`Gravity`],
-	/// [`WindowCirculated`]).
+	/// [`Map`], [`Configure`], [`Gravity`],
+	/// [`Circulate`]).
 	///
 	/// This event is received only by clients selecting [`LEAVE_WINDOW`] on a
 	/// window.
@@ -1262,9 +1261,9 @@ derive_xrb! {
 		/// The window that was mapped.
 		pub window: Window,
 
-		/// Whether [`MapWindow`] and [`ConfigureWindow`] requests on the newly
-		/// created window should override a [`SUBSTRUCTURE_REDIRECT`] on the
-		/// window's `parent`.
+		/// Whether [`MapWindow`] and [`ConfigureWindow`] requests on the
+		/// `window` should override a [`SUBSTRUCTURE_REDIRECT`] on the
+		/// window's parent.
 		///
 		/// This is typically set to inform the window manager not to tamper
 		/// with the window.
@@ -1306,21 +1305,60 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	pub struct WindowReparented: Event(21) {
+	/// An event generated when a [window] is reparented.
+	///
+	/// This event is reported to client selecting [`SUBSTRUCTURE_NOTIFY`] on
+	/// either the old parent or the new `parent`, and to clients selecting
+	/// [`STRUCTURE_NOTIFY`] on the `window` itself.
+	///
+	/// Reparenting a window means to remove it from its current position in
+	/// the window hierarchy and place it as the child of a new parent window.
+	///
+	/// [window]: Window
+	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
+	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
+	pub struct Reparent: Event(21) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
+		/// The window on which this `Reparent` event was generated.
+		///
+		/// For clients selecting [`STRUCTURE_NOTIFY`] on the `window` that was
+		/// reparented, this is that `window`. For clients selecting
+		/// [`SUBSTRUCTURE_NOTIFY`] on the `window`'s old parent or new
+		/// `parent`, this is that parent.
+		///
+		/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
+		/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
 		pub event_window: Window,
+		/// The window which was reparented.
 		pub window: Window,
+		/// The `window`'s new parent.
 		pub parent: Window,
 
+		/// The `window`'s new coordinates relative to its new `parent`'s origin.
 		pub coords: Point,
 
+		/// Whether [`MapWindow`] and [`ConfigureWindow`] requests on the
+		/// `window` should override a [`SUBSTRUCTURE_REDIRECT`] on the
+		/// window's `parent`.
+		///
+		/// This is typically set to inform the window manager not to tamper
+		/// with the window.
+		///
+		/// [`MapWindow`]: super::request::MapWindow
+		/// [`ConfigureWindow`]: super::request::ConfigureWindow
+		///
+		/// [`SUBSTRUCTURE_REDIRECT`]: crate::mask::EventMask::SUBSTRUCTURE_REDIRECT
 		pub override_redirect: bool,
 		[_; ..],
 	}
 
-	pub struct WindowConfigured: Event(22) {
+	pub struct Configure: Event(22) {
 		#[sequence]
 		pub sequence: u16,
 
@@ -1363,7 +1401,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	pub struct WindowResized: Event(25) {
+	pub struct Resize: Event(25) {
 		#[sequence]
 		pub sequence: u16,
 
@@ -1382,7 +1420,7 @@ pub enum Placement {
 }
 
 derive_xrb! {
-	pub struct WindowCirculated: Event(26) {
+	pub struct Circulate: Event(26) {
 		#[sequence]
 		pub sequence: u16,
 
@@ -1415,7 +1453,7 @@ pub enum PropertyChange {
 }
 
 derive_xrb! {
-	pub struct PropertyChanged: Event(28) {
+	pub struct Property: Event(28) {
 		#[sequence]
 		pub sequence: u16,
 
@@ -1452,7 +1490,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	pub struct SelectionNotify: Event(31) {
+	pub struct Selection: Event(31) {
 		#[sequence]
 		pub sequence: u16,
 
@@ -1466,12 +1504,12 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	pub struct ColormapNotify: Event(32) {
+	pub struct Colormap: Event(32) {
 		#[sequence]
 		pub sequence: u16,
 
 		pub window: Window,
-		pub colormap: Option<Colormap>,
+		pub colormap: Option<crate::Colormap>,
 	}
 
 	pub struct ClientMessage: Event(33) {
@@ -1488,18 +1526,18 @@ derive_xrb! {
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
-pub enum MappingNotifyRequest {
+pub enum KeyMappingRequest {
 	Modifier,
 	Keyboard,
 	Pointer,
 }
 
 derive_xrb! {
-	pub struct MappingNotify: Event(34) {
+	pub struct KeyMapping: Event(34) {
 		#[sequence]
 		pub sequence: u16,
 
-		pub request: MappingNotifyRequest,
+		pub request: KeyMappingRequest,
 
 		pub first_keycode: Keycode,
 		pub count: u8,
