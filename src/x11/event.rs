@@ -1243,6 +1243,8 @@ derive_xrb! {
 	/// 'minimizing' the window.
 	///
 	/// [window]: Window
+	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
+	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
 	pub struct Map: Event(19) {
 		#[sequence]
 		/// The sequence number associated with the last [`Request`] related
@@ -1286,7 +1288,7 @@ derive_xrb! {
 	/// the client selecting [`SUBSTRUCTURE_REDIRECT`] sends its own
 	/// [`MapWindow` request] for the window.
 	///
-	/// [`OverrideRedirect` attribute`]: crate::WinAttribute::OverrideRedirect
+	/// [`OverrideRedirect` attribute]: crate::WinAttribute::OverrideRedirect
 	/// [`MapWindow` request]: super::request::MapWindow
 	///
 	/// [`SUBSTRUCTURE_REDIRECT`]: crate::mask::EventMask::SUBSTRUCTURE_REDIRECT
