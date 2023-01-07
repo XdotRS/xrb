@@ -4,7 +4,7 @@
 
 use crate::{Atom, Colormap, Timestamp, Window};
 use bytes::{Buf, BufMut};
-use cornflakes::{DataSize, ReadResult, Readable, StaticDataSize, Wrapper, Writable, WriteResult};
+use xrbk::{DataSize, ReadResult, Readable, StaticDataSize, Wrapper, Writable, WriteResult};
 
 macro_rules! impl_wrapper {
 	(

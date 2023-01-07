@@ -5,7 +5,7 @@
 extern crate self as xrb;
 
 use bytes::Buf;
-use cornflakes::{ContextualReadable, ReadResult};
+use xrbk::{ContextualReadable, ReadResult};
 use derive_more::{From, Into};
 use xrbk_macro::{derive_xrb, DataSize, Readable, StaticDataSize, Writable};
 
