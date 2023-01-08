@@ -15,7 +15,7 @@ mod source;
 
 use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
-use syn::{parse_macro_input, Data, DataEnum, DeriveInput};
+use syn::{parse_macro_input, DeriveInput};
 
 pub(crate) use definition::*;
 use derive::*;
@@ -219,7 +219,6 @@ pub fn derive_xrb(input: TokenStream) -> TokenStream {
 }
 
 // Potential idea: source attribute to use a source to serialize a field...?
-// TODO: pad other enum variants if #[wrapper] is found
 #[proc_macro_derive(Writable, attributes(wrapper))]
 pub fn derive_writable(item: TokenStream) -> TokenStream {
 	let item = parse_macro_input!(item as DeriveInput);
@@ -247,7 +246,6 @@ pub fn derive_writable(item: TokenStream) -> TokenStream {
 }
 
 // TODO: context attribute support
-// TODO: pad other enum variants if #[wrapper] is found
 #[proc_macro_derive(Readable, attributes(context, wrapper))]
 pub fn derive_readable(item: TokenStream) -> TokenStream {
 	let item = parse_macro_input!(item as DeriveInput);
@@ -271,55 +269,43 @@ pub fn derive_readable(item: TokenStream) -> TokenStream {
 	.into()
 }
 
-#[proc_macro_derive(DataSize, attributes(wrapper))]
-pub fn derive_datasize(item: TokenStream) -> TokenStream {
+#[proc_macro_derive(X11Size)]
+pub fn derive_x11_size(item: TokenStream) -> TokenStream {
 	let item = parse_macro_input!(item as DeriveInput);
 
 	let ident = &item.ident;
 	// TODO: add generic bounds
-	//       add Self: StaticDataSize bound if #[wrapper] is found?
 	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
 
-	let datasize = match &item.data {
-		// If there are any #[wrapper] attributes, use the StaticDataSize impl
-		Data::Enum(DataEnum { variants, .. })
-			if variants.iter().any(|syn::Variant { attrs, .. }| {
-				attrs.iter().any(|attr| attr.path.is_ident("wrapper"))
-			}) =>
-		{
-			quote!(<Self as ::xrbk::StaticDataSize>::static_data_size())
-		},
-
-		_ => derive_datasizes(&item.data),
-	};
+	let x11_size = derive_x11_sizes(&item.data);
 
 	quote!(
 		#[automatically_derived]
-		impl #impl_generics ::xrbk::DataSize for #ident #type_generics #where_clause {
-			fn data_size(&self) -> usize {
-				#datasize
+		impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
+			fn x11_size(&self) -> usize {
+				#x11_size
 			}
 		}
 	)
 	.into()
 }
 
-#[proc_macro_derive(StaticDataSize, attributes(wrapper))]
-pub fn derive_static_datasize(item: TokenStream) -> TokenStream {
+#[proc_macro_derive(ConstantX11Size)]
+pub fn derive_constant_x11_size(item: TokenStream) -> TokenStream {
 	let item = parse_macro_input!(item as DeriveInput);
 
 	let ident = &item.ident;
 	// TODO: add generic bounds
 	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
 
-	let datasizes = derive_static_datasizes(&item.data);
+	let x11_sizes = derive_constant_x11_sizes(&item.data);
 
 	quote!(
 		#[automatically_derived]
-		impl #impl_generics ::xrbk::StaticDataSize for #ident #type_generics #where_clause {
-			fn static_data_size() -> usize {
-				#datasizes
-			}
+		impl #impl_generics ::xrbk::ConstantX11Size for #ident #type_generics #where_clause {
+			const X11_SIZE: usize = {
+				#x11_sizes
+			};
 		}
 	)
 	.into()

@@ -8,7 +8,7 @@ use crate::TsExt;
 use proc_macro2::TokenStream as TokenStream2;
 
 impl Struct {
-	pub fn impl_datasize(&self, tokens: &mut TokenStream2) {
+	pub fn impl_x11_size(&self, tokens: &mut TokenStream2) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
@@ -18,26 +18,26 @@ impl Struct {
 			self.content.pat_cons_to_tokens(tokens);
 		});
 
-		let datasizes = TokenStream2::with_tokens(|tokens| {
+		let sizes = TokenStream2::with_tokens(|tokens| {
 			for element in &self.content {
-				element.datasize_tokens(tokens, DefinitionType::Basic);
+				element.x11_size_tokens(tokens, DefinitionType::Basic);
 			}
 		});
 
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics ::xrbk::DataSize for #ident #type_generics #where_clause {
-					fn data_size(&self) -> usize {
-						let mut datasize: usize = 0;
+				impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
+					fn x11_size(&self) -> usize {
+						let mut size: usize = 0;
 						// Destructure the struct's fields, if any.
 						let Self #pat = self;
 
-						// Add the datasize of each element.
-						#datasizes
+						// Add the size of each element.
+						#sizes
 
-						// Return the cumulative datasize.
-						datasize
+						// Return the cumulative size.
+						size
 					}
 				}
 			)
@@ -46,7 +46,7 @@ impl Struct {
 }
 
 impl Request {
-	pub fn impl_datasize(&self, tokens: &mut TokenStream2) {
+	pub fn impl_x11_size(&self, tokens: &mut TokenStream2) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
@@ -56,10 +56,10 @@ impl Request {
 			self.content.pat_cons_to_tokens(tokens);
 		});
 
-		let datasizes = TokenStream2::with_tokens(|tokens| {
+		let sizes = TokenStream2::with_tokens(|tokens| {
 			for element in &self.content {
 				if !element.is_metabyte() && !element.is_sequence() {
-					element.datasize_tokens(tokens, DefinitionType::Request);
+					element.x11_size_tokens(tokens, DefinitionType::Request);
 				}
 			}
 		});
@@ -67,19 +67,19 @@ impl Request {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics ::xrbk::DataSize for #ident #type_generics #where_clause {
-					fn data_size(&self) -> usize {
-						// The datasize starts at `4` to account for the size
+				impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
+					fn x11_size(&self) -> usize {
+						// The size starts at `4` to account for the size
 						// of a request's header being 4 bytes.
-						let mut datasize: usize = 4;
+						let mut size: usize = 4;
 						// Destructure the request's fields, if any.
 						let Self #pat = self;
 
-						// Add the datasize of each element.
-						#datasizes
+						// Add the size of each element.
+						#sizes
 
-						// Return the cumulative datasize.
-						datasize
+						// Return the cumulative size.
+						size
 					}
 				}
 			)
@@ -88,7 +88,7 @@ impl Request {
 }
 
 impl Reply {
-	pub fn impl_datasize(&self, tokens: &mut TokenStream2) {
+	pub fn impl_x11_size(&self, tokens: &mut TokenStream2) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
@@ -98,10 +98,10 @@ impl Reply {
 			self.content.pat_cons_to_tokens(tokens);
 		});
 
-		let datasizes = TokenStream2::with_tokens(|tokens| {
+		let sizes = TokenStream2::with_tokens(|tokens| {
 			for element in &self.content {
 				if !element.is_metabyte() && !element.is_sequence() {
-					element.datasize_tokens(tokens, DefinitionType::Reply);
+					element.x11_size_tokens(tokens, DefinitionType::Reply);
 				}
 			}
 		});
@@ -109,19 +109,19 @@ impl Reply {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics ::xrbk::DataSize for #ident #type_generics #where_clause {
-					fn data_size(&self) -> usize {
-						// The datasize starts at `8` to account for the size
+				impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
+					fn x11_size(&self) -> usize {
+						// The size starts at `8` to account for the size
 						// of a reply's header being 8 bytes.
-						let mut datasize: usize = 8;
+						let mut size: usize = 8;
 						// Destructure the reply's fields, if any.
 						let Self #pat = self;
 
-						// Add the datasize of each element.
-						#datasizes
+						// Add the size of each element.
+						#sizes
 
-						// Return the cumulative datasize.
-						datasize
+						// Return the cumulative size.
+						size
 					}
 				}
 			)
@@ -130,13 +130,13 @@ impl Reply {
 }
 
 impl Event {
-	pub fn impl_datasize(&self, tokens: &mut TokenStream2) {
+	pub fn impl_x11_size(&self, tokens: &mut TokenStream2) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
-		let datasize: usize = if self.content.sequence_element().is_some() {
+		let size: usize = if self.content.sequence_element().is_some() {
 			4
 		} else {
 			1
@@ -146,10 +146,10 @@ impl Event {
 			self.content.pat_cons_to_tokens(tokens);
 		});
 
-		let datasizes = TokenStream2::with_tokens(|tokens| {
+		let sizes = TokenStream2::with_tokens(|tokens| {
 			for element in &self.content {
 				if !element.is_metabyte() && !element.is_sequence() {
-					element.datasize_tokens(tokens, DefinitionType::Event);
+					element.x11_size_tokens(tokens, DefinitionType::Event);
 				}
 			}
 		});
@@ -157,21 +157,21 @@ impl Event {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics ::xrbk::DataSize for #ident #type_generics #where_clause {
-					fn data_size(&self) -> usize {
-						// The datasize starts at either `4` or `1`, depending
+				impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
+					fn x11_size(&self) -> usize {
+						// The size starts at either `4` or `1`, depending
 						// on whether there is a sequence field and metabyte
 						// position, to account for the size of the event's
 						// header.
-						let mut datasize: usize = #datasize;
+						let mut size: usize = #size;
 						// Destructure the event's fields, if any.
 						let Self #pat = self;
 
-						// Add the datasize of each element.
-						#datasizes
+						// Add the size of each element.
+						#sizes
 
-						// Return the cumulative datasize.
-						datasize
+						// Return the cumulative size.
+						size
 					}
 				}
 			)
@@ -180,7 +180,7 @@ impl Event {
 }
 
 impl Enum {
-	pub fn impl_datasize(&self, tokens: &mut TokenStream2) {
+	pub fn impl_x11_size(&self, tokens: &mut TokenStream2) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
@@ -194,17 +194,17 @@ impl Enum {
 					variant.content.pat_cons_to_tokens(tokens);
 				});
 
-				let datasizes = TokenStream2::with_tokens(|tokens| {
+				let sizes = TokenStream2::with_tokens(|tokens| {
 					for element in &variant.content {
-						element.datasize_tokens(tokens, DefinitionType::Basic);
+						element.x11_size_tokens(tokens, DefinitionType::Basic);
 					}
 				});
 
 				tokens.append_tokens(|| {
 					quote!(
 						Self::#ident #pat => {
-							// Add the datasize of each element.
-							#datasizes
+							// Add the size of each element.
+							#sizes
 						},
 					)
 				});
@@ -214,18 +214,18 @@ impl Enum {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics ::xrbk::DataSize for #ident #type_generics #where_clause {
-					fn data_size(&self) -> usize {
-						// The datasize starts at `1` to account for the
+				impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
+					fn x11_size(&self) -> usize {
+						// The size starts at `1` to account for the
 						// discriminant.
-						let mut datasize: usize = 1;
+						let mut size: usize = 1;
 
 						match self {
 							#arms
 						}
 
-						// Return the cumulative datasize.
-						datasize
+						// Return the cumulative size.
+						size
 					}
 				}
 			)

@@ -2,10 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-mod datasize;
 mod readable;
 mod r#trait;
 mod writable;
+mod x11_size;
 
 use super::*;
 use proc_macro2::TokenStream;
@@ -29,7 +29,7 @@ impl ToTokens for Definition {
 
 				r#struct.impl_writable(tokens);
 				r#struct.impl_readable(tokens);
-				r#struct.impl_datasize(tokens);
+				r#struct.impl_x11_size(tokens);
 			},
 
 			Self::Enum(r#enum) => {
@@ -37,7 +37,7 @@ impl ToTokens for Definition {
 
 				r#enum.impl_writable(tokens);
 				r#enum.impl_readable(tokens);
-				r#enum.impl_datasize(tokens);
+				r#enum.impl_x11_size(tokens);
 			},
 
 			Self::Request(request) => {
@@ -46,7 +46,7 @@ impl ToTokens for Definition {
 
 				request.impl_writable(tokens);
 				request.impl_readable(tokens);
-				request.impl_datasize(tokens);
+				request.impl_x11_size(tokens);
 			},
 
 			Self::Reply(reply) => {
@@ -55,7 +55,7 @@ impl ToTokens for Definition {
 
 				reply.impl_writable(tokens);
 				reply.impl_readable(tokens);
-				reply.impl_datasize(tokens);
+				reply.impl_x11_size(tokens);
 			},
 
 			Self::Event(event) => {
@@ -64,7 +64,7 @@ impl ToTokens for Definition {
 
 				event.impl_writable(tokens);
 				event.impl_readable(tokens);
-				event.impl_datasize(tokens);
+				event.impl_x11_size(tokens);
 			},
 
 			Self::Other(item) => item.to_tokens(tokens),

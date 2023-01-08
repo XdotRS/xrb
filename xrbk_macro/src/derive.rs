@@ -59,7 +59,7 @@ pub fn derive_writes(data: &Data) -> TokenStream2 {
 
 					tokens.append_tokens(|| {
 						quote!(
-							<#r#type as xrbk::Writable>::write_to(#ident, buf)?;
+							<#r#type as ::xrbk::Writable>::write_to(#ident, buf)?;
 						)
 					});
 				}
@@ -72,7 +72,7 @@ pub fn derive_writes(data: &Data) -> TokenStream2 {
 
 					tokens.append_tokens(|| {
 						quote!(
-							<#r#type as xrbk::Writable>::write_to(#formatted, buf)?;
+							<#r#type as ::xrbk::Writable>::write_to(#formatted, buf)?;
 						)
 					});
 				}
@@ -141,7 +141,7 @@ pub fn derive_reads(data: &Data) -> TokenStream2 {
 
 					tokens.append_tokens(|| {
 						quote!(
-							let #ident = <#r#type as xrbk::Readable>::read_from(buf)?;
+							let #ident = <#r#type as ::xrbk::Readable>::read_from(buf)?;
 						)
 					});
 				}
@@ -154,7 +154,7 @@ pub fn derive_reads(data: &Data) -> TokenStream2 {
 
 					tokens.append_tokens(|| {
 						quote!(
-							let #formatted = <#r#type as xrbk::Readable>::read_from(buf)?;
+							let #formatted = <#r#type as ::xrbk::Readable>::read_from(buf)?;
 						)
 					});
 				}
@@ -207,7 +207,7 @@ pub fn derive_reads(data: &Data) -> TokenStream2 {
 					#(#arms)*
 
 					other_discrim => Err(
-						xrbk::ReadError::UnrecognizedDiscriminant(other_discrim),
+						::xrbk::ReadError::UnrecognizedDiscriminant(other_discrim),
 					),
 				}
 			)
@@ -217,7 +217,7 @@ pub fn derive_reads(data: &Data) -> TokenStream2 {
 	}
 }
 
-pub fn derive_datasizes(data: &Data) -> TokenStream2 {
+pub fn derive_x11_sizes(data: &Data) -> TokenStream2 {
 	fn derive_for_fields(fields: &Fields) -> TokenStream2 {
 		TokenStream2::with_tokens(|tokens| match &fields {
 			Fields::Named(fields) => {
@@ -227,7 +227,7 @@ pub fn derive_datasizes(data: &Data) -> TokenStream2 {
 
 					tokens.append_tokens(|| {
 						quote!(
-							datasize += <#r#type as xrbk::DataSize>::data_size(#ident);
+							size += <#r#type as ::xrbk::X11Size>::x11_size(#ident);
 						)
 					});
 				}
@@ -240,7 +240,7 @@ pub fn derive_datasizes(data: &Data) -> TokenStream2 {
 
 					tokens.append_tokens(|| {
 						quote!(
-							datasize += <#r#type as xrbk::DataSize>::data_size(#formatted);
+							size += <#r#type as ::xrbk::X11Size>::x11_size(#formatted);
 						)
 					});
 				}
@@ -253,15 +253,15 @@ pub fn derive_datasizes(data: &Data) -> TokenStream2 {
 	match data {
 		Data::Struct(r#struct) => {
 			let pat = pat_cons(&r#struct.fields);
-			let datasizes = derive_for_fields(&r#struct.fields);
+			let sizes = derive_for_fields(&r#struct.fields);
 
 			quote!(
 				let Self #pat = &self;
-				let mut datasize = 0;
+				let mut size = 0;
 
-				#datasizes
+				#sizes
 
-				datasize
+				size
 			)
 		},
 
@@ -270,15 +270,15 @@ pub fn derive_datasizes(data: &Data) -> TokenStream2 {
 				let ident = &variant.ident;
 
 				let pat = pat_cons(&variant.fields);
-				let datasizes = derive_for_fields(&variant.fields);
+				let sizes = derive_for_fields(&variant.fields);
 
 				quote!(
 					Self::#ident #pat => {
-						let mut datasize = 1;
+						let mut size = 1;
 
-						#datasizes
+						#sizes
 
-						datasize
+						size
 					},
 				)
 			});
@@ -294,7 +294,7 @@ pub fn derive_datasizes(data: &Data) -> TokenStream2 {
 	}
 }
 
-pub fn derive_static_datasizes(data: &Data) -> TokenStream2 {
+pub fn derive_constant_x11_sizes(data: &Data) -> TokenStream2 {
 	fn derive_for_fields(fields: &Fields) -> TokenStream2 {
 		TokenStream2::with_tokens(|tokens| match fields {
 			Fields::Named(FieldsNamed { named: fields, .. })
@@ -306,7 +306,7 @@ pub fn derive_static_datasizes(data: &Data) -> TokenStream2 {
 
 					tokens.append_tokens(|| {
 						quote!(
-							datasize += <#r#type as xrbk::StaticDataSize>::static_data_size();
+							size += <#r#type as ::xrbk::ConstantX11Size>::X11_SIZE;
 						)
 					});
 				}
@@ -318,38 +318,17 @@ pub fn derive_static_datasizes(data: &Data) -> TokenStream2 {
 
 	match data {
 		Data::Struct(r#struct) => {
-			let datasizes = derive_for_fields(&r#struct.fields);
+			let sizes = derive_for_fields(&r#struct.fields);
 
 			quote!(
-				let mut datasize = 0;
+				let mut size = 0;
 
-				#datasizes
+				#sizes
 
-				datasize
+				size
 			)
 		},
 
-		Data::Enum(r#enum) => {
-			let variant = r#enum
-				.variants
-				.iter()
-				.find(|syn::Variant { attrs, .. }| {
-					attrs.iter().any(|attr| attr.path.is_ident("wrapper"))
-				})
-				.expect("expected #[wrapper] on an enum variant");
-
-			let datasizes = derive_for_fields(&variant.fields);
-
-			quote!(
-				// Enum wrappers don't write the discriminant.
-				let mut datasize = 0;
-
-				#datasizes
-
-				datasize
-			)
-		},
-
-		Data::Union(_) => unimplemented!(),
+		Data::Enum(_) | Data::Union(_) => unimplemented!(),
 	}
 }

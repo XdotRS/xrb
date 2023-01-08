@@ -16,13 +16,13 @@ impl Element {
 		}
 	}
 
-	pub fn datasize_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
+	pub fn x11_size_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		match self {
-			Self::Field(field) => field.datasize_tokens(tokens),
-			Self::Let(r#let) => r#let.datasize_tokens(tokens),
+			Self::Field(field) => field.x11_size_tokens(tokens),
+			Self::Let(r#let) => r#let.x11_size_tokens(tokens),
 
-			Self::SingleUnused(unused) => unused.datasize_tokens(tokens),
-			Self::ArrayUnused(unused) => unused.datasize_tokens(tokens, definition_type),
+			Self::SingleUnused(unused) => unused.x11_size_tokens(tokens),
+			Self::ArrayUnused(unused) => unused.x11_size_tokens(tokens, definition_type),
 		}
 	}
 
@@ -36,13 +36,13 @@ impl Element {
 		}
 	}
 
-	pub fn add_datasize_tokens(&self, tokens: &mut TokenStream2) {
+	pub fn add_x11_size_tokens(&self, tokens: &mut TokenStream2) {
 		match self {
-			Self::Field(field) => field.add_datasize_tokens(tokens),
-			Self::Let(r#let) => r#let.add_datasize_tokens(tokens),
+			Self::Field(field) => field.add_x11_size_tokens(tokens),
+			Self::Let(r#let) => r#let.add_x11_size_tokens(tokens),
 
-			Self::SingleUnused(unused) => unused.add_datasize_tokens(tokens),
-			Self::ArrayUnused(unused) => unused.add_datasize_tokens(tokens),
+			Self::SingleUnused(unused) => unused.add_x11_size_tokens(tokens),
+			Self::ArrayUnused(unused) => unused.add_x11_size_tokens(tokens),
 		}
 	}
 }
@@ -61,8 +61,8 @@ impl Field {
 		});
 	}
 
-	pub fn datasize_tokens(&self, tokens: &mut TokenStream2) {
-		self.add_datasize_tokens(tokens);
+	pub fn x11_size_tokens(&self, tokens: &mut TokenStream2) {
+		self.add_x11_size_tokens(tokens);
 	}
 
 	pub fn read_tokens(&self, tokens: &mut TokenStream2) {
@@ -75,7 +75,7 @@ impl Field {
 					tokens,
 					None,
 					formatted,
-					quote!(<#r#type as ::xrbk::ContextualReadable>::Context),
+					quote!(<#r#type as ::xrbk::ReadableWithContext>::Context),
 				);
 
 				let function_call = TokenStream2::with_tokens(|tokens| {
@@ -84,7 +84,7 @@ impl Field {
 
 				tokens.append_tokens(|| {
 					quote!(
-						let #formatted = <#r#type as ::xrbk::ContextualReadable>::read_with(
+						let #formatted = <#r#type as ::xrbk::ReadableWithContext>::read_with(
 							buf,
 							&#function_call,
 						)?;
@@ -102,13 +102,13 @@ impl Field {
 		}
 	}
 
-	pub fn add_datasize_tokens(&self, tokens: &mut TokenStream2) {
+	pub fn add_x11_size_tokens(&self, tokens: &mut TokenStream2) {
 		tokens.append_tokens(|| {
 			let r#type = &self.r#type;
 			let formatted = &self.formatted;
 
 			quote!(
-				datasize += <#r#type as ::xrbk::DataSize>::data_size(&#formatted);
+				size += <#r#type as ::xrbk::X11Size>::x11_size(&#formatted);
 			)
 		});
 	}
@@ -141,7 +141,7 @@ impl Let {
 		});
 	}
 
-	pub fn datasize_tokens(&self, tokens: &mut TokenStream2) {
+	pub fn x11_size_tokens(&self, tokens: &mut TokenStream2) {
 		let formatted = &self.formatted;
 
 		self.source.function_to_tokens(
@@ -161,7 +161,7 @@ impl Let {
 			)
 		});
 
-		self.add_datasize_tokens(tokens);
+		self.add_x11_size_tokens(tokens);
 	}
 
 	pub fn read_tokens(&self, tokens: &mut TokenStream2) {
@@ -174,7 +174,7 @@ impl Let {
 					tokens,
 					None,
 					formatted,
-					quote!(<#r#type as ::xrbk::ContextualReadable>::Context),
+					quote!(<#r#type as ::xrbk::ReadableWithContext>::Context),
 				);
 
 				let function_call = TokenStream2::with_tokens(|tokens| {
@@ -183,7 +183,7 @@ impl Let {
 
 				tokens.append_tokens(|| {
 					quote!(
-						let #formatted = <#r#type as ::xrbk::ContextualReadable>::read_with(
+						let #formatted = <#r#type as ::xrbk::ReadableWithContext>::read_with(
 							buf,
 							#function_call,
 						)?;
@@ -201,13 +201,13 @@ impl Let {
 		}
 	}
 
-	pub fn add_datasize_tokens(&self, tokens: &mut TokenStream2) {
+	pub fn add_x11_size_tokens(&self, tokens: &mut TokenStream2) {
 		let r#type = &self.r#type;
 		let formatted = &self.formatted;
 
 		tokens.append_tokens(|| {
 			quote!(
-				datasize += <#r#type as ::xrbk::DataSize>::data_size(&#formatted);
+				size += <#r#type as ::xrbk::X11Size>::x11_size(&#formatted);
 			)
 		});
 	}
@@ -224,8 +224,8 @@ impl SingleUnused {
 		});
 	}
 
-	pub fn datasize_tokens(&self, tokens: &mut TokenStream2) {
-		self.add_datasize_tokens(tokens);
+	pub fn x11_size_tokens(&self, tokens: &mut TokenStream2) {
+		self.add_x11_size_tokens(tokens);
 	}
 
 	pub fn read_tokens(&self, tokens: &mut TokenStream2) {
@@ -236,10 +236,10 @@ impl SingleUnused {
 		});
 	}
 
-	pub fn add_datasize_tokens(&self, tokens: &mut TokenStream2) {
+	pub fn add_x11_size_tokens(&self, tokens: &mut TokenStream2) {
 		tokens.append_tokens(|| {
 			quote!(
-				datasize += 1;
+				size += 1;
 			)
 		});
 	}
@@ -256,17 +256,17 @@ impl ArrayUnused {
 				tokens.append_tokens(|| match definition_type.min_length() {
 					Some(min_length) if *last_element => {
 						quote!(
-							let #formatted = if datasize < #min_length {
-								#min_length - datasize
+							let #formatted = if size < #min_length {
+								#min_length - size
 							} else {
-								(4 - (datasize % 4)) % 4
+								(4 - (size % 4)) % 4
 							};
 						)
 					},
 
 					_ => {
 						quote!(
-							let #formatted = (4 - (datasize % 4)) % 4;
+							let #formatted = (4 - (size % 4)) % 4;
 						)
 					},
 				});
@@ -296,9 +296,9 @@ impl ArrayUnused {
 		});
 	}
 
-	pub fn datasize_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
+	pub fn x11_size_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		self.r#impl(tokens, definition_type);
-		self.add_datasize_tokens(tokens);
+		self.add_x11_size_tokens(tokens);
 	}
 
 	pub fn read_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
@@ -313,12 +313,12 @@ impl ArrayUnused {
 		})
 	}
 
-	pub fn add_datasize_tokens(&self, tokens: &mut TokenStream2) {
+	pub fn add_x11_size_tokens(&self, tokens: &mut TokenStream2) {
 		let formatted = &self.formatted;
 
 		tokens.append_tokens(|| {
 			quote!(
-				datasize += #formatted;
+				size += #formatted;
 			)
 		});
 	}

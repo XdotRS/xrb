@@ -14,10 +14,10 @@ impl Struct {
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
-		// Expand the tokens to declare the datasize variable if there is an
+		// Expand the tokens to declare the x11_size variable if there is an
 		// UnusedContent::Infer unused bytes element to use it.
-		let declare_datasize = if self.content.contains_infer() {
-			Some(quote!(let mut datasize: usize = 0;))
+		let declare_x11_size = if self.content.contains_infer() {
+			Some(quote!(let mut size: usize = 0;))
 		} else {
 			None
 		};
@@ -33,7 +33,7 @@ impl Struct {
 				element.read_tokens(tokens, DefinitionType::Basic);
 
 				if self.content.contains_infer() {
-					element.add_datasize_tokens(tokens);
+					element.add_x11_size_tokens(tokens);
 				}
 			}
 		});
@@ -45,9 +45,9 @@ impl Struct {
 					fn read_from(
 						buf: &mut impl ::xrbk::Buf,
 					) -> Result<Self, ::xrbk::ReadError> {
-						// Declare a datasize variable if it is going to be
+						// Declare a x11_size variable if it is going to be
 						// used in an infer unused bytes element.
-						#declare_datasize
+						#declare_x11_size
 
 						// Read each element.
 						#reads
@@ -68,10 +68,10 @@ impl Request {
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
-		let declare_datasize = if self.content.contains_infer() {
-			// The datasize starts at `4` to account for the size of a request's header
+		let declare_x11_size = if self.content.contains_infer() {
+			// The x11_size starts at `4` to account for the size of a request's header
 			// being 4 bytes.
-			Some(quote!(let mut datasize: usize = 4;))
+			Some(quote!(let mut size: usize = 4;))
 		} else {
 			None
 		};
@@ -86,7 +86,7 @@ impl Request {
 					element.read_tokens(tokens, DefinitionType::Request);
 
 					if self.content.contains_infer() {
-						element.add_datasize_tokens(tokens);
+						element.add_x11_size_tokens(tokens);
 					}
 				}
 			}
@@ -111,7 +111,7 @@ impl Request {
 					fn read_from(
 						buf: &mut impl ::xrbk::Buf,
 					) -> Result<Self, ::xrbk::ReadError> {
-						#declare_datasize
+						#declare_x11_size
 
 						// If there is a metabyte element, read it, if not and
 						// there is no minor opcode, skip one byte. If there
@@ -140,8 +140,8 @@ impl Reply {
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
-		let declare_datasize = if self.content.contains_infer() {
-			Some(quote!(let mut datasize: usize = 8;))
+		let declare_x11_size = if self.content.contains_infer() {
+			Some(quote!(let mut size: usize = 8;))
 		} else {
 			None
 		};
@@ -156,7 +156,7 @@ impl Reply {
 					element.read_tokens(tokens, DefinitionType::Reply);
 
 					if self.content.contains_infer() {
-						element.add_datasize_tokens(tokens);
+						element.add_x11_size_tokens(tokens);
 					}
 				}
 			}
@@ -182,7 +182,7 @@ impl Reply {
 					fn read_from(
 						buf: &mut impl ::xrbk::Buf,
 					) -> Result<Self, ::xrbk::ReadError> {
-						#declare_datasize
+						#declare_x11_size
 
 						// Metabyte position
 						#metabyte
@@ -210,14 +210,14 @@ impl Event {
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
-		let declare_datasize = if self.content.contains_infer() {
-			let datasize: usize = if self.content.sequence_element().is_some() {
+		let declare_x11_size = if self.content.contains_infer() {
+			let size: usize = if self.content.sequence_element().is_some() {
 				4
 			} else {
 				1
 			};
 
-			Some(quote!(let mut datasize: usize = #datasize;))
+			Some(quote!(let mut size: usize = #size;))
 		} else {
 			None
 		};
@@ -232,7 +232,7 @@ impl Event {
 					element.read_tokens(tokens, DefinitionType::Event);
 
 					if self.content.contains_infer() {
-						element.add_datasize_tokens(tokens);
+						element.add_x11_size_tokens(tokens);
 					}
 				}
 			}
@@ -265,7 +265,7 @@ impl Event {
 					fn read_from(
 						buf: &mut impl ::xrbk::Buf,
 					) -> Result<Self, ::xrbk::ReadError> {
-						#declare_datasize
+						#declare_x11_size
 
 						// Metabyte position
 						#metabyte
@@ -323,10 +323,10 @@ impl Enum {
 			for variant in &self.variants {
 				let ident = &variant.ident;
 
-				let declare_datasize = if variant.content.contains_infer() {
-					// The datasize starts at `1` to account for the
+				let declare_x11_size = if variant.content.contains_infer() {
+					// The x11_size starts at `1` to account for the
 					// discriminant.
-					Some(quote!(let mut datasize: usize = 1;))
+					Some(quote!(let mut size: usize = 1;))
 				} else {
 					None
 				};
@@ -346,7 +346,7 @@ impl Enum {
 						element.read_tokens(tokens, DefinitionType::Basic);
 
 						if variant.content.contains_infer() {
-							element.add_datasize_tokens(tokens);
+							element.add_x11_size_tokens(tokens);
 						}
 					}
 				});
@@ -354,7 +354,7 @@ impl Enum {
 				tokens.append_tokens(|| {
 					quote!(
 						discrim if discrim == #discrim => {
-							#declare_datasize
+							#declare_x11_size
 
 							#reads
 

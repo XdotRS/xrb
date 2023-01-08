@@ -15,8 +15,8 @@ impl Struct {
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
-		let declare_datasize = if self.content.contains_infer() {
-			Some(quote!(let mut datasize: usize = 0;))
+		let declare_x11_size = if self.content.contains_infer() {
+			Some(quote!(let mut size: usize = 0;))
 		} else {
 			None
 		};
@@ -30,7 +30,7 @@ impl Struct {
 				element.write_tokens(tokens, DefinitionType::Basic);
 
 				if self.content.contains_infer() {
-					element.add_datasize_tokens(tokens);
+					element.add_x11_size_tokens(tokens);
 				}
 			}
 		});
@@ -43,7 +43,7 @@ impl Struct {
 						&self,
 						buf: &mut impl ::xrbk::BufMut,
 					) -> Result<(), ::xrbk::WriteError> {
-						#declare_datasize
+						#declare_x11_size
 						// Destructure the struct's fields, if any.
 						let Self #pat = self;
 
@@ -64,10 +64,10 @@ impl Request {
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
-		let declare_datasize = if self.content.contains_infer() {
-			// The datasize starts at `4` to account for the size of a request's header
+		let declare_x11_size = if self.content.contains_infer() {
+			// The x11_size starts at `4` to account for the size of a request's header
 			// being 4 bytes.
-			Some(quote!(let mut datasize: usize = 4;))
+			Some(quote!(let mut size: usize = 4;))
 		} else {
 			None
 		};
@@ -82,7 +82,7 @@ impl Request {
 					element.write_tokens(tokens, DefinitionType::Request);
 
 					if self.content.contains_infer() {
-						element.add_datasize_tokens(tokens);
+						element.add_x11_size_tokens(tokens);
 					}
 				}
 			}
@@ -110,7 +110,7 @@ impl Request {
 						&self,
 						buf: &mut impl ::xrbk::BufMut,
 					) -> Result<(), ::xrbk::WriteError> {
-						#declare_datasize
+						#declare_x11_size
 						// Destructure the request struct's fields, if any.
 						let Self #pat = self;
 
@@ -139,10 +139,10 @@ impl Reply {
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
-		let declare_datasize = if self.content.contains_infer() {
-			// The datasize starts at `8` to account for the size of a reply's\
+		let declare_x11_size = if self.content.contains_infer() {
+			// The x11_size starts at `8` to account for the size of a reply's\
 			// header being 8 bytes.
-			Some(quote!(let mut datasize: usize = 8;))
+			Some(quote!(let mut size: usize = 8;))
 		} else {
 			None
 		};
@@ -157,7 +157,7 @@ impl Reply {
 					element.write_tokens(tokens, DefinitionType::Reply);
 
 					if self.content.contains_infer() {
-						element.add_datasize_tokens(tokens);
+						element.add_x11_size_tokens(tokens);
 					}
 				}
 			}
@@ -186,7 +186,7 @@ impl Reply {
 						&self,
 						buf: &mut impl ::xrbk::BufMut,
 					) -> Result<(), ::xrbk::WriteError> {
-						#declare_datasize
+						#declare_x11_size
 						// Destructure the reply struct's fields, if any.
 						let Self #pat = self;
 
@@ -217,14 +217,14 @@ impl Event {
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
-		let declare_datasize = if self.content.contains_infer() {
-			let datasize: usize = if self.content.sequence_element().is_some() {
+		let declare_x11_size = if self.content.contains_infer() {
+			let x11_size: usize = if self.content.sequence_element().is_some() {
 				4
 			} else {
 				1
 			};
 
-			Some(quote!(let mut datasize: usize = #datasize;))
+			Some(quote!(let mut size: usize = #x11_size;))
 		} else {
 			None
 		};
@@ -239,7 +239,7 @@ impl Event {
 					element.write_tokens(tokens, DefinitionType::Event);
 
 					if self.content.contains_infer() {
-						element.add_datasize_tokens(tokens);
+						element.add_x11_size_tokens(tokens);
 					}
 				}
 			}
@@ -273,7 +273,7 @@ impl Event {
 						&self,
 						buf: &mut impl ::xrbk::BufMut,
 					) -> Result<(), ::xrbk::WriteError> {
-						#declare_datasize
+						#declare_x11_size
 						// Destructure the event struct's fields, if any.
 						let Self #pat = self;
 
@@ -334,8 +334,8 @@ impl Enum {
 			for variant in &self.variants {
 				let ident = &variant.ident;
 
-				let declare_datasize = if variant.content.contains_infer() {
-					Some(quote!(let mut datasize: usize = 1;))
+				let declare_x11_size = if variant.content.contains_infer() {
+					Some(quote!(let mut size: usize = 1;))
 				} else {
 					None
 				};
@@ -355,7 +355,7 @@ impl Enum {
 						element.write_tokens(tokens, DefinitionType::Basic);
 
 						if variant.content.contains_infer() {
-							element.add_datasize_tokens(tokens);
+							element.add_x11_size_tokens(tokens);
 						}
 					}
 				});
@@ -363,7 +363,7 @@ impl Enum {
 				tokens.append_tokens(|| {
 					quote!(
 						Self::#ident #pat => {
-							#declare_datasize
+							#declare_x11_size
 							buf.put_u8(#discrim);
 
 							#writes
