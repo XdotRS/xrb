@@ -1,0 +1,18 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+[package]
+name = "xrbk"
+version = "0.0.7"
+readme = false
+authors = ["X.RS", "Antikyth <antikyth at gmail dot com>", "Syudagye"]
+edition = "2021"
+description = "The XRB Kit: Utilities for (de)serialization in XRB."
+keywords = ["serialization", "encoding", "bytes"]
+categories = ["encoding"]
+
+[dependencies]
+thiserror = "1.0"
+bytes = "1.2"
+num = "0.4.0"

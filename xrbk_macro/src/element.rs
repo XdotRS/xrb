@@ -353,11 +353,11 @@ pub struct Field {
 	/// Attributes associated with the `Field`.
 	pub attributes: Vec<Attribute>,
 	/// An optional [`ContextAttribute`] to provide context for types
-	/// implementing [`cornflakes::ContextualReadable`].
+	/// implementing [`xrbk::ContextualReadable`].
 	///
 	/// See [`ContextAttribute`] for more information.
 	///
-	/// [`cornflakes::ContextualReadable`]: https://docs.rs/cornflakes/latest/cornflakes/trait.ContextualReadable.html
+	/// [`xrbk::ContextualReadable`]: https://docs.rs/xrbk/latest/xrbk/trait.ContextualReadable.html
 	pub context_attribute: Option<ContextAttribute>,
 	/// An optional [`MetabyteAttribute`] which places this `Field` in the
 	/// metabyte position.
@@ -438,28 +438,28 @@ impl ToString for FieldId {
 /// ## Serialization
 /// During serialization, a `Let` element's [`Source`] is used to determine the
 /// value that is written by the `Let` element's [`Type`]'s
-/// [`cornflakes::Writable`] implementation.
+/// [`xrbk::Writable`] implementation.
 ///
 /// ## Deserialization
 /// During deserialization, a `Let` element with a [`ContextAttribute`] will be
-/// read with the `Let` element's `type`'s [`cornflakes::ContextualReadable`]
+/// read with the `Let` element's `type`'s [`xrbk::ContextualReadable`]
 /// implementation using the context given by the [`ContextAttribute`]'s
 /// [`Source`].  A `Let` element with no [`ContextAttribute`] will simply be
-/// read with the `Let` element's `type`'s [`cornflakes::Readable`]
+/// read with the `Let` element's `type`'s [`xrbk::Readable`]
 /// implementation.
 ///
-/// [`cornflakes::Writable`]: https://docs.rs/cornflakes/latest/cornflakes/trait.Writable.html
-/// [`cornflakes::ContextualReadable`]: https://docs.rs/cornflakes/latest/cornflakes/trait.ContextualReadable.html
-/// [`cornflakes::Readable`]: https://docs.rs/cornflakes/latest/cornflakes/trait.Readable.html
+/// [`xrbk::Writable`]: https://docs.rs/xrbk/latest/xrbk/trait.Writable.html
+/// [`xrbk::ContextualReadable`]: https://docs.rs/xrbk/latest/xrbk/trait.ContextualReadable.html
+/// [`xrbk::Readable`]: https://docs.rs/xrbk/latest/xrbk/trait.Readable.html
 pub struct Let {
 	/// Attributes associated with the `Let` element.
 	pub attributes: Vec<Attribute>,
 	/// An optional [`ContextAttribute`] to provide context for reading `Let`
-	/// element types which implement [`cornflakes::ContextualReadable`].
+	/// element types which implement [`xrbk::ContextualReadable`].
 	///
 	/// See [`ContextAttribute`] for more information.
 	///
-	/// [`cornflakes::ContextualReadable`]: https://docs.rs/cornflakes/latest/cornflakes/trait.ContextualReadable.html
+	/// [`xrbk::ContextualReadable`]: https://docs.rs/xrbk/latest/xrbk/trait.ContextualReadable.html
 	pub context_attribute: Option<ContextAttribute>,
 	/// An optional [`MetabyteAttribute`] which places this `Let` element in the
 	/// metabyte position.

@@ -45,7 +45,7 @@ impl Request {
 
 					#[allow(clippy::cast_possible_truncation)]
 					fn length(&self) -> u16 {
-						(<Self as ::cornflakes::DataSize>::data_size(&self) / 4) as u16
+						(<Self as ::xrbk::DataSize>::data_size(&self) / 4) as u16
 					}
 				}
 			)
@@ -83,7 +83,7 @@ impl Reply {
 
 					#[allow(clippy::cast_possible_truncation)]
 					fn length(&self) -> u32 {
-						((<Self as ::cornflakes::DataSize>::data_size(&self) / 4) - 8) as u32
+						((<Self as ::xrbk::DataSize>::data_size(&self) / 4) - 8) as u32
 					}
 
 					fn sequence(&self) -> u16 {

@@ -45,7 +45,7 @@ pub struct SequenceAttribute {
 }
 
 /// An attribute which provides the [`ContextualReadable::Context`] for a type
-/// implementing [`cornflakes::ContextualReadable`].
+/// implementing [`xrbk::ContextualReadable`].
 ///
 /// > **<sup>Syntax</sup>**\
 /// > _ContextAttribute_ :\
@@ -53,8 +53,8 @@ pub struct SequenceAttribute {
 /// >
 /// > [_Context_]: Context
 ///
-/// [`ContextualReadable::Context`]: https://docs.rs/cornflakes/latest/cornflakes/trait.ContextualReadable.html#associatedtype.Context
-/// [`cornflakes::ContextualReadable`]: https://docs.rs/cornflakes/latest/cornflakes/trait.ContextualReadable.html
+/// [`ContextualReadable::Context`]: https://docs.rs/xrbk/latest/xrbk/trait.ContextualReadable.html#associatedtype.Context
+/// [`xrbk::ContextualReadable`]: https://docs.rs/xrbk/latest/xrbk/trait.ContextualReadable.html
 pub struct ContextAttribute {
 	/// A hash token: `#`.
 	pub hash_token: Token![#],

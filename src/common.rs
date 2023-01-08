@@ -5,8 +5,8 @@
 extern crate self as xrb;
 
 use bytes::Buf;
-use cornflakes::{ContextualReadable, ReadResult};
 use derive_more::{From, Into};
+use xrbk::{ContextualReadable, ReadResult};
 use xrbk_macro::{derive_xrb, DataSize, Readable, StaticDataSize, Writable};
 
 pub mod atom;

@@ -232,11 +232,11 @@ pub fn derive_writable(item: TokenStream) -> TokenStream {
 
 	quote!(
 		#[automatically_derived]
-		impl #impl_generics ::cornflakes::Writable for #ident #type_generics #where_clause {
+		impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
 			fn write_to(
 				&self,
-				buf: &mut impl ::cornflakes::BufMut,
-			) -> Result<(), ::cornflakes::WriteError> {
+				buf: &mut impl ::xrbk::BufMut,
+			) -> Result<(), ::xrbk::WriteError> {
 				#writes
 
 				Ok(())
@@ -260,10 +260,10 @@ pub fn derive_readable(item: TokenStream) -> TokenStream {
 
 	quote!(
 		#[automatically_derived]
-		impl #impl_generics ::cornflakes::Readable for #ident #type_generics #where_clause {
+		impl #impl_generics ::xrbk::Readable for #ident #type_generics #where_clause {
 			fn read_from(
-				buf: &mut impl ::cornflakes::Buf,
-			) -> Result<Self, ::cornflakes::ReadError> {
+				buf: &mut impl ::xrbk::Buf,
+			) -> Result<Self, ::xrbk::ReadError> {
 				#reads
 			}
 		}
@@ -287,7 +287,7 @@ pub fn derive_datasize(item: TokenStream) -> TokenStream {
 				attrs.iter().any(|attr| attr.path.is_ident("wrapper"))
 			}) =>
 		{
-			quote!(<Self as ::cornflakes::StaticDataSize>::static_data_size())
+			quote!(<Self as ::xrbk::StaticDataSize>::static_data_size())
 		},
 
 		_ => derive_datasizes(&item.data),
@@ -295,7 +295,7 @@ pub fn derive_datasize(item: TokenStream) -> TokenStream {
 
 	quote!(
 		#[automatically_derived]
-		impl #impl_generics ::cornflakes::DataSize for #ident #type_generics #where_clause {
+		impl #impl_generics ::xrbk::DataSize for #ident #type_generics #where_clause {
 			fn data_size(&self) -> usize {
 				#datasize
 			}
@@ -316,7 +316,7 @@ pub fn derive_static_datasize(item: TokenStream) -> TokenStream {
 
 	quote!(
 		#[automatically_derived]
-		impl #impl_generics ::cornflakes::StaticDataSize for #ident #type_generics #where_clause {
+		impl #impl_generics ::xrbk::StaticDataSize for #ident #type_generics #where_clause {
 			fn static_data_size() -> usize {
 				#datasizes
 			}

@@ -38,11 +38,11 @@ impl Struct {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics ::cornflakes::Writable for #ident #type_generics #where_clause {
+				impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
 					fn write_to(
 						&self,
-						buf: &mut impl ::cornflakes::BufMut,
-					) -> Result<(), ::cornflakes::WriteError> {
+						buf: &mut impl ::xrbk::BufMut,
+					) -> Result<(), ::xrbk::WriteError> {
 						#declare_datasize
 						// Destructure the struct's fields, if any.
 						let Self #pat = self;
@@ -105,11 +105,11 @@ impl Request {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics ::cornflakes::Writable for #ident #type_generics #where_clause {
+				impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
 					fn write_to(
 						&self,
-						buf: &mut impl ::cornflakes::BufMut,
-					) -> Result<(), ::cornflakes::WriteError> {
+						buf: &mut impl ::xrbk::BufMut,
+					) -> Result<(), ::xrbk::WriteError> {
 						#declare_datasize
 						// Destructure the request struct's fields, if any.
 						let Self #pat = self;
@@ -181,11 +181,11 @@ impl Reply {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics ::cornflakes::Writable for #ident #type_generics #where_clause {
+				impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
 					fn write_to(
 						&self,
-						buf: &mut impl ::cornflakes::BufMut,
-					) -> Result<(), ::cornflakes::WriteError> {
+						buf: &mut impl ::xrbk::BufMut,
+					) -> Result<(), ::xrbk::WriteError> {
 						#declare_datasize
 						// Destructure the reply struct's fields, if any.
 						let Self #pat = self;
@@ -268,11 +268,11 @@ impl Event {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics ::cornflakes::Writable for #ident #type_generics #where_clause {
+				impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
 					fn write_to(
 						&self,
-						buf: &mut impl ::cornflakes::BufMut,
-					) -> Result<(), ::cornflakes::WriteError> {
+						buf: &mut impl ::xrbk::BufMut,
+					) -> Result<(), ::xrbk::WriteError> {
 						#declare_datasize
 						// Destructure the event struct's fields, if any.
 						let Self #pat = self;
@@ -378,11 +378,11 @@ impl Enum {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics ::cornflakes::Writable for #ident #type_generics #where_clause {
+				impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
 					fn write_to(
 						&self,
-						buf: &mut impl ::cornflakes::BufMut,
-					) -> Result<(), ::cornflakes::WriteError> {
+						buf: &mut impl ::xrbk::BufMut,
+					) -> Result<(), ::xrbk::WriteError> {
 						// Define functions and variables for variants which
 						// have custom discriminant expressions.
 						#discriminants

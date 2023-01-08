@@ -132,7 +132,7 @@ pub struct SourceArgs {
 /// For example, take the following struct containing a [`Let`] element which
 /// uses a `Source` (assume `width` and `height` are of type `u32`):
 /// ```ignore
-/// # extern crate cornflakes;
+/// # extern crate xrbk;
 /// use xrbk_macro::derive_xrb;
 /// use xrb::Rectangle;
 ///
@@ -183,7 +183,7 @@ pub struct SourceArgs {
 ///
 /// # Examples
 /// ```ignore
-/// # extern crate cornflakes;
+/// # extern crate xrbk;
 /// # extern crate xrb;
 /// #
 /// use xrbk_macro::derive_xrb;
@@ -226,7 +226,7 @@ pub struct SourceArgs {
 /// This `Source` takes the `name_len` [`Let`] element defined earlier as an
 /// argument, and has `*name_len as usize` as the body of its function. The
 /// return type of [`ContextAttribute`] sources, like this one, is given by the
-/// [`cornflakes::ContextualReadable::Context`] associated type, which happens
+/// [`xrbk::ContextualReadable::Context`] associated type, which happens
 /// to be `usize` for a `String8`.
 ///
 /// Neither the second [`ArrayUnused`] bytes element in the [`Request`] nor the
@@ -236,7 +236,7 @@ pub struct SourceArgs {
 ///
 /// ## Length arguments
 /// ```ignore
-/// # extern crate cornflakes;
+/// # extern crate xrbk;
 /// # extern crate xrb;
 /// #
 /// use xrbk_macro::derive_xrb;
@@ -281,7 +281,7 @@ pub struct SourceArgs {
 /// [`Request`]: crate::definition::Request
 /// [`Reply`]: crate::definition::Reply
 /// [`Field`]: crate::element::Field
-/// [`cornflakes::ContextualReadable::Context`]: https://docs.rs/cornflakes/latest/cornflakes/trait.ContextualReadable.html#associatedtype.Context
+/// [`xrbk::ContextualReadable::Context`]: https://docs.rs/xrbk/latest/xrbk/trait.ContextualReadable.html#associatedtype.Context
 pub struct Source {
 	/// Optional arguments for the `Source` function, followed by a `=>`.
 	pub args: Option<(SourceArgs, Token![=>])>,

@@ -27,7 +27,7 @@ impl Struct {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics ::cornflakes::DataSize for #ident #type_generics #where_clause {
+				impl #impl_generics ::xrbk::DataSize for #ident #type_generics #where_clause {
 					fn data_size(&self) -> usize {
 						let mut datasize: usize = 0;
 						// Destructure the struct's fields, if any.
@@ -67,7 +67,7 @@ impl Request {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics ::cornflakes::DataSize for #ident #type_generics #where_clause {
+				impl #impl_generics ::xrbk::DataSize for #ident #type_generics #where_clause {
 					fn data_size(&self) -> usize {
 						// The datasize starts at `4` to account for the size
 						// of a request's header being 4 bytes.
@@ -109,7 +109,7 @@ impl Reply {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics ::cornflakes::DataSize for #ident #type_generics #where_clause {
+				impl #impl_generics ::xrbk::DataSize for #ident #type_generics #where_clause {
 					fn data_size(&self) -> usize {
 						// The datasize starts at `8` to account for the size
 						// of a reply's header being 8 bytes.
@@ -157,7 +157,7 @@ impl Event {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics ::cornflakes::DataSize for #ident #type_generics #where_clause {
+				impl #impl_generics ::xrbk::DataSize for #ident #type_generics #where_clause {
 					fn data_size(&self) -> usize {
 						// The datasize starts at either `4` or `1`, depending
 						// on whether there is a sequence field and metabyte
@@ -214,7 +214,7 @@ impl Enum {
 		tokens.append_tokens(|| {
 			quote!(
 				#[automatically_derived]
-				impl #impl_generics ::cornflakes::DataSize for #ident #type_generics #where_clause {
+				impl #impl_generics ::xrbk::DataSize for #ident #type_generics #where_clause {
 					fn data_size(&self) -> usize {
 						// The datasize starts at `1` to account for the
 						// discriminant.
