@@ -1564,33 +1564,93 @@ derive_xrb! {
 	}
 }
 
+/// The new placement of a [window] restacked in a [`CirculateWindow` request].
+///
+/// This is used in [`Circulate` events].
+///
+/// [window]: Window
+/// [`CirculateWindow` request]: super::request::CirculateWindow
+/// [`Circulate` events]: Circulate
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
 pub enum Placement {
+	/// The `window` is now above all its siblings in the stack.
 	Top,
+	/// The `window` is now below all its siblings in the stack.
 	Bottom,
 }
 
 derive_xrb! {
+	/// An event generated when a [window] is restacked due to a
+	/// [`CirculateWindow` request].
+	///
+	/// This event is reported to clients selecting [`STRUCTURE_NOTIFY`] on the
+	/// window, and to clients selecting [`SUBSTRUCTURE_NOTIFY`] on its parent.
+	///
+	/// [window]: Window
+	/// [`CirculateWindow` request]: super::request::CirculateWindow
+	///
+	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
+	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
 	pub struct Circulate: Event(26) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
+		/// The window which this `Circulate` event was generated on.
+		///
+		/// For clients selecting [`STRUCTURE_NOTIFY`] on the `window` that was
+		/// restacked, this is that `window`. For clients selecting
+		/// [`SUBSTRUCTURE_NOTIFY`] on the `window`'s parent, this is that parent.
+		///
+		/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
+		/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
 		pub event_window: Window,
+		/// The window which was restacked.
 		pub window: Window,
 		[_; 4],
 
+		/// The new placement in the window stack of the `window` in relation to
+		/// its siblings.
 		pub placement: Placement,
 		[_; ..],
 	}
 
+	/// An event generated when a [`CirculateWindow` request] is sent for a
+	/// [window] and that window actually needs to be restacked.
+	///
+	/// This event is reported to the client selecting [`SUBSTRUCTURE_REDIRECT`]
+	/// on the window's parent.
+	///
+	/// [window]: Window
+	/// [`CirculateWindow` request]: super::request::CirculateWindow
 	pub struct CirculateRequest: Event(27) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
-		pub event_window: Window,
+		/// The parent of the `window` the [`CirculateWindow` request] applies
+		/// to.
+		///
+		/// This is the window that this `CirculateRequest` event was generated
+		/// on.
+		///
+		/// [`CirculateWindow` request]: super::request::CirculateWindow
+		pub parent: Window,
+		/// The window which the [`CirculateWindow` request] is attempting to
+		/// restack.
+		///
+		/// [`CirculateWindow` request]: super::request::CirculateWindow
 		pub window: Window,
 		[_; 4],
 
+		/// The requested placement in the window stack of the `window` in
+		/// relation to its siblings.
 		pub placement: Placement,
 		[_; ..],
 	}
