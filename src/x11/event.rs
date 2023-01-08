@@ -1423,19 +1423,70 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	/// An event generated when a [window] sends a [`ConfigureWindow` request].
+	///
+	/// This event is reported to the client selecting [`SUBSTRUCTURE_REDIRECT`]
+	/// on the window's parent.
+	///
+	/// This event is generated when a client other than the one selecting
+	/// [`SUBSTRUCTURE_REDIRECT`] sends a [`ConfigureWindow`] request for that
+	/// window.
+	///
+	/// The `mask` and corresponding values are reported as given in the
+	/// request. The remaining values are filled in from the current geometry of
+	/// the window, except for `sibling` and `stack_mode`, which are reported as
+	/// [`None`] and [`StackMode::Above`] respectively if not given in the
+	/// request.
+	///
+	/// [window]: Window
+	/// [`ConfigureWindow` request]: super::request::ConfigureWindow
+	///
+	/// [`SUBSTRUCTURE_REDIRECT`]: crate::mask::EventMask::SUBSTRUCTURE_REDIRECT
 	pub struct ConfigureWindowRequest: Event(23) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
 		#[metabyte]
+		/// The [stacking mode] to use to restack the window.
+		///
+		/// See [`StackMode`] for more information.
+		///
+		/// [stacking mode]: StackMode
 		pub stack_mode: StackMode,
 
+		/// The `window`'s parent, on which [`SUBSTRUCTURE_REDIRECT`] is
+		/// selected.
+		///
+		/// [`SUBSTRUCTURE_REDIRECT`]: crate::mask::EventMask::SUBSTRUCTURE_REDIRECT
 		pub parent: Window,
+		/// The window for which the [`ConfigureWindow` request] was sent.
+		///
+		/// [`ConfigureWindow` request]: super::request::ConfigureWindow
 		pub window: Window,
+
+		/// The `window`'s sibling that the `stack_mode` is applied to, if
+		/// provided.
+		///
+		/// See [`ConfigureWindow`] for more information.
+		///
+		/// [`ConfigureWindow`]: super::request::ConfigureWindow
 		pub sibling: Option<Window>,
 
+		/// The geometry (coordinates and dimensions) of the `window`.
+		///
+		/// The `window`'s coordinates are relative to its `parent`'s origin.
+		///
+		/// The `window`'s dimensions exclude its border.
 		pub geometry: Rectangle,
 
+		/// A bitmask representing which attributes were configured in the
+		/// [`ConfigureWindow` request].
+		///
+		/// [`ConfigureWindow` request]: super::request::ConfigureWindow
 		pub mask: ConfigureWindowMask,
 		[_; ..],
 	}
