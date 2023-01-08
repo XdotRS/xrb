@@ -90,7 +90,7 @@ impl Request {
 
 		let metabyte = if self.minor_opcode.is_some() {
 			quote!(
-				buf.put_u8(<Self as xrb::Request>::minor_opcode().unwrap());
+				buf.put_u8(<Self as xrb::Request>::MINOR_OPCODE.unwrap());
 			)
 		} else if let Some(element) = self.content.metabyte_element() {
 			TokenStream2::with_tokens(|tokens| {
@@ -115,7 +115,7 @@ impl Request {
 						let Self #pat = self;
 
 						// Major opcode
-						buf.put_u8(<Self as xrb::Request>::major_opcode());
+						buf.put_u8(<Self as xrb::Request>::MAJOR_OPCODE);
 						// Metabyte position
 						#metabyte
 						// Length
@@ -278,7 +278,7 @@ impl Event {
 						let Self #pat = self;
 
 						// Event code
-						buf.put_u8(<Self as xrb::Event>::code());
+						buf.put_u8(<Self as xrb::Event>::CODE);
 						// Metabyte position
 						#metabyte
 						// Sequence field
