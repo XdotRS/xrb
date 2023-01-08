@@ -55,34 +55,44 @@ pub enum WriteError {
 	Other(Box<dyn Error>),
 }
 
-mod datasize;
 mod readable;
 mod writable;
+mod x11_size;
 
 /// Gives the type size in bytes.
 /// The size can vary depending on the quantity of data it contains
-pub trait DataSize {
-	/// Returns the size of `self` in bytes when written with [`Writable`].
-	fn data_size(&self) -> usize;
+pub trait X11Size {
+	/// Returns the size of `self` when serialized according to the X11
+	/// protocol, measured in bytes.
+	fn x11_size(&self) -> usize;
 }
 
-/// Gives the type size in bytes.
-/// This trait can be used on types with a known size
+/// Defines the constant size in bytes of a type when serialized according to
+/// the X11 protocol.
 ///
-/// This traits requires that the type also implements [`DataSize`] for
-/// abstraction.
-pub trait StaticDataSize: DataSize {
-	/// Returns the size of `Self` in bytes when written with [`Writable`].
-	///
-	/// If `Self` is an `enum`, then the size is the maximum size of the values
-	/// contained in the variants
-	fn static_data_size() -> usize
-	where
-		Self: Sized;
+/// [`X11Size`] must be implemented to return the same `X11_SIZE`:
+/// ```
+/// # use xrbk::{ConstantX11Size, X11Size};
+/// # struct MyStruct;
+/// #
+/// # impl ConstantX11Size for MyStruct {
+/// #     const X11_SIZE: usize = 5;
+/// # }
+/// #
+/// impl X11Size for MyStruct {
+///     fn x11_size(&self) -> usize {
+///         Self::X11_SIZE
+///     }
+/// }
+/// ```
+pub trait ConstantX11Size: X11Size {
+	/// The size of this type when serialized according to the the X11 protocol,
+	/// measured in bytes.
+	const X11_SIZE: usize;
 }
 
 /// Reads a type from bytes.
-pub trait Readable: DataSize {
+pub trait Readable: X11Size {
 	/// Reads [`Self`] from a [`Buf`] of bytes.
 	///
 	/// # Errors
@@ -90,6 +100,8 @@ pub trait Readable: DataSize {
 	/// - [`ReadError::UnrecognizedDiscriminant`]: The value encountered is not
 	///   matching any enum's variants discriminant.
 	/// - [`ReadError::Other`]: Any other error when parsing.
+	///
+	/// [`Buf`]: Buf
 	fn read_from(reader: &mut impl Buf) -> ReadResult<Self>
 	where
 		Self: Sized;
@@ -97,7 +109,7 @@ pub trait Readable: DataSize {
 
 /// Allows the reading of a type from bytes given some additional
 /// [`Context`](Self::Context).
-pub trait ContextualReadable: DataSize {
+pub trait ReadableWithContext: X11Size {
 	/// The type of context with which this type can be read from bytes.
 	///
 	/// For example, this might be `usize` for some collection, where that
@@ -112,25 +124,29 @@ pub trait ContextualReadable: DataSize {
 	/// - [`ReadError::UnrecognizedDiscriminant`]: The value encountered is not
 	///   matching any enum's variants discriminant.
 	/// - [`ReadError::Other`]: Any other error when parsing.
+	///
+	/// [`Buf`]: Buf
 	fn read_with(reader: &mut impl Buf, context: &Self::Context) -> ReadResult<Self>
 	where
 		Self: Sized;
 }
 
 /// Allows a type to be written as bytes.
-pub trait Writable: DataSize {
+pub trait Writable: X11Size {
 	/// Writes [`self`](Self) as bytes to a [`BufMut`].
 	///
 	/// # Errors
 	///
 	/// Returns a [`WriteError`] if it was not able to properly write to the
 	/// given `reader`.
+	///
+	/// [`BufMut`]: BufMut
 	fn write_to(&self, writer: &mut impl BufMut) -> WriteResult;
 }
 
 // TODO: see if this is actually a good way to do things
-pub trait Wrapper: DataSize {
-	type WrappedType: Writable + Readable + DataSize + StaticDataSize;
+pub trait Wrapper: ConstantX11Size {
+	type WrappedType: Writable + Readable + ConstantX11Size;
 
 	fn wrap(val: Self::WrappedType) -> Self;
 	fn unwrap(&self) -> &Self::WrappedType;
@@ -170,10 +186,9 @@ where
 // of these traits are accidentally made _object unsafe_, which means that they
 // cannot be used with the `dyn` keyword.
 fn _assert_object_safety(
-	_data_size: &dyn DataSize,
-	_static_data_size: &dyn StaticDataSize,
+	_data_size: &dyn X11Size,
 	_readable: &dyn Readable,
-	_contextual_readable: &dyn ContextualReadable<Context = ()>,
+	_contextual_readable: &dyn ReadableWithContext<Context = ()>,
 	//_writable: &dyn Writable,
 ) {
 }

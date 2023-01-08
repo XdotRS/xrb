@@ -4,7 +4,7 @@
 
 //! [`Readable`] implementations for primitive types
 
-use crate::{ContextualReadable, ReadResult, Readable};
+use crate::{ReadResult, Readable, ReadableWithContext};
 use bytes::Buf;
 
 macro_rules! implement {
@@ -64,7 +64,7 @@ impl<T: Readable> Readable for Box<T> {
 	}
 }
 
-impl<T: Readable> ContextualReadable for Vec<T> {
+impl<T: Readable> ReadableWithContext for Vec<T> {
 	type Context = usize;
 
 	fn read_with(reader: &mut impl Buf, context: &Self::Context) -> ReadResult<Self>
