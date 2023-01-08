@@ -1118,7 +1118,7 @@ derive_xrb! {
 	///
 	/// [window]: Window
 	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
-	pub struct WindowCreated: Event(16) {
+	pub struct Create: Event(16) {
 		#[sequence]
 		/// The sequence number associated with the last [`Request`] related
 		/// to this event prior to this event being generated.
@@ -1168,7 +1168,7 @@ derive_xrb! {
 	/// [window]: Window
 	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
 	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
-	pub struct WindowDestroyed: Event(17) {
+	pub struct Destroy: Event(17) {
 		#[sequence]
 		/// The sequence number associated with the last [`Request`] related
 		/// to this event prior to this event being generated.
@@ -1429,7 +1429,7 @@ derive_xrb! {
 	/// on the window's parent.
 	///
 	/// This event is generated when a client other than the one selecting
-	/// [`SUBSTRUCTURE_REDIRECT`] sends a [`ConfigureWindow`] request for that
+	/// [`SUBSTRUCTURE_REDIRECT`] sends a [`ConfigureWindow` request] for that
 	/// window.
 	///
 	/// The `mask` and corresponding values are reported as given in the
