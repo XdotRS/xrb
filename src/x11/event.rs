@@ -1131,14 +1131,13 @@ derive_xrb! {
 		/// The window that was created.
 		pub window: Window,
 
-		/// The geometry (coordinates and dimensions) of the window that was
-		/// created.
+		/// The geometry (coordinates and dimensions) of the `window`.
 		///
-		/// The window's coordinates are relative to its `parent`'s origin.
+		/// The `window`'s coordinates are relative to its `parent`'s origin.
 		///
-		/// The window's dimensions exclude its border.
+		/// The `window`'s dimensions exclude its border.
 		pub geometry: Rectangle,
-		/// The width of the window that was created's border.
+		/// The width of the border of the `window` that was created.
 		///
 		/// This is zero for [`WindowClass::InputOnly`] windows.
 		///
@@ -1146,11 +1145,11 @@ derive_xrb! {
 		pub border_width: u16,
 
 		/// Whether [`MapWindow`] and [`ConfigureWindow`] requests on the newly
-		/// created window should override a [`SUBSTRUCTURE_REDIRECT`] on the
+		/// created `window` should override a [`SUBSTRUCTURE_REDIRECT`] on the
 		/// window's `parent`.
 		///
 		/// This is typically set to inform the window manager not to tamper
-		/// with the window.
+		/// with the `window`.
 		///
 		/// [`MapWindow`]: super::request::MapWindow
 		/// [`ConfigureWindow`]: super::request::ConfigureWindow
@@ -1308,11 +1307,11 @@ derive_xrb! {
 	/// An event generated when a [window] is reparented.
 	///
 	/// This event is reported to client selecting [`SUBSTRUCTURE_NOTIFY`] on
-	/// either the old parent or the new `parent`, and to clients selecting
+	/// either the old parent or the `new_parent`, and to clients selecting
 	/// [`STRUCTURE_NOTIFY`] on the `window` itself.
 	///
 	/// Reparenting a window means to remove it from its current position in
-	/// the window hierarchy and place it as the child of a new parent window.
+	/// the window hierarchy and place it as the child of a `new_parent` window.
 	///
 	/// [window]: Window
 	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
@@ -1329,8 +1328,8 @@ derive_xrb! {
 		///
 		/// For clients selecting [`STRUCTURE_NOTIFY`] on the `window` that was
 		/// reparented, this is that `window`. For clients selecting
-		/// [`SUBSTRUCTURE_NOTIFY`] on the `window`'s old parent or new
-		/// `parent`, this is that parent.
+		/// [`SUBSTRUCTURE_NOTIFY`] on the `window`'s old parent or
+		/// `new_parent`, this is that parent.
 		///
 		/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
 		/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
@@ -1338,14 +1337,14 @@ derive_xrb! {
 		/// The window which was reparented.
 		pub window: Window,
 		/// The `window`'s new parent.
-		pub parent: Window,
+		pub new_parent: Window,
 
-		/// The `window`'s new coordinates relative to its new `parent`'s origin.
+		/// The `window`'s new coordinates relative to its `new_parent`'s origin.
 		pub coords: Point,
 
 		/// Whether [`MapWindow`] and [`ConfigureWindow`] requests on the
 		/// `window` should override a [`SUBSTRUCTURE_REDIRECT`] on the
-		/// window's `parent`.
+		/// window's parent.
 		///
 		/// This is typically set to inform the window manager not to tamper
 		/// with the window.
@@ -1358,17 +1357,68 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	/// An event generated when a [`ConfigureWindow` request] changes the state
+	/// of a [window].
+	///
+	/// This event is reported to clients selecting [`STRUCTURE_NOTIFY`] on the
+	/// window, and to clients selecting [`SUBSTRUCTURE_NOTIFY`] on its parent.
+	///
+	/// [`ConfigureWindow` request]: super::request::ConfigureWindow
+	/// [window]: Window
+	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
+	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
 	pub struct Configure: Event(22) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
-		pub event: Window,
+		/// The window on which this `Configure` event was generated.
+		///
+		/// For clients selecting [`STRUCTURE_NOTIFY`] on the window that was
+		/// mapped, this is that window. For clients selecting
+		/// [`SUBSTRUCTURE_NOTIFY`] on the window's parent, this is that parent.
+		///
+		/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
+		/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
+		pub event_window: Window,
+		/// The window which was configured in the [`ConfigureWindow` request].
+		///
+		/// [`ConfigureWindow` request]: super::request::ConfigureWindow
 		pub window: Window,
-		pub above_sibling: Option<Window>,
+		/// The `window`'s sibling which is directly below it in the window
+		/// stack.
+		///
+		/// If the `window` has no siblings or the `window` is lower than all
+		/// its siblings in the window stack, this is [`None`].
+		pub sibling_below: Option<Window>,
 
+		/// The geometry (coordinates and dimensions) of the `window`.
+		///
+		/// The `window`'s coordinates are relative to its `parent`'s origin.
+		///
+		/// The `window`'s dimensions exclude its border.
 		pub geometry: Rectangle,
+		/// The width of the configured `window`'s border.
+		///
+		/// This is zero for [`WindowClass::InputOnly`] windows.
+		///
+		/// [`WindowClass::InputOnly`]: crate::WindowClass::InputOnly
 		pub border_width: u16,
 
+		/// Whether [`MapWindow`] and [`ConfigureWindow`] requests on the
+		/// configured `window` should override a [`SUBSTRUCTURE_REDIRECT`] on
+		/// its `parent`.
+		///
+		/// This is typically set to inform the window manager not to tamper
+		/// with the `window`.
+		///
+		/// [`MapWindow`]: super::request::MapWindow
+		/// [`ConfigureWindow`]: super::request::ConfigureWindow
+		///
+		/// [`SUBSTRUCTURE_REDIRECT`]: crate::mask::EventMask::SUBSTRUCTURE_REDIRECT
 		pub override_redirect: bool,
 		[_; ..],
 	}
