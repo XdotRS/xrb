@@ -3,8 +3,8 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use derive_more::{From, Into};
-use xrbk::DataSize;
-use xrbk_macro::{derive_xrb, DataSize, Readable, Writable};
+use xrbk::X11Size;
+use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use crate::{mask::EventMask, BackingStores, Color, Colormap, Keycode, String8, VisualId, Window};
 
@@ -13,7 +13,7 @@ const fn pad(n: usize) -> usize {
 	(4 - (n % 4)) % 4
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum Endianness {
 	BigEndian = 0x42,
 	LittleEndian = 0x6c,
@@ -47,7 +47,7 @@ derive_xrb! {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum ImageEndianness {
 	LittleEndian,
 	BigEndian,
@@ -192,7 +192,7 @@ derive_xrb! {
 		#[allow(clippy::cast_possible_truncation)]
 		let additional_data_len: u16 = pixmap_formats, vendor, roots => {
 			let vendor_len = vendor.len() + pad(vendor.len());
-			let len = 32 + pixmap_formats.data_size() + vendor_len + roots.data_size();
+			let len = 32 + pixmap_formats.x11_size() + vendor_len + roots.x11_size();
 
 			(len / 4) as u16
 		},

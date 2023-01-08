@@ -27,7 +27,7 @@ use crate::{
 
 use bitflags::bitflags;
 
-use xrbk_macro::{derive_xrb, DataSize, Readable, StaticDataSize, Writable};
+use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
 extern crate self as xrb;
 
 derive_xrb! {
@@ -247,7 +247,7 @@ derive_xrb! {
 }
 
 /// The type of [`Motion`] event sent.
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum MotionNotificationType {
 	/// The [`Motion`] event was not one generated for a client selecting
 	/// [`MOTION_HINT`].
@@ -398,7 +398,7 @@ derive_xrb! {
 /// [`NonlinearIntermediate`]: EnterLeaveDetail::NonlinearIntermediate
 ///
 /// [window]: Window
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum EnterLeaveDetail {
 	/// Used for [`LeaveWindow`] events when the cursor leaves a window and
 	/// enters an ancestor of that window, and for [`EnterWindow`] events
@@ -433,7 +433,7 @@ pub enum EnterLeaveDetail {
 
 bitflags! {
 	/// A bitmask used in the [`EnterWindow`] and [`LeaveWindow`] events.
-	#[derive(Default, DataSize, Readable, StaticDataSize, Writable)]
+	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
 	pub struct EnterLeaveMask: u8 {
 		/// Whether the `event_window` is the focused window or a descendant
 		/// of the focused window.
@@ -745,7 +745,7 @@ derive_xrb! {
 /// [`None`]: FocusDetail::None
 ///
 /// [window]: Window
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum FocusDetail {
 	/// Used for [`Unfocus`] events for the window which has been unfocused if
 	/// the newly focused window is an ancestor of that window, and for
@@ -779,7 +779,7 @@ pub enum FocusDetail {
 
 /// Detail about how an [`Unfocus`] or [`Focus`] event was generated in relation
 /// to grabs.
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum FocusGrabMode {
 	/// Used for [`Unfocus`] and [`Focus`] events generated when the keyboard is
 	/// not grabbed.
@@ -1048,7 +1048,7 @@ derive_xrb! {
 /// This is used in the [`Visibility`] event.
 ///
 /// [window]: Window
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum VisibilityState {
 	/// There is nothing obscuring the window.
 	///
@@ -1571,7 +1571,7 @@ derive_xrb! {
 /// [window]: Window
 /// [`CirculateWindow` request]: super::request::CirculateWindow
 /// [`Circulate` events]: Circulate
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum Placement {
 	/// The `window` is now above all its siblings in the stack.
 	Top,
@@ -1661,7 +1661,7 @@ derive_xrb! {
 ///
 /// [`Modified`]: PropertyChange::Modified
 /// [`Deleted`]: PropertyChange::Deleted
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum PropertyChange {
 	/// The `property` was added or its value was changed.
 	Modified,
@@ -1832,7 +1832,7 @@ derive_xrb! {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum KeyMappingRequest {
 	Modifier,
 	Keyboard,

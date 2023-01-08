@@ -4,7 +4,7 @@
 
 use crate::{Atom, Colormap, Timestamp, Window};
 use bytes::{Buf, BufMut};
-use xrbk::{DataSize, ReadResult, Readable, StaticDataSize, Wrapper, Writable, WriteResult};
+use xrbk::{ConstantX11Size, ReadResult, Readable, Wrapper, Writable, WriteResult, X11Size};
 
 macro_rules! impl_wrapper {
 	(
@@ -43,19 +43,14 @@ pub enum CurrentableTime {
 	Timestamp(Timestamp),
 }
 
-impl DataSize for CurrentableTime {
-	fn data_size(&self) -> usize {
-		Self::static_data_size()
+impl X11Size for CurrentableTime {
+	fn x11_size(&self) -> usize {
+		Self::X11_SIZE
 	}
 }
 
-impl StaticDataSize for CurrentableTime {
-	fn static_data_size() -> usize
-	where
-		Self: Sized,
-	{
-		4
-	}
+impl ConstantX11Size for CurrentableTime {
+	const X11_SIZE: usize = 4;
 }
 
 impl Writable for CurrentableTime {

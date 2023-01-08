@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use derive_more::{From, Into};
-use xrbk_macro::{DataSize, Readable, StaticDataSize, Writable};
+use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
 
 /// A unique ID corresponding to a string name.
 ///
@@ -18,8 +18,8 @@ use xrbk_macro::{DataSize, Readable, StaticDataSize, Writable};
 	From,
 	Into,
 	// XRBK traits
-	DataSize,
-	StaticDataSize,
+	X11Size,
+	ConstantX11Size,
 	Readable,
 	Writable,
 )]

@@ -6,8 +6,8 @@ extern crate self as xrb;
 
 use bytes::Buf;
 use derive_more::{From, Into};
-use xrbk::{ContextualReadable, ReadResult};
-use xrbk_macro::{derive_xrb, DataSize, Readable, StaticDataSize, Writable};
+use xrbk::{ReadResult, ReadableWithContext};
+use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
 
 pub mod atom;
 pub mod mask;
@@ -26,8 +26,8 @@ pub use wrapper::*;
 	From,
 	Into,
 	// XRBK traits
-	DataSize,
-	StaticDataSize,
+	X11Size,
+	ConstantX11Size,
 	Readable,
 	Writable,
 )]
@@ -51,8 +51,8 @@ pub struct Color(
 	From,
 	Into,
 	// XRBK traits
-	DataSize,
-	StaticDataSize,
+	X11Size,
+	ConstantX11Size,
 	Readable,
 	Writable,
 )]
@@ -83,8 +83,8 @@ impl From<Pixmap> for Drawable {
 	From,
 	Into,
 	// XRBK traits
-	DataSize,
-	StaticDataSize,
+	X11Size,
+	ConstantX11Size,
 	Readable,
 	Writable,
 )]
@@ -108,8 +108,8 @@ impl From<Drawable> for Window {
 	From,
 	Into,
 	// XRBK traits
-	DataSize,
-	StaticDataSize,
+	X11Size,
+	ConstantX11Size,
 	Readable,
 	Writable,
 )]
@@ -133,8 +133,8 @@ impl From<Drawable> for Pixmap {
 	From,
 	Into,
 	// XRBK traits
-	DataSize,
-	StaticDataSize,
+	X11Size,
+	ConstantX11Size,
 	Readable,
 	Writable,
 )]
@@ -151,8 +151,8 @@ pub struct Cursor(pub(crate) u32);
 	From,
 	Into,
 	// XRBK traits
-	DataSize,
-	StaticDataSize,
+	X11Size,
+	ConstantX11Size,
 	Readable,
 	Writable,
 )]
@@ -183,8 +183,8 @@ impl From<GraphicsContext> for Fontable {
 	From,
 	Into,
 	// XRBK traits
-	DataSize,
-	StaticDataSize,
+	X11Size,
+	ConstantX11Size,
 	Readable,
 	Writable,
 )]
@@ -214,8 +214,8 @@ impl From<Fontable> for Font {
 	From,
 	Into,
 	// XRBK traits
-	DataSize,
-	StaticDataSize,
+	X11Size,
+	ConstantX11Size,
 	Readable,
 	Writable,
 )]
@@ -239,8 +239,8 @@ impl From<Fontable> for GraphicsContext {
 	From,
 	Into,
 	// XRBK traits
-	DataSize,
-	StaticDataSize,
+	X11Size,
+	ConstantX11Size,
 	Readable,
 	Writable,
 )]
@@ -260,8 +260,8 @@ pub struct Colormap(pub(crate) u32);
 	From,
 	Into,
 	// XRBK traits
-	DataSize,
-	StaticDataSize,
+	X11Size,
+	ConstantX11Size,
 	Readable,
 	Writable,
 )]
@@ -289,8 +289,8 @@ impl Timestamp {
 	From,
 	Into,
 	// XRBK traits
-	DataSize,
-	StaticDataSize,
+	X11Size,
+	ConstantX11Size,
 	Readable,
 	Writable,
 )]
@@ -308,7 +308,7 @@ impl VisualId {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum BitGravity {
 	Forget,
 	Static,
@@ -323,7 +323,7 @@ pub enum BitGravity {
 	SouthEast,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum WinGravity {
 	Unmap,
 	Static,
@@ -338,21 +338,21 @@ pub enum WinGravity {
 	SouthEast,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum BackingStores {
 	Never,
 	WhenMapped,
 	Always,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum GrabMode {
 	Normal,
 	Grab,
 	Ungrab,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum StackMode {
 	Above,
 	Below,
@@ -371,8 +371,8 @@ pub enum StackMode {
 	From,
 	Into,
 	// XRBK traits
-	DataSize,
-	StaticDataSize,
+	X11Size,
+	ConstantX11Size,
 	Readable,
 	Writable,
 )]
@@ -388,8 +388,8 @@ pub struct Keysym(pub(crate) u32);
 	From,
 	Into,
 	// XRBK traits
-	DataSize,
-	StaticDataSize,
+	X11Size,
+	ConstantX11Size,
 	Readable,
 	Writable,
 )]
@@ -405,8 +405,8 @@ pub struct Keycode(pub(crate) u8);
 	From,
 	Into,
 	// XRBK traits
-	DataSize,
-	StaticDataSize,
+	X11Size,
+	ConstantX11Size,
 	Readable,
 	Writable,
 )]
@@ -422,14 +422,14 @@ pub struct Button(pub(crate) u8);
 	From,
 	Into,
 	// XRBK traits
-	DataSize,
-	StaticDataSize,
+	X11Size,
+	ConstantX11Size,
 	Readable,
 	Writable,
 )]
 pub struct Char8(pub(crate) u8);
 
-#[derive(Clone, Eq, PartialEq, Hash, Debug, From, Into, DataSize, Writable)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, From, Into, X11Size, Writable)]
 pub struct String8(Vec<Char8>);
 
 impl String8 {
@@ -444,7 +444,7 @@ impl String8 {
 	}
 }
 
-impl ContextualReadable for String8 {
+impl ReadableWithContext for String8 {
 	type Context = usize;
 
 	fn read_with(reader: &mut impl Buf, length: &usize) -> ReadResult<Self>
@@ -465,14 +465,14 @@ impl ContextualReadable for String8 {
 	From,
 	Into,
 	// XRBK traits
-	DataSize,
-	StaticDataSize,
+	X11Size,
+	ConstantX11Size,
 	Readable,
 	Writable,
 )]
 pub struct Char16(pub(crate) u8, pub(crate) u8);
 
-#[derive(Clone, Eq, PartialEq, Hash, Debug, From, Into, DataSize, Writable)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, From, Into, X11Size, Writable)]
 pub struct String16(Vec<Char16>);
 
 impl String16 {
@@ -487,7 +487,7 @@ impl String16 {
 	}
 }
 
-impl ContextualReadable for String16 {
+impl ReadableWithContext for String16 {
 	type Context = usize;
 
 	fn read_with(reader: &mut impl Buf, length: &usize) -> ReadResult<Self>
@@ -509,8 +509,8 @@ impl ContextualReadable for String16 {
 	From,
 	Into,
 	// XRBK traits
-	DataSize,
-	StaticDataSize,
+	X11Size,
+	ConstantX11Size,
 	Readable,
 	Writable,
 )]
@@ -522,7 +522,7 @@ pub struct Point {
 }
 
 /// A rectangle with coordinates and dimensions.
-#[derive(Clone, Eq, PartialEq, Hash, Debug, DataSize, StaticDataSize, Readable, Writable)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, X11Size, ConstantX11Size, Readable, Writable)]
 pub struct Rectangle {
 	/// The x-coordinate of the upper left corner of the `Rectangle`.
 	pub x: i16,
@@ -535,7 +535,7 @@ pub struct Rectangle {
 }
 
 /// Same as a [`Rectangle`], but with unsigned coordinates.
-#[derive(Clone, Eq, PartialEq, Hash, Debug, DataSize, StaticDataSize, Readable, Writable)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, X11Size, ConstantX11Size, Readable, Writable)]
 pub struct Region {
 	/// The x-coordinate of the upper left corner of the `Region`.
 	pub x: u16,
@@ -548,7 +548,7 @@ pub struct Region {
 	pub height: u16,
 }
 
-#[derive(Clone, Eq, PartialEq, Hash, Debug, DataSize, StaticDataSize, Readable, Writable)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, X11Size, ConstantX11Size, Readable, Writable)]
 pub struct Arc {
 	pub x: i16,
 	pub y: i16,
@@ -569,7 +569,7 @@ pub struct Arc {
 	pub end_angle: i16,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum HostFamily {
 	Internet,
 	Decnet,
