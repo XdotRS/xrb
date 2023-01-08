@@ -1798,6 +1798,8 @@ derive_xrb! {
 		pub requester: Window,
 
 		/// The selection which the [`ConvertSelection` request] applied to.
+		///
+		/// [`ConvertSelection` request]: super::request::ConvertSelection
 		pub selection: Atom,
 		/// The type that the `selection` was to be converted into.
 		///

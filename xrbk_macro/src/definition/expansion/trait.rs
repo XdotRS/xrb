@@ -35,13 +35,13 @@ impl Request {
 				impl #impl_generics xrb::#r#trait for #name #type_generics #where_clause {
 					type Reply = #reply;
 
-					fn major_opcode() -> u8 {
+					const MAJOR_OPCODE: u8 = {
 						#major_opcode
-					}
+					};
 
-					fn minor_opcode() -> Option<u8> {
+					const MINOR_OPCODE: Option<u8> = {
 						#minor_opcode
-					}
+					};
 
 					#[allow(clippy::cast_possible_truncation)]
 					fn length(&self) -> u16 {
@@ -127,9 +127,9 @@ impl Event {
 			quote!(
 				#[automatically_derived]
 				impl #impl_generics xrb::#r#trait for #name #type_generics #where_clause {
-					fn code() -> u8 {
+					const CODE: u8 = {
 						#code
-					}
+					};
 
 					fn sequence(&self) -> Option<u16> {
 						#sequence

@@ -17,7 +17,7 @@ pub trait Request {
 	/// X core protocol `Request`s have unique major opcodes, but each extension
 	/// is only assigned one major opcode. Extensions are assigned major opcodes
 	/// from 127 through to 255.
-	fn major_opcode() -> u8;
+	const MAJOR_OPCODE: u8;
 
 	/// The minor opcode that uniquely identifies this `Request` within its
 	/// extension.
@@ -32,7 +32,7 @@ pub trait Request {
 	/// [`None`] means that either this request is not from an extension, or the
 	/// extension does not make use of the minor opcode, likely because it only
 	/// has one request.
-	fn minor_opcode() -> Option<u8>;
+	const MINOR_OPCODE: Option<u8>;
 
 	/// The length of this `Request`, including the header, in 4-byte units.
 	///
@@ -99,7 +99,7 @@ where
 	Self: Sized,
 {
 	/// The code uniquely identifying this `Event`.
-	fn code() -> u8;
+	const CODE: u8;
 
 	/// The sequence number associated with the last [request] received that
 	/// was related to this `Event`.
