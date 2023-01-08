@@ -1656,22 +1656,47 @@ derive_xrb! {
 	}
 }
 
+/// Whether a `property` was [`Modified`] or [`Deleted`] in a [`Property`]
+/// event.
+///
+/// [`Modified`]: PropertyChange::Modified
+/// [`Deleted`]: PropertyChange::Deleted
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, DataSize, Readable, Writable)]
 pub enum PropertyChange {
-	// This might be for new properties added too, if so mention that in the docs when written.
+	/// The `property` was added or its value was changed.
 	Modified,
+	/// The `property` was removed.
 	Deleted,
 }
 
 derive_xrb! {
+	/// An event generated when a [window] property is added, modified, or
+	/// removed.
+	///
+	/// This event is reported to clients selecting [`PROPERTY_CHANGE`] on the
+	/// window.
+	///
+	/// [window]: Window
+	/// [`PROPERTY_CHANGE`]: crate::mask::EventMask::PROPERTY_CHANGE
 	pub struct Property: Event(28) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
+		/// The window on which the `property` was changed.
 		pub window: Window,
 
+		/// The property that was changed.
 		pub property: Atom,
+		/// The time at which the property was changed.
 		pub time: Timestamp,
+		/// Whether the property was [`Modified`] or [`Deleted`].
+		///
+		/// [`Modified`]: PropertyChange::Modified
+		/// [`Deleted`]: PropertyChange::Deleted
 		pub change: PropertyChange,
 		[_; ..],
 	}
