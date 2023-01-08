@@ -1491,24 +1491,74 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	/// An event generated when a [window] is moved because its parent is
+	/// resized.
+	///
+	/// This event is reported to clients selecting [`STRUCTURE_NOTIFY`] on the
+	/// window, and to clients selecting [`SUBSTRUCTURE_NOTIFY`] on its parent.
+	///
+	/// [window]: Window
+	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
+	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
 	pub struct Gravity: Event(24) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
+		/// The window which this `Gravity` event was generated on.
+		///
+		/// For clients selecting [`STRUCTURE_NOTIFY`] on the `window` that was
+		/// moved, this is that `window`. For clients selecting
+		/// [`SUBSTRUCTURE_NOTIFY`] on the `window`'s parent, this is that parent.
+		///
+		/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
+		/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
 		pub event_window: Window,
+		/// The window which was moved.
 		pub window: Window,
 
+		/// The new coordinates of the `window`, relative to its parent's
+		/// origin.
 		pub coords: Point,
 		[_; ..],
 	}
 
-	pub struct Resize: Event(25) {
+	/// An event generated when a [window] on which a client is selecting
+	/// [`RESIZE_REDIRECT`] has a [`ConfigureWindow` request] sent by another
+	/// client attempt to change the window's size.
+	///
+	/// This event is reported to the client selecting [`RESIZE_REDIRECT`] on
+	/// the window.
+	///
+	/// [window]: Window
+	/// [`RESIZE_REDIRECT`]: crate::mask::EventMask::RESIZE_REDIRECT
+	/// [`ConfigureWindow` request]: super::request::ConfigureWindow
+	pub struct ResizeRequest: Event(25) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
+		/// The window which the [`ConfigureWindow` request] attempted to
+		/// resize.
+		///
+		/// [`ConfigureWindow` request]: super::request::ConfigureWindow
 		pub window: Window,
 
+		/// The width which the [`ConfigureWindow` request] is attempting to
+		/// resize the window to.
+		///
+		/// [`ConfigureWindow` request]: super::request::ConfigureWindow
 		pub width: u16,
+		/// The height which the [`ConfigureWindow` request] is attempting to
+		/// resize the window to.
+		///
+		/// [`ConfigureWindow` request]: super::request::ConfigureWindow
 		pub height: u16,
 		[_; ..],
 	}

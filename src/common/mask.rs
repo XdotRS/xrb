@@ -101,6 +101,12 @@ bitflags! {
 		///
 		/// [`SUBSTRUCTURE_NOTIFY`]: EventMask::SUBSTRUCTURE_NOTIFY
 		const STRUCTURE_NOTIFY = 0x0002_0000;
+		/// Events generated when another client sends a
+		/// [`ConfigureWindow` request] for a window which attempts to change
+		/// its size.
+		///
+		/// [`ConfigureWindow` request]: crate::x11::request::ConfigureWindow
+		const RESIZE_REDIRECT = 0x0004_0000;
 		/// Events generated when the substructure of a window changes.
 		///
 		/// In contrast to [`STRUCTURE_NOTIFY`], `SUBSTRUCTURE_NOTIFY` events
@@ -115,7 +121,7 @@ bitflags! {
 		///
 		/// [`STRUCTURE_NOTIFY`]: EventMask::STRUCTURE_NOTIFY
 		/// [`SUBSTRUCTURE_REDIRECT`]: EventMask::SUBSTRUCTURE_REDIRECT
-		const SUBSTRUCTURE_NOTIFY = 0x0004_0000;
+		const SUBSTRUCTURE_NOTIFY = 0x0008_0000;
 		/// Redirects certain structural requests to the selecting client.
 		///
 		/// `SUBSTRUCTURE_REDIRECT` allows a client to have certain requests
@@ -123,11 +129,11 @@ bitflags! {
 		/// window redirected to itself. It is commonly selected by window
 		/// managers so that they can have their own 'verdict' on whether to
 		/// honor, modify, or reject certain requests sent by a window.
-		const SUBSTRUCTURE_REDIRECT = 0x0008_0000;
+		const SUBSTRUCTURE_REDIRECT = 0x0010_0000;
 
 		/// Events generated when there are changes to the current input focus.
 		// TODO: improve FOCUS_CHANGE docs
-		const FOCUS_CHANGE = 0x0010_0000;
+		const FOCUS_CHANGE = 0x0020_0000;
 
 		/// Events generated when the properties of a window change.
 		const PROPERTY_CHANGE = 0x0040_0000;
