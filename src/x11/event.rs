@@ -47,7 +47,7 @@ derive_xrb! {
 	pub struct KeyPress: Event(2) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -125,7 +125,7 @@ derive_xrb! {
 	pub struct KeyRelease: Event(3) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -206,7 +206,7 @@ derive_xrb! {
 	pub struct ButtonPress: Event(4) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -285,7 +285,7 @@ derive_xrb! {
 	pub struct ButtonRelease: Event(5) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -407,7 +407,7 @@ derive_xrb! {
 	/// `Motion` event with a [`MotionNotificationType`] of [`Hint`] until:
 	/// - a mouse button or key is pressed or released; or
 	/// - the pointer leaves the `event_window`; or
-	/// - the client sends a [`QueryCursor`] or [`GetMotionEvents` request].
+	/// - the client sends a [`QueryCursor`] or [`GetMotionEvents`].
 	///
 	/// [`EnterWindow` event]: EnterWindow
 	/// [`LeaveWindow` event]: LeaveWindow
@@ -427,7 +427,7 @@ derive_xrb! {
 	pub struct Motion: Event(6) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -629,7 +629,7 @@ derive_xrb! {
 	pub struct EnterWindow: Event(7) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -699,7 +699,7 @@ derive_xrb! {
 		pub mask: EnterLeaveMask,
 	}
 
-	/// An event generated when the cursor leaves a [window].
+	/// An [event] generated when the cursor leaves a [window].
 	///
 	/// This event is triggered both when the cursor moves to be in a different
 	/// window than it was before, as well as when the window under the cursor
@@ -707,20 +707,17 @@ derive_xrb! {
 	/// [`Map`], [`Configure`], [`Gravity`],
 	/// [`Circulate`]).
 	///
-	/// This event is received only by clients selecting [`LEAVE_WINDOW`] on a
-	/// window.
+	/// # Recipients
+	/// This [event] is reported to clients selecting [`LEAVE_WINDOW`] on the
+	/// [window].
 	///
-	/// `LeaveWindow` events caused by a hierarchy change are generated after
-	/// that hierarchy change event (see above), but there is no restriction
-	/// as to whether `LeaveWindow` events should be generated before or
-	/// after [`Unfocus`], [`Visibility`], or [`Expose`] events.
-	///
+	/// [event]: crate::Event
 	/// [window]: Window
 	/// [`LEAVE_WINDOW`]: crate::mask::EventMask::LEAVE_WINDOW
 	pub struct LeaveWindow: Event(8) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -735,7 +732,9 @@ derive_xrb! {
 		/// [event]: crate::Event
 		pub detail: EnterLeaveDetail,
 
-		/// The time at which this event was generated.
+		/// The time at which this [event] was generated.
+		///
+		/// [event]: crate::Event
 		pub time: Timestamp,
 
 		/// The root window containing the window in which the cursor was
@@ -1004,7 +1003,7 @@ derive_xrb! {
 	pub struct Focus: Event(9) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -1060,7 +1059,7 @@ derive_xrb! {
 	pub struct Unfocus: Event(10) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -1150,7 +1149,7 @@ derive_xrb! {
 	pub struct Expose: Event(12) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [event]: crate::Event
@@ -1186,7 +1185,7 @@ derive_xrb! {
 	pub struct GraphicsExposure: Event(13) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [event]: crate::Event
@@ -1238,7 +1237,7 @@ derive_xrb! {
 	pub struct NoExposure: Event(14) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -1339,7 +1338,7 @@ derive_xrb! {
 	pub struct Visibility: Event(15) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -1365,7 +1364,7 @@ derive_xrb! {
 	pub struct Create: Event(16) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -1419,7 +1418,7 @@ derive_xrb! {
 	pub struct Destroy: Event(17) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -1428,7 +1427,7 @@ derive_xrb! {
 
 		/// The window on which this `Destroy` event was generated.
 		///
-		/// For clients selecting [`STRUCTURE_NOTIFY`] on the [window] that was
+		/// For clients selecting [`STRUCTURE_NOTIFY`] on the window that was
 		/// destroyed, this is that window. For clients selecting
 		/// [`SUBSTRUCTURE_NOTIFY`] on the window's parent, this is that parent.
 		///
@@ -1456,7 +1455,7 @@ derive_xrb! {
 	pub struct Unmap: Event(18) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -1501,7 +1500,7 @@ derive_xrb! {
 	pub struct Map: Event(19) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -1553,7 +1552,7 @@ derive_xrb! {
 	pub struct MapRequest: Event(20) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -1586,7 +1585,7 @@ derive_xrb! {
 	pub struct Reparent: Event(21) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -1641,7 +1640,7 @@ derive_xrb! {
 	pub struct Configure: Event(22) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -1720,7 +1719,7 @@ derive_xrb! {
 	pub struct ConfigureWindowRequest: Event(23) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -1782,7 +1781,7 @@ derive_xrb! {
 	pub struct Gravity: Event(24) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -1822,7 +1821,7 @@ derive_xrb! {
 	pub struct ResizeRequest: Event(25) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -1881,7 +1880,7 @@ derive_xrb! {
 	pub struct Circulate: Event(26) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -1921,7 +1920,7 @@ derive_xrb! {
 	pub struct CirculateRequest: Event(27) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -1978,7 +1977,7 @@ derive_xrb! {
 	pub struct Property: Event(28) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -2009,11 +2008,12 @@ derive_xrb! {
 	/// # Recipients
 	/// This [event] is reported to the current owner of a selection.
 	///
+	/// [event]: crate::Event
 	/// [`SetSelectionOwner` request]: super::request::SetSelectionOwner
 	pub struct SelectionClear: Event(29) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -2048,7 +2048,7 @@ derive_xrb! {
 	pub struct ConvertSelectionRequest: Event(30) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -2079,19 +2079,20 @@ derive_xrb! {
 	/// A reply to the [`ConvertSelection` request].
 	///
 	/// If the selection has no owner, this is generated by the X server. If the
-	/// selection does have an owner, that owner should generate this event
+	/// selection does have an owner, that owner should generate this [event]
 	/// using the [`SendEvent` request].
 	///
 	/// # Recipients
 	/// This [event] is reported to the `requester` of a
 	/// [`ConvertSelection` request].
 	///
+	/// [event]: crate::Event
 	/// [`ConvertSelection` request]: super::request::ConvertSelection
 	/// [`SendEvent` request]: super::request::SendEvent
 	pub struct Selection: Event(31) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -2166,7 +2167,7 @@ derive_xrb! {
 	pub struct Colormap: Event(32) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -2261,7 +2262,7 @@ derive_xrb! {
 	pub struct ClientMessage: Event(33) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
@@ -2319,7 +2320,7 @@ pub enum MappingRequest {
 
 derive_xrb! {
 	/// An [event] generated when a [`SetModifierMapping`],
-	/// [`ChangeKeyboardMapping`], or [`SetCursorMapping` request] is successful.
+	/// [`ChangeKeyboardMapping`], or [`SetCursorMapping`] request is successful.
 	///
 	/// # Recipients
 	/// This [event] is reported to all clients.
@@ -2331,7 +2332,7 @@ derive_xrb! {
 	pub struct MappingChange: Event(34) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
-		/// to this [event] that was sent before this [event] was generated.
+		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::Event::sequence
 		/// [request]: crate::Request
