@@ -219,7 +219,7 @@ pub fn derive_xrb(input: TokenStream) -> TokenStream {
 }
 
 // Potential idea: source attribute to use a source to serialize a field...?
-#[proc_macro_derive(Writable, attributes(wrapper))]
+#[proc_macro_derive(Writable, attributes(no_discrim))]
 pub fn derive_writable(item: TokenStream) -> TokenStream {
 	let item = parse_macro_input!(item as DeriveInput);
 
