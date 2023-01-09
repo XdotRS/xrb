@@ -393,7 +393,19 @@ pub struct Keysym(pub(crate) u32);
 	Readable,
 	Writable,
 )]
-pub struct Keycode(pub(crate) u8);
+pub struct Keycode(pub u8);
+
+impl Keycode {
+	#[must_use]
+	pub const fn new(keycode: u8) -> Self {
+		Self(keycode)
+	}
+
+	#[must_use]
+	pub const fn unwrap(self) -> u8 {
+		self.0
+	}
+}
 
 #[derive(
 	Copy,
