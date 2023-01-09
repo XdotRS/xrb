@@ -32,8 +32,6 @@ use xrbk::{
 	ReadResult,
 	Readable,
 	ReadableWithContext,
-	Writable,
-	WriteResult,
 	X11Size,
 };
 
