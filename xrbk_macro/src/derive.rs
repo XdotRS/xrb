@@ -4,7 +4,7 @@
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
-use syn::{punctuated::Pair, Data, Fields, FieldsNamed, FieldsUnnamed, Index};
+use syn::{punctuated::Pair, Attribute, Data, Fields, FieldsNamed, FieldsUnnamed, Index};
 
 use crate::TsExt;
 
@@ -49,7 +49,7 @@ fn pat_cons(fields: &Fields) -> TokenStream2 {
 	tokens
 }
 
-pub fn derive_writes(data: &Data) -> TokenStream2 {
+pub fn derive_writes(attributes: &[Attribute], data: &Data) -> TokenStream2 {
 	fn derive_for_fields(fields: &Fields) -> TokenStream2 {
 		TokenStream2::with_tokens(|tokens| match &fields {
 			Fields::Named(fields) => {
@@ -82,6 +82,19 @@ pub fn derive_writes(data: &Data) -> TokenStream2 {
 		})
 	}
 
+	let no_discrim = {
+		let mut no_discrim = false;
+
+		for attribute in attributes {
+			if attribute.path.is_ident("no_discrim") {
+				no_discrim = true;
+				break;
+			}
+		}
+
+		no_discrim
+	};
+
 	match data {
 		Data::Struct(r#struct) => {
 			let pat = pat_cons(&r#struct.fields);
@@ -100,22 +113,32 @@ pub fn derive_writes(data: &Data) -> TokenStream2 {
 			let arms = r#enum.variants.iter().map(|variant| {
 				let ident = &variant.ident;
 
-				if let Some((_, expr)) = &variant.discriminant {
+				if !no_discrim && let Some((_, expr)) = &variant.discriminant {
 					discrim = quote!((#expr));
 				}
 
 				let pat = pat_cons(&variant.fields);
 				let writes = derive_for_fields(&variant.fields);
 
+				let write_discrim = if no_discrim {
+					None
+				} else {
+					Some(quote!(
+						buf.put_u8((#discrim) as u8);
+					))
+				};
+
 				let arm = quote!(
 					Self::#ident #pat => {
-						buf.put_u8((#discrim) as u8);
+						#write_discrim
 
 						#writes
 					},
 				);
 
-				quote!(/* discrim */ + 1).to_tokens(&mut discrim);
+				if !no_discrim {
+					quote!(/* discrim */ + 1).to_tokens(&mut discrim);
+				}
 
 				arm
 			});
@@ -131,7 +154,13 @@ pub fn derive_writes(data: &Data) -> TokenStream2 {
 	}
 }
 
-pub fn derive_reads(data: &Data) -> TokenStream2 {
+pub fn derive_reads(attributes: &[Attribute], data: &Data) -> TokenStream2 {
+	for attribute in attributes {
+		if attribute.path.is_ident("no_discrim") {
+			panic!("found #[no_discrim]: cannot derive Readable without discriminants");
+		}
+	}
+
 	fn derive_for_fields(fields: &Fields) -> TokenStream2 {
 		TokenStream2::with_tokens(|tokens| match &fields {
 			Fields::Named(fields) => {
@@ -217,7 +246,7 @@ pub fn derive_reads(data: &Data) -> TokenStream2 {
 	}
 }
 
-pub fn derive_x11_sizes(data: &Data) -> TokenStream2 {
+pub fn derive_x11_sizes(attributes: &[Attribute], data: &Data) -> TokenStream2 {
 	fn derive_for_fields(fields: &Fields) -> TokenStream2 {
 		TokenStream2::with_tokens(|tokens| match &fields {
 			Fields::Named(fields) => {
@@ -250,6 +279,19 @@ pub fn derive_x11_sizes(data: &Data) -> TokenStream2 {
 		})
 	}
 
+	let no_discrim = {
+		let mut no_discrim = false;
+
+		for attribute in attributes {
+			if attribute.path.is_ident("no_discrim") {
+				no_discrim = true;
+				break;
+			}
+		}
+
+		no_discrim
+	};
+
 	match data {
 		Data::Struct(r#struct) => {
 			let pat = pat_cons(&r#struct.fields);
@@ -272,10 +314,19 @@ pub fn derive_x11_sizes(data: &Data) -> TokenStream2 {
 				let pat = pat_cons(&variant.fields);
 				let sizes = derive_for_fields(&variant.fields);
 
+				let size = if no_discrim {
+					quote! {
+						let mut size = 0;
+					}
+				} else {
+					quote! {
+						let mut size = 1;
+					}
+				};
+
 				quote!(
 					Self::#ident #pat => {
-						let mut size = 1;
-
+						#size
 						#sizes
 
 						size
@@ -294,7 +345,7 @@ pub fn derive_x11_sizes(data: &Data) -> TokenStream2 {
 	}
 }
 
-pub fn derive_constant_x11_sizes(data: &Data) -> TokenStream2 {
+pub fn derive_constant_x11_sizes(_attributes: &[Attribute], data: &Data) -> TokenStream2 {
 	fn derive_for_fields(fields: &Fields) -> TokenStream2 {
 		TokenStream2::with_tokens(|tokens| match fields {
 			Fields::Named(FieldsNamed { named: fields, .. })
@@ -329,6 +380,7 @@ pub fn derive_constant_x11_sizes(data: &Data) -> TokenStream2 {
 			)
 		},
 
+		// TODO: derive for enums if all variants are the same constant size
 		Data::Enum(_) | Data::Union(_) => unimplemented!(),
 	}
 }

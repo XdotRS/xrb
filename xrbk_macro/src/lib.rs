@@ -227,7 +227,7 @@ pub fn derive_writable(item: TokenStream) -> TokenStream {
 	// TODO: add generic bounds
 	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
 
-	let writes = derive_writes(&item.data);
+	let writes = derive_writes(&item.attrs, &item.data);
 
 	quote!(
 		#[automatically_derived]
@@ -246,7 +246,7 @@ pub fn derive_writable(item: TokenStream) -> TokenStream {
 }
 
 // TODO: context attribute support
-#[proc_macro_derive(Readable, attributes(context, wrapper))]
+#[proc_macro_derive(Readable, attributes(no_discrim, context))]
 pub fn derive_readable(item: TokenStream) -> TokenStream {
 	let item = parse_macro_input!(item as DeriveInput);
 
@@ -254,7 +254,7 @@ pub fn derive_readable(item: TokenStream) -> TokenStream {
 	// TODO: add generic bounds
 	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
 
-	let reads = derive_reads(&item.data);
+	let reads = derive_reads(&item.attrs, &item.data);
 
 	quote!(
 		#[automatically_derived]
@@ -269,7 +269,7 @@ pub fn derive_readable(item: TokenStream) -> TokenStream {
 	.into()
 }
 
-#[proc_macro_derive(X11Size)]
+#[proc_macro_derive(X11Size, attributes(no_discrim))]
 pub fn derive_x11_size(item: TokenStream) -> TokenStream {
 	let item = parse_macro_input!(item as DeriveInput);
 
@@ -277,7 +277,7 @@ pub fn derive_x11_size(item: TokenStream) -> TokenStream {
 	// TODO: add generic bounds
 	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
 
-	let x11_size = derive_x11_sizes(&item.data);
+	let x11_size = derive_x11_sizes(&item.attrs, &item.data);
 
 	quote!(
 		#[automatically_derived]
@@ -290,7 +290,7 @@ pub fn derive_x11_size(item: TokenStream) -> TokenStream {
 	.into()
 }
 
-#[proc_macro_derive(ConstantX11Size)]
+#[proc_macro_derive(ConstantX11Size, attributes(no_discrim))]
 pub fn derive_constant_x11_size(item: TokenStream) -> TokenStream {
 	let item = parse_macro_input!(item as DeriveInput);
 
@@ -298,7 +298,7 @@ pub fn derive_constant_x11_size(item: TokenStream) -> TokenStream {
 	// TODO: add generic bounds
 	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
 
-	let x11_sizes = derive_constant_x11_sizes(&item.data);
+	let x11_sizes = derive_constant_x11_sizes(&item.attrs, &item.data);
 
 	quote!(
 		#[automatically_derived]
