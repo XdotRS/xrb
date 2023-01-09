@@ -219,7 +219,7 @@ pub fn derive_xrb(input: TokenStream) -> TokenStream {
 }
 
 // Potential idea: source attribute to use a source to serialize a field...?
-#[proc_macro_derive(Writable, attributes(no_discrim))]
+#[proc_macro_derive(Writable, attributes(no_discrim, hide))]
 pub fn derive_writable(item: TokenStream) -> TokenStream {
 	let item = parse_macro_input!(item as DeriveInput);
 
@@ -246,7 +246,7 @@ pub fn derive_writable(item: TokenStream) -> TokenStream {
 }
 
 // TODO: context attribute support
-#[proc_macro_derive(Readable, attributes(no_discrim, context))]
+#[proc_macro_derive(Readable, attributes(no_discrim, hide, context))]
 pub fn derive_readable(item: TokenStream) -> TokenStream {
 	let item = parse_macro_input!(item as DeriveInput);
 
@@ -269,7 +269,7 @@ pub fn derive_readable(item: TokenStream) -> TokenStream {
 	.into()
 }
 
-#[proc_macro_derive(X11Size, attributes(no_discrim))]
+#[proc_macro_derive(X11Size, attributes(no_discrim, hide))]
 pub fn derive_x11_size(item: TokenStream) -> TokenStream {
 	let item = parse_macro_input!(item as DeriveInput);
 
@@ -290,7 +290,7 @@ pub fn derive_x11_size(item: TokenStream) -> TokenStream {
 	.into()
 }
 
-#[proc_macro_derive(ConstantX11Size, attributes(no_discrim))]
+#[proc_macro_derive(ConstantX11Size, attributes(no_discrim, hide))]
 pub fn derive_constant_x11_size(item: TokenStream) -> TokenStream {
 	let item = parse_macro_input!(item as DeriveInput);
 

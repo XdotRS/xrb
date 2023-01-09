@@ -8,7 +8,11 @@ use crate::{definition::DefinitionType, TsExt};
 impl Element {
 	pub fn write_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		match self {
-			Self::Field(field) => field.write_tokens(tokens),
+			Self::Field(field) => {
+				if field.hide_attribute.is_none() {
+					field.write_tokens(tokens)
+				}
+			},
 			Self::Let(r#let) => r#let.write_tokens(tokens),
 
 			Self::SingleUnused(unused) => unused.write_tokens(tokens),
@@ -18,7 +22,11 @@ impl Element {
 
 	pub fn x11_size_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		match self {
-			Self::Field(field) => field.x11_size_tokens(tokens),
+			Self::Field(field) => {
+				if field.hide_attribute.is_none() {
+					field.x11_size_tokens(tokens)
+				}
+			},
 			Self::Let(r#let) => r#let.x11_size_tokens(tokens),
 
 			Self::SingleUnused(unused) => unused.x11_size_tokens(tokens),
@@ -28,7 +36,11 @@ impl Element {
 
 	pub fn read_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		match self {
-			Self::Field(field) => field.read_tokens(tokens),
+			Self::Field(field) => {
+				if field.hide_attribute.is_none() || field.context_attribute.is_some() {
+					field.read_tokens(tokens)
+				}
+			},
 			Self::Let(r#let) => r#let.read_tokens(tokens),
 
 			Self::SingleUnused(unused) => unused.read_tokens(tokens),
@@ -38,7 +50,11 @@ impl Element {
 
 	pub fn add_x11_size_tokens(&self, tokens: &mut TokenStream2) {
 		match self {
-			Self::Field(field) => field.add_x11_size_tokens(tokens),
+			Self::Field(field) => {
+				if field.hide_attribute.is_none() {
+					field.add_x11_size_tokens(tokens)
+				}
+			},
 			Self::Let(r#let) => r#let.add_x11_size_tokens(tokens),
 
 			Self::SingleUnused(unused) => unused.add_x11_size_tokens(tokens),

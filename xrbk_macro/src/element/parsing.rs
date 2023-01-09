@@ -336,6 +336,7 @@ impl ParseWithContext for SingleUnused {
 			context_attribute,
 			metabyte_attribute,
 			sequence_attribute,
+			hide_attribute,
 		}: ParsedAttributes,
 	) -> Result<Self> {
 		if let Some(attribute) = attributes.first() {
@@ -356,6 +357,13 @@ impl ParseWithContext for SingleUnused {
 			return Err(Error::new(
 				attribute.span(),
 				"sequence attributes are not allowed for singular unused bytes elements",
+			));
+		}
+
+		if let Some(attribute) = hide_attribute {
+			return Err(Error::new(
+				attribute.span(),
+				"hide attributes are not allowed for singular unused bytes elements",
 			));
 		}
 
@@ -384,6 +392,7 @@ impl ParseWithContext for ArrayUnused {
 				metabyte_attribute,
 				context_attribute,
 				sequence_attribute,
+				hide_attribute,
 			},
 			bracket_token,
 			maps,
@@ -411,6 +420,13 @@ impl ParseWithContext for ArrayUnused {
 			return Err(Error::new(
 				attribute.span(),
 				"sequence attributes are not allowed for array-type unused bytes elements",
+			));
+		}
+
+		if let Some(attribute) = hide_attribute {
+			return Err(Error::new(
+				attribute.span(),
+				"hide attributes are not allowed for array-type unused bytes elements",
 			));
 		}
 
@@ -464,6 +480,7 @@ impl ParseWithContext for Let {
 				metabyte_attribute,
 				context_attribute,
 				sequence_attribute,
+				hide_attribute,
 			},
 			let_map,
 			definition_type,
@@ -476,6 +493,13 @@ impl ParseWithContext for Let {
 			return Err(Error::new(
 				attribute.span(),
 				"sequence attributes are not allowed for let elements",
+			));
+		}
+
+		if let Some(attribute) = hide_attribute {
+			return Err(Error::new(
+				attribute.span(),
+				"hide attributes ar e not allowed for let elements",
 			));
 		}
 
@@ -524,6 +548,7 @@ impl ParseWithContext for Field {
 				metabyte_attribute,
 				context_attribute,
 				sequence_attribute,
+				hide_attribute,
 			},
 			map,
 		): Self::Context<'_>,
@@ -557,6 +582,7 @@ impl ParseWithContext for Field {
 			metabyte_attribute,
 			context_attribute,
 			sequence_attribute,
+			hide_attribute,
 
 			visibility,
 			id,

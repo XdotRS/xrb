@@ -44,6 +44,24 @@ pub struct SequenceAttribute {
 	pub path: Path,
 }
 
+/// An attribute which indicates that a [`Field`] should not be taken into
+/// consideration when implementing XRBK traits.
+///
+/// > **<sup>Syntax</sup>**\
+/// > _HideAttribute_ :\
+/// > &nbsp;&nbsp; `#` `[` `hide` `]`
+///
+/// [`Field`]: crate::element::Field
+pub struct HideAttribute {
+	/// A hash token: `#`.
+	pub hash_token: Token![#],
+	/// A pair of square brackets (`[` and `]`) surrounding the `path`.
+	pub bracket_token: token::Bracket,
+
+	/// The attribute path: `hide` for a `HideAttribute`.
+	pub path: Path,
+}
+
 /// An attribute which provides the [`ContextualReadable::Context`] for a type
 /// implementing [`xrbk::ContextualReadable`].
 ///

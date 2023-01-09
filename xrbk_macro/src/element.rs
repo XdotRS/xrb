@@ -20,7 +20,7 @@ use syn::{
 };
 
 use crate::{
-	attribute::{ContextAttribute, MetabyteAttribute, SequenceAttribute},
+	attribute::{ContextAttribute, HideAttribute, MetabyteAttribute, SequenceAttribute},
 	source::Source,
 };
 
@@ -369,6 +369,11 @@ pub struct Field {
 	///
 	/// See [`SequenceAttribute`] for more information.
 	pub sequence_attribute: Option<SequenceAttribute>,
+	/// An optional [`HideAttribute`] which indicates that this field should
+	/// not be taken into account when implementing XRBK traits.
+	///
+	/// See [`HideAttribute`] for more information.
+	pub hide_attribute: Option<HideAttribute>,
 
 	/// The visibility of the `Field`.
 	pub visibility: Visibility,

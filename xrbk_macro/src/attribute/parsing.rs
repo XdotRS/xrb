@@ -27,6 +27,8 @@ pub struct ParsedAttributes {
 	pub metabyte_attribute: Option<MetabyteAttribute>,
 	/// A sequence attribute, if one was parsed.
 	pub sequence_attribute: Option<SequenceAttribute>,
+	/// A hide attribute, if one was parsed.
+	pub hide_attribute: Option<HideAttribute>,
 }
 
 impl ParseWithContext for ParsedAttributes {
@@ -41,6 +43,7 @@ impl ParseWithContext for ParsedAttributes {
 		let mut context_attribute = None;
 		let mut metabyte_attribute = None;
 		let mut sequence_attribute = None;
+		let mut hide_attribute = None;
 
 		// While there are still attributes remaining...
 		while input.peek(Token![#]) && input.peek2(token::Bracket) {
@@ -101,6 +104,20 @@ impl ParseWithContext for ParsedAttributes {
 					bracket_token,
 					path,
 				});
+			// If the name is `hide`, parse it as a hide attribute.
+			} else if path.is_ident("hide") {
+				if hide_attribute.is_some() {
+					return Err(Error::new(
+						path.span(),
+						"no more than one hide attribute is allowed per element",
+					));
+				}
+
+				hide_attribute = Some(HideAttribute {
+					hash_token,
+					bracket_token,
+					path,
+				});
 			// Otherwise, if the name was not `context`, `metabyte`, nor
 			// `sequence`, parse the attribute as a normal attribute.
 			} else {
@@ -115,12 +132,20 @@ impl ParseWithContext for ParsedAttributes {
 			}
 		}
 
+		if let Some(hide_attribute) = &hide_attribute && context_attribute.is_none() {
+			return Err(Error::new(
+				hide_attribute.span(),
+				"hide attributes cannot be used without a context attribute to read the field",
+			));
+		}
+
 		Ok(Self {
 			attributes,
 
 			context_attribute,
 			metabyte_attribute,
 			sequence_attribute,
+			hide_attribute,
 		})
 	}
 }

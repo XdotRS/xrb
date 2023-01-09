@@ -29,6 +29,17 @@ impl ToTokens for SequenceAttribute {
 	}
 }
 
+impl ToTokens for HideAttribute {
+	fn to_tokens(&self, tokens: &mut TokenStream) {
+		// `#`.
+		self.hash_token.to_tokens(tokens);
+		// Square brackets surrounding `hide`.
+		self.bracket_token.surround(tokens, |tokens| {
+			self.path.to_tokens(tokens);
+		});
+	}
+}
+
 impl ToTokens for ContextAttribute {
 	fn to_tokens(&self, tokens: &mut TokenStream) {
 		// `#`.
