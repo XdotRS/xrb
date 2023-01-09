@@ -5,6 +5,7 @@
 //! [`X11Size`] and [`ConstantX11Size`] implementations for primitive types
 
 use crate::{ConstantX11Size, X11Size};
+use std::ops::{Range, RangeInclusive};
 
 /// Simple macro for easely defining size for primitive types
 macro_rules! constant_x11_size {
@@ -130,6 +131,26 @@ impl<T: X11Size> X11Size for Box<T> {
 
 impl<T: X11Size + ConstantX11Size> ConstantX11Size for Box<T> {
 	const X11_SIZE: usize = T::X11_SIZE;
+}
+
+impl<T: X11Size> X11Size for Range<T> {
+	fn x11_size(&self) -> usize {
+		self.start.x11_size() + u8::X11_SIZE
+	}
+}
+
+impl<T: X11Size + ConstantX11Size> ConstantX11Size for Range<T> {
+	const X11_SIZE: usize = T::X11_SIZE + u8::X11_SIZE;
+}
+
+impl<T: X11Size> X11Size for RangeInclusive<T> {
+	fn x11_size(&self) -> usize {
+		self.start().x11_size() + u8::X11_SIZE
+	}
+}
+
+impl<T: X11Size + ConstantX11Size> ConstantX11Size for RangeInclusive<T> {
+	const X11_SIZE: usize = T::X11_SIZE + u8::X11_SIZE;
 }
 
 #[cfg(test)]

@@ -4,8 +4,9 @@
 
 //! [`Readable`] implementations for primitive types
 
-use crate::{ReadResult, Readable, ReadableWithContext};
+use crate::{ReadResult, Readable, ReadableWithContext, X11Size};
 use bytes::Buf;
+use std::ops::{Range, RangeInclusive};
 
 macro_rules! implement {
 	($($reader:ident, $ty:ty => $expr:expr),*$(,)?) => {
@@ -78,5 +79,27 @@ impl<T: Readable> ReadableWithContext for Vec<T> {
 		}
 
 		Ok(vec)
+	}
+}
+
+impl<T: X11Size + Clone> ReadableWithContext for Range<T> {
+	type Context = (T, T);
+
+	fn read_with(_buf: &mut impl Buf, (start, end): &(T, T)) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		Ok(Self { start: start.clone(), end: end.clone() })
+	}
+}
+
+impl<T: X11Size + Clone> ReadableWithContext for RangeInclusive<T> {
+	type Context = (T, T);
+
+	fn read_with(_buf: &mut impl Buf, (start, end): &(T, T)) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		Ok(Self::new(start.clone(), end.clone()))
 	}
 }
