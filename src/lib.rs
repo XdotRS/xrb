@@ -66,14 +66,4 @@ pub mod x11 {
 }
 
 pub use common::*;
-pub use connection::{
-	Depth,
-	Endianness,
-	Format,
-	ImageEndianness,
-	Millimeters,
-	Screen,
-	VisualClass,
-	VisualType,
-};
 pub use r#trait::*;
