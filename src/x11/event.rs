@@ -1901,10 +1901,11 @@ pub enum ClientMessageFormat {
 	I32 = 32,
 }
 
-#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Writable)]
 /// The `data` contained in a [`ClientMessage` event].
 ///
 /// [`ClientMessage` event]: ClientMessage
+#[no_discrim]
 pub enum ClientMessageData {
 	/// Data comprised of 20 `i8` values.
 	I8([i8; 20]),
@@ -1936,18 +1937,6 @@ impl ReadableWithContext for ClientMessageData {
 			ClientMessageFormat::I16 => Self::I16(<_>::read_from(buf)?),
 			ClientMessageFormat::I32 => Self::I32(<_>::read_from(buf)?),
 		})
-	}
-}
-
-impl Writable for ClientMessageData {
-	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
-		match self {
-			Self::I8(values) => values.write_to(buf)?,
-			Self::I16(values) => values.write_to(buf)?,
-			Self::I32(values) => values.write_to(buf)?,
-		}
-
-		Ok(())
 	}
 }
 
