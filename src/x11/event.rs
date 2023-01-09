@@ -1865,6 +1865,8 @@ derive_xrb! {
 		/// The window that this event relates to.
 		pub window: Window,
 		/// The `window`'s [colormap].
+		///
+		/// [colormap]: crate::Colormap
 		pub colormap: Option<crate::Colormap>,
 
 		/// Whether this event was generated because the `window`'s
