@@ -27,13 +27,7 @@ use crate::{
 
 use bitflags::bitflags;
 use bytes::{Buf, BufMut};
-use xrbk::{
-	ConstantX11Size,
-	ReadResult,
-	Readable,
-	ReadableWithContext,
-	X11Size,
-};
+use xrbk::{ConstantX11Size, ReadResult, Readable, ReadableWithContext, X11Size};
 
 use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
 extern crate self as xrb;
