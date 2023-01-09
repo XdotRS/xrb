@@ -1810,12 +1810,70 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	/// The reason why a [`Colormap` event] was generated.
+	///
+	/// [`Colormap` event]: Colormap
+	pub enum ColormapDetail {
+		/// The `window`'s [`COLORMAP` attribute] was changed.
+		///
+		/// [`COLORMAP` attribute]: crate::mask::AttributeMask::COLORMAP
+		AttributeChanged,
+		/// The `window`'s [colormap] was installed or uninstalled.
+		///
+		/// [colormap]: crate::Colormap
+		InstalledOrUninstalled,
+	}
+
+	/// Whether a [window]'s [colormap] is currently installed.
+	///
+	/// [window]: Window
+	/// [colormap]: crate::Colormap
+	pub enum ColormapState {
+		/// The [window]'s [colormap] is not currently installed.
+		///
+		/// [window]: Window
+		/// [colormap]: crate::Colormap
+		Uninstalled,
+		/// The [window]'s [colormap] is currently installed.
+		///
+		/// [window]: Window
+		/// [colormap]: crate::Colormap
+		Installed,
+	}
+
+	/// An event generated when a [window]'s [colormap] is installed,
+	/// uninstalled, or its [`COLORMAP` attribute] is changed.
+	///
+	/// This event is reported to clients selecting [`COLORMAP_CHANGE`] on the
+	/// window.
+	///
+	/// [window]: Window
+	/// [colormap]: crate::Colormap
+	/// [`COLORMAP` attribute]: crate::mask::AttributeMask::COLORMAP
+	///
+	/// [`COLORMAP_CHANGE`]: crate::mask::EventMask::COLORMAP_CHANGE
 	pub struct Colormap: Event(32) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
+		/// The window that this event relates to.
 		pub window: Window,
+		/// The `window`'s [colormap].
 		pub colormap: Option<crate::Colormap>,
+
+		/// Whether this event was generated because the `window`'s
+		/// [`COLORMAP` attribute] was changed or because the `window`'s
+		/// `colormap` was installed or uninstalled.
+		///
+		/// [`COLORMAP` attribute]: crate::mask::AttributeMask::COLORMAP
+		pub detail: ColormapDetail,
+		/// Whether the `window`'s `colormap` is currently installed.
+		pub state: ColormapState,
+		[_; ..],
 	}
 
 	pub struct ClientMessage: Event(33) {
