@@ -4,7 +4,15 @@
 
 use proc_macro2::Span;
 use std::collections::HashMap;
-use syn::{braced, bracketed, parenthesized, parse::ParseStream, spanned::Spanned, Error, Result};
+use syn::{
+	braced,
+	bracketed,
+	parenthesized,
+	parse::{discouraged::Speculative, ParseStream},
+	spanned::Spanned,
+	Error,
+	Result,
+};
 
 use super::*;
 use crate::{
@@ -282,13 +290,6 @@ impl ParseWithContext for Element {
 
 		Ok(if input.peek(Token![_]) {
 			Self::SingleUnused(input.parse_with(parsed_attributes)?)
-		} else if input.peek(token::Bracket) {
-			Self::ArrayUnused(Box::new(input.parse_with((
-				unused_index,
-				parsed_attributes,
-				(&*let_map, &*field_map),
-				definition_type,
-			))?))
 		} else if input.peek(Token![let]) {
 			Self::Let(Box::new(input.parse_with((
 				parsed_attributes,
@@ -296,6 +297,25 @@ impl ParseWithContext for Element {
 				definition_type,
 			))?))
 		} else {
+			if input.peek(token::Bracket) {
+				let content;
+				let fork = &input.fork();
+
+				let bracket_token = bracketed!(content in fork);
+
+				if content.peek(Token![_]) {
+					input.advance_to(fork);
+
+					return Ok(Self::ArrayUnused(Box::new(content.parse_with((
+						unused_index,
+						parsed_attributes,
+						bracket_token,
+						(&*let_map, &*field_map),
+						definition_type,
+					))?)));
+				}
+			}
+
 			Self::Field(Box::new(input.parse_with((
 				field_index,
 				element_type,
@@ -350,6 +370,7 @@ impl ParseWithContext for ArrayUnused {
 	type Context<'a> = (
 		usize,
 		ParsedAttributes,
+		token::Bracket,
 		(IdentMap<'a>, IdentMap<'a>),
 		DefinitionType,
 	);
@@ -364,6 +385,7 @@ impl ParseWithContext for ArrayUnused {
 				context_attribute,
 				sequence_attribute,
 			},
+			bracket_token,
 			maps,
 			definition_type,
 		): Self::Context<'_>,
@@ -392,17 +414,15 @@ impl ParseWithContext for ArrayUnused {
 			));
 		}
 
-		let content;
-
 		Ok(Self {
 			formatted: format_ident!("unused_{}", unused_index),
 
 			attributes,
 
-			bracket_token: bracketed!(content in input),
-			underscore_token: content.parse()?,
-			semicolon_token: content.parse()?,
-			content: content.parse_with((maps, definition_type))?,
+			bracket_token,
+			underscore_token: input.parse()?,
+			semicolon_token: input.parse()?,
+			content: input.parse_with((maps, definition_type))?,
 		})
 	}
 }
