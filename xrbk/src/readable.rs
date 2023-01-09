@@ -89,7 +89,10 @@ impl<T: X11Size + Clone> ReadableWithContext for Range<T> {
 	where
 		Self: Sized,
 	{
-		Ok(Self { start: start.clone(), end: end.clone() })
+		Ok(Self {
+			start: start.clone(),
+			end: end.clone(),
+		})
 	}
 }
 
