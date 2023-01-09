@@ -26,6 +26,16 @@ use crate::{
 };
 
 use bitflags::bitflags;
+use bytes::{Buf, BufMut};
+use xrbk::{
+	ConstantX11Size,
+	ReadResult,
+	Readable,
+	ReadableWithContext,
+	Writable,
+	WriteResult,
+	X11Size,
+};
 
 use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
 extern crate self as xrb;
@@ -246,8 +256,8 @@ derive_xrb! {
 	}
 }
 
-/// The type of [`Motion`] event sent.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+/// The type of [`Motion`] event sent.
 pub enum MotionNotificationType {
 	/// The [`Motion`] event was not one generated for a client selecting
 	/// [`MOTION_HINT`].
@@ -354,6 +364,7 @@ derive_xrb! {
 	}
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 /// Detail that describes how a [window] receiving a [`LeaveWindow`] or
 /// [`EnterWindow`] event relates to the event which took place.
 ///
@@ -398,7 +409,6 @@ derive_xrb! {
 /// [`NonlinearIntermediate`]: EnterLeaveDetail::NonlinearIntermediate
 ///
 /// [window]: Window
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum EnterLeaveDetail {
 	/// Used for [`LeaveWindow`] events when the cursor leaves a window and
 	/// enters an ancestor of that window, and for [`EnterWindow`] events
@@ -432,8 +442,8 @@ pub enum EnterLeaveDetail {
 }
 
 bitflags! {
-	/// A bitmask used in the [`EnterWindow`] and [`LeaveWindow`] events.
 	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
+	/// A bitmask used in the [`EnterWindow`] and [`LeaveWindow`] events.
 	pub struct EnterLeaveMask: u8 {
 		/// Whether the `event_window` is the focused window or a descendant
 		/// of the focused window.
@@ -629,6 +639,7 @@ derive_xrb! {
 	}
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 /// Detail describing how a [window] that receives a [`Focus`] or [`Unfocus`]
 /// event relates to the event that occurred.
 ///
@@ -745,7 +756,6 @@ derive_xrb! {
 /// [`None`]: FocusDetail::None
 ///
 /// [window]: Window
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum FocusDetail {
 	/// Used for [`Unfocus`] events for the window which has been unfocused if
 	/// the newly focused window is an ancestor of that window, and for
@@ -777,9 +787,9 @@ pub enum FocusDetail {
 	None,
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 /// Detail about how an [`Unfocus`] or [`Focus`] event was generated in relation
 /// to grabs.
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum FocusGrabMode {
 	/// Used for [`Unfocus`] and [`Focus`] events generated when the keyboard is
 	/// not grabbed.
@@ -1043,12 +1053,12 @@ derive_xrb! {
 	}
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 /// The state of a [window]'s visibility.
 ///
 /// This is used in the [`Visibility`] event.
 ///
 /// [window]: Window
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum VisibilityState {
 	/// There is nothing obscuring the window.
 	///
@@ -1564,6 +1574,7 @@ derive_xrb! {
 	}
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 /// The new placement of a [window] restacked in a [`CirculateWindow` request].
 ///
 /// This is used in [`Circulate` events].
@@ -1571,7 +1582,6 @@ derive_xrb! {
 /// [window]: Window
 /// [`CirculateWindow` request]: super::request::CirculateWindow
 /// [`Circulate` events]: Circulate
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum Placement {
 	/// The `window` is now above all its siblings in the stack.
 	Top,
@@ -1656,12 +1666,12 @@ derive_xrb! {
 	}
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 /// Whether a `property` was [`Modified`] or [`Deleted`] in a [`Property`]
 /// event.
 ///
 /// [`Modified`]: PropertyChange::Modified
 /// [`Deleted`]: PropertyChange::Deleted
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum PropertyChange {
 	/// The `property` was added or its value was changed.
 	Modified,
@@ -1875,18 +1885,104 @@ derive_xrb! {
 		pub state: ColormapState,
 		[_; ..],
 	}
+}
 
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+/// Used in the [`ClientMessage` event] to represent whether its `data` is 20
+/// `i8` values, 10 `i16` values, or 5 `i32` values.
+///
+/// [`ClientMessage` event]: ClientMessage
+pub enum ClientMessageFormat {
+	/// 20 `i8` values: [`ClientMessageData::I8`].
+	I8 = 8,
+	/// 10 `i16` values: [`ClientMessageData::I16`].
+	I16 = 16,
+	/// 5 `i32` values: [`ClientMessageData::I32`].
+	I32 = 32,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+/// The `data` contained in a [`ClientMessage` event].
+///
+/// [`ClientMessage` event]: ClientMessage
+pub enum ClientMessageData {
+	/// Data comprised of 20 `i8` values.
+	I8([i8; 20]),
+	/// Data comprised of 10 `i16` values.
+	I16([i16; 10]),
+	/// Data comprised of 5 `i32` values.
+	I32([i32; 5]),
+}
+
+impl ConstantX11Size for ClientMessageData {
+	const X11_SIZE: usize = 20;
+}
+
+impl X11Size for ClientMessageData {
+	fn x11_size(&self) -> usize {
+		Self::X11_SIZE
+	}
+}
+
+impl ReadableWithContext for ClientMessageData {
+	type Context = ClientMessageFormat;
+
+	fn read_with(buf: &mut impl Buf, format: &ClientMessageFormat) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		Ok(match format {
+			ClientMessageFormat::I8 => Self::I8(<_>::read_from(buf)?),
+			ClientMessageFormat::I16 => Self::I16(<_>::read_from(buf)?),
+			ClientMessageFormat::I32 => Self::I32(<_>::read_from(buf)?),
+		})
+	}
+}
+
+impl Writable for ClientMessageData {
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		match self {
+			Self::I8(values) => values.write_to(buf)?,
+			Self::I16(values) => values.write_to(buf)?,
+			Self::I32(values) => values.write_to(buf)?,
+		}
+
+		Ok(())
+	}
+}
+
+derive_xrb! {
+	/// An event generated by a [`SendEvent` request].
+	///
+	/// This event is reported to the [`SendEvent` request]'s `destination`
+	/// [window].
+	///
+	/// [`SendEvent` request]: super::request::SendEvent
+	/// [window]: Window
 	pub struct ClientMessage: Event(33) {
 		#[sequence]
+		/// The sequence number associated with the last [`Request`] related
+		/// to this event prior to this event being generated.
+		///
+		/// [`Request`]: crate::Request
 		pub sequence: u16,
 
 		#[metabyte]
-		pub format: u8,
+		/// Whether `data` is `[i8; 20]`, `[i16; 10]`, or `[i32; 5]`.
+		let format: ClientMessageFormat = data => match data {
+			ClientMessageData::I8(_) => ClientMessageFormat::I8,
+			ClientMessageData::I16(_) => ClientMessageFormat::I16,
+			ClientMessageData::I32(_) => ClientMessageFormat::I32,
+		},
 
+		/// The recipient of this `ClientMessage` event.
 		pub window: Window,
+		/// How the `data` is to be interpreted by the `recipient`.
 		pub r#type: Atom,
 
-		pub data: [u8; 20],
+		#[context(format => *format)]
+		/// The data contained in this event.
+		pub data: ClientMessageData,
 	}
 }
 
