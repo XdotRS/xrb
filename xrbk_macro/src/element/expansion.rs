@@ -6,7 +6,7 @@ mod xrbk;
 
 use super::*;
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{quote, ToTokens};
+use quote::{quote, quote_spanned, ToTokens};
 
 impl ToTokens for FieldId {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
@@ -167,5 +167,49 @@ impl ToTokens for Field {
 		}
 
 		self.r#type.to_tokens(tokens);
+	}
+}
+
+impl ToTokens for Let {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		for attribute in &self.attributes {
+			attribute.to_tokens(tokens);
+		}
+
+		self.let_token.to_tokens(tokens);
+		self.ident.to_tokens(tokens);
+		quote_spanned!(self.equals_token.span=> ;).to_tokens(tokens);
+	}
+}
+
+impl ToTokens for SingleUnused {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		self.attribute.to_tokens(tokens);
+		self.underscore_token.to_tokens(tokens);
+	}
+}
+
+impl ToTokens for ArrayUnused {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		for attribute in &self.attributes {
+			attribute.to_tokens(tokens);
+		}
+
+		self.bracket_token.surround(tokens, |tokens| {
+			self.underscore_token.to_tokens(tokens);
+			self.semicolon_token.to_tokens(tokens);
+			self.content.to_tokens(tokens);
+		})
+	}
+}
+
+impl ToTokens for UnusedContent {
+	fn to_tokens(&self, tokens: &mut TokenStream2) {
+		match self {
+			Self::Infer {
+				double_dot_token, ..
+			} => double_dot_token.to_tokens(tokens),
+			Self::Source(_) => {},
+		}
 	}
 }

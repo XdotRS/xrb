@@ -2,6 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use quote::quote_spanned;
+use syn::spanned::Spanned;
+
 use super::*;
 use crate::{definition::DefinitionType, TsExt};
 
@@ -71,8 +74,12 @@ impl Field {
 		let r#type = &self.r#type;
 
 		tokens.append_tokens(|| {
-			quote!(
-				<#r#type as ::xrbk::Writable>::write_to(&#formatted, buf)?;
+			let r#type = quote_spanned!(r#type.span()=>
+				<#r#type as ::xrbk::Writable>
+			);
+
+			quote_spanned!(self.span()=>
+				#r#type::write_to(&#formatted, buf)?;
 			)
 		});
 	}
@@ -91,7 +98,9 @@ impl Field {
 					tokens,
 					None,
 					formatted,
-					quote!(<#r#type as ::xrbk::ReadableWithContext>::Context),
+					quote_spanned!(r#type.span()=>
+						<#r#type as ::xrbk::ReadableWithContext>::Context
+					),
 				);
 
 				let function_call = TokenStream2::with_tokens(|tokens| {
@@ -99,8 +108,12 @@ impl Field {
 				});
 
 				tokens.append_tokens(|| {
-					quote!(
-						let #formatted = <#r#type as ::xrbk::ReadableWithContext>::read_with(
+					let r#type = quote_spanned!(r#type.span()=>
+						<#r#type as ::xrbk::ReadableWithContext>
+					);
+
+					quote_spanned!(self.span()=>
+						let #formatted = #r#type::read_with(
 							buf,
 							&#function_call,
 						)?;
@@ -110,8 +123,12 @@ impl Field {
 
 			None => {
 				tokens.append_tokens(|| {
-					quote!(
-						let #formatted = <#r#type as ::xrbk::Readable>::read_from(buf)?;
+					let r#type = quote_spanned!(r#type.span()=>
+						<#r#type as ::xrbk::Readable>
+					);
+
+					quote_spanned!(self.span()=>
+						let #formatted = #r#type::read_from(buf)?;
 					)
 				});
 			},
@@ -123,7 +140,7 @@ impl Field {
 			let r#type = &self.r#type;
 			let formatted = &self.formatted;
 
-			quote!(
+			quote_spanned!(self.span()=>
 				size += <#r#type as ::xrbk::X11Size>::x11_size(&#formatted);
 			)
 		});
@@ -149,10 +166,17 @@ impl Let {
 		});
 
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(formatted.span()=>
 				let #formatted = #function_call;
+			)
+		});
+		tokens.append_tokens(|| {
+			let r#type = quote_spanned!(r#type.span()=>
+				<#r#type as ::xrbk::Writable>
+			);
 
-				<#r#type as ::xrbk::Writable>::write_to(&#formatted, buf)?;
+			quote_spanned!(self.span()=>
+				#r#type::write_to(&#formatted, buf)?;
 			)
 		});
 	}
@@ -172,7 +196,7 @@ impl Let {
 		});
 
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(self.span()=>
 				let #formatted = #function_call;
 			)
 		});
@@ -190,7 +214,9 @@ impl Let {
 					tokens,
 					None,
 					formatted,
-					quote!(<#r#type as ::xrbk::ReadableWithContext>::Context),
+					quote_spanned!(r#type.span()=>
+						<#r#type as ::xrbk::ReadableWithContext>::Context
+					),
 				);
 
 				let function_call = TokenStream2::with_tokens(|tokens| {
@@ -198,8 +224,12 @@ impl Let {
 				});
 
 				tokens.append_tokens(|| {
-					quote!(
-						let #formatted = <#r#type as ::xrbk::ReadableWithContext>::read_with(
+					let r#type = quote_spanned!(r#type.span()=>
+						<#r#type as ::xrbk::ReadableWithContext>
+					);
+
+					quote_spanned!(self.span()=>
+						let #formatted = #r#type::read_with(
 							buf,
 							#function_call,
 						)?;
@@ -209,8 +239,12 @@ impl Let {
 
 			None => {
 				tokens.append_tokens(|| {
-					quote!(
-						let #formatted = <#r#type as ::xrbk::Readable>::read_from(buf)?;
+					let r#type = quote_spanned!(r#type.span()=>
+						<#r#type as ::xrbk::Readable>
+					);
+
+					quote_spanned!(self.span()=>
+						let #formatted = #r#type::read_from(buf)?;
 					)
 				});
 			},
@@ -222,7 +256,7 @@ impl Let {
 		let formatted = &self.formatted;
 
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(self.span()=>
 				size += <#r#type as ::xrbk::X11Size>::x11_size(&#formatted);
 			)
 		});
@@ -234,7 +268,7 @@ impl Let {
 impl SingleUnused {
 	pub fn write_tokens(&self, tokens: &mut TokenStream2) {
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(self.span()=>
 				buf.put_u8(0);
 			)
 		});
@@ -246,7 +280,7 @@ impl SingleUnused {
 
 	pub fn read_tokens(&self, tokens: &mut TokenStream2) {
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(self.span()=>
 				buf.advance(1);
 			)
 		});
@@ -254,7 +288,7 @@ impl SingleUnused {
 
 	pub fn add_x11_size_tokens(&self, tokens: &mut TokenStream2) {
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(self.span()=>
 				size += 1;
 			)
 		});
@@ -271,7 +305,7 @@ impl ArrayUnused {
 			UnusedContent::Infer { last_element, .. } => {
 				tokens.append_tokens(|| match definition_type.min_length() {
 					Some(min_length) if *last_element => {
-						quote!(
+						quote_spanned!(self.span()=>
 							let #formatted = if size < #min_length {
 								#min_length - size
 							} else {
@@ -281,7 +315,7 @@ impl ArrayUnused {
 					},
 
 					_ => {
-						quote!(
+						quote_spanned!(self.span()=>
 							let #formatted = (4 - (size % 4)) % 4;
 						)
 					},
@@ -292,7 +326,7 @@ impl ArrayUnused {
 				source.function_to_tokens(tokens, Some(&self.attributes), formatted, quote!(usize));
 
 				tokens.append_tokens(|| {
-					quote!(
+					quote_spanned!(self.span()=>
 						let #formatted = #formatted();
 					)
 				});
@@ -306,7 +340,7 @@ impl ArrayUnused {
 		self.r#impl(tokens, definition_type);
 
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(self.span()=>
 				buf.put_bytes(0u8, #formatted);
 			)
 		});
@@ -323,7 +357,7 @@ impl ArrayUnused {
 		self.r#impl(tokens, definition_type);
 
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(self.span()=>
 				buf.advance(#formatted);
 			)
 		})
@@ -333,7 +367,7 @@ impl ArrayUnused {
 		let formatted = &self.formatted;
 
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(self.span()=>
 				size += #formatted;
 			)
 		});

@@ -6,17 +6,18 @@ use super::*;
 use crate::{element::Element, TsExt};
 
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{format_ident, quote, ToTokens};
+use quote::{format_ident, quote_spanned, ToTokens};
+use syn::Path;
 
 impl Struct {
-	pub fn impl_writable(&self, tokens: &mut TokenStream2) {
+	pub fn impl_writable(&self, tokens: &mut TokenStream2, trait_path: &Path) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
 		let declare_x11_size = if self.content.contains_infer() {
-			Some(quote!(let mut size: usize = 0;))
+			Some(quote_spanned!(trait_path.span()=> let mut size: usize = 0;))
 		} else {
 			None
 		};
@@ -36,9 +37,10 @@ impl Struct {
 		});
 
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
-				impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
+				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
+					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
 					fn write_to(
 						&self,
 						buf: &mut impl ::xrbk::BufMut,
@@ -58,7 +60,7 @@ impl Struct {
 }
 
 impl Request {
-	pub fn impl_writable(&self, tokens: &mut TokenStream2) {
+	pub fn impl_writable(&self, tokens: &mut TokenStream2, trait_path: &Path) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
@@ -67,7 +69,7 @@ impl Request {
 		let declare_x11_size = if self.content.contains_infer() {
 			// The x11_size starts at `4` to account for the size of a request's header
 			// being 4 bytes.
-			Some(quote!(let mut size: usize = 4;))
+			Some(quote_spanned!(trait_path.span()=> let mut size: usize = 4;))
 		} else {
 			None
 		};
@@ -89,7 +91,7 @@ impl Request {
 		});
 
 		let metabyte = if self.minor_opcode.is_some() {
-			quote!(
+			quote_spanned!(trait_path.span()=>
 				buf.put_u8(<Self as xrb::Request>::MINOR_OPCODE.unwrap());
 			)
 		} else if let Some(element) = self.content.metabyte_element() {
@@ -97,15 +99,16 @@ impl Request {
 				element.write_tokens(tokens, DefinitionType::Request);
 			})
 		} else {
-			quote!(
+			quote_spanned!(trait_path.span()=>
 				buf.put_u8(0);
 			)
 		};
 
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
-				impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
+				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
+					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
 					fn write_to(
 						&self,
 						buf: &mut impl ::xrbk::BufMut,
@@ -133,7 +136,7 @@ impl Request {
 }
 
 impl Reply {
-	pub fn impl_writable(&self, tokens: &mut TokenStream2) {
+	pub fn impl_writable(&self, tokens: &mut TokenStream2, trait_path: &Path) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
@@ -142,7 +145,7 @@ impl Reply {
 		let declare_x11_size = if self.content.contains_infer() {
 			// The x11_size starts at `8` to account for the size of a reply's\
 			// header being 8 bytes.
-			Some(quote!(let mut size: usize = 8;))
+			Some(quote_spanned!(trait_path.span()=> let mut size: usize = 8;))
 		} else {
 			None
 		};
@@ -168,7 +171,7 @@ impl Reply {
 				element.write_tokens(tokens, DefinitionType::Reply);
 			})
 		} else {
-			quote!(
+			quote_spanned!(trait_path.span()=>
 				buf.put_u8(0);
 			)
 		};
@@ -179,9 +182,10 @@ impl Reply {
 		};
 
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
-				impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
+				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
+					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
 					fn write_to(
 						&self,
 						buf: &mut impl ::xrbk::BufMut,
@@ -211,7 +215,7 @@ impl Reply {
 }
 
 impl Event {
-	pub fn impl_writable(&self, tokens: &mut TokenStream2) {
+	pub fn impl_writable(&self, tokens: &mut TokenStream2, trait_path: &Path) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
@@ -224,7 +228,7 @@ impl Event {
 				1
 			};
 
-			Some(quote!(let mut size: usize = #x11_size;))
+			Some(quote_spanned!(trait_path.span()=> let mut size: usize = #x11_size;))
 		} else {
 			None
 		};
@@ -252,7 +256,7 @@ impl Event {
 				element.write_tokens(tokens, DefinitionType::Event);
 			}))
 		} else {
-			Some(quote!(
+			Some(quote_spanned!(trait_path.span()=>
 				buf.put_u8(0);
 			))
 		};
@@ -260,15 +264,16 @@ impl Event {
 		let sequence = if let Some(Element::Field(field)) = self.content.sequence_element() {
 			let formatted = &field.formatted;
 
-			Some(quote!(buf.put_u16(*#formatted);))
+			Some(quote_spanned!(trait_path.span()=> buf.put_u16(*#formatted);))
 		} else {
 			None
 		};
 
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
-				impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
+				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
+					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
 					fn write_to(
 						&self,
 						buf: &mut impl ::xrbk::BufMut,
@@ -296,7 +301,7 @@ impl Event {
 }
 
 impl Enum {
-	pub fn impl_writable(&self, tokens: &mut TokenStream2) {
+	pub fn impl_writable(&self, tokens: &mut TokenStream2, trait_path: &Path) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
@@ -308,7 +313,7 @@ impl Enum {
 					let ident = format_ident!("discrim_{}", variant.ident);
 
 					tokens.append_tokens(|| {
-						quote!(
+						quote_spanned!(trait_path.span()=>
 							// Isolate the discriminant's expression in a
 							// function so that it doesn't have access to
 							// identifiers used in the surrounding generated
@@ -329,13 +334,13 @@ impl Enum {
 		});
 
 		let arms = TokenStream2::with_tokens(|tokens| {
-			let mut discrim = quote!(0);
+			let mut discrim = quote_spanned!(trait_path.span()=> 0);
 
 			for variant in &self.variants {
 				let ident = &variant.ident;
 
 				let declare_x11_size = if variant.content.contains_infer() {
-					Some(quote!(let mut size: usize = 1;))
+					Some(quote_spanned!(trait_path.span()=> let mut size: usize = 1;))
 				} else {
 					None
 				};
@@ -361,7 +366,7 @@ impl Enum {
 				});
 
 				tokens.append_tokens(|| {
-					quote!(
+					quote_spanned!(trait_path.span()=>
 						Self::#ident #pat => {
 							#declare_x11_size
 							buf.put_u8(#discrim);
@@ -371,14 +376,15 @@ impl Enum {
 					)
 				});
 
-				quote!(/* discrim */ + 1).to_tokens(&mut discrim);
+				quote_spanned!(trait_path.span()=> /* discrim */ + 1).to_tokens(&mut discrim);
 			}
 		});
 
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
-				impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
+				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
+					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
 					fn write_to(
 						&self,
 						buf: &mut impl ::xrbk::BufMut,

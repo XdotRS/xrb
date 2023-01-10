@@ -4,7 +4,7 @@
 
 use crate::element::Element;
 use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
+use quote::{quote, quote_spanned};
 
 use super::*;
 use crate::TsExt;
@@ -27,12 +27,10 @@ impl Request {
 			quote!(None)
 		};
 
-		let r#trait = &self.request_token;
-
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(self.request_token.span()=>
 				#[automatically_derived]
-				impl #impl_generics xrb::#r#trait for #name #type_generics #where_clause {
+				impl #impl_generics xrb::Request for #name #type_generics #where_clause {
 					type Reply = #reply;
 
 					const MAJOR_OPCODE: u8 = {
@@ -73,13 +71,11 @@ impl Reply {
 			_ => panic!("replies must have a sequence field of type `u32`"),
 		};
 
-		let r#trait = &self.reply_token;
-
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(self.reply_token.span()=>
 				#[automatically_derived]
-				impl #impl_generics xrb::#r#trait for #name #type_generics #where_clause {
-					type Req = #request;
+				impl #impl_generics xrb::Reply for #name #type_generics #where_clause {
+					type Request = #request;
 
 					#[allow(clippy::cast_possible_truncation)]
 					fn length(&self) -> u32 {
@@ -121,12 +117,10 @@ impl Event {
 			_ => quote!(None),
 		};
 
-		let r#trait = &self.event_token;
-
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(self.event_token.span()=>
 				#[automatically_derived]
-				impl #impl_generics xrb::#r#trait for #name #type_generics #where_clause {
+				impl #impl_generics xrb::Event for #name #type_generics #where_clause {
 					const CODE: u8 = {
 						#code
 					};

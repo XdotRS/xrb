@@ -6,9 +6,11 @@ use super::*;
 use crate::TsExt;
 
 use proc_macro2::TokenStream as TokenStream2;
+use quote::quote_spanned;
+use syn::Path;
 
 impl Struct {
-	pub fn impl_x11_size(&self, tokens: &mut TokenStream2) {
+	pub fn impl_x11_size(&self, tokens: &mut TokenStream2, trait_path: &Path) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
@@ -25,9 +27,10 @@ impl Struct {
 		});
 
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
-				impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
+				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
+					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
 					fn x11_size(&self) -> usize {
 						let mut size: usize = 0;
 						// Destructure the struct's fields, if any.
@@ -46,7 +49,7 @@ impl Struct {
 }
 
 impl Request {
-	pub fn impl_x11_size(&self, tokens: &mut TokenStream2) {
+	pub fn impl_x11_size(&self, tokens: &mut TokenStream2, trait_path: &Path) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
@@ -65,9 +68,10 @@ impl Request {
 		});
 
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
-				impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
+				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
+					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
 					fn x11_size(&self) -> usize {
 						// The size starts at `4` to account for the size
 						// of a request's header being 4 bytes.
@@ -88,7 +92,7 @@ impl Request {
 }
 
 impl Reply {
-	pub fn impl_x11_size(&self, tokens: &mut TokenStream2) {
+	pub fn impl_x11_size(&self, tokens: &mut TokenStream2, trait_path: &Path) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
@@ -107,9 +111,10 @@ impl Reply {
 		});
 
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
-				impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
+				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
+					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
 					fn x11_size(&self) -> usize {
 						// The size starts at `8` to account for the size
 						// of a reply's header being 8 bytes.
@@ -130,7 +135,7 @@ impl Reply {
 }
 
 impl Event {
-	pub fn impl_x11_size(&self, tokens: &mut TokenStream2) {
+	pub fn impl_x11_size(&self, tokens: &mut TokenStream2, trait_path: &Path) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
@@ -155,9 +160,10 @@ impl Event {
 		});
 
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
-				impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
+				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
+					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
 					fn x11_size(&self) -> usize {
 						// The size starts at either `4` or `1`, depending
 						// on whether there is a sequence field and metabyte
@@ -180,7 +186,7 @@ impl Event {
 }
 
 impl Enum {
-	pub fn impl_x11_size(&self, tokens: &mut TokenStream2) {
+	pub fn impl_x11_size(&self, tokens: &mut TokenStream2, trait_path: &Path) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
@@ -201,7 +207,7 @@ impl Enum {
 				});
 
 				tokens.append_tokens(|| {
-					quote!(
+					quote_spanned!(trait_path.span()=>
 						Self::#ident #pat => {
 							// Add the size of each element.
 							#sizes
@@ -212,9 +218,10 @@ impl Enum {
 		});
 
 		tokens.append_tokens(|| {
-			quote!(
+			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
-				impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
+				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
+					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op, unused_mut)]
 					fn x11_size(&self) -> usize {
 						// The size starts at `1` to account for the
 						// discriminant.
