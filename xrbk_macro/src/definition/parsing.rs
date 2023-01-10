@@ -27,72 +27,76 @@ impl Parse for Definition {
 	fn parse(input: ParseStream) -> Result<Self> {
 		let fork = &input.fork();
 
-		let attributes = fork.call(Attribute::parse_outer)?;
+		let item_attributes = fork.parse::<ParsedItemAttributes>()?;
 		let visibility = fork.parse::<Visibility>()?;
 
-		Ok(if fork.peek(Token![struct]) {
-			input.advance_to(fork);
+		Ok(if item_attributes.contains_xrbk_derives() {
+			if fork.peek(Token![struct]) {
+				input.advance_to(fork);
 
-			let struct_token = input.parse()?;
-			let ident = input.parse()?;
-			let generics = input.parse()?;
+				let struct_token = input.parse()?;
+				let ident = input.parse()?;
+				let generics = input.parse()?;
 
-			if !input.peek(Token![:]) {
-				Self::Struct(Struct {
-					attributes,
-					visibility,
-					struct_token,
-					ident,
-					generics,
-					content: input.parse_with(DefinitionType::Basic)?,
-				})
-			} else {
-				let colon_token = input.parse()?;
-				let message_token: Ident = input.parse()?;
-
-				match &*message_token.to_string() {
-					"Request" => Self::Request(input.parse_with((
-						attributes,
+				if !input.peek(Token![:]) {
+					Self::Struct(Struct {
+						item_attributes,
 						visibility,
 						struct_token,
 						ident,
 						generics,
-						colon_token,
-						message_token,
-					))?),
+						content: input.parse_with(DefinitionType::Basic)?,
+					})
+				} else {
+					let colon_token = input.parse()?;
+					let message_token: Ident = input.parse()?;
 
-					"Reply" => Self::Reply(input.parse_with((
-						attributes,
-						visibility,
-						struct_token,
-						ident,
-						generics,
-						colon_token,
-						message_token,
-					))?),
+					match &*message_token.to_string() {
+						"Request" => Self::Request(input.parse_with((
+							item_attributes,
+							visibility,
+							struct_token,
+							ident,
+							generics,
+							colon_token,
+							message_token,
+						))?),
 
-					"Event" => Self::Event(input.parse_with((
-						attributes,
-						visibility,
-						struct_token,
-						ident,
-						generics,
-						colon_token,
-						message_token,
-					))?),
+						"Reply" => Self::Reply(input.parse_with((
+							item_attributes,
+							visibility,
+							struct_token,
+							ident,
+							generics,
+							colon_token,
+							message_token,
+						))?),
 
-					_ => {
-						return Err(Error::new(
-							message_token.span(),
-							"expected `Request`, `Reply`, or `Event` message type",
-						))
-					},
+						"Event" => Self::Event(input.parse_with((
+							item_attributes,
+							visibility,
+							struct_token,
+							ident,
+							generics,
+							colon_token,
+							message_token,
+						))?),
+
+						_ => {
+							return Err(Error::new(
+								message_token.span(),
+								"expected `Request`, `Reply`, or `Event` message type",
+							))
+						},
+					}
 				}
-			}
-		} else if fork.peek(Token![enum]) {
-			input.advance_to(fork);
+			} else if fork.peek(Token![enum]) {
+				input.advance_to(fork);
 
-			Self::Enum(input.parse_with((attributes, visibility))?)
+				Self::Enum(input.parse_with((item_attributes, visibility))?)
+			} else {
+				Self::Other(input.parse()?)
+			}
 		} else {
 			Self::Other(input.parse()?)
 		})
@@ -100,7 +104,7 @@ impl Parse for Definition {
 }
 
 type MetadataContext = (
-	Vec<Attribute>,
+	ParsedItemAttributes,
 	Visibility,
 	Token![struct],
 	Ident,
@@ -114,7 +118,7 @@ impl ParseWithContext for Request {
 
 	fn parse_with(
 		input: ParseStream,
-		(attributes, visibility, struct_token, ident, generics, colon_token, request_token): MetadataContext,
+		(item_attributes, visibility, struct_token, ident, generics, colon_token, request_token): MetadataContext,
 	) -> Result<Self>
 	where
 		Self: Sized,
@@ -122,7 +126,7 @@ impl ParseWithContext for Request {
 		let content;
 
 		Ok(Self {
-			attributes,
+			item_attributes,
 			visibility,
 			struct_token,
 			ident,
@@ -151,13 +155,13 @@ impl ParseWithContext for Reply {
 
 	fn parse_with(
 		input: ParseStream,
-		(attributes, visibility, struct_token, ident, generics, colon_token, reply_token): MetadataContext,
+		(item_attributes, visibility, struct_token, ident, generics, colon_token, reply_token): MetadataContext,
 	) -> Result<Self>
 	where
 		Self: Sized,
 	{
 		Ok(Self {
-			attributes,
+			item_attributes,
 			visibility,
 			struct_token,
 			ident,
@@ -176,7 +180,7 @@ impl ParseWithContext for Event {
 
 	fn parse_with(
 		input: ParseStream,
-		(attributes, visibility, struct_token, ident, generics, colon_token, event_token): MetadataContext,
+		(item_attributes, visibility, struct_token, ident, generics, colon_token, event_token): MetadataContext,
 	) -> Result<Self>
 	where
 		Self: Sized,
@@ -184,7 +188,7 @@ impl ParseWithContext for Event {
 		let content;
 
 		Ok(Self {
-			attributes,
+			item_attributes,
 			visibility,
 			struct_token,
 			ident,
@@ -199,10 +203,10 @@ impl ParseWithContext for Event {
 }
 
 impl ParseWithContext for Enum {
-	type Context<'a> = (Vec<Attribute>, Visibility);
+	type Context<'a> = (ParsedItemAttributes, Visibility);
 
 	fn parse_with(
-		input: ParseStream, (attributes, visibility): (Vec<Attribute>, Visibility),
+		input: ParseStream, (item_attributes, visibility): (ParsedItemAttributes, Visibility),
 	) -> Result<Self>
 	where
 		Self: Sized,
@@ -210,7 +214,7 @@ impl ParseWithContext for Enum {
 		let content;
 
 		Ok(Self {
-			attributes,
+			item_attributes,
 			visibility,
 			enum_token: input.parse()?,
 			ident: input.parse()?,

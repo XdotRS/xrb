@@ -2,11 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use proc_macro2::TokenStream as TokenStream2;
+use quote::ToTokens;
 use syn::{
 	braced,
 	bracketed,
 	parenthesized,
-	parse::{ParseStream, Result},
+	parse::{Parse, ParseStream, Result},
+	punctuated::Punctuated,
 	spanned::Spanned,
 	AttrStyle,
 	Attribute,
@@ -14,7 +17,7 @@ use syn::{
 };
 
 use super::*;
-use crate::{definition::DefinitionType, source::IdentMap, ParseWithContext, PsExt};
+use crate::{definition::DefinitionType, source::IdentMap, ParseWithContext, PsExt, TsExt};
 
 /// Normal attributes and special XRBK attributes which were parsed.
 pub struct ParsedAttributes {
@@ -29,6 +32,26 @@ pub struct ParsedAttributes {
 	pub sequence_attribute: Option<SequenceAttribute>,
 	/// A hide attribute, if one was parsed.
 	pub hide_attribute: Option<HideAttribute>,
+}
+
+pub struct ParsedItemAttributes {
+	pub attributes: Vec<Attribute>,
+
+	pub derive_x11_sizes: Punctuated<Path, Token![,]>,
+	pub derive_constant_x11_sizes: Punctuated<Path, Token![,]>,
+	pub derive_writables: Punctuated<Path, Token![,]>,
+	pub derive_readables: Punctuated<Path, Token![,]>,
+	pub derive_readable_with_contexts: Punctuated<Path, Token![,]>,
+}
+
+impl ParsedItemAttributes {
+	pub fn contains_xrbk_derives(&self) -> bool {
+		!self.derive_x11_sizes.is_empty()
+			|| !self.derive_constant_x11_sizes.is_empty()
+			|| !self.derive_writables.is_empty()
+			|| !self.derive_readables.is_empty()
+			|| !self.derive_readable_with_contexts.is_empty()
+	}
 }
 
 impl ParseWithContext for ParsedAttributes {
@@ -146,6 +169,118 @@ impl ParseWithContext for ParsedAttributes {
 			metabyte_attribute,
 			sequence_attribute,
 			hide_attribute,
+		})
+	}
+}
+
+impl Parse for ParsedItemAttributes {
+	fn parse(input: ParseStream) -> Result<Self> {
+		let mut attributes = Vec::new();
+
+		let mut derive_x11_sizes = Punctuated::new();
+		let mut derive_constant_x11_sizes = Punctuated::new();
+		let mut derive_writables = Punctuated::new();
+		let mut derive_readables = Punctuated::new();
+		let mut derive_readable_with_contexts = Punctuated::new();
+
+		while input.peek(Token![#]) && input.peek2(token::Bracket) {
+			let content;
+
+			let hash_token = input.parse()?;
+			let bracket_token = bracketed!(content in input);
+			let path = content.parse::<Path>()?;
+
+			if path.is_ident("derive") {
+				let inner;
+
+				let paren_token = parenthesized!(inner in content);
+				let mut paths = Punctuated::new();
+
+				while !inner.is_empty() {
+					let path = inner.parse::<Path>()?;
+
+					let comma = if inner.peek(Token![,]) {
+						Some(inner.parse()?)
+					} else {
+						None
+					};
+					let is_comma = comma.is_some();
+
+					if path.is_ident("X11Size") {
+						derive_x11_sizes.push_value(path);
+
+						if let Some(comma) = comma {
+							derive_x11_sizes.push_punct(comma);
+						}
+					} else if path.is_ident("ConstantX11Size") {
+						derive_constant_x11_sizes.push_value(path);
+
+						if let Some(comma) = comma {
+							derive_constant_x11_sizes.push_punct(comma);
+						}
+					} else if path.is_ident("Writable") {
+						derive_writables.push_value(path);
+
+						if let Some(comma) = comma {
+							derive_writables.push_punct(comma);
+						}
+					} else if path.is_ident("Readable") {
+						derive_readables.push_value(path);
+
+						if let Some(comma) = comma {
+							derive_readables.push_punct(comma);
+						}
+					} else if path.is_ident("ReadableWithContext") {
+						derive_readable_with_contexts.push_value(path);
+
+						if let Some(comma) = comma {
+							derive_readable_with_contexts.push_punct(comma);
+						}
+					} else {
+						paths.push(path);
+
+						if let Some(comma) = comma {
+							paths.push_punct(comma);
+						}
+					}
+
+					if !is_comma {
+						break;
+					}
+				}
+
+				attributes.push(Attribute {
+					pound_token: hash_token,
+					style: AttrStyle::Outer,
+					bracket_token,
+					path,
+
+					tokens: TokenStream2::with_tokens(|tokens| {
+						paren_token.surround(tokens, |tokens| {
+							paths.to_tokens(tokens);
+						});
+					}),
+				})
+			} else {
+				attributes.push(Attribute {
+					pound_token: hash_token,
+					style: AttrStyle::Outer,
+					bracket_token,
+					path,
+
+					tokens: content.parse()?,
+				})
+			}
+		}
+
+		Ok(Self {
+			attributes,
+
+			derive_x11_sizes,
+			derive_constant_x11_sizes,
+			derive_writables,
+			derive_readables,
+			derive_readable_with_contexts,
 		})
 	}
 }

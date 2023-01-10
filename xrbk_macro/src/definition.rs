@@ -23,7 +23,10 @@ use syn::{
 use quote::quote;
 use syn::punctuated::Punctuated;
 
-use crate::element::{Content, StructlikeContent};
+use crate::{
+	attribute::parsing::ParsedItemAttributes,
+	element::{Content, StructlikeContent},
+};
 
 /// Multiple [`Definition`]s.
 ///
@@ -93,7 +96,7 @@ pub enum Definition {
 /// [`Element`]: crate::element::Element
 pub struct Struct {
 	/// Attributes associated with the struct, including doc comments.
-	pub attributes: Vec<Attribute>,
+	pub item_attributes: ParsedItemAttributes,
 
 	/// The visibility of the struct.
 	pub visibility: Visibility,
@@ -137,7 +140,7 @@ pub struct Struct {
 /// [`Element`]: crate::element::Element
 pub struct Request {
 	/// Attributes associated with the request's struct, including doc comments.
-	pub attributes: Vec<Attribute>,
+	pub item_attributes: ParsedItemAttributes,
 
 	/// The visibility of the request's struct.
 	pub visibility: Visibility,
@@ -190,7 +193,7 @@ pub struct Request {
 /// [`Element`]: crate::element::Element
 pub struct Reply {
 	/// Attributes associated with the reply's struct.
-	pub attributes: Vec<Attribute>,
+	pub item_attributes: ParsedItemAttributes,
 
 	/// The visibility of the reply's struct.
 	pub visibility: Visibility,
@@ -235,7 +238,7 @@ pub struct Reply {
 /// [`Element`]: crate::element::Element
 pub struct Event {
 	/// Attributes associated with the event's struct, including doc comments.
-	pub attributes: Vec<Attribute>,
+	pub item_attributes: ParsedItemAttributes,
 
 	/// The visibility of the event's struct.
 	pub visibility: Visibility,
@@ -286,7 +289,7 @@ pub struct Event {
 /// [`Element`]: crate::element::Element
 pub struct Enum {
 	/// Attributes associated with the enum.
-	pub attributes: Vec<Attribute>,
+	pub item_attributes: ParsedItemAttributes,
 
 	/// The visibility of the enum.
 	pub visibility: Visibility,
