@@ -549,9 +549,7 @@ pub struct Point {
 }
 
 /// A rectangle with coordinates and dimensions.
-#[derive(
-	Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable,
-)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable)]
 pub struct Rectangle {
 	/// The x-coordinate of the upper left corner of the `Rectangle`.
 	pub x: i16,
@@ -564,9 +562,7 @@ pub struct Rectangle {
 }
 
 /// Same as a [`Rectangle`], but with unsigned coordinates.
-#[derive(
-	Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable,
-)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable)]
 pub struct Region {
 	/// The x-coordinate of the upper left corner of the `Region`.
 	pub x: u16,
@@ -579,9 +575,7 @@ pub struct Region {
 	pub height: u16,
 }
 
-#[derive(
-	Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable,
-)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable)]
 pub struct Arc {
 	pub x: i16,
 	pub y: i16,
