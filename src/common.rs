@@ -7,7 +7,7 @@ extern crate self as xrb;
 use bytes::Buf;
 use derive_more::{From, Into};
 use xrbk::{ReadResult, ReadableWithContext};
-use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
+use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Writable, X11Size};
 
 pub mod atom;
 pub mod mask;
@@ -25,6 +25,9 @@ pub use wrapper::*;
 	Debug,
 	From,
 	Into,
+	// `new` and `unwrap` const fns
+	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -50,6 +53,9 @@ pub struct Color(
 	Debug,
 	From,
 	Into,
+	// `new` and `unwrap` const fns
+	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -82,6 +88,9 @@ impl From<Pixmap> for Drawable {
 	Debug,
 	From,
 	Into,
+	// `new` and `unwrap` const fns
+	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -107,6 +116,9 @@ impl From<Drawable> for Window {
 	Debug,
 	From,
 	Into,
+	// `new` and `unwrap` const fns
+	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -132,6 +144,9 @@ impl From<Drawable> for Pixmap {
 	Debug,
 	From,
 	Into,
+	// `new` and `unwrap` const fns
+	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -150,6 +165,9 @@ pub struct Cursor(pub(crate) u32);
 	Debug,
 	From,
 	Into,
+	// `new` and `unwrap` const fns
+	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -182,6 +200,9 @@ impl From<GraphicsContext> for Fontable {
 	Debug,
 	From,
 	Into,
+	// `new` and `unwrap` const fns
+	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -213,6 +234,9 @@ impl From<Fontable> for Font {
 	Debug,
 	From,
 	Into,
+	// `new` and `unwrap` const fns
+	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -238,6 +262,9 @@ impl From<Fontable> for GraphicsContext {
 	Debug,
 	From,
 	Into,
+	// `new` and `unwrap` const fns
+	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -259,6 +286,9 @@ pub struct Colormap(pub(crate) u32);
 	Debug,
 	From,
 	Into,
+	// `new` and `unwrap` const fns
+	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -266,18 +296,6 @@ pub struct Colormap(pub(crate) u32);
 	Writable,
 )]
 pub struct Timestamp(pub(crate) u32);
-
-impl Timestamp {
-	#[must_use]
-	pub const fn new(timestamp: u32) -> Self {
-		Self(timestamp)
-	}
-
-	#[must_use]
-	pub const fn unwrap(self) -> u32 {
-		self.0
-	}
-}
 
 #[derive(
 	Copy,
@@ -288,6 +306,9 @@ impl Timestamp {
 	Debug,
 	From,
 	Into,
+	// `new` and `unwrap` const fns
+	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -295,18 +316,6 @@ impl Timestamp {
 	Writable,
 )]
 pub struct VisualId(pub(crate) u32);
-
-impl VisualId {
-	#[must_use]
-	pub const fn new(id: u32) -> Self {
-		Self(id)
-	}
-
-	#[must_use]
-	pub const fn unwrap(self) -> u32 {
-		self.0
-	}
-}
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum BitGravity {
@@ -370,6 +379,9 @@ pub enum StackMode {
 	Debug,
 	From,
 	Into,
+	// `new` and `unwrap` const fns
+	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -387,6 +399,9 @@ pub struct Keysym(pub(crate) u32);
 	Debug,
 	From,
 	Into,
+	// `new` and `unwrap` const fns
+	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -394,18 +409,6 @@ pub struct Keysym(pub(crate) u32);
 	Writable,
 )]
 pub struct Keycode(pub u8);
-
-impl Keycode {
-	#[must_use]
-	pub const fn new(keycode: u8) -> Self {
-		Self(keycode)
-	}
-
-	#[must_use]
-	pub const fn unwrap(self) -> u8 {
-		self.0
-	}
-}
 
 #[derive(
 	Copy,
@@ -416,6 +419,9 @@ impl Keycode {
 	Debug,
 	From,
 	Into,
+	// `new` and `unwrap` const fns
+	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -433,6 +439,9 @@ pub struct Button(pub(crate) u8);
 	Debug,
 	From,
 	Into,
+	// `new` and `unwrap` const fns
+	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -476,6 +485,9 @@ impl ReadableWithContext for String8 {
 	Debug,
 	From,
 	Into,
+	// `new` and `unwrap` const fns
+	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -520,6 +532,9 @@ impl ReadableWithContext for String16 {
 	Debug,
 	From,
 	Into,
+	// `new` and `unwrap` const fns
+	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -534,7 +549,9 @@ pub struct Point {
 }
 
 /// A rectangle with coordinates and dimensions.
-#[derive(Clone, Eq, PartialEq, Hash, Debug, X11Size, ConstantX11Size, Readable, Writable)]
+#[derive(
+	Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable,
+)]
 pub struct Rectangle {
 	/// The x-coordinate of the upper left corner of the `Rectangle`.
 	pub x: i16,
@@ -547,7 +564,9 @@ pub struct Rectangle {
 }
 
 /// Same as a [`Rectangle`], but with unsigned coordinates.
-#[derive(Clone, Eq, PartialEq, Hash, Debug, X11Size, ConstantX11Size, Readable, Writable)]
+#[derive(
+	Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable,
+)]
 pub struct Region {
 	/// The x-coordinate of the upper left corner of the `Region`.
 	pub x: u16,
@@ -560,7 +579,9 @@ pub struct Region {
 	pub height: u16,
 }
 
-#[derive(Clone, Eq, PartialEq, Hash, Debug, X11Size, ConstantX11Size, Readable, Writable)]
+#[derive(
+	Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable,
+)]
 pub struct Arc {
 	pub x: i16,
 	pub y: i16,
@@ -591,7 +612,7 @@ pub enum HostFamily {
 }
 
 derive_xrb! {
-	#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+	#[derive(Clone, Eq, PartialEq, Hash, Debug, new)]
 	pub struct Host {
 		pub family: HostFamily,
 		_,

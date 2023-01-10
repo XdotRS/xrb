@@ -2,9 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+#![allow(
+	clippy::too_many_arguments,
+	reason = "It makes sense for `Screen` to have many arguments because it has many fields."
+)]
+
 use derive_more::{From, Into};
 use xrbk::X11Size;
-use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
+use xrbk_macro::{derive_xrb, new, unwrap, Readable, Writable, X11Size};
 
 use crate::{mask::EventMask, BackingStores, Color, Colormap, Keycode, String8, VisualId, Window};
 
@@ -54,7 +59,7 @@ pub enum ImageEndianness {
 }
 
 derive_xrb! {
-	#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+	#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, new)]
 	pub struct Format {
 		pub depth: u8,
 		pub bits_per_pixel: u8,
@@ -62,10 +67,10 @@ derive_xrb! {
 		[_; 5],
 	}
 
-	#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, From, Into)]
+	#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, From, Into, new, unwrap)]
 	pub struct Millimeters(u16);
 
-	#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+	#[derive(Clone, Eq, PartialEq, Hash, Debug, new)]
 	pub struct Screen {
 		pub root: Window,
 		pub default_colormap: Colormap,
@@ -90,11 +95,12 @@ derive_xrb! {
 
 		#[allow(clippy::cast_possible_truncation)]
 		let allowed_depths_len: u8 = allowed_depths => allowed_depths.len() as u8,
+
 		#[context(allowed_depths_len => *allowed_depths_len as usize)]
 		pub allowed_depths: Vec<Depth>,
 	}
 
-	#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+	#[derive(Clone, Eq, PartialEq, Hash, Debug, new)]
 	pub struct Depth {
 		pub depth: u8,
 		_,
@@ -117,7 +123,7 @@ derive_xrb! {
 		DirectColor,
 	}
 
-	#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+	#[derive(Clone, Eq, PartialEq, Hash, Debug, new)]
 	pub struct VisualType {
 		pub visual_id: VisualId,
 		pub class: VisualClass,
@@ -156,8 +162,8 @@ impl ConnectionResponse {
 }
 
 derive_xrb! {
-	/// There was a failure in attempting the connection.
 	#[derive(Debug)]
+	/// There was a failure in attempting the connection.
 	pub struct ConnectionFailure {
 		#[allow(clippy::cast_possible_truncation)]
 		let reason_len: u8 = reason => reason.len() as u8,
@@ -180,8 +186,8 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	/// The connection was successfully established.
 	#[derive(Debug)]
+	/// The connection was successfully established.
 	pub struct ConnectionSuccess {
 		_,
 		/// The major version of the X11 protocol used by the X server.
@@ -233,13 +239,13 @@ derive_xrb! {
 		roots: Vec<Screen>,
 	}
 
-	/// The connection was refused because authentication was unsuccessful.
 	#[derive(Debug)]
+	/// The connection was refused because authentication was unsuccessful.
 	pub struct ConnectionAuthenticationError {
 		[_; 5],
 
-		// Length in 4-byte units of "additional data".
 		#[allow(clippy::cast_possible_truncation)]
+		/// Length in 4-byte units of "additional data".
 		let additional_data_len: u16 = reason => {
 			let len = reason.len() + pad(reason.len());
 			(len / 4) as u16
