@@ -30,7 +30,7 @@
 
 use std::error::Error;
 
-use num::Zero;
+use num_traits::Zero;
 use thiserror::Error;
 
 pub type ReadResult<T> = Result<T, ReadError>;
