@@ -8,7 +8,7 @@ mod writable;
 mod x11_size;
 
 use super::*;
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::{TokenStream};
 use quote::ToTokens;
 use syn::spanned::Spanned;
 
