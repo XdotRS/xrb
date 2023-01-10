@@ -34,13 +34,25 @@ pub trait Request {
 	/// has one request.
 	const MINOR_OPCODE: Option<u8>;
 
-	/// The length of this `Request`, including the header, in 4-byte units.
+	/// The size of this `Request`, including the header, in 4-byte units.
 	///
 	/// Every `Request` contains a header which is 4 bytes long. This header is
-	/// included in the length, so the minimum length is 1 unit (4 bytes). Since
-	/// the length is always in multiples of 4 bytes, padding bytes may need to
-	/// be added to the end of the `Request` to ensure its length is a multiple
-	/// of 4 bytes.
+	/// included in the `length()`, so the minimum `length()` is 1 unit (4
+	/// bytes). Since the length is always in multiples of 4 bytes, padding
+	/// bytes may need to be added to the end of the `Request` to ensure its
+	/// `length()` is a multiple of 4 bytes.
+	///
+	/// The `Request` header includes the metabyte position, so that will not
+	/// contribute toward the data portion.
+	///
+	/// |Size (excl. header)|Size (incl. header)|`length()`|
+	/// |-------------------|-------------------|----------|
+	/// |0                  |4                  |1         |
+	/// |4                  |8                  |2         |
+	/// |8                  |12                 |3         |
+	/// |12                 |16                 |4         |
+	/// |...                |...                |...       |
+	/// |`4n - 4`           |`4n`               |`n`       |
 	fn length(&self) -> u16;
 }
 
@@ -59,20 +71,24 @@ where
 	/// [request]: Request
 	type Request: Request<Reply = Self>;
 
-	/// The length of this `Reply` in 4-byte units minus 8.
+	/// The size of this `Reply` in 4-byte units minus 8.
 	///
-	/// Every `Reply` always consists of 32 bytes followed by zero or more
-	/// additional bytes of data; this method indicates the number of additional
-	/// bytes of data within the `Reply`.
+	/// Every `Reply` always consists of an 8-byte-long header followed by 24
+	/// bytes of data, followed by zero or more additional bytes of data; this
+	/// method indicates the number of additional bytes of data within the
+	/// `Reply`.
 	///
-	/// |'Actual' length in bytes|`length()`|
-	/// |------------------------|----------|
-	/// |32                      |0         |
-	/// |36                      |1         |
-	/// |40                      |2         |
-	/// |44                      |3         |
-	/// |...                     |...       |
-	/// |`32 + 4n`               |`n`       |
+	/// The `Reply` header includes the metabyte position and sequence number,
+	/// so those will not contribute toward the data portion.
+	///
+	/// |Size (excl. header)|Size (incl. header)|`length()`|
+	/// |-------------------|-------------------|----------|
+	/// |24                 |32                 |0         |
+	/// |28                 |36                 |1         |
+	/// |32                 |40                 |2         |
+	/// |36                 |44                 |3         |
+	/// |...                |...                |...       |
+	/// |`4n - 8`           |`4n`               |`n - 8`   |
 	fn length(&self) -> u32;
 
 	/// The sequence number associated with the [request] that generated this
