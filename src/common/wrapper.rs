@@ -33,11 +33,13 @@ impl_wrapper! {
 	Atom: u32,
 }
 
+#[derive(Debug)]
 pub enum Inheritable<T> {
 	CopyFromParent,
 	Uninherited(T),
 }
 
+#[derive(Debug)]
 pub enum CurrentableTime {
 	CurrentTime,
 	Timestamp(Timestamp),

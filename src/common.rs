@@ -6,7 +6,7 @@ extern crate self as xrb;
 
 use bytes::Buf;
 use derive_more::{From, Into};
-use xrbk::{ReadResult, ReadableWithContext};
+use xrbk::{ReadResult, Readable, ReadableWithContext, Writable, X11Size};
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Writable, X11Size};
 
 pub mod atom;
@@ -606,7 +606,7 @@ pub enum HostFamily {
 }
 
 derive_xrb! {
-	#[derive(Clone, Eq, PartialEq, Hash, Debug, new)]
+	#[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, Readable, Writable)]
 	pub struct Host {
 		pub family: HostFamily,
 		_,

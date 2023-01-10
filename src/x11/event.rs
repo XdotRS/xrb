@@ -27,12 +27,13 @@ use crate::{
 
 use bitflags::bitflags;
 use bytes::Buf;
-use xrbk::{ConstantX11Size, ReadResult, Readable, ReadableWithContext, X11Size};
+use xrbk::{ConstantX11Size, ReadResult, Readable, ReadableWithContext, Writable, X11Size};
 
 use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
 extern crate self as xrb;
 
 derive_xrb! {
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a key is pressed.
 	///
 	/// This [event] is generated for all keys: that includes modifier keys.
@@ -112,6 +113,7 @@ derive_xrb! {
 		_,
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a key is released.
 	///
 	/// This [event] is generated for all keys: that includes modifier keys.
@@ -194,6 +196,7 @@ derive_xrb! {
 		_,
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [mouse button] is pressed.
 	///
 	/// # Recipients
@@ -273,6 +276,7 @@ derive_xrb! {
 		_,
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [mouse button] is released.
 	///
 	/// # Recipients
@@ -385,6 +389,7 @@ pub enum MotionNotificationType {
 }
 
 derive_xrb! {
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when the cursor moves within a [window].
 	///
 	/// `Motion` events are only generated when the cursor motion begins and ends
@@ -611,6 +616,7 @@ bitflags! {
 }
 
 derive_xrb! {
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when the cursor enters a [window].
 	///
 	/// This [event] is triggered both when the cursor moves to be in a different
@@ -699,6 +705,7 @@ derive_xrb! {
 		pub mask: EnterLeaveMask,
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when the cursor leaves a [window].
 	///
 	/// This event is triggered both when the cursor moves to be in a different
@@ -984,6 +991,7 @@ pub enum FocusGrabMode {
 }
 
 derive_xrb! {
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] is focused.
 	///
 	/// `Focus` events generated when the keyboard is not grabbed have
@@ -1040,6 +1048,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] is unfocused.
 	///
 	/// `Unfocus` events generated when the keyboard is not grabbed have
@@ -1096,6 +1105,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] describing the current state of the keyboard.
 	///
 	/// # Recipients
@@ -1117,6 +1127,7 @@ derive_xrb! {
 		pub keys: [u8; 31],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a rectangular area of a [window] needs to be
 	/// rendered.
 	///
@@ -1169,6 +1180,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when using graphics operations when a region of a
 	/// source [`Drawable`] is obscured.
 	///
@@ -1223,6 +1235,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a graphics request which might generate
 	/// [`GraphicsExposure` events] doesn't generate any.
 	///
@@ -1305,6 +1318,7 @@ pub enum VisibilityState {
 }
 
 derive_xrb! {
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when changes to a [window]'s visibility occur.
 	///
 	/// The [window]'s visibility is calculated ignoring all of its subwindows.
@@ -1352,6 +1366,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] is created.
 	///
 	/// # Recipients
@@ -1404,6 +1419,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] is destroyed.
 	///
 	/// # Recipients
@@ -1439,6 +1455,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] is unmapped.
 	///
 	/// Unmapping a [window] is the X term for hiding it. This is commonly used to
@@ -1484,6 +1501,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] is mapped.
 	///
 	/// Mapping a [window] is the X term for showing it. It is the reverse of
@@ -1534,6 +1552,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when an unmapped [window] with an
 	/// [`OverrideRedirect` attribute] of `false` sends a [`MapWindow` request].
 	///
@@ -1568,6 +1587,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] is reparented.
 	///
 	/// Reparenting a [window] means to remove it from its current position in
@@ -1625,6 +1645,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [`ConfigureWindow` request] changes the state
 	/// of a [window].
 	///
@@ -1695,6 +1716,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] sends a [`ConfigureWindow` request].
 	///
 	/// This [event] is generated when a client other than the one selecting
@@ -1767,6 +1789,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] is moved because its parent is
 	/// resized.
 	///
@@ -1806,6 +1829,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] on which a client is selecting
 	/// [`RESIZE_REDIRECT`] has a [`ConfigureWindow` request] sent by another
 	/// client attempt to change the [window]'s size.
@@ -1864,6 +1888,7 @@ pub enum Placement {
 }
 
 derive_xrb! {
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] is restacked due to a
 	/// [`CirculateWindow` request].
 	///
@@ -1906,6 +1931,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [`CirculateWindow` request] is sent for a
 	/// [window] and that [window] actually needs to be restacked.
 	///
@@ -1964,6 +1990,7 @@ pub enum PropertyChange {
 }
 
 derive_xrb! {
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] property is added, modified, or
 	/// removed.
 	///
@@ -1999,6 +2026,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a new selection owner is defined for a
 	/// selection.
 	///
@@ -2029,6 +2057,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [`ConvertSelection` request] is sent.
 	///
 	/// The owner should convert the selection based on the specified target
@@ -2076,6 +2105,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// A reply to the [`ConvertSelection` request].
 	///
 	/// If the selection has no owner, this is generated by the X server. If the
@@ -2120,6 +2150,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 	/// The reason why a [`Colormap` event] was generated.
 	///
 	/// [`Colormap` event]: Colormap
@@ -2134,6 +2165,7 @@ derive_xrb! {
 		InstalledOrUninstalled,
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// Whether a [window]'s [colormap] is currently installed.
 	///
 	/// [window]: Window
@@ -2151,6 +2183,7 @@ derive_xrb! {
 		Installed,
 	}
 
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window]'s [colormap] is installed,
 	/// uninstalled, or its [`COLORMAP` attribute] is changed.
 	///
@@ -2250,6 +2283,7 @@ impl ReadableWithContext for ClientMessageData {
 }
 
 derive_xrb! {
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated by a [`SendEvent` request].
 	///
 	/// # Recipients
@@ -2319,6 +2353,7 @@ pub enum MappingRequest {
 }
 
 derive_xrb! {
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// An [event] generated when a [`SetModifierMapping`],
 	/// [`ChangeKeyboardMapping`], or [`SetCursorMapping`] request is successful.
 	///

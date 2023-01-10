@@ -8,7 +8,7 @@
 )]
 
 use derive_more::{From, Into};
-use xrbk::X11Size;
+use xrbk::{Readable, Writable, X11Size};
 use xrbk_macro::{derive_xrb, new, unwrap, Readable, Writable, X11Size};
 
 use crate::{mask::EventMask, BackingStores, Color, Colormap, Keycode, String8, VisualId, Window};
@@ -25,7 +25,7 @@ pub enum Endianness {
 }
 
 derive_xrb! {
-	#[derive(Debug)]
+	#[derive(Debug, X11Size, Readable, Writable)]
 	pub struct InitConnection {
 		// XRBK assumes the endianness is big endian, so we hardcode that in.
 		let byte_order: Endianness = Endianness::BigEndian,
@@ -59,7 +59,19 @@ pub enum ImageEndianness {
 }
 
 derive_xrb! {
-	#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, new)]
+	#[derive(
+		Copy,
+		Clone,
+		Eq,
+		PartialEq,
+		Hash,
+		Debug,
+		new,
+		// XRBK traits
+		X11Size,
+		Readable,
+		Writable,
+	)]
 	pub struct Format {
 		pub depth: u8,
 		pub bits_per_pixel: u8,
@@ -67,10 +79,26 @@ derive_xrb! {
 		[_; 5],
 	}
 
-	#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, From, Into, new, unwrap)]
+	#[derive(
+		Copy,
+		Clone,
+		Eq,
+		PartialEq,
+		Hash,
+		Debug,
+		From,
+		Into,
+		// `new` and `unwrap` const fns
+		new,
+		unwrap,
+		// XRBK traits
+		X11Size,
+		Readable,
+		Writable,
+	)]
 	pub struct Millimeters(u16);
 
-	#[derive(Clone, Eq, PartialEq, Hash, Debug, new)]
+	#[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, Readable, Writable)]
 	pub struct Screen {
 		pub root: Window,
 		pub default_colormap: Colormap,
@@ -100,7 +128,7 @@ derive_xrb! {
 		pub allowed_depths: Vec<Depth>,
 	}
 
-	#[derive(Clone, Eq, PartialEq, Hash, Debug, new)]
+	#[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, Readable, Writable)]
 	pub struct Depth {
 		pub depth: u8,
 		_,
@@ -113,7 +141,7 @@ derive_xrb! {
 		pub visuals: Vec<VisualType>,
 	}
 
-	#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+	#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 	pub enum VisualClass {
 		StaticGray,
 		GrayScale,
@@ -123,7 +151,7 @@ derive_xrb! {
 		DirectColor,
 	}
 
-	#[derive(Clone, Eq, PartialEq, Hash, Debug, new)]
+	#[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, Readable, Writable)]
 	pub struct VisualType {
 		pub visual_id: VisualId,
 		pub class: VisualClass,
@@ -133,7 +161,7 @@ derive_xrb! {
 		[_; 4],
 	}
 
-	#[derive(Debug)]
+	#[derive(Debug, X11Size, Readable, Writable)]
 	pub enum ConnectionResponse {
 		/// There was a failure in attempting the connection.
 		Failed(ConnectionFailure),
@@ -162,7 +190,7 @@ impl ConnectionResponse {
 }
 
 derive_xrb! {
-	#[derive(Debug)]
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// There was a failure in attempting the connection.
 	pub struct ConnectionFailure {
 		#[allow(clippy::cast_possible_truncation)]
@@ -186,7 +214,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug)]
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// The connection was successfully established.
 	pub struct ConnectionSuccess {
 		_,
@@ -239,7 +267,7 @@ derive_xrb! {
 		roots: Vec<Screen>,
 	}
 
-	#[derive(Debug)]
+	#[derive(Debug, X11Size, Readable, Writable)]
 	/// The connection was refused because authentication was unsuccessful.
 	pub struct ConnectionAuthenticationError {
 		[_; 5],
