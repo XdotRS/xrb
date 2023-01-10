@@ -15,12 +15,181 @@ mod source;
 
 use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
-use syn::{parse_macro_input, DeriveInput};
+use syn::{parse_macro_input, Data, DeriveInput, Fields, FieldsNamed, FieldsUnnamed};
 
 pub(crate) use definition::*;
 use derive::*;
 pub(crate) use ext::*;
 pub(crate) use source::*;
+
+#[proc_macro_derive(new)]
+pub fn derive_new(item: TokenStream) -> TokenStream {
+	let item = parse_macro_input!(item as DeriveInput);
+
+	let fields = match &item.data {
+		Data::Struct(r#struct) => &r#struct.fields,
+		Data::Enum(_) | Data::Union(_) => unimplemented!(),
+	};
+
+	let ident = &item.ident;
+	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
+
+	let args = args(fields);
+	let cons = pat_cons(fields);
+
+	quote! (
+		#[automatically_derived]
+		impl #impl_generics #ident #type_generics #where_clause {
+			#[doc = concat!("Returns a new `", stringify!(#ident), "`.")]
+			#[must_use]
+			pub const fn new(#args) -> Self {
+				Self #cons
+			}
+		}
+	)
+	.into()
+}
+
+#[proc_macro_derive(unwrap)]
+pub fn derive_unwrap(item: TokenStream) -> TokenStream {
+	let item = parse_macro_input!(item as DeriveInput);
+
+	let fields = match &item.data {
+		Data::Struct(r#struct) => &r#struct.fields,
+		Data::Enum(_) | Data::Union(_) => unimplemented!(),
+	};
+
+	let ident = &item.ident;
+	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
+
+	let r#return = unwrap_return(fields);
+	let pat = pat_cons(fields);
+	let names = names(fields);
+
+	let return_comment = match fields {
+		Fields::Named(FieldsNamed { named: fields, .. })
+		| Fields::Unnamed(FieldsUnnamed {
+			unnamed: fields, ..
+		}) => {
+			if fields.is_empty() {
+				quote!("`()`.")
+			} else if fields.len() == 1 {
+				quote!("its field.")
+			} else {
+				quote!("a tuple of its fields.")
+			}
+		},
+
+		Fields::Unit => quote!("`()`."),
+	};
+
+	quote! (
+		#[automatically_derived]
+		impl #impl_generics #ident #type_generics #where_clause {
+			#[doc = concat!("Unwraps `self`, returning ", #return_comment)]
+			#[must_use]
+			pub const fn unwrap(self) -> (#r#return) {
+				let Self #pat = self;
+
+				(#names)
+			}
+		}
+	)
+	.into()
+}
+
+// Potential idea: source attribute to use a source to serialize a field...?
+#[proc_macro_derive(Writable, attributes(no_discrim, hide))]
+pub fn derive_writable(item: TokenStream) -> TokenStream {
+	let item = parse_macro_input!(item as DeriveInput);
+
+	let ident = &item.ident;
+	// TODO: add generic bounds
+	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
+
+	let writes = derive_writes(&item.attrs, &item.data);
+
+	quote!(
+		#[automatically_derived]
+		impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
+			fn write_to(
+				&self,
+				buf: &mut impl ::xrbk::BufMut,
+			) -> Result<(), ::xrbk::WriteError> {
+				#writes
+
+				Ok(())
+			}
+		}
+	)
+	.into()
+}
+
+// TODO: context attribute support
+#[proc_macro_derive(Readable, attributes(no_discrim, hide, context))]
+pub fn derive_readable(item: TokenStream) -> TokenStream {
+	let item = parse_macro_input!(item as DeriveInput);
+
+	let ident = &item.ident;
+	// TODO: add generic bounds
+	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
+
+	let reads = derive_reads(&item.attrs, &item.data);
+
+	quote!(
+		#[automatically_derived]
+		impl #impl_generics ::xrbk::Readable for #ident #type_generics #where_clause {
+			fn read_from(
+				buf: &mut impl ::xrbk::Buf,
+			) -> Result<Self, ::xrbk::ReadError> {
+				#reads
+			}
+		}
+	)
+	.into()
+}
+
+#[proc_macro_derive(X11Size, attributes(no_discrim, hide))]
+pub fn derive_x11_size(item: TokenStream) -> TokenStream {
+	let item = parse_macro_input!(item as DeriveInput);
+
+	let ident = &item.ident;
+	// TODO: add generic bounds
+	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
+
+	let x11_size = derive_x11_sizes(&item.attrs, &item.data);
+
+	quote!(
+		#[automatically_derived]
+		impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
+			fn x11_size(&self) -> usize {
+				#x11_size
+			}
+		}
+	)
+	.into()
+}
+
+#[proc_macro_derive(ConstantX11Size, attributes(no_discrim, hide))]
+pub fn derive_constant_x11_size(item: TokenStream) -> TokenStream {
+	let item = parse_macro_input!(item as DeriveInput);
+
+	let ident = &item.ident;
+	// TODO: add generic bounds
+	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
+
+	let x11_sizes = derive_constant_x11_sizes(&item.attrs, &item.data);
+
+	quote!(
+		#[automatically_derived]
+		impl #impl_generics ::xrbk::ConstantX11Size for #ident #type_generics #where_clause {
+			const X11_SIZE: usize = {
+				#x11_sizes
+			};
+		}
+	)
+	.into()
+}
 
 /// Derive XRB-related traits for structs and enums.
 ///
@@ -216,97 +385,4 @@ pub fn derive_xrb(input: TokenStream) -> TokenStream {
 	let expanded = definitions.into_token_stream();
 
 	expanded.into()
-}
-
-// Potential idea: source attribute to use a source to serialize a field...?
-#[proc_macro_derive(Writable, attributes(no_discrim, hide))]
-pub fn derive_writable(item: TokenStream) -> TokenStream {
-	let item = parse_macro_input!(item as DeriveInput);
-
-	let ident = &item.ident;
-	// TODO: add generic bounds
-	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
-
-	let writes = derive_writes(&item.attrs, &item.data);
-
-	quote!(
-		#[automatically_derived]
-		impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
-			fn write_to(
-				&self,
-				buf: &mut impl ::xrbk::BufMut,
-			) -> Result<(), ::xrbk::WriteError> {
-				#writes
-
-				Ok(())
-			}
-		}
-	)
-	.into()
-}
-
-// TODO: context attribute support
-#[proc_macro_derive(Readable, attributes(no_discrim, hide, context))]
-pub fn derive_readable(item: TokenStream) -> TokenStream {
-	let item = parse_macro_input!(item as DeriveInput);
-
-	let ident = &item.ident;
-	// TODO: add generic bounds
-	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
-
-	let reads = derive_reads(&item.attrs, &item.data);
-
-	quote!(
-		#[automatically_derived]
-		impl #impl_generics ::xrbk::Readable for #ident #type_generics #where_clause {
-			fn read_from(
-				buf: &mut impl ::xrbk::Buf,
-			) -> Result<Self, ::xrbk::ReadError> {
-				#reads
-			}
-		}
-	)
-	.into()
-}
-
-#[proc_macro_derive(X11Size, attributes(no_discrim, hide))]
-pub fn derive_x11_size(item: TokenStream) -> TokenStream {
-	let item = parse_macro_input!(item as DeriveInput);
-
-	let ident = &item.ident;
-	// TODO: add generic bounds
-	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
-
-	let x11_size = derive_x11_sizes(&item.attrs, &item.data);
-
-	quote!(
-		#[automatically_derived]
-		impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
-			fn x11_size(&self) -> usize {
-				#x11_size
-			}
-		}
-	)
-	.into()
-}
-
-#[proc_macro_derive(ConstantX11Size, attributes(no_discrim, hide))]
-pub fn derive_constant_x11_size(item: TokenStream) -> TokenStream {
-	let item = parse_macro_input!(item as DeriveInput);
-
-	let ident = &item.ident;
-	// TODO: add generic bounds
-	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
-
-	let x11_sizes = derive_constant_x11_sizes(&item.attrs, &item.data);
-
-	quote!(
-		#[automatically_derived]
-		impl #impl_generics ::xrbk::ConstantX11Size for #ident #type_generics #where_clause {
-			const X11_SIZE: usize = {
-				#x11_sizes
-			};
-		}
-	)
-	.into()
 }

@@ -8,7 +8,7 @@ use syn::{punctuated::Pair, Attribute, Data, Fields, FieldsNamed, FieldsUnnamed,
 
 use crate::TsExt;
 
-fn pat_cons(fields: &Fields) -> TokenStream2 {
+pub fn pat_cons(fields: &Fields) -> TokenStream2 {
 	let mut tokens = TokenStream2::new();
 
 	match fields {
@@ -47,6 +47,100 @@ fn pat_cons(fields: &Fields) -> TokenStream2 {
 	}
 
 	tokens
+}
+
+pub fn args(fields: &Fields) -> TokenStream2 {
+	TokenStream2::with_tokens(|tokens| {
+		match fields {
+			Fields::Named(FieldsNamed { named, ..}) => {
+				for pair in named.pairs() {
+					let (field, comma) = match pair {
+						Pair::Punctuated(field, comma) => (field, Some(comma)),
+						Pair::End(field) => (field, None),
+					};
+					
+					field.ident.to_tokens(tokens);
+					field.colon_token.to_tokens(tokens);
+					field.ty.to_tokens(tokens);
+					
+					comma.to_tokens(tokens);
+				}
+			},
+			
+			Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
+				for (i, pair) in unnamed.pairs().enumerate() {
+					let (field, comma) = match pair {
+						Pair::Punctuated(field, comma) => (field, Some(comma)),
+						Pair::End(field) => (field, None),
+					};
+					
+					let formatted = format_ident!("field{}", i);
+					let r#type = &field.ty;
+					
+					quote!(#formatted: #r#type).to_tokens(tokens);
+					comma.to_tokens(tokens);
+				}
+			},
+			
+			Fields::Unit => {},
+		}
+	})
+}
+
+/// This is used in [`derive_unwrap`] for the tuple return.
+/// 
+/// This does not construct a tuple, however, it is just the names of the
+/// fields that need to be surrounded with `(` and  `)`.
+pub fn names(fields: &Fields) -> TokenStream2 {
+	TokenStream2::with_tokens(|tokens| {
+		match fields {
+			Fields::Named(FieldsNamed { named, .. }) => {
+				for pair in named.pairs() {
+					let (field, comma) = match pair {
+						Pair::Punctuated(field, comma) => (field, Some(comma)),
+						Pair::End(field) => (field, None),
+					};
+					
+					field.ident.to_tokens(tokens);
+					comma.to_tokens(tokens);
+				}
+			},
+			
+			Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
+				for (i, pair) in unnamed.pairs().enumerate() {
+					let comma = match pair {
+						Pair::Punctuated(_, comma) => Some(comma),
+						Pair::End(_) => None,
+					};
+					
+					format_ident!("field{}", i).to_tokens(tokens);
+					comma.to_tokens(tokens);
+				}
+			},
+			
+			Fields::Unit => {},
+		}
+	})
+}
+
+pub fn unwrap_return(fields: &Fields) -> TokenStream2 {
+	TokenStream2::with_tokens(|tokens| {
+		match fields {
+			Fields::Named(FieldsNamed { named: fields, .. }) | Fields::Unnamed(FieldsUnnamed { unnamed: fields, .. }) => {
+				for pair in fields.pairs() {
+					let (field, comma) = match pair {
+						Pair::Punctuated(field, comma) => (field, Some(comma)),
+						Pair::End(field) => (field, None),
+					};
+					
+					field.ty.to_tokens(tokens);
+					comma.to_tokens(tokens);
+				}
+			},
+			
+			Fields::Unit => {},
+		}
+	})
 }
 
 pub fn derive_writes(attributes: &[Attribute], data: &Data) -> TokenStream2 {
