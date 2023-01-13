@@ -40,7 +40,6 @@ pub trait Request: X11Size + Writable {
 	/// is only assigned one major opcode. Extensions are assigned major opcodes
 	/// from 127 through to 255.
 	const MAJOR_OPCODE: u8;
-
 	/// The minor opcode that uniquely identifies this `Request` within its
 	/// extension.
 	///
@@ -54,7 +53,7 @@ pub trait Request: X11Size + Writable {
 	/// [`None`] means that either this request is not from an extension, or the
 	/// extension does not make use of the minor opcode, likely because it only
 	/// has one request.
-	const MINOR_OPCODE: Option<u8>;
+	const MINOR_OPCODE: Option<u16>;
 
 	/// The size of this `Request`, including the header, in 4-byte units.
 	///
@@ -154,10 +153,7 @@ pub enum RequestError<OtherErrors> {
 /// A message sent from the X server to an X client in response to a
 /// [`Request`].
 #[doc(notable_trait)]
-pub trait Reply: X11Size + Readable
-where
-	Self: Sized,
-{
+pub trait Reply: X11Size + Readable {
 	/// The [request] that generates this `Reply`.
 	///
 	/// The type indicated here must implement [`Request`] with a
@@ -205,11 +201,12 @@ where
 /// [replies]: Reply
 /// [request]: Request
 #[doc(notable_trait)]
-pub trait Event: X11Size + Readable + Writable
-where
-	Self: Sized,
-{
-	/// The code uniquely identifying this `Event`.
+pub trait Event: X11Size + Readable + Writable {
+	/// The code uniquely identifying this `Event` (among other `Event`s).
+	///
+	/// Event codes 64 to 127 are reserved for extensions. The core X11 protocol
+	/// does not, however, provide a way for clients to select interest in these
+	/// events.
 	const CODE: u8;
 
 	/// The sequence number associated with the last [request] received that
