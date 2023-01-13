@@ -89,6 +89,10 @@ pub type RequestResult<Req: Request> = Result<Req::Reply, RequestError<Req::Othe
 ///
 /// [error]: Error
 /// [request]: Request
+///
+/// [`Alloc`]: crate::x11::error::Alloc
+/// [`Implementation`]: crate::x11::error::Implementation
+/// [`Length`]: crate::x11::error::Length
 pub enum RequestError<OtherErrors> {
 	/// An X server may generate an [`Alloc`] event if it runs out of allocation
 	/// space to allocate a requested resource.
