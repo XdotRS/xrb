@@ -6,7 +6,7 @@
 //!
 //! [Events] are messages sent from the X server to an X client.
 //!
-//! [Events]: crate::Event
+//! [Events]: crate::message::Event
 //! [core X11 protocol]: super
 
 use crate::{
@@ -33,7 +33,7 @@ use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
 extern crate self as xrb;
 
 derive_xrb! {
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a key is pressed.
 	///
 	/// This [event] is generated for all keys: that includes modifier keys.
@@ -42,7 +42,7 @@ derive_xrb! {
 	/// This [event] is reported to clients selecting [`KEY_PRESS`] on the
 	/// `event_window`.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`KEY_PRESS`]: crate::mask::EventMask::KEY_PRESS
 	pub struct KeyPress: Event(2) {
@@ -50,9 +50,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		#[metabyte]
@@ -61,13 +61,13 @@ derive_xrb! {
 
 		/// The time at which this [event] was generated.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub time: Timestamp,
 
 		/// The root window containing the window in which the cursor was
 		/// located when this [event] was generated.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub root: Window,
 		/// The window which this [event] was generated in relation to.
 		///
@@ -81,7 +81,7 @@ derive_xrb! {
 		/// Active grabs or the currently focused window may modify how the
 		/// `event_window` is chosen.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		/// [`DO_NOT_PROPAGATE_MASK`]: crate::mask::AttributeMask::DO_NOT_PROPAGATE_MASK
 		pub event_window: Window,
 		/// If a child of the `event_window` contains the cursor, this is that
@@ -93,19 +93,19 @@ derive_xrb! {
 		/// The coordinates of the cursor at the `time` this [event] was
 		/// generated, relative to the `root` [window]'s origin.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		/// [window]: Window
 		pub root_coords: Point,
 		/// The coordinates of the cursor at the `time` this [event] was
 		/// generated, relative to the `event_window`'s origin.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub event_coords: Point,
 
 		/// The state of mouse buttons and modifier keys immediately
 		/// before this [event] was generated.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub modifiers: ModifierMask,
 
 		/// Whether the cursor is on the same screen as the `event_window`.
@@ -113,7 +113,7 @@ derive_xrb! {
 		_,
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a key is released.
 	///
 	/// This [event] is generated for all keys: that includes modifier keys.
@@ -122,16 +122,16 @@ derive_xrb! {
 	/// This [event] is reported to clients selecting [`KEY_RELEASE`] on the
 	/// `event_window`.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [`KEY_RELEASE`]: crate::mask::EventMask::KEY_RELEASE
 	pub struct KeyRelease: Event(3) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		#[metabyte]
@@ -140,14 +140,14 @@ derive_xrb! {
 
 		/// The time at which this [event] was generated.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub time: Timestamp,
 
 		/// The root [window] containing the [window] in which the cursor was located
 		/// within when this [event] was generated.
 		///
 		/// [window]: Window
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub root: Window,
 		/// The window which this [event] was generated in relation to.
 		///
@@ -161,7 +161,7 @@ derive_xrb! {
 		/// Active grabs or the currently focused window may modify how the
 		/// `event_window` is chosen.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		/// [`DO_NOT_PROPAGATE_MASK`]: crate::mask::AttributeMask::DO_NOT_PROPAGATE_MASK
 		pub event_window: Window,
 		/// If a child of the `event_window` contains the cursor, this is that
@@ -174,18 +174,18 @@ derive_xrb! {
 		/// generated, relative to the `root` [window]'s origin.
 		///
 		/// [window]: Window
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub root_coords: Point,
 		/// The coordinates of the cursor at the `time` this [event] was
 		/// generated, relative to the `event_window`'s origin.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub event_coords: Point,
 
 		/// The state of [mouse buttons] and modifier keys immediately
 		/// before this [event] was generated.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		/// [mouse buttons]: Button
 		pub modifiers: ModifierMask,
 
@@ -196,14 +196,14 @@ derive_xrb! {
 		_,
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [mouse button] is pressed.
 	///
 	/// # Recipients
 	/// This [event] is reported to clients selecting [`BUTTON_PRESS`] on the
 	/// `event_window`.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [mouse button]: Button
 	/// [`BUTTON_PRESS`]: crate::mask::EventMask::BUTTON_PRESS
 	pub struct ButtonPress: Event(4) {
@@ -211,9 +211,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		#[metabyte]
@@ -222,13 +222,13 @@ derive_xrb! {
 
 		/// The time at which this [event] was generated.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub time: Timestamp,
 
 		/// The root window containing the window in which the cursor was
 		/// located when this [event] was generated.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub root: Window,
 		/// The window which this [event] was generated in relation to.
 		///
@@ -241,7 +241,7 @@ derive_xrb! {
 		///
 		/// Active grabs may modify how the `event_window` is chosen.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		/// [`DO_NOT_PROPAGATE_MASK`]: crate::mask::AttributeMask::DO_NOT_PROPAGATE_MASK
 		pub event_window: Window,
 		/// If a child of the `event_window` contains the cursor, this is that
@@ -253,20 +253,20 @@ derive_xrb! {
 		/// The coordinates of the cursor at the `time` this [event] was generated,
 		/// relative to the `root` [window]'s origin.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		/// [window]: Window
 		pub root_coords: Point,
 		/// The coordinates of the cursor at the `time` this [event] was generated,
 		/// relative to the `event_window`'s origin.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub event_coords: Point,
 
 		/// The state of [mouse buttons] and modifier keys immediately
 		/// before this [event] was generated.
 		///
 		/// [mouse buttons]: Button
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub modifiers: ModifierMask,
 
 		/// Whether the cursor is on the same [screen] as the `event_window`.
@@ -276,14 +276,14 @@ derive_xrb! {
 		_,
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [mouse button] is released.
 	///
 	/// # Recipients
 	/// This [event] is reported to clients selecting [`BUTTON_RELEASE`] on the
 	/// `event_window`.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [mouse button]: Button
 	/// [`BUTTON_RELEASE`]: crate::mask::EventMask::BUTTON_RELEASE
 	pub struct ButtonRelease: Event(5) {
@@ -291,9 +291,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		#[metabyte]
@@ -302,13 +302,13 @@ derive_xrb! {
 
 		/// The time at which this [event] was generated.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub time: Timestamp,
 
 		/// The root window containing the window in which the cursor was
 		/// located when this [event] was generated.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub root: Window,
 		/// The window which this [event] was generated in relation to.
 		///
@@ -321,7 +321,7 @@ derive_xrb! {
 		///
 		/// Active grabs may modify how the `event_window` is chosen.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		/// [`DO_NOT_PROPAGATE_MASK`]: crate::mask::AttributeMask::DO_NOT_PROPAGATE_MASK
 		pub event_window: Window,
 		/// If a child of the `event_window` contains the cursor, this is that
@@ -333,19 +333,19 @@ derive_xrb! {
 		/// The coordinates of the cursor at the `time` this [event] was generated,
 		/// relative to the `root` window's origin.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub root_coords: Point,
 		/// The coordinates of the cursor at the `time` this [event] was generated,
 		/// relative to the `event_window`'s origin.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub event_coords: Point,
 
 		/// The state of [mouse buttons] and modifier keys immediately
 		/// before this [event] was generated.
 		///
 		/// [mouse buttons]: Button
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub modifiers: ModifierMask,
 
 		/// Whether the cursor is on the same [screen] as the `event_window`.
@@ -356,7 +356,7 @@ derive_xrb! {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 /// The type of [`Motion` event] sent.
 ///
 /// This is used in the [`Motion` event].
@@ -389,7 +389,7 @@ pub enum MotionNotificationType {
 }
 
 derive_xrb! {
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when the cursor moves within a [window].
 	///
 	/// `Motion` events are only generated when the cursor motion begins and ends
@@ -427,16 +427,16 @@ derive_xrb! {
 	/// [`QueryCursor`]: super::request::QueryCursor
 	/// [`GetMotionEvents`]: super::request::GetMotionEvents
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	pub struct Motion: Event(6) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		#[metabyte]
@@ -449,7 +449,7 @@ derive_xrb! {
 		/// The root window containing the window in which the cursor was
 		/// located when this [event] was generated.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub root: Window,
 		/// The window which this [event] was generated in relation to.
 		///
@@ -462,7 +462,7 @@ derive_xrb! {
 		///
 		/// Active grabs may modify how the `event_window` is chosen.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		/// [`DO_NOT_PROPAGATE_MASK`]: crate::mask::AttributeMask::DO_NOT_PROPAGATE_MASK
 		pub event_window: Window,
 		/// If a child of the `event_window` contains the cursor, this is that
@@ -474,20 +474,20 @@ derive_xrb! {
 		/// The coordinates of the cursor at the `time` this [event] was generated,
 		/// relative to the `root` [window]'s origin.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		/// [window]: Window
 		pub root_coords: Point,
 		/// The coordinates of the cursor at the `time` this [event] was generated,
 		/// relative to the `event_window`'s origin.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub event_coords: Point,
 
 		/// The state of [mouse buttons] and modifier keys immediately
 		/// before this [event] was generated.
 		///
 		/// [mouse buttons]: Button
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub modifiers: ModifierMask,
 
 		/// Whether the cursor is on the same [screen] as the `event_window`.
@@ -498,7 +498,7 @@ derive_xrb! {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 /// Detail that describes how a [window] receiving a [`LeaveWindow`] or
 /// [`EnterWindow`] event relates to the [event] which took place.
 ///
@@ -545,7 +545,7 @@ derive_xrb! {
 /// [`Nonlinear`]: EnterLeaveDetail::Nonlinear
 /// [`NonlinearIntermediate`]: EnterLeaveDetail::NonlinearIntermediate
 ///
-/// [event]: crate::Event
+/// [event]: crate::message::Event
 /// [window]: Window
 pub enum EnterLeaveDetail {
 	/// Used for [`LeaveWindow` events] when the cursor leaves a [window] and
@@ -616,7 +616,7 @@ bitflags! {
 }
 
 derive_xrb! {
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when the cursor enters a [window].
 	///
 	/// This [event] is triggered both when the cursor moves to be in a different
@@ -629,7 +629,7 @@ derive_xrb! {
 	/// This [event] is reported to clients selecting [`ENTER_WINDOW`] on the
 	/// [window].
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`ENTER_WINDOW`]: crate::mask::EventMask::ENTER_WINDOW
 	pub struct EnterWindow: Event(7) {
@@ -637,9 +637,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		#[metabyte]
@@ -647,18 +647,18 @@ derive_xrb! {
 		///
 		/// See [`EnterLeaveDetail`] for more information.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub detail: EnterLeaveDetail,
 
 		/// The time at which this [event] was generated.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub time: Timestamp,
 
 		/// The root window containing the window in which the cursor was
 		/// located when this [event] was generated.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub root: Window,
 		/// The window that the cursor entered.
 		pub event_window: Window,
@@ -705,7 +705,7 @@ derive_xrb! {
 		pub mask: EnterLeaveMask,
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when the cursor leaves a [window].
 	///
 	/// This event is triggered both when the cursor moves to be in a different
@@ -718,7 +718,7 @@ derive_xrb! {
 	/// This [event] is reported to clients selecting [`LEAVE_WINDOW`] on the
 	/// [window].
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`LEAVE_WINDOW`]: crate::mask::EventMask::LEAVE_WINDOW
 	pub struct LeaveWindow: Event(8) {
@@ -726,9 +726,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		#[metabyte]
@@ -736,18 +736,18 @@ derive_xrb! {
 		///
 		/// See [`EnterLeaveDetail`] for more information.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub detail: EnterLeaveDetail,
 
 		/// The time at which this [event] was generated.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub time: Timestamp,
 
 		/// The root window containing the window in which the cursor was
 		/// located when this [event] was generated.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub root: Window,
 		/// The window which the cursor left.
 		pub event_window: Window,
@@ -763,7 +763,7 @@ derive_xrb! {
 		/// This is always the final position of the cursor, not its initial
 		/// position.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		/// [window]: Window
 		pub root_coords: Point,
 		/// The position of the cursor at the `time` this [event] was generated,
@@ -776,7 +776,7 @@ derive_xrb! {
 		/// This is always the final position of the cursor, not its initial
 		/// position.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		/// [`SAME_SCREEN`]: EnterLeaveMask::SAME_SCREEN
 		/// [screen]: crate::connection::Screen
 		pub event_coords: Point,
@@ -785,7 +785,7 @@ derive_xrb! {
 		/// before this [event] was generated.
 		///
 		/// [mouse buttons]: Button
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub modifiers: ModifierMask,
 		/// [`Normal`] for normal `LeaveWindow` events, [`Grab`] and
 		/// [`Ungrab`] for events generated by grabs and ungrabs.
@@ -803,7 +803,7 @@ derive_xrb! {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 /// Detail describing how a [window] that receives a [`Focus`] or [`Unfocus`]
 /// event relates to the [event] that occurred.
 ///
@@ -922,7 +922,7 @@ derive_xrb! {
 ///
 /// [`None`]: FocusDetail::None
 ///
-/// [event]: crate::Event
+/// [event]: crate::message::Event
 /// [window]: Window
 pub enum FocusDetail {
 	/// Used for [`Unfocus` events] for the [window] which has been unfocused if
@@ -970,7 +970,7 @@ pub enum FocusDetail {
 	None,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 /// Detail about how an [`Unfocus`] or [`Focus`] event was generated in relation
 /// to grabs.
 pub enum FocusGrabMode {
@@ -991,7 +991,7 @@ pub enum FocusGrabMode {
 }
 
 derive_xrb! {
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] is focused.
 	///
 	/// `Focus` events generated when the keyboard is not grabbed have
@@ -1005,7 +1005,7 @@ derive_xrb! {
 	/// `Focus` events are reported to clients selecting [`FOCUS_CHANGE`] on the
 	/// [window] that was focused.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`FOCUS_CHANGE`]: crate::mask::EventMask::FOCUS_CHANGE
 	pub struct Focus: Event(9) {
@@ -1013,9 +1013,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		#[metabyte]
@@ -1023,7 +1023,7 @@ derive_xrb! {
 		///
 		/// See [`FocusDetail`] for more information.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub detail: FocusDetail,
 
 		/// The window which was focused.
@@ -1036,7 +1036,7 @@ derive_xrb! {
 		/// generated by a [`SetInputFocus` request] while the keyboard is
 		/// grabbed.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		///
 		/// [`Normal`]: FocusGrabMode::Normal
 		/// [`Grab`]: FocusGrabMode::Grab
@@ -1048,7 +1048,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] is unfocused.
 	///
 	/// `Unfocus` events generated when the keyboard is not grabbed have
@@ -1062,7 +1062,7 @@ derive_xrb! {
 	/// `Unfocus` events are reported to clients selecting [`FOCUS_CHANGE`] on the
 	/// [window] that was unfocused.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`FOCUS_CHANGE`]: crate::mask::EventMask::FOCUS_CHANGE
 	pub struct Unfocus: Event(10) {
@@ -1070,9 +1070,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		#[metabyte]
@@ -1080,7 +1080,7 @@ derive_xrb! {
 		///
 		/// See [`FocusDetail`] for more information.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub detail: FocusDetail,
 
 		/// The window which was unfocused.
@@ -1093,7 +1093,7 @@ derive_xrb! {
 		/// generated by a [`SetInputFocus` request] while the keyboard is
 		/// grabbed.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		///
 		/// [`Normal`]: FocusGrabMode::Normal
 		/// [`Grab`]: FocusGrabMode::Grab
@@ -1105,14 +1105,14 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] describing the current state of the keyboard.
 	///
 	/// # Recipients
 	/// This [event] is reported to clients selecting [`KEYS_STATE`] on a [window]
 	/// immediately after every [`EnterWindow`] and [`Focus`] event.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`KEYS_STATE`]: crate::mask::EventMask::KEYS_STATE
 	pub struct KeysState: Event(11) {
@@ -1127,7 +1127,7 @@ derive_xrb! {
 		pub keys: [u8; 31],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a rectangular area of a [window] needs to be
 	/// rendered.
 	///
@@ -1148,7 +1148,7 @@ derive_xrb! {
 	/// # Recipients
 	/// This [event] is reported to clients selecting [`EXPOSURE`] on a [window].
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	///
 	/// [`BackingStore` attribute]: crate::Attribute::BackingStore
@@ -1162,9 +1162,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [event]: crate::Event
-		/// [request]: crate::Request
+		/// [sequence number]: crate::message::Event::sequence
+		/// [event]: crate::message::Event
+		/// [request]: crate::message::Request
 		pub sequence: u16,
 
 		/// The window which this `Expose` event applies to.
@@ -1180,7 +1180,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when using graphics operations when a region of a
 	/// source [`Drawable`] is obscured.
 	///
@@ -1191,7 +1191,7 @@ derive_xrb! {
 	/// This [event] is reported to a client using a [`GraphicsContext`] with
 	/// [`GRAPHICS_EXPOSURE`] selected.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [`GraphicsContext`]: crate::GraphicsContext
 	/// [`GRAPHICS_EXPOSURE`]: crate::mask::GraphicsContextMask::GRAPHICS_EXPOSURE
 	pub struct GraphicsExposure: Event(13) {
@@ -1199,9 +1199,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [event]: crate::Event
-		/// [request]: crate::Request
+		/// [sequence number]: crate::message::Event::sequence
+		/// [event]: crate::message::Event
+		/// [request]: crate::message::Request
 		pub sequence: u16,
 
 		/// The [`Drawable`] this `GraphicsExposure` event applies to.
@@ -1213,7 +1213,7 @@ derive_xrb! {
 		///
 		/// For the core protocol, this is always zero.
 		///
-		/// [minor opcode]: crate::Request::MINOR_OPCODE
+		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 		pub minor_opcode: u16,
 
 		/// The minimum number of `GraphicsExposure` events that follow for this
@@ -1228,14 +1228,14 @@ derive_xrb! {
 		/// For the core protocol, this always refers to [`CopyArea`] or
 		/// [`CopyPlane`].
 		///
-		/// [major opcode]: crate::Request::MAJOR_OPCODE
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		/// [`CopyArea`]: super::request::CopyArea
 		/// [`CopyPlane`]: super::request::CopyPlane
 		pub major_opcode: u8,
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a graphics request which might generate
 	/// [`GraphicsExposure` events] doesn't generate any.
 	///
@@ -1243,7 +1243,7 @@ derive_xrb! {
 	/// This [event] is reported to a client using a [`GraphicsContext`] with
 	/// [`GRAPHICS_EXPOSURE`] selected.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [`GraphicsExposure` events]: GraphicsExposure
 	/// [`GraphicsContext`]: crate::GraphicsContext
 	/// [`GRAPHICS_EXPOSURE`]: crate::mask::GraphicsContextMask::GRAPHICS_EXPOSURE
@@ -1252,9 +1252,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The [`Drawable`] this `NoExposure` event applies to.
@@ -1266,14 +1266,14 @@ derive_xrb! {
 		///
 		/// For the core protocol, this is always zero.
 		///
-		/// [minor opcode]: crate::Request::MINOR_OPCODE
+		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 		pub minor_opcode: u16,
 		/// The [major opcode] identifying the graphics request used.
 		///
 		/// For the core protocol, this always refers to [`CopyArea`] or
 		/// [`CopyPlane`].
 		///
-		/// [major opcode]: crate::Request::MAJOR_OPCODE
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		/// [`CopyArea`]: super::request::CopyArea
 		/// [`CopyPlane`]: super::request::CopyPlane
 		pub major_opcode: u8,
@@ -1281,7 +1281,7 @@ derive_xrb! {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 /// The state of a [window]'s visibility.
 ///
 /// This is used in the [`Visibility` event].
@@ -1318,7 +1318,7 @@ pub enum VisibilityState {
 }
 
 derive_xrb! {
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when changes to a [window]'s visibility occur.
 	///
 	/// The [window]'s visibility is calculated ignoring all of its subwindows.
@@ -1341,7 +1341,7 @@ derive_xrb! {
 	/// This [event] is reported to clients selecting [`VISIBILITY_CHANGE`] on
 	/// the [window].
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	///
 	/// [`Unobscured`]: VisibilityState::Unobscured
@@ -1354,9 +1354,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The window this `Visibility` event applies to.
@@ -1366,14 +1366,14 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] is created.
 	///
 	/// # Recipients
 	/// This [event] is reported to clients selecting [`SUBSTRUCTURE_NOTIFY`] on
 	/// the [window]'s parent.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
 	pub struct Create: Event(16) {
@@ -1381,9 +1381,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The parent of the `window` that was created.
@@ -1419,7 +1419,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] is destroyed.
 	///
 	/// # Recipients
@@ -1427,7 +1427,7 @@ derive_xrb! {
 	/// [window], as well as to clients selecting [`SUBSTRUCTURE_NOTIFY`] on its
 	/// parent.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
 	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
@@ -1436,9 +1436,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The window on which this `Destroy` event was generated.
@@ -1455,7 +1455,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] is unmapped.
 	///
 	/// Unmapping a [window] is the X term for hiding it. This is commonly used to
@@ -1465,7 +1465,7 @@ derive_xrb! {
 	/// This [event] is reported to clients selecting [`STRUCTURE_NOTIFY`] on the
 	/// window, and to clients selecting [`SUBSTRUCTURE_NOTIFY`] on its parent.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
 	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
@@ -1474,9 +1474,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The window on which this `Unmap` event was generated.
@@ -1494,14 +1494,14 @@ derive_xrb! {
 		/// Whether this [event] was generated as a result of its parent being
 		/// resized when the unmapped [window] had [`WinGravity::Unmap`].
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		/// [window]: Window
 		/// [`WinGravity::Unmap`]: crate::WinGravity::Unmap
 		pub from_configure: bool,
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] is mapped.
 	///
 	/// Mapping a [window] is the X term for showing it. It is the reverse of
@@ -1511,7 +1511,7 @@ derive_xrb! {
 	/// This [event] is reported to clients selecting [`STRUCTURE_NOTIFY`] on the
 	/// [window] and to clients selecting [`SUBSTRUCTURE_NOTIFY`] on the parent.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
 	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
@@ -1520,9 +1520,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The window on which this `Map` event was generated.
@@ -1552,7 +1552,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when an unmapped [window] with an
 	/// [`OverrideRedirect` attribute] of `false` sends a [`MapWindow` request].
 	///
@@ -1562,7 +1562,7 @@ derive_xrb! {
 	/// the client selecting [`SUBSTRUCTURE_REDIRECT`] sends its own
 	/// [`MapWindow` request] for the [window].
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`OverrideRedirect` attribute]: crate::WinAttribute::OverrideRedirect
 	/// [`MapWindow` request]: super::request::MapWindow
@@ -1573,9 +1573,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The `window`'s parent.
@@ -1587,7 +1587,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] is reparented.
 	///
 	/// Reparenting a [window] means to remove it from its current position in
@@ -1598,7 +1598,7 @@ derive_xrb! {
 	/// either the old parent or the `new_parent`, and to clients selecting
 	/// [`STRUCTURE_NOTIFY`] on the `window` itself.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
 	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
@@ -1607,9 +1607,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The window on which this `Reparent` event was generated.
@@ -1645,7 +1645,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [`ConfigureWindow` request] changes the state
 	/// of a [window].
 	///
@@ -1653,7 +1653,7 @@ derive_xrb! {
 	/// This [event] is reported to clients selecting [`STRUCTURE_NOTIFY`] on the
 	/// window, and to clients selecting [`SUBSTRUCTURE_NOTIFY`] on its parent.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [`ConfigureWindow` request]: super::request::ConfigureWindow
 	/// [window]: Window
 	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
@@ -1663,9 +1663,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The window on which this `Configure` event was generated.
@@ -1716,7 +1716,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] sends a [`ConfigureWindow` request].
 	///
 	/// This [event] is generated when a client other than the one selecting
@@ -1733,7 +1733,7 @@ derive_xrb! {
 	/// This [event] is reported to the client selecting [`SUBSTRUCTURE_REDIRECT`]
 	/// on the window's parent.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`ConfigureWindow` request]: super::request::ConfigureWindow
 	///
@@ -1743,9 +1743,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		#[metabyte]
@@ -1789,7 +1789,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] is moved because its parent is
 	/// resized.
 	///
@@ -1797,7 +1797,7 @@ derive_xrb! {
 	/// This [event] is reported to clients selecting [`STRUCTURE_NOTIFY`] on the
 	/// window, and to clients selecting [`SUBSTRUCTURE_NOTIFY`] on its parent.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
 	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
@@ -1806,9 +1806,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The window which this `Gravity` event was generated on.
@@ -1829,7 +1829,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] on which a client is selecting
 	/// [`RESIZE_REDIRECT`] has a [`ConfigureWindow` request] sent by another
 	/// client attempt to change the [window]'s size.
@@ -1838,7 +1838,7 @@ derive_xrb! {
 	/// This [event] is reported to the client selecting [`RESIZE_REDIRECT`] on
 	/// the [window].
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`RESIZE_REDIRECT`]: crate::mask::EventMask::RESIZE_REDIRECT
 	/// [`ConfigureWindow` request]: super::request::ConfigureWindow
@@ -1847,9 +1847,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The window which the [`ConfigureWindow` request] attempted to
@@ -1872,7 +1872,7 @@ derive_xrb! {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 /// The new placement of a [window] restacked in a [`CirculateWindow` request].
 ///
 /// This is used in [`Circulate` events].
@@ -1888,7 +1888,7 @@ pub enum Placement {
 }
 
 derive_xrb! {
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] is restacked due to a
 	/// [`CirculateWindow` request].
 	///
@@ -1896,7 +1896,7 @@ derive_xrb! {
 	/// This [event] is reported to clients selecting [`STRUCTURE_NOTIFY`] on the
 	/// [window], and to clients selecting [`SUBSTRUCTURE_NOTIFY`] on its parent.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`CirculateWindow` request]: super::request::CirculateWindow
 	///
@@ -1907,9 +1907,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The window which this `Circulate` event was generated on.
@@ -1931,7 +1931,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [`CirculateWindow` request] is sent for a
 	/// [window] and that [window] actually needs to be restacked.
 	///
@@ -1939,7 +1939,7 @@ derive_xrb! {
 	/// This [event] is reported to the client selecting [`SUBSTRUCTURE_REDIRECT`]
 	/// on the [window]'s parent.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`SUBSTRUCTURE_REDIRECT`]: crate::mask::EventMask::SUBSTRUCTURE_REDIRECT
 	/// [`CirculateWindow` request]: super::request::CirculateWindow
@@ -1948,9 +1948,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The parent of the `window` the [`CirculateWindow` request] applies
@@ -1975,7 +1975,7 @@ derive_xrb! {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 /// Whether a `property` was [`Modified`] or [`Deleted`] in a [`Property`
 /// event].
 ///
@@ -1990,7 +1990,7 @@ pub enum PropertyChange {
 }
 
 derive_xrb! {
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window] property is added, modified, or
 	/// removed.
 	///
@@ -1998,7 +1998,7 @@ derive_xrb! {
 	/// This [event] is reported to clients selecting [`PROPERTY_CHANGE`] on the
 	/// [window].
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`PROPERTY_CHANGE`]: crate::mask::EventMask::PROPERTY_CHANGE
 	pub struct Property: Event(28) {
@@ -2006,9 +2006,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The window on which the `property` was changed.
@@ -2026,7 +2026,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a new selection owner is defined for a
 	/// selection.
 	///
@@ -2036,16 +2036,16 @@ derive_xrb! {
 	/// # Recipients
 	/// This [event] is reported to the current owner of a selection.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [`SetSelectionOwner` request]: super::request::SetSelectionOwner
 	pub struct SelectionClear: Event(29) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The time at which the new `selection` owner was defined.
@@ -2057,7 +2057,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [`ConvertSelection` request] is sent.
 	///
 	/// The owner should convert the selection based on the specified target
@@ -2070,7 +2070,7 @@ derive_xrb! {
 	/// # Recipients
 	/// This [event] is reported to the owner of the selection.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [`ConvertSelection` request]: super::request::ConvertSelection
 	/// [`Selection` event]: Selection
 	/// [`SendEvent` request]: super::request::SendEvent
@@ -2079,9 +2079,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The time at which the [`ConvertSelection` request] was sent.
@@ -2105,7 +2105,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// A reply to the [`ConvertSelection` request].
 	///
 	/// If the selection has no owner, this is generated by the X server. If the
@@ -2116,7 +2116,7 @@ derive_xrb! {
 	/// This [event] is reported to the `requester` of a
 	/// [`ConvertSelection` request].
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [`ConvertSelection` request]: super::request::ConvertSelection
 	/// [`SendEvent` request]: super::request::SendEvent
 	pub struct Selection: Event(31) {
@@ -2124,9 +2124,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The time at which this `Selection` event was generated.
@@ -2150,7 +2150,7 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+	#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 	/// The reason why a [`Colormap` event] was generated.
 	///
 	/// [`Colormap` event]: Colormap
@@ -2165,7 +2165,7 @@ derive_xrb! {
 		InstalledOrUninstalled,
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// Whether a [window]'s [colormap] is currently installed.
 	///
 	/// [window]: Window
@@ -2183,7 +2183,7 @@ derive_xrb! {
 		Installed,
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window]'s [colormap] is installed,
 	/// uninstalled, or its [`COLORMAP` attribute] is changed.
 	///
@@ -2191,7 +2191,7 @@ derive_xrb! {
 	/// This [event] is reported to clients selecting [`COLORMAP_CHANGE`] on the
 	/// window.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [colormap]: crate::Colormap
 	/// [`COLORMAP` attribute]: crate::mask::AttributeMask::COLORMAP
@@ -2202,14 +2202,14 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The window that this [event] relates to.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub window: Window,
 		/// The `window`'s [colormap].
 		///
@@ -2220,7 +2220,7 @@ derive_xrb! {
 		/// [`COLORMAP` attribute] was changed or because the `window`'s
 		/// `colormap` was installed or uninstalled.
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		/// [`COLORMAP` attribute]: crate::mask::AttributeMask::COLORMAP
 		pub detail: ColormapDetail,
 		/// Whether the `window`'s `colormap` is currently installed.
@@ -2229,7 +2229,7 @@ derive_xrb! {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 /// Used in the [`ClientMessage` event] to represent whether its `data` is 20
 /// `i8` values, 10 `i16` values, or 5 `i32` values.
 ///
@@ -2283,14 +2283,14 @@ impl ReadableWithContext for ClientMessageData {
 }
 
 derive_xrb! {
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated by a [`SendEvent` request].
 	///
 	/// # Recipients
 	/// This [event] is reported to the [`SendEvent` request]'s `destination`
 	/// [window].
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [`SendEvent` request]: super::request::SendEvent
 	/// [window]: Window
 	pub struct ClientMessage: Event(33) {
@@ -2298,9 +2298,9 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		#[metabyte]
@@ -2319,15 +2319,15 @@ derive_xrb! {
 		#[context(format => *format)]
 		/// The data contained in this [event].
 		///
-		/// [event]: crate::Event
+		/// [event]: crate::message::Event
 		pub data: ClientMessageData,
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 /// Detail about which [request] generated a [`MappingChange` event].
 ///
-/// [request]: crate::Request
+/// [request]: crate::message::Request
 /// [`MappingChange` event]: MappingChange
 pub enum MappingRequest {
 	/// The [`MappingChange` event] was generated by a
@@ -2353,14 +2353,14 @@ pub enum MappingRequest {
 }
 
 derive_xrb! {
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [`SetModifierMapping`],
 	/// [`ChangeKeyboardMapping`], or [`SetCursorMapping`] request is successful.
 	///
 	/// # Recipients
 	/// This [event] is reported to all clients.
 	///
-	/// [event]: crate::Event
+	/// [event]: crate::message::Event
 	/// [`SetModifierMapping`]: super::request::SetModifierMapping
 	/// [`ChangeKeyboardMapping`]: super::request::ChangeKeyboardMapping
 	/// [`SetCursorMapping`]: super::request::SetCursorMapping
@@ -2369,16 +2369,16 @@ derive_xrb! {
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
-		/// [sequence number]: crate::Event::sequence
-		/// [request]: crate::Request
-		/// [event]: crate::Event
+		/// [sequence number]: crate::message::Event::sequence
+		/// [request]: crate::message::Request
+		/// [event]: crate::message::Event
 		pub sequence: u16,
 
 		/// The [request] that generated this `MappingChange` event.
 		///
 		/// See [`MappingRequest`] for more information.
 		///
-		/// [request]: crate::Request
+		/// [request]: crate::message::Request
 		pub request: MappingRequest,
 
 		/// The first [keycode] in the range of altered keycodes, if this event
