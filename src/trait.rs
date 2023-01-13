@@ -243,3 +243,11 @@ pub trait Error: X11Size + Readable {
 	/// [major opcode]: Request::MAJOR_OPCODE
 	fn major_opcode(&self) -> u8;
 }
+
+#[doc(hidden)]
+/// Asserts the object safety of XRB traits by using them with `dyn`.
+fn _assert_object_safety(
+	_request: &dyn Request<Reply = (), OtherErrors = ()>, _reply: &dyn Reply<Request = ()>,
+	_event: &dyn Event, _error: &dyn Error,
+) {
+}
