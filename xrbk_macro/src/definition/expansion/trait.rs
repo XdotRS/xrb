@@ -30,7 +30,7 @@ impl Request {
 		tokens.append_tokens(|| {
 			quote_spanned!(self.request_token.span()=>
 				#[automatically_derived]
-				impl #impl_generics xrb::Request for #name #type_generics #where_clause {
+				impl #impl_generics xrb::message::Request for #name #type_generics #where_clause {
 					type Reply = #reply;
 
 					const MAJOR_OPCODE: u8 = {
@@ -43,7 +43,7 @@ impl Request {
 
 					#[allow(clippy::cast_possible_truncation)]
 					fn length(&self) -> u16 {
-						(<Self as ::xrbk::DataSize>::data_size(&self) / 4) as u16
+						(<Self as ::xrbk::X11Size>::x11_size(&self) / 4) as u16
 					}
 				}
 			)
@@ -74,12 +74,12 @@ impl Reply {
 		tokens.append_tokens(|| {
 			quote_spanned!(self.reply_token.span()=>
 				#[automatically_derived]
-				impl #impl_generics xrb::Reply for #name #type_generics #where_clause {
+				impl #impl_generics xrb::message::Reply for #name #type_generics #where_clause {
 					type Request = #request;
 
 					#[allow(clippy::cast_possible_truncation)]
 					fn length(&self) -> u32 {
-						((<Self as ::xrbk::DataSize>::data_size(&self) / 4) - 8) as u32
+						((<Self as ::xrbk::X11Size>::x11_size(&self) / 4) - 8) as u32
 					}
 
 					fn sequence(&self) -> u16 {
@@ -120,7 +120,7 @@ impl Event {
 		tokens.append_tokens(|| {
 			quote_spanned!(self.event_token.span()=>
 				#[automatically_derived]
-				impl #impl_generics xrb::Event for #name #type_generics #where_clause {
+				impl #impl_generics xrb::message::Event for #name #type_generics #where_clause {
 					const CODE: u8 = {
 						#code
 					};
