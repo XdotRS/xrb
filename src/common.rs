@@ -6,7 +6,15 @@ extern crate self as xrb;
 
 use bytes::Buf;
 use derive_more::{From, Into};
-use xrbk::{ReadResult, Readable, ReadableWithContext, Writable, X11Size};
+use xrbk::{
+	ConstantX11Size,
+	ReadResult,
+	Readable,
+	ReadableWithContext,
+	Wrapper,
+	Writable,
+	X11Size,
+};
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Writable, X11Size};
 
 pub mod atom;
@@ -345,6 +353,51 @@ pub enum WinGravity {
 	SouthWest,
 	South,
 	SouthEast,
+}
+
+// The `derive_xrb!` attribute here is used to write the discriminants as `u16`.
+derive_xrb! {
+	#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+	/// A [window]'s class; whether it has a visual output form.
+	///
+	/// [window]: Window
+	pub enum WindowClass: u16 {
+		/// A [window] that both receives input and has a visual output (i.e. what
+		/// one would normally consider a window to be).
+		///
+		/// [window]: Window
+		InputOutput = 1,
+		/// A [window] that receives input but does not have a visual form.
+		///
+		/// [window]: Window
+		InputOnly = 2,
+	}
+
+	impl ConstantX11Size for WindowClass {
+		const X11_SIZE: usize = 2;
+	}
+
+	impl Wrapper for WindowClass {
+		type WrappedType = u16;
+
+		fn wrap(val: Self::WrappedType) -> Self {
+			match val {
+				discrim if discrim == 1 => Self::InputOutput,
+				discrim if discrim == 2 => Self::InputOnly,
+
+				other_discrim => panic!(
+					"WindowClass: expected a discriminant of 1 or 2, found {other_discrim}"
+				),
+			}
+		}
+
+		fn unwrap(&self) -> &Self::WrappedType {
+			match self {
+				Self::InputOutput => &1,
+				Self::InputOnly => &2,
+			}
+		}
+	}
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
