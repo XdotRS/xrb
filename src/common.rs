@@ -386,8 +386,7 @@ derive_xrb! {
 				discrim if discrim == 2 => Self::InputOnly,
 
 				other_discrim => panic!(
-					"WindowClass: expected a discriminant of 1 or 2, found {}",
-					other_discrim
+					"WindowClass: expected a discriminant of 1 or 2, found {other_discrim}"
 				),
 			}
 		}
