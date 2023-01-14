@@ -27,7 +27,7 @@ impl Request {
 			quote!(None)
 		};
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(self.request_token.span()=>
 				#[automatically_derived]
 				impl #impl_generics xrb::message::Request for #name #type_generics #where_clause {
@@ -71,7 +71,7 @@ impl Reply {
 			_ => panic!("replies must have a sequence field of type `u32`"),
 		};
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(self.reply_token.span()=>
 				#[automatically_derived]
 				impl #impl_generics xrb::message::Reply for #name #type_generics #where_clause {
@@ -117,7 +117,7 @@ impl Event {
 			_ => quote!(None),
 		};
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(self.event_token.span()=>
 				#[automatically_derived]
 				impl #impl_generics xrb::message::Event for #name #type_generics #where_clause {

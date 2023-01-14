@@ -149,11 +149,9 @@ pub fn derive_writes(attributes: &[Attribute], data: &Data) -> TokenStream2 {
 						let ident = &field.ident;
 						let r#type = &field.ty;
 
-						tokens.append_tokens(|| {
-							quote!(
-								<#r#type as ::xrbk::Writable>::write_to(#ident, buf)?;
-							)
-						});
+						tokens.append_tokens(quote!(
+							<#r#type as ::xrbk::Writable>::write_to(#ident, buf)?;
+						));
 					}
 				}
 			},
@@ -164,11 +162,9 @@ pub fn derive_writes(attributes: &[Attribute], data: &Data) -> TokenStream2 {
 						let formatted = format_ident!("field{}", Index::from(i));
 						let r#type = &field.ty;
 
-						tokens.append_tokens(|| {
-							quote!(
-								<#r#type as ::xrbk::Writable>::write_to(#formatted, buf)?;
-							)
-						});
+						tokens.append_tokens(quote!(
+							<#r#type as ::xrbk::Writable>::write_to(#formatted, buf)?;
+						));
 					}
 				}
 			},
@@ -272,11 +268,9 @@ pub fn derive_reads(attributes: &[Attribute], data: &Data) -> TokenStream2 {
 					let ident = &field.ident;
 					let r#type = &field.ty;
 
-					tokens.append_tokens(|| {
-						quote!(
-							let #ident = <#r#type as ::xrbk::Readable>::read_from(buf)?;
-						)
-					});
+					tokens.append_tokens(quote!(
+						let #ident = <#r#type as ::xrbk::Readable>::read_from(buf)?;
+					));
 				}
 			},
 
@@ -294,11 +288,9 @@ pub fn derive_reads(attributes: &[Attribute], data: &Data) -> TokenStream2 {
 					let formatted = format_ident!("field{}", Index::from(i));
 					let r#type = &field.ty;
 
-					tokens.append_tokens(|| {
-						quote!(
-							let #formatted = <#r#type as ::xrbk::Readable>::read_from(buf)?;
-						)
-					});
+					tokens.append_tokens(quote!(
+						let #formatted = <#r#type as ::xrbk::Readable>::read_from(buf)?;
+					));
 				}
 			},
 
@@ -368,11 +360,9 @@ pub fn derive_x11_sizes(attributes: &[Attribute], data: &Data) -> TokenStream2 {
 						let ident = &field.ident;
 						let r#type = &field.ty;
 
-						tokens.append_tokens(|| {
-							quote!(
-								size += <#r#type as ::xrbk::X11Size>::x11_size(#ident);
-							)
-						});
+						tokens.append_tokens(quote!(
+							size += <#r#type as ::xrbk::X11Size>::x11_size(#ident);
+						));
 					}
 				}
 			},
@@ -383,11 +373,9 @@ pub fn derive_x11_sizes(attributes: &[Attribute], data: &Data) -> TokenStream2 {
 						let formatted = format_ident!("field{}", i);
 						let r#type = &field.ty;
 
-						tokens.append_tokens(|| {
-							quote!(
-								size += <#r#type as ::xrbk::X11Size>::x11_size(#formatted);
-							)
-						});
+						tokens.append_tokens(quote!(
+							size += <#r#type as ::xrbk::X11Size>::x11_size(#formatted);
+						));
 					}
 				}
 			},
@@ -473,11 +461,9 @@ pub fn derive_constant_x11_sizes(_attributes: &[Attribute], data: &Data) -> Toke
 					if !field.attrs.iter().any(|attr| attr.path.is_ident("hide")) {
 						let r#type = &field.ty;
 
-						tokens.append_tokens(|| {
-							quote!(
-								size += <#r#type as ::xrbk::ConstantX11Size>::X11_SIZE;
-							)
-						});
+						tokens.append_tokens(quote!(
+							size += <#r#type as ::xrbk::ConstantX11Size>::X11_SIZE;
+						));
 					}
 				}
 			},

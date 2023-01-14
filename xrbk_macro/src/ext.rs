@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::{TokenStream as TokenStream2, TokenStream};
 use quote::ToTokens;
 use syn::{
 	parse::{Parse, ParseBuffer, ParseStream, Result},
@@ -79,12 +79,12 @@ pub trait TsExt {
 	/// });
 	/// ```
 	///
-	/// [`TokenStream`]: proc_macro::TokenStream
+	/// [`TokenStream`]: TokenStream
 	fn with_tokens<F>(f: F) -> Self
 	where
 		F: FnOnce(&mut Self);
 
-	/// Appends a [`TokenStream`] given by the given function `f`.
+	/// Appends a [`TokenStream`].
 	///
 	/// # Examples
 	/// ```ignore
@@ -95,17 +95,13 @@ pub trait TsExt {
 	///
 	/// let mut tokens = TokenStream::new();
 	///
-	/// tokens.append_tokens(|| {
-	///     quote!(
-	///         println!("hello world!");
-	///     )
-	/// });
+	/// tokens.append_tokens(quote!(
+	///     println!("hello world!");
+	/// ));
 	/// ```
 	///
-	/// [`TokenStream`]: proc_macro::TokenStream
-	fn append_tokens<F>(&mut self, f: F)
-	where
-		F: FnOnce() -> Self;
+	/// [`TokenStream`]: proc_macro2::TokenStream
+	fn append_tokens(&mut self, tokens: TokenStream2);
 }
 
 impl TsExt for TokenStream2 {
@@ -119,10 +115,7 @@ impl TsExt for TokenStream2 {
 		tokens
 	}
 
-	fn append_tokens<F>(&mut self, f: F)
-	where
-		F: FnOnce() -> Self,
-	{
-		f().to_tokens(self);
+	fn append_tokens(&mut self, tokens: TokenStream2) {
+		tokens.to_tokens(self);
 	}
 }

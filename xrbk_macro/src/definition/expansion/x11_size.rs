@@ -26,7 +26,7 @@ impl Struct {
 			}
 		});
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
@@ -67,7 +67,7 @@ impl Request {
 			}
 		});
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
@@ -110,7 +110,7 @@ impl Reply {
 			}
 		});
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
@@ -159,7 +159,7 @@ impl Event {
 			}
 		});
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
@@ -210,7 +210,7 @@ impl Enum {
 					}
 				});
 
-				tokens.append_tokens(|| {
+				tokens.append_tokens({
 					quote_spanned!(trait_path.span()=>
 						Self::#ident #pat => {
 							// Add the size of each element.
