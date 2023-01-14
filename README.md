@@ -16,7 +16,7 @@
 <p align="center">
 	<a href="https://docs.aquariwm.org/doc/xrb/">
 		<img src="https://img.shields.io/badge/docs-dev build-forestgreen?style=for-the-badge" /></a>
-	<a href="hhttps://github.com/orgs/XdotRS/projects/1/views/1">
+	<a href="https://github.com/orgs/XdotRS/projects/1/views/1">
 		<img src="https://img.shields.io/badge/todo-project-8860b8?style=for-the-badge" /></a>
 </p>
 
