@@ -7,6 +7,7 @@ extern crate self as xrb;
 use bytes::Buf;
 use derive_more::{From, Into};
 use xrbk::{
+	ConstantX11Size,
 	ReadResult,
 	Readable,
 	ReadableWithContext,
