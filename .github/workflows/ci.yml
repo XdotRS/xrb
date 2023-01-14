@@ -77,7 +77,7 @@ jobs:
           profile: minimal
           toolchain: nightly
           override: true
-          components: [clippy, rustfmt]
+          components: clippy, rustfmt
 
       - name: Configure git credentials
         run: |
