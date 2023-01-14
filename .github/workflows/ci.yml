@@ -67,7 +67,7 @@ jobs:
         run: |
           git pull origin ${{ github.ref }}
           git diff --quiet || echo "### Applied recommended clippy fixes." >> $GITHUB_STEP_SUMMARY
-          git diff --quiet || (git commit -am "[CI${{ github.run_number}}] applied recommended clippy fixes" && echo "$(git log --format='%H' -n 1)" >> $GITHUB_STEP_SUMMARY && echo "$(git log --format='%H' -n 1 >> .git-blame-ignore-revs)
+          git diff --quiet || (git commit -am "[CI${{ github.run_number}}] applied recommended clippy fixes" && echo "$(git log --format='%H' -n 1)" >> $GITHUB_STEP_SUMMARY && echo "$(git log --format='%H' -n 1" >> .git-blame-ignore-revs)
 
       # Automatically format the code with `rustfmt`.
       - name: Format code with `rustfmt`
@@ -80,7 +80,7 @@ jobs:
         run: |
           git pull origin ${{ github.ref }}
           git diff --quiet || echo "### Formatted code with rustfmt." >> $GITHUB_STEP_SUMMARY
-          git diff --quiet || (git commit -am "[CI${{ github.run_number}}] formatted code with rustfmt" && echo "$(git log --format='%H' -n 1)" >> $GITHUB_STEP_SUMMARY && echo "$(git log --format='%H' -n 1 >> .git-blame-ignore-revs)
+          git diff --quiet || (git commit -am "[CI${{ github.run_number}}] formatted code with rustfmt" && echo "$(git log --format='%H' -n 1)" >> $GITHUB_STEP_SUMMARY && echo "$(git log --format='%H' -n 1" >> .git-blame-ignore-revs)
 
       # This sets the `commit-id` to the latest commit. If there were changes
       # made, that means it will be the commit for those changes, otherwise it
