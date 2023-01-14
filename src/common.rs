@@ -6,12 +6,7 @@ extern crate self as xrb;
 
 use bytes::Buf;
 use derive_more::{From, Into};
-use xrbk::{
-	ConstantX11Size,
-	ReadResult,
-	ReadableWithContext,
-	Wrapper,
-};
+use xrbk::{ConstantX11Size, ReadResult, ReadableWithContext, Wrapper};
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Writable, X11Size};
 
 pub mod atom;
