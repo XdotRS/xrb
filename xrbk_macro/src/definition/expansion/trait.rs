@@ -133,3 +133,96 @@ impl Event {
 		});
 	}
 }
+
+impl Error {
+	pub fn impl_trait(&self, tokens: &mut TokenStream2) {
+		let name = &self.ident;
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let error_path = &self.error_token;
+		let error_code = &self.error_code;
+
+		let sequence = match &self.content {
+			StructlikeContent::Regular {
+				content,
+				..
+			} if let Some(Element::Field(field)) = content.sequence_element() => {
+				let id = &field.id;
+				quote!(self.#id)
+			},
+
+			StructlikeContent::Tuple {
+				content,
+				..
+			} if let Some(Element::Field(field)) = content.sequence_element() => {
+				let id = &field.id;
+				quote!(self.#id)
+			},
+
+			_ => panic!("expected a sequence field"),
+		};
+
+		let minor_opcode = match &self.content {
+			StructlikeContent::Regular {
+				content,
+				..
+			} if let Some(Element::Field(field)) = content.minor_opcode_element() => {
+				let id = &field.id;
+				quote!(self.#id)
+			},
+
+			StructlikeContent::Tuple {
+				content,
+				..
+			} if let Some(Element::Field(field)) = content.minor_opcode_element() => {
+				let id = &field.id;
+				quote!(self.#id)
+			},
+
+			_ => panic!("expected a minor opcode field"),
+		};
+
+		let major_opcode = match &self.content {
+			StructlikeContent::Regular {
+				content,
+				..
+			} if let Some(Element::Field(field)) = content.major_opcode_element() => {
+				let id = &field.id;
+				quote!(self.#id)
+			},
+
+			StructlikeContent::Tuple {
+				content,
+				..
+			} if let Some(Element::Field(field)) = content.major_opcode_element() => {
+				let id = &field.id;
+				quote!(self.#id)
+			},
+
+			_ => panic!("expected a major opcode field"),
+		};
+
+		tokens.append_tokens({
+			quote_spanned!(error_path.span()=>
+				#[automatically_derived]
+				impl #impl_generics #error_path for #name #type_generics #where_clause {
+					const CODE: u8 = {
+						#error_code
+					};
+
+					fn sequence(&self) -> u16 {
+						#sequence
+					}
+
+					fn minor_opcode(&self) -> u16 {
+						#minor_opcode
+					}
+
+					fn major_opcode(&self) -> u8 {
+						#major_opcode
+					}
+				}
+			)
+		});
+	}
+}
