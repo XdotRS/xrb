@@ -29,14 +29,10 @@
 //! (de)serialization of types in XRB.
 
 use std::{
-	cmp,
-	cmp::Ordering,
-	convert::Infallible,
+	any::Any,
 	fmt::{Debug, Display},
-	mem::size_of,
 };
 
-use num_traits::Zero;
 use thiserror::Error;
 
 pub type ReadResult<T> = Result<T, ReadError>;
@@ -44,7 +40,7 @@ pub type WriteResult = Result<(), WriteError>;
 
 pub use bytes::{Buf, BufMut};
 
-trait DebugDisplay: Debug + Display {}
+pub trait DebugDisplay: Debug + Display {}
 impl<T: Debug + Display> DebugDisplay for T {}
 
 #[non_exhaustive]
@@ -53,8 +49,8 @@ pub enum ReadError {
 	#[error("unrecognized variant discriminant: {0}")]
 	UnrecognizedDiscriminant(usize),
 
-	#[error("a conversion failed: {0}")]
-	FailedConversion(Box<dyn DebugDisplay>),
+	#[error("a conversion failed")]
+	FailedConversion(Box<dyn Any>),
 	#[error("{0}")]
 	Other(Box<dyn DebugDisplay>),
 }
@@ -62,8 +58,8 @@ pub enum ReadError {
 #[non_exhaustive]
 #[derive(Error, Debug)]
 pub enum WriteError {
-	#[error("a conversion failed: {0}")]
-	FailedConversion(Box<dyn DebugDisplay>),
+	#[error("a conversion failed")]
+	FailedConversion(Box<dyn Any>),
 	#[error("{0}")]
 	Other(Box<dyn DebugDisplay>),
 }
@@ -295,7 +291,7 @@ pub trait Wrapper: ConstantX11Size {
 /// It makes use of the `Wrap` trait so that it can have a value of a generic
 /// type `T` and choose the appropriate integer type to encode the discriminant
 /// of its discrete alternative `CopyFromParent`.
-pub trait Wrap: TryFrom<Self::Integer> + Into<Self::Integer> + ConstantX11Size {
+pub trait Wrap: Clone + TryFrom<Self::Integer> + Into<Self::Integer> + ConstantX11Size {
 	type Integer: Copy + TryFrom<usize> + Into<usize> + ConstantX11Size + Readable + Writable;
 
 	/// Referencing this associated `const` causes a compilation error if
@@ -312,7 +308,10 @@ impl<T: Wrap> Wrapper for Option<T> {
 	type Wrapped = T;
 }
 
-impl<T: Wrap> Readable for Option<T> {
+impl<T: Wrap> Readable for Option<T>
+where
+	<T as TryFrom<T::Integer>>::Error: 'static,
+{
 	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
 	where
 		Self: Sized,
@@ -327,7 +326,10 @@ impl<T: Wrap> Readable for Option<T> {
 	}
 }
 
-impl<T: Wrap> Writable for Option<T> {
+impl<T: Wrap> Writable for Option<T>
+where
+	<T::Integer as TryFrom<usize>>::Error: 'static,
+{
 	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
 		match self {
 			None => match T::Integer::try_from(0_usize) {
@@ -336,7 +338,11 @@ impl<T: Wrap> Writable for Option<T> {
 			}
 			.write_to(buf)?,
 
-			Some(val) => <&T::Integer as From<T>>::from(val).write_to(buf)?,
+			Some(val) => match <T::Integer as TryFrom<T>>::try_from(val.clone()) {
+				Ok(val) => val,
+				Err(error) => return Err(WriteError::FailedConversion(Box::new(error))),
+			}
+			.write_to(buf)?,
 		}
 
 		Ok(())
