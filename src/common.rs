@@ -378,9 +378,9 @@ derive_xrb! {
 	}
 
 	impl Wrapper for WindowClass {
-		type WrappedType = u16;
+		type Wrapped = u16;
 
-		fn wrap(val: Self::WrappedType) -> Self {
+		fn wrap(val: Self::Wrapped) -> Self {
 			match val {
 				discrim if discrim == 1 => Self::InputOutput,
 				discrim if discrim == 2 => Self::InputOnly,
@@ -391,7 +391,7 @@ derive_xrb! {
 			}
 		}
 
-		fn unwrap(&self) -> &Self::WrappedType {
+		fn unwrap(&self) -> &Self::Wrapped {
 			match self {
 				Self::InputOutput => &1,
 				Self::InputOnly => &2,
