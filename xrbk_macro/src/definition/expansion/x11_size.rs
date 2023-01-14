@@ -188,6 +188,10 @@ impl Event {
 impl Enum {
 	pub fn impl_x11_size(&self, tokens: &mut TokenStream2, trait_path: &Path) {
 		let ident = &self.ident;
+		let discrim_type = self.discriminant_type.as_ref().map_or_else(
+			|| quote_spanned!(trait_path.span()=> u8),
+			|(_, r#type)| r#type.to_token_stream(),
+		);
 
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
