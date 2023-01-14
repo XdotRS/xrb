@@ -71,6 +71,7 @@ pub enum Definition {
 	Request(Request),
 	Reply(Reply),
 	Event(Event),
+	Error(Error),
 
 	/// Any other item allowed in Rust that isn't a struct nor an enum.
 	Other(syn::Item),
@@ -155,8 +156,8 @@ pub struct Request {
 
 	/// A colon token: `:`.
 	pub colon_token: Token![:],
-	/// An identifier representing the `Request` trait.
-	pub request_token: Ident,
+	/// A path representing the `Request` trait.
+	pub request_token: Path,
 
 	/// A pair of normal brackets surrounding the opcodes: `(` and `)`.
 	pub paren_token: token::Paren,
@@ -207,8 +208,8 @@ pub struct Reply {
 
 	/// A colon token: `:`.
 	pub colon_token: Token![:],
-	/// An identifier representing the `Reply` trait.
-	pub reply_token: Ident,
+	/// A path representing the `Reply` trait.
+	pub reply_token: Path,
 
 	/// A for token: `for`.
 	pub for_token: Token![for],
@@ -252,8 +253,8 @@ pub struct Event {
 
 	/// A colon token: `:`.
 	pub colon_token: Token![:],
-	/// An identifier representing the `Event` trait.
-	pub event_token: Ident,
+	/// A path representing the `Event` trait.
+	pub event_token: Path,
 
 	/// A pair of normal brackets surrounding the `event_code`: `(` and `)`.
 	pub paren_token: token::Paren,
@@ -394,6 +395,7 @@ pub enum DefinitionType {
 	Request,
 	Reply,
 	Event,
+	Error,
 }
 
 impl DefinitionType {
@@ -404,6 +406,7 @@ impl DefinitionType {
 			Self::Request => None,
 			Self::Reply => Some(32),
 			Self::Event => Some(32),
+			Self::Error => Some(32),
 		}
 	}
 
