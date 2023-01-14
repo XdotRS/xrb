@@ -94,8 +94,9 @@ impl Request {
 		});
 
 		let metabyte = if self.minor_opcode.is_some() {
+			// TODO: can't be in metabyte, must check this in protocol!!
 			quote_spanned!(trait_path.span()=>
-				buf.put_u8(<Self as xrb::message::Request>::MINOR_OPCODE.unwrap());
+				buf.put_u16(<Self as xrb::message::Request>::MINOR_OPCODE.unwrap());
 			)
 		} else if let Some(element) = self.content.metabyte_element() {
 			TokenStream2::with_tokens(|tokens| {

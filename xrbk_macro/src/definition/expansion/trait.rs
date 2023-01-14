@@ -37,7 +37,7 @@ impl Request {
 						#major_opcode
 					};
 
-					const MINOR_OPCODE: Option<u8> = {
+					const MINOR_OPCODE: Option<u16> = {
 						#minor_opcode
 					};
 
