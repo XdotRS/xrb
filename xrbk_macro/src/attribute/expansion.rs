@@ -29,6 +29,28 @@ impl ToTokens for SequenceAttribute {
 	}
 }
 
+impl ToTokens for MinorOpcodeAttribute {
+	fn to_tokens(&self, tokens: &mut TokenStream) {
+		// `#`.
+		self.hash_token.to_tokens(tokens);
+		// Square brackets surrounding `minor_opcode`.
+		self.bracket_token.surround(tokens, |tokens| {
+			self.path.to_tokens(tokens);
+		});
+	}
+}
+
+impl ToTokens for MajorOpcodeAttribute {
+	fn to_tokens(&self, tokens: &mut TokenStream) {
+		// `#`.
+		self.hash_token.to_tokens(tokens);
+		// Square brackets surrounding `major_opcode`.
+		self.bracket_token.surround(tokens, |tokens| {
+			self.path.to_tokens(tokens);
+		});
+	}
+}
+
 impl ToTokens for HideAttribute {
 	fn to_tokens(&self, tokens: &mut TokenStream) {
 		// `#`.

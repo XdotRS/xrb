@@ -30,6 +30,10 @@ pub struct ParsedAttributes {
 	pub metabyte_attribute: Option<MetabyteAttribute>,
 	/// A sequence attribute, if one was parsed.
 	pub sequence_attribute: Option<SequenceAttribute>,
+	/// A minor opcode attribute, if one was parsed.
+	pub minor_opcode_attribute: Option<MinorOpcodeAttribute>,
+	/// A major opcode attribute, if one was parsed.
+	pub major_opcode_attribute: Option<MajorOpcodeAttribute>,
 	/// A hide attribute, if one was parsed.
 	pub hide_attribute: Option<HideAttribute>,
 }
@@ -66,6 +70,8 @@ impl ParseWithContext for ParsedAttributes {
 		let mut context_attribute = None;
 		let mut metabyte_attribute = None;
 		let mut sequence_attribute = None;
+		let mut minor_opcode_attribute = None;
+		let mut major_opcode_attribute = None;
 		let mut hide_attribute = None;
 
 		// While there are still attributes remaining...
@@ -127,6 +133,36 @@ impl ParseWithContext for ParsedAttributes {
 					bracket_token,
 					path,
 				});
+			// If the name is `minor_opcode`, parse it as a minor opcode
+			// attribute.
+			} else if path.is_ident("minor_opcode") {
+				if minor_opcode_attribute.is_some() {
+					return Err(Error::new(
+						path.span(),
+						"no more than one minor opcode attribute is allowed per element",
+					));
+				}
+
+				minor_opcode_attribute = Some(MinorOpcodeAttribute {
+					hash_token,
+					bracket_token,
+					path,
+				});
+			// If the name is `major_opcode`, parse it as a minor opcode
+			// attribute.
+			} else if path.is_ident("major_opcode") {
+				if major_opcode_attribute.is_some() {
+					return Err(Error::new(
+						path.span(),
+						"no more than one major opcode attribute is allowd per element",
+					));
+				}
+
+				major_opcode_attribute = Some(MajorOpcodeAttribute {
+					hash_token,
+					bracket_token,
+					path,
+				});
 			// If the name is `hide`, parse it as a hide attribute.
 			} else if path.is_ident("hide") {
 				if hide_attribute.is_some() {
@@ -168,6 +204,8 @@ impl ParseWithContext for ParsedAttributes {
 			context_attribute,
 			metabyte_attribute,
 			sequence_attribute,
+			minor_opcode_attribute,
+			major_opcode_attribute,
 			hide_attribute,
 		})
 	}

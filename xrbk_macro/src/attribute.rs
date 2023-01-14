@@ -44,6 +44,44 @@ pub struct SequenceAttribute {
 	pub path: Path,
 }
 
+/// An attribute which indicates that a [`Field`] for an [`Error`] represents
+/// the minor opcode of the request which generated an error.
+///
+/// > **<sup>Syntax</sup>**\
+/// > _MinorOpcodeAttribute_ :\
+/// > &nbsp;&nbsp; `#` `[` `minor_opcode` `]`
+///
+/// [`Field`]: crate::element::Field
+/// [`Error`]: crate::definition::Error
+pub struct MinorOpcodeAttribute {
+	/// A hash token: `#`.
+	pub hash_token: Token![#],
+	/// A pair of square brackets (`[` and `]`) surrounding the `path`.
+	pub bracket_token: token::Bracket,
+
+	/// The attribute path: `minor_opcode` for a `MinorOpcodeAttribute`.
+	pub path: Path,
+}
+
+/// An attribute which indicates that a [`Field`] for an [`Error`] represents
+/// the major opcode of the request which generated an error.
+///
+/// > **<sup>Syntax</sup>**\
+/// > _MajorOpcodeAttribute_ :\
+/// > &nbsp;&nbsp; `#` `[` `major_opcode` `]`
+///
+/// [`Field`]: crate::element::Field
+/// [`Error`]: crate::definition::Error
+pub struct MajorOpcodeAttribute {
+	/// A hash token: `#`.
+	pub hash_token: Token![#],
+	/// A pair of square brackets (`[` and `]`) surrounding the `path`.
+	pub bracket_token: token::Bracket,
+
+	/// The attribute path: `major_opcode` for a `MajorOpcodeAttribute`.
+	pub path: Path,
+}
+
 /// An attribute which indicates that a [`Field`] should not be taken into
 /// consideration when implementing XRBK traits.
 ///

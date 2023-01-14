@@ -20,7 +20,14 @@ use syn::{
 };
 
 use crate::{
-	attribute::{ContextAttribute, HideAttribute, MetabyteAttribute, SequenceAttribute},
+	attribute::{
+		ContextAttribute,
+		HideAttribute,
+		MajorOpcodeAttribute,
+		MetabyteAttribute,
+		MinorOpcodeAttribute,
+		SequenceAttribute,
+	},
 	source::Source,
 };
 
@@ -54,6 +61,18 @@ impl RegularContent {
 	pub const fn sequence_element(&self) -> &Option<Element> {
 		&self.elements.sequence_element
 	}
+
+	/// The [`Element`] contained within this `RegularContent` which has a
+	/// [`MinorOpcodeAttribute`], if there is one.
+	pub const fn minor_opcode_element(&self) -> &Option<Element> {
+		&self.elements.minor_opcode_element
+	}
+
+	/// The [`Element`] contained within this `RegularContent` which has a
+	/// [`MajorOpcodeAttribute`], if there is one.
+	pub const fn major_opcode_element(&self) -> &Option<Element> {
+		&self.elements.major_opcode_element
+	}
 }
 
 /// > **<sup>Syntax</sup>**\
@@ -85,6 +104,18 @@ impl TupleContent {
 	/// [`SequenceAttribute`], if there is one.
 	pub const fn sequence_element(&self) -> &Option<Element> {
 		&self.elements.sequence_element
+	}
+
+	/// The [`Element`] contained within this `TupleContent` which has a
+	/// [`MinorOpcodeAttribute`], if there is one.
+	pub const fn minor_opcode_element(&self) -> &Option<Element> {
+		&self.elements.minor_opcode_element
+	}
+
+	/// The [`Element`] contained within this `TupleContent` which has a
+	/// [`MajorOpcodeAttribute`], if there is one.
+	pub const fn major_opcode_element(&self) -> &Option<Element> {
+		&self.elements.major_opcode_element
 	}
 }
 
@@ -140,6 +171,28 @@ impl Content {
 		match self {
 			Self::Regular(content) => content.sequence_element(),
 			Self::Tuple(content) => content.sequence_element(),
+
+			Self::Unit => &None,
+		}
+	}
+
+	/// The [`Element`] contained within this `Content` which has a
+	/// [`MinorOpcodeAttribute`], if there is one.
+	pub const fn minor_opcode_element(&self) -> &Option<Element> {
+		match self {
+			Self::Regular(content) => content.minor_opcode_element(),
+			Self::Tuple(content) => content.minor_opcode_element(),
+
+			Self::Unit => &None,
+		}
+	}
+
+	/// The [`Element`] contained within this `Content` which has a
+	/// [`MajorOpcodeAttribute`], if there is one.
+	pub const fn major_opcode_element(&self) -> &Option<Element> {
+		match self {
+			Self::Regular(content) => content.major_opcode_element(),
+			Self::Tuple(content) => content.major_opcode_element(),
 
 			Self::Unit => &None,
 		}
@@ -209,8 +262,8 @@ impl StructlikeContent {
 		}
 	}
 
-	/// The [`Element`]  contained within this `StructlikeContent` which has a
-	/// [`MetabyteAttribute`], if there is one.
+	/// The [`Element`] contained within this `StructlikeContent` which has a
+	/// [`SequenceAttribute`], if there is one.
 	pub const fn sequence_element(&self) -> &Option<Element> {
 		match self {
 			Self::Regular { content, .. } => content.sequence_element(),
@@ -219,12 +272,38 @@ impl StructlikeContent {
 			Self::Unit { .. } => &None,
 		}
 	}
+
+	/// The [`Element`] contained within this `StructlikeContent` which has a
+	/// [`MinorOpcodeAttribute`], if there is one.
+	pub const fn minor_opcode_element(&self) -> &Option<Element> {
+		match self {
+			Self::Regular { content, .. } => content.minor_opcode_element(),
+			Self::Tuple { content, .. } => content.minor_opcode_element(),
+
+			Self::Unit { .. } => &None,
+		}
+	}
+
+	/// The [`Element`] contained within this `StructlikeContent` which has a
+	/// [`MajorOpcodeAttribute`], if there is one.
+	pub const fn major_opcode_element(&self) -> &Option<Element> {
+		match self {
+			Self::Regular { content, .. } => content.major_opcode_element(),
+			Self::Tuple { content, .. } => content.major_opcode_element(),
+
+			Self::Unit { .. } => &None,
+		}
+	}
 }
 
 enum ElementsItem {
 	Element(Element),
+
 	Metabyte,
 	Sequence,
+
+	MinorOpcode,
+	MajorOpcode,
 }
 
 /// Multiple [`Element`]s.
@@ -244,6 +323,11 @@ pub struct Elements {
 	pub metabyte_element: Option<Element>,
 	/// The [`Element`] which has a [`SequenceAttribute`], if there is one.
 	pub sequence_element: Option<Element>,
+
+	/// The [`Element`] which has a [`MinorOpcodeAttribute`], if there is one.
+	pub minor_opcode_element: Option<Element>,
+	/// The [`Element`] which has a [`MajorOpcodeAttribute`], if there is one.
+	pub major_opcode_element: Option<Element>,
 
 	/// Whether there is an [`ArrayUnused`] element with
 	/// [`UnusedContent::Infer`] within these `Elements`.
@@ -369,6 +453,18 @@ pub struct Field {
 	///
 	/// See [`SequenceAttribute`] for more information.
 	pub sequence_attribute: Option<SequenceAttribute>,
+	/// A [`MinorOpcodeAttribute`], required for errors but forbidden elsewhere,
+	/// which indicates that this field represents the request that generated an
+	/// error for that error.
+	///
+	/// See [`MinorOpcodeAttribute`] for more information.
+	pub minor_opcode_attribute: Option<MinorOpcodeAttribute>,
+	/// A [`MajorOpcodeAttribute`], required for errors but forbidden elsewhere,
+	/// which indicates that this field represents the request that generated an
+	/// error for that error.
+	///
+	/// See [`MajorOpcodeAttribute`] for more information.
+	pub major_opcode_attribute: Option<MajorOpcodeAttribute>,
 	/// An optional [`HideAttribute`] which indicates that this field should
 	/// not be taken into account when implementing XRBK traits.
 	///
@@ -398,6 +494,16 @@ impl Field {
 	/// Whether this `Field` has a [`SequenceAttribute`].
 	pub const fn is_sequence(&self) -> bool {
 		self.sequence_attribute.is_some()
+	}
+
+	/// Whether this `Field` has a [`MinorOpcodeAttribute`].
+	pub const fn is_minor_opcode(&self) -> bool {
+		self.minor_opcode_attribute.is_some()
+	}
+
+	/// Whether this `Field` has a [`MajorOpcodeAttribute`].
+	pub const fn is_major_opcode(&self) -> bool {
+		self.major_opcode_attribute.is_some()
 	}
 }
 
