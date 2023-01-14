@@ -6,8 +6,8 @@
 name = "xrbk_macro" # Procedural macros for XRB
 version = "0.1.0-dev"
 readme = false
-repository = "https://github.com/XdotRS/xrb/tree/main/xrb-proc-macros"
-documentation = "https://docs.aquariwm.org/doc/xrb-proc-macros"
+repository = "https://github.com/XdotRS/xrb/tree/main/xrbk_macro"
+documentation = "https://docs.aquariwm.org/doc/xrbk_macro"
 authors = [ "X.RS", "Antikyth <antikyth at gmail dot com>" ]
 edition = "2021"
 description = "Procedural macros for X Rust Bindings, a.k.a. XRB."

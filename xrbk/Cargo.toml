@@ -4,11 +4,14 @@
 
 [package]
 name = "xrbk"
-version = "0.0.7"
+version = "0.0.1"
 readme = false
+repository = "https://github.com/XdotRS/xrb/tree/main/xrbk"
+documentation = "https://docs.aquariwm.org/doc/xrbk"
 authors = ["X.RS", "Antikyth <antikyth at gmail dot com>", "Syudagye"]
 edition = "2021"
-description = "The XRB Kit: Utilities for (de)serialization in XRB."
+description = "Development toolkit for implementing X11 protocols for XRB."
+license = "MPL-2.0"
 keywords = ["serialization", "encoding", "bytes"]
 categories = ["encoding"]
 
