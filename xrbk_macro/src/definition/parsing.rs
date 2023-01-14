@@ -196,7 +196,7 @@ impl ParseWithContext for Event {
 			colon_token,
 			event_token,
 			paren_token: parenthesized!(content in input),
-			code: content.parse()?,
+			event_code: content.parse()?,
 			content: input.parse_with(DefinitionType::Event)?,
 		})
 	}

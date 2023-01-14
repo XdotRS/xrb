@@ -96,7 +96,7 @@ impl Event {
 		let name = &self.ident;
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
-		let code = &self.code;
+		let code = &self.event_code;
 		let sequence = match &self.content {
 			StructlikeContent::Regular {
 				content,

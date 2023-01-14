@@ -10,10 +10,10 @@ use syn::{
 	parenthesized,
 	token,
 	Attribute,
-	Error,
 	Expr,
 	Generics,
 	Ident,
+	Path,
 	Result,
 	Token,
 	Type,
@@ -155,15 +155,14 @@ pub struct Request {
 
 	/// A colon token: `:`.
 	pub colon_token: Token![:],
-	/// Specifies that this is a request: `Request`.
+	/// An identifier representing the `Request` trait.
 	pub request_token: Ident,
 
 	/// A pair of normal brackets surrounding the opcodes: `(` and `)`.
 	pub paren_token: token::Paren,
-	/// An expression that evaluates to the major opcode associated with the
-	/// request.
+	/// An expression representing the major opcode associated with the request.
 	pub major_opcode: Expr,
-	/// An optional comma then expression that evaluates to the minor opcode
+	/// An optional comma then an expression representing the minor opcode
 	/// associated with the request.
 	pub minor_opcode: Option<(Token![,], Expr)>,
 
@@ -208,7 +207,7 @@ pub struct Reply {
 
 	/// A colon token: `:`.
 	pub colon_token: Token![:],
-	/// Specifies that this is a reply: `Reply`.
+	/// An identifier representing the `Reply` trait.
 	pub reply_token: Ident,
 
 	/// A for token: `for`.
@@ -253,15 +252,61 @@ pub struct Event {
 
 	/// A colon token: `:`.
 	pub colon_token: Token![:],
-	/// Specifies that this is an event: `Event`.
+	/// An identifier representing the `Event` trait.
 	pub event_token: Ident,
 
-	/// A pair of normal brackets: `(` and `)`.
+	/// A pair of normal brackets surrounding the `event_code`: `(` and `)`.
 	pub paren_token: token::Paren,
-	/// An expression that evaluates to the code associated with the event.
-	pub code: Expr,
+	/// An expression representing the unique event code associated with the
+	/// event.
+	pub event_code: Expr,
 
 	/// The content of the `Event`, containing its elements.
+	pub content: StructlikeContent,
+}
+
+/// A struct with metadata  for error messages and support for [`Element`]s.
+///
+/// > **<sup>Syntax</sup>**\
+/// > _Error_ :\
+/// > &nbsp;&nbsp; [_OuterAttribute_]<sup>\*</sup> [_Visibility_]<sup>?</sup>
+/// > [_StructlikeMetadata_]\
+/// > &nbsp;&nbsp; `:` `Error` `(` [_Expression_] `)`\
+/// > &nbsp;&nbsp; [_StructlikeContent_]
+/// >
+/// > [_OuterAttribute_]: https://doc.rust-lang.org/reference/attributes.html
+/// > [_Visibility_]: https://doc.rust-lang.org/reference/visibility-and-privacy.html
+/// > [_StructMetadata_]: Struct
+/// > [_Expression_]: https://doc.rust-lang.org/reference/expressions.html
+/// > [_StructlikeContent_]: StructlikeContent
+///
+/// [`Element`]: crate::element::Element
+pub struct Error {
+	/// Attributes associated with the error's struct, including doc comments.
+	pub item_attributes: ParsedItemAttributes,
+
+	/// The visibility of the error's struct.
+	pub visibility: Visibility,
+	/// The struct token: `struct.
+	pub struct_token: Token![struct],
+	/// The name of the error.
+	pub ident: Ident,
+	/// Generics (lifetimes and/or generic types) associated with the error
+	/// struct.
+	pub generics: Generics,
+
+	/// A colon token: `:`.
+	pub colon_token: Token![:],
+	/// A path representing the `Error` trait.
+	pub error_token: Path,
+
+	/// A pair of normal brackets surrounding the `error_code`: `(` and `)`.
+	pub paren_token: token::Paren,
+	/// An expression representing the unique error code associated with the
+	/// error.
+	pub error_code: Expr,
+
+	/// The content of the `Error`, containing its elements.
 	pub content: StructlikeContent,
 }
 
