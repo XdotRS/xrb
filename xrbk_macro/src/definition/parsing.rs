@@ -215,10 +215,20 @@ impl ParseWithContext for Enum {
 
 		Ok(Self {
 			item_attributes,
+
 			visibility,
 			enum_token: input.parse()?,
 			ident: input.parse()?,
 			generics: input.parse()?,
+
+			discriminant_type: if input.peek(Token![:]) {
+				Some((input.parse::<Token![:]>()?, input.parse::<Type>()?))
+			} else {
+				None
+			},
+
+			where_clause: input.parse()?,
+
 			brace_token: braced!(content in input),
 			variants: content.parse_terminated(Variant::parse)?,
 		})
@@ -229,10 +239,12 @@ impl Parse for Variant {
 	fn parse(input: ParseStream) -> Result<Self> {
 		Ok(Self {
 			attributes: input.call(Attribute::parse_outer)?,
+
 			ident: input.parse()?,
 			content: input.parse_with(DefinitionType::Basic)?,
+
 			discriminant: if input.peek(Token![=]) {
-				Some((input.parse()?, input.parse()?))
+				Some((input.parse::<Token![=]>()?, input.parse::<Expr>()?))
 			} else {
 				None
 			},

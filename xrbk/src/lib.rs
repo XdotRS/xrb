@@ -42,7 +42,7 @@ pub use bytes::{Buf, BufMut};
 #[derive(Error, Debug)]
 pub enum ReadError {
 	#[error("unrecognized variant discriminant: {0}")]
-	UnrecognizedDiscriminant(u8),
+	UnrecognizedDiscriminant(usize),
 
 	#[error("{0}")]
 	Other(Box<dyn Error>),

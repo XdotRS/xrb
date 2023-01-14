@@ -18,6 +18,7 @@ use syn::{
 	Token,
 	Type,
 	Visibility,
+	WhereClause,
 };
 
 use quote::quote;
@@ -299,6 +300,11 @@ pub struct Enum {
 	pub ident: Ident,
 	/// Generics (lifetimes and/or generic types) associated with the enum.
 	pub generics: Generics,
+	/// The numerical primitive type used for this enum's discriminants.
+	///
+	/// This defaults to `u8`.
+	pub discriminant_type: Option<(Token![:], Type)>,
+	pub where_clause: Option<WhereClause>,
 
 	/// A pair of curly brackets (`{` and `}`) surrounding the enum `variants`.
 	pub brace_token: token::Brace,
