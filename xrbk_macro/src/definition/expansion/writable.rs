@@ -375,7 +375,7 @@ impl Enum {
 					}
 				});
 
-				let discrim_type = quote_spanned!(discrim_type.span()=>
+				let discrim_writable = quote_spanned!(discrim_type.span()=>
 					<#discrim_type as ::xrbk::Writable>
 				);
 
@@ -383,7 +383,7 @@ impl Enum {
 					quote_spanned!(trait_path.span()=>
 						Self::#ident #pat => {
 							#declare_x11_size
-							#discrim_type::write_to(&#discrim, buf)?;
+							#discrim_writable::write_to(&((#discrim) as #discrim_type), buf)?;
 
 							#writes
 						},
