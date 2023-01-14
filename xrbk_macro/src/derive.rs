@@ -349,7 +349,7 @@ pub fn derive_reads(attributes: &[Attribute], data: &Data) -> TokenStream2 {
 					#(#arms)*
 
 					other_discrim => Err(
-						::xrbk::ReadError::UnrecognizedDiscriminant(other_discrim),
+						::xrbk::ReadError::UnrecognizedDiscriminant(other_discrim as usize),
 					),
 				}
 			)
