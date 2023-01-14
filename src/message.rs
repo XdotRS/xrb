@@ -74,7 +74,19 @@ pub trait Request: X11Size + Writable {
 	/// |12                 |16                 |4         |
 	/// |...                |...                |...       |
 	/// |`4n - 4`           |`4n`               |`n`       |
-	fn length(&self) -> u16;
+	///
+	#[allow(clippy::cast_possible_truncation)]
+	fn length(&self) -> u16 {
+		let size = self.x11_size();
+
+		assert_eq!(
+			size % 4,
+			0,
+			"expected Request size to be a multiple of 4, found {size}"
+		);
+
+		(size / 4) as u16
+	}
 }
 
 /// The result of sending a [request].
@@ -185,7 +197,24 @@ pub trait Reply: X11Size + Readable {
 	/// |36                 |44                 |3         |
 	/// |...                |...                |...       |
 	/// |`4n - 8`           |`4n`               |`n - 8`   |
-	fn length(&self) -> u32;
+	///
+	#[allow(clippy::cast_possible_truncation)]
+	fn length(&self) -> u32 {
+		let size = self.x11_size();
+
+		assert!(
+			size >= 32,
+			"expected Reply size to be greater than or equal to 32 bytes, found {size}"
+		);
+
+		assert_eq!(
+			size % 4,
+			0,
+			"expected Reply size to be a multiple of 4, found {size}"
+		);
+
+		((size - 32) / 4) as u32
+	}
 
 	/// The sequence number associated with the [request] that generated this
 	/// `Reply`.
