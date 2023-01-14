@@ -26,35 +26,6 @@ jobs:
         with:
           access_token: ${{ github.token }}
 
-  # Runs unit tests.
-  run-tests:
-    runs-on: ubuntu-latest
-
-    steps:
-      # Check out (a.k.a. clones) the XRB repository.
-      - name: Checkout XRB
-        uses: actions/checkout@v3
-
-      # Install the latest nightly release of the Rust toolchain.
-      - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: true
-
-      # Matches test failures so annotations can be added and such.
-      - name: Add test problem matching
-        run: echo "::add-matcher::.github/test-problem-matcher.json"
-
-      # Run unit tests with `cargo test`.
-      - name: Run tests
-        run: cargo test --workspace --color never
-
-      - name: Remove test problem matching
-        if: ${{ success() || failure() }}
-        run: echo "::remove-matcher owner=rust-tests::"
-
   # Automatically applies suggested fixes from `clippy` and formats with rustfmt.
   fix-n-format:
     runs-on: ubuntu-latest
@@ -120,6 +91,39 @@ jobs:
 
       - name: Push changes
         run: git push origin HEAD:${{ github.ref }}
+
+  # Runs unit tests.
+  run-tests:
+    needs: fix-n-format
+    if: success() || failure()
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out (a.k.a. clones) the XRB repository.
+      - name: Checkout XRB
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.fix-n-format.outputs.commit-id }}
+
+      # Install the latest nightly release of the Rust toolchain.
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+
+      # Matches test failures so annotations can be added and such.
+      - name: Add test problem matching
+        run: echo "::add-matcher::.github/test-problem-matcher.json"
+
+      # Run unit tests with `cargo test`.
+      - name: Run tests
+        run: cargo test --workspace --color never
+
+      - name: Remove test problem matching
+        if: ${{ success() || failure() }}
+        run: echo "::remove-matcher owner=rust-tests::"
 
   # Analyses the code with `clippy`.
   clippy-analysis:
