@@ -379,16 +379,14 @@ impl Enum {
 					<#discrim_type as ::xrbk::Writable>
 				);
 
-				tokens.append_tokens(|| {
-					quote_spanned!(trait_path.span()=>
-						Self::#ident #pat => {
-							#declare_x11_size
-							#discrim_writable::write_to(&((#discrim) as #discrim_type), buf)?;
+				tokens.append_tokens(quote_spanned!(trait_path.span()=>
+					Self::#ident #pat => {
+						#declare_x11_size
+						#discrim_writable::write_to(&((#discrim) as #discrim_type), buf)?;
 
-							#writes
-						},
-					)
-				});
+						#writes
+					},
+				));
 
 				quote_spanned!(trait_path.span()=> /* discrim */ + 1).to_tokens(&mut discrim);
 			}
