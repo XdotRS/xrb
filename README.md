@@ -2,22 +2,34 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at https://mozilla.org/MPL/2.0/. -->
 
-# X Rust Bindings
-[![Tests](https://github.com/XdotRS/xrb/actions/workflows/ci.yml/badge.svg)](https://github.com/XdotRS/xrb/actions/workflows/ci.yml)
+<h1 align="center">
+	X Rust Bindings <a href="https://docs.aquariwm.org/doc/xrb/">(docs)</a>
+</h1>
+<p align="center">
+	<a href="https://github.com/XdotRS/xrb/blob/main/LICENSE">
+		<img src="https://img.shields.io/crates/l/xrb?style=for-the-badge" /></a>
+	<a href="https://crates.io/crates/xrb">
+		<img src="https://img.shields.io/crates/v/xrb?style=for-the-badge" /></a>
+	<a href="https://github.com/XdotRS/xrb/issues">
+		<img src="https://img.shields.io/github/issues-raw/XdotRS/xrb?style=for-the-badge" /></a>
+	<a href="https://github.com/XdotRS/xrb/actions/workflows/ci.yml">
+		<img src="https://img.shields.io/github/actions/workflow/status/XdotRS/xrb/ci.yml?event=push&branch=main&label=ci&style=for-the-badge" /></a>
+</p>
 
-X Rust Bindings (a.k.a. XRB) is an implementation of the X Window System protocol version
-11, more commonly known as X11, in Rust. It provides types and data structures
-for X11, as well as serialization and deserialization for them.
+X Rust Bindings, better known as XRB, is a [Rust crate] implementing data structures
+(and their serialization/deserialization) for the X Window System protocol version
+11. It provides a foundation upon which more opinionated APIs and connection
+handling may be built in order to create an 'X library'.
 
-> _Hey! Why not check out [XRB's documentation](https://docs.aquariwm.org/doc/xrb)?
-> It contains a lot of information about the project, and has many examples and
-> explanations._
+XRB serves as a foundation for [X.RS (WIP)][X.RS] in particular.
 
-XRB is not, however, an X library. It does not offer functionality for connecting
-to the X server, sending or receiving messages, nor an opinionated API. The idea
-is that those functionalities are implemented on top of XRB with an API wrapper,
-such as [X.RS](https://github.com/XdotRS/xrs). XRB provides a foundation for API
-wrappers so that they can focus on their APIs, not on implementing the X protocol.
+[Rust crate]: https://crates.io/crates/xrb/
+[X.RS]: https://github.com/XdotRS/xrs/
+
+> ### Disclaimer
+> XRB is not an X library: it cannot be used in an application binary without
+> extensive connection logic, nor is it meant to be. Instead, you can use an X
+> library built on XRB such as [X.RS (WIP)][X.RS].
 
 ## Contributing
 Contributions are welcome and encouraged for XRB! Here's a list of resources that
