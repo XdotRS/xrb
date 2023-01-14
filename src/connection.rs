@@ -8,7 +8,7 @@
 )]
 
 use derive_more::{From, Into};
-use xrbk::{Readable, Writable, X11Size};
+use xrbk::{X11Size};
 use xrbk_macro::{derive_xrb, new, unwrap, Readable, Writable, X11Size};
 
 use crate::{mask::EventMask, BackingStores, Color, Colormap, Keycode, String8, VisualId, Window};

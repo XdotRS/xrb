@@ -9,11 +9,8 @@ use derive_more::{From, Into};
 use xrbk::{
 	ConstantX11Size,
 	ReadResult,
-	Readable,
 	ReadableWithContext,
 	Wrapper,
-	Writable,
-	X11Size,
 };
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Writable, X11Size};
 
