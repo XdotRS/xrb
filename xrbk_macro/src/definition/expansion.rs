@@ -156,6 +156,7 @@ impl ToTokens for Enum {
 		self.enum_token.to_tokens(tokens);
 		self.ident.to_tokens(tokens);
 		self.generics.to_tokens(tokens);
+		self.where_clause.to_tokens(tokens);
 
 		self.brace_token.surround(tokens, |tokens| {
 			self.variants.to_tokens(tokens);
