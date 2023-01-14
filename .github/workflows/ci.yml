@@ -220,7 +220,7 @@ jobs:
 
   # Deploy the documentation with GitHub Pages.
   deploy-docs:
-    if: github.event_name == "push" && github.ref_type == "branch" && github.ref_name == "main"
+    if: github.event_name == 'push' && github.ref_type == 'branch' && github.ref_name == 'main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
