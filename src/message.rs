@@ -57,6 +57,11 @@ pub trait Request: X11Size + Writable {
 
 	/// The size of this `Request`, including the header, in 4-byte units.
 	///
+	/// ***Implementors: please see the [implementation notes section][impl] at
+	/// the end.***
+	///
+	/// [impl]: #implementation-notes
+	///
 	/// Every `Request` contains a header which is 4 bytes long. This header is
 	/// included in the `length()`, so the minimum `length()` is 1 unit (4
 	/// bytes). Since the length is always in multiples of 4 bytes, padding
@@ -74,7 +79,63 @@ pub trait Request: X11Size + Writable {
 	/// |12                 |16                 |4         |
 	/// |...                |...                |...       |
 	/// |`4n - 4`           |`4n`               |`n`       |
-	fn length(&self) -> u16;
+	///
+	/// # Implementation notes
+	/// This method is implemented by default based on the [`X11Size`]
+	/// implementation.
+	///
+	/// It is important that the [`X11Size`] implementation includes all of
+	/// the bytes, including the header - it is recommended to use
+	/// [`xrbk_macro::derive_xrb!`] to ensure this.
+	///
+	/// It is also important that the `Request` is a multiple of 4 bytes in
+	/// length, and therefore that the [`X11Size`] implementation returns a
+	/// multiple of 4. This can be ensured when using the [`derive_xrb!`] macro
+	/// by the use of an inferred unused bytes element:
+	///
+	/// [`derive_xrb!`]: xrbk_macro::derive_xrb!
+	///
+	/// ```
+	/// use xrbk_macro::derive_xrb;
+	/// use xrb::{Colormap, mask::ColorChannelMask, String8};
+	///
+	/// derive_xrb! {
+	///     #[derive(Debug, Hash, PartialEq, Eq, Readable, Writable, X11Size)]
+	///     pub struct StoreNamedColor: Request(90) {
+	///         #[metabyte]
+	///         pub color_channel_mask: ColorChannelMask,
+	///
+	///         pub colormap: Colormap,
+	///         pub pixel: u32,
+	///
+	///         #[allow(clippy::cast_possible_truncation)]
+	///         let name_len: u16 = name => name.len() as u16,
+	///         // This could also work here, because these two unused bytes
+	///         // serve as padding, but it is recommended that if the exact
+	///         // number of bytes is known, it is written explicitly. This
+	///         // helps to catch any mistakes with previous elements because
+	///         // the total length wouldn't be a multiple of 4.
+	///         //
+	///         // `[_; ..]`
+	///         [_; 2],
+	///
+	///         pub name: String8,
+	///         [_; ..], // <-- inferred unused bytes element
+	///     }
+	/// }
+	/// ```
+	#[allow(clippy::cast_possible_truncation)]
+	fn length(&self) -> u16 {
+		let size = self.x11_size();
+
+		assert_eq!(
+			size % 4,
+			0,
+			"expected Request size to be a multiple of 4, found {size}"
+		);
+
+		(size / 4) as u16
+	}
 }
 
 /// The result of sending a [request].
@@ -169,6 +230,11 @@ pub trait Reply: X11Size + Readable {
 
 	/// The size of this `Reply` in 4-byte units minus 8.
 	///
+	/// ***Implementors: please see the [implementation notes section][impl] at
+	/// the end.***
+	///
+	/// [impl]: #implementation-notes
+	///
 	/// Every `Reply` always consists of an 8-byte-long header followed by 24
 	/// bytes of data, followed by zero or more additional bytes of data; this
 	/// method indicates the number of additional bytes of data within the
@@ -185,7 +251,69 @@ pub trait Reply: X11Size + Readable {
 	/// |36                 |44                 |3         |
 	/// |...                |...                |...       |
 	/// |`4n - 8`           |`4n`               |`n - 8`   |
-	fn length(&self) -> u32;
+	///
+	/// # Implementation notes
+	/// This method is implemented by default based on the [`X11Size`]
+	/// implementation.
+	///
+	/// It is important that the [`X11Size`] implementation includes all the
+	/// bytes, including the header - it is recommended to use
+	/// [`xrbk_macro::derive_xrb!`] to ensure this.
+	///
+	/// It is also important that the `Reply` a multiple of 4 bytes in size, and
+	/// also that it is greater than or equal to 32 bytes in size. This can be
+	/// ensured when using the [`derive_xrb!`] macro by the use of an inferred
+	/// unused bytes element as _the last element_ in the `Reply`:
+	///
+	/// [`derive_xrb!`]: xrbk_macro::derive_xrb!
+	///
+	/// ```
+	/// use xrbk_macro::derive_xrb;
+	/// use xrb::{Atom, message::Reply, Rectangle, Window};
+	/// # use xrb::message::Request;
+	///
+	/// derive_xrb! {
+	///     # #[derive(Debug, Hash, PartialEq, Eq, Readable, Writable, X11Size)]
+	///     # pub struct GetGeometry: Request(14) -> GetGeometryReply {
+	///     #     pub drawable: xrb::Drawable,
+	///     # }
+	///     #
+	///     #[derive(Debug, Hash, Readable, Writable, X11Size)]
+	///     pub struct GetGeometryReply: Reply for GetGeometry {
+	///         // Header is 8 bytes.
+	///
+	///         #[sequence]
+	///         pub sequence: u16, // part of header
+	///         #[metabyte]
+	///         pub depth: u8, // part of header
+	///
+	///         pub root: Window, // 4 bytes
+	///         pub geometry: Rectangle, // 8 bytes
+	///         pub border_width: u16, // 2 bytes
+	///         // Total number of bytes by now is 22; since this is less than
+	///         // the minimum length of a Reply (32 bytes), it adds 10 unused
+	///         // bytes.
+	///         [_; ..],
+	///     }
+	/// }
+	/// ```
+	#[allow(clippy::cast_possible_truncation)]
+	fn length(&self) -> u32 {
+		let size = self.x11_size();
+
+		assert!(
+			size >= 32,
+			"expected Reply size to be greater than or equal to 32 bytes, found {size}"
+		);
+
+		assert_eq!(
+			size % 4,
+			0,
+			"expected Reply size to be a multiple of 4, found {size}"
+		);
+
+		((size - 32) / 4) as u32
+	}
 
 	/// The sequence number associated with the [request] that generated this
 	/// `Reply`.
