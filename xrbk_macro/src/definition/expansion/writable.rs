@@ -404,7 +404,7 @@ impl Enum {
 
 		tokens.append_tokens(quote_spanned!(trait_path.span()=>
 			#[automatically_derived]
-			impl #impl_generics ::xrbk::Writable #ident #type_generics #where_clause {
+			impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
 				#[allow(
 					clippy::items_after_statements,
 					clippy::trivially_copy_pass_by_ref,

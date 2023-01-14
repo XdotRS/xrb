@@ -28,7 +28,7 @@ impl Struct {
 
 		tokens.append_tokens(quote_spanned!(trait_path.span()=>
 			#[automatically_derived]
-			impl #impl_generics ::xrbk::X11Size #ident #type_generics #where_clause {
+			impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
 				#[allow(
 					clippy::items_after_statements,
 					clippy::trivially_copy_pass_by_ref,
@@ -72,7 +72,7 @@ impl Request {
 
 		tokens.append_tokens(quote_spanned!(trait_path.span()=>
 			#[automatically_derived]
-			impl #impl_generics ::xrbk::X11Size #ident #type_generics #where_clause {
+			impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
 				#[allow(
 					clippy::items_after_statements,
 					clippy::trivially_copy_pass_by_ref,
@@ -118,7 +118,7 @@ impl Reply {
 
 		tokens.append_tokens(quote_spanned!(trait_path.span()=>
 			#[automatically_derived]
-			impl #impl_generics ::xrbk::X11Size #ident #type_generics #where_clause {
+			impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
 				#[allow(
 					clippy::items_after_statements,
 					clippy::trivially_copy_pass_by_ref,
@@ -170,7 +170,7 @@ impl Event {
 
 		tokens.append_tokens(quote_spanned!(trait_path.span()=>
 			#[automatically_derived]
-			impl #impl_generics ::xrbk::X11Size #ident #type_generics #where_clause {
+			impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
 				#[allow(
 					clippy::items_after_statements,
 					clippy::trivially_copy_pass_by_ref,
@@ -237,7 +237,7 @@ impl Enum {
 
 		tokens.append_tokens(quote_spanned!(trait_path.span()=>
 			#[automatically_derived]
-			impl #impl_generics ::xrbk::X11Size #ident #type_generics #where_clause {
+			impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
 				#[allow(
 					clippy::items_after_statements,
 					clippy::trivially_copy_pass_by_ref,
