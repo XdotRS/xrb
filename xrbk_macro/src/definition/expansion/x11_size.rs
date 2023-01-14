@@ -26,25 +26,28 @@ impl Struct {
 			}
 		});
 
-		tokens.append_tokens({
-			quote_spanned!(trait_path.span()=>
-				#[automatically_derived]
-				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
-					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
-					fn x11_size(&self) -> usize {
-						let mut size: usize = 0;
-						// Destructure the struct's fields, if any.
-						let Self #pat = self;
+		tokens.append_tokens(quote_spanned!(trait_path.span()=>
+			#[automatically_derived]
+			impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
+				#[allow(
+					clippy::items_after_statements,
+					clippy::trivially_copy_pass_by_ref,
+					clippy::needless_borrow,
+					clippy::identity_op,
+				)]
+				fn x11_size(&self) -> usize {
+					let mut size: usize = 0;
+					// Destructure the struct's fields, if any.
+					let Self #pat = self;
 
-						// Add the size of each element.
-						#sizes
+					// Add the size of each element.
+					#sizes
 
-						// Return the cumulative size.
-						size
-					}
+					// Return the cumulative size.
+					size
 				}
-			)
-		});
+			}
+		));
 	}
 }
 
@@ -67,27 +70,30 @@ impl Request {
 			}
 		});
 
-		tokens.append_tokens({
-			quote_spanned!(trait_path.span()=>
-				#[automatically_derived]
-				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
-					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
-					fn x11_size(&self) -> usize {
-						// The size starts at `4` to account for the size
-						// of a request's header being 4 bytes.
-						let mut size: usize = 4;
-						// Destructure the request's fields, if any.
-						let Self #pat = self;
+		tokens.append_tokens(quote_spanned!(trait_path.span()=>
+			#[automatically_derived]
+			impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
+				#[allow(
+					clippy::items_after_statements,
+					clippy::trivially_copy_pass_by_ref,
+					clippy::needless_borrow,
+					clippy::identity_op,
+				)]
+				fn x11_size(&self) -> usize {
+					// The size starts at `4` to account for the size
+					// of a request's header being 4 bytes.
+					let mut size: usize = 4;
+					// Destructure the request's fields, if any.
+					let Self #pat = self;
 
-						// Add the size of each element.
-						#sizes
+					// Add the size of each element.
+					#sizes
 
-						// Return the cumulative size.
-						size
-					}
+					// Return the cumulative size.
+					size
 				}
-			)
-		});
+			}
+		));
 	}
 }
 
@@ -110,27 +116,30 @@ impl Reply {
 			}
 		});
 
-		tokens.append_tokens({
-			quote_spanned!(trait_path.span()=>
-				#[automatically_derived]
-				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
-					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
-					fn x11_size(&self) -> usize {
-						// The size starts at `8` to account for the size
-						// of a reply's header being 8 bytes.
-						let mut size: usize = 8;
-						// Destructure the reply's fields, if any.
-						let Self #pat = self;
+		tokens.append_tokens(quote_spanned!(trait_path.span()=>
+			#[automatically_derived]
+			impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
+				#[allow(
+					clippy::items_after_statements,
+					clippy::trivially_copy_pass_by_ref,
+					clippy::needless_borrow,
+					clippy::identity_op,
+				)]
+				fn x11_size(&self) -> usize {
+					// The size starts at `8` to account for the size
+					// of a reply's header being 8 bytes.
+					let mut size: usize = 8;
+					// Destructure the reply's fields, if any.
+					let Self #pat = self;
 
-						// Add the size of each element.
-						#sizes
+					// Add the size of each element.
+					#sizes
 
-						// Return the cumulative size.
-						size
-					}
+					// Return the cumulative size.
+					size
 				}
-			)
-		});
+			}
+		));
 	}
 }
 
@@ -159,29 +168,32 @@ impl Event {
 			}
 		});
 
-		tokens.append_tokens({
-			quote_spanned!(trait_path.span()=>
-				#[automatically_derived]
-				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
-					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
-					fn x11_size(&self) -> usize {
-						// The size starts at either `4` or `1`, depending
-						// on whether there is a sequence field and metabyte
-						// position, to account for the size of the event's
-						// header.
-						let mut size: usize = #size;
-						// Destructure the event's fields, if any.
-						let Self #pat = self;
+		tokens.append_tokens(quote_spanned!(trait_path.span()=>
+			#[automatically_derived]
+			impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
+				#[allow(
+					clippy::items_after_statements,
+					clippy::trivially_copy_pass_by_ref,
+					clippy::needless_borrow,
+					clippy::identity_op,
+				)]
+				fn x11_size(&self) -> usize {
+					// The size starts at either `4` or `1`, depending
+					// on whether there is a sequence field and metabyte
+					// position, to account for the size of the event's
+					// header.
+					let mut size: usize = #size;
+					// Destructure the event's fields, if any.
+					let Self #pat = self;
 
-						// Add the size of each element.
-						#sizes
+					// Add the size of each element.
+					#sizes
 
-						// Return the cumulative size.
-						size
-					}
+					// Return the cumulative size.
+					size
 				}
-			)
-		});
+			}
+		));
 	}
 }
 
@@ -210,14 +222,12 @@ impl Enum {
 					}
 				});
 
-				tokens.append_tokens({
-					quote_spanned!(trait_path.span()=>
-						Self::#ident #pat => {
-							// Add the size of each element.
-							#sizes
-						},
-					)
-				});
+				tokens.append_tokens(quote_spanned!(trait_path.span()=>
+					Self::#ident #pat => {
+						// Add the size of each element.
+						#sizes
+					},
+				));
 			}
 		});
 
@@ -227,8 +237,14 @@ impl Enum {
 
 		tokens.append_tokens(quote_spanned!(trait_path.span()=>
 			#[automatically_derived]
-			impl #impl_generics #trait_path for #ident #type_generics #where_clause {
-				#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op, unused_mut)]
+			impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
+				#[allow(
+					clippy::items_after_statements,
+					clippy::trivially_copy_pass_by_ref,
+					clippy::needless_borrow,
+					clippy::identity_op,
+					unused_mut,
+				)]
 				fn x11_size(&self) -> usize {
 					let mut size: usize = #discrim_type::X11_SIZE;
 

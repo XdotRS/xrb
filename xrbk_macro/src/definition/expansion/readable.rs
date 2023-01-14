@@ -39,27 +39,30 @@ impl Struct {
 			}
 		});
 
-		tokens.append_tokens({
-			quote_spanned!(trait_path.span()=>
-				#[automatically_derived]
-				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
-					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
-					fn read_from(
-						buf: &mut impl ::xrbk::Buf,
-					) -> Result<Self, ::xrbk::ReadError> {
-						// Declare a x11_size variable if it is going to be
-						// used in an infer unused bytes element.
-						#declare_x11_size
+		tokens.append_tokens(quote_spanned!(trait_path.span()=>
+			#[automatically_derived]
+			impl #impl_generics ::xrbk::Readable for #ident #type_generics #where_clause {
+				#[allow(
+					clippy::items_after_statements,
+					clippy::trivially_copy_pass_by_ref,
+					clippy::needless_borrow,
+					clippy::identity_op,
+				)]
+				fn read_from(
+					buf: &mut impl ::xrbk::Buf,
+				) -> Result<Self, ::xrbk::ReadError> {
+					// Declare a x11_size variable if it is going to be
+					// used in an infer unused bytes element.
+					#declare_x11_size
 
-						// Read each element.
-						#reads
+					// Read each element.
+					#reads
 
-						// Construct and return `Self`.
-						Ok(Self #cons)
-					}
+					// Construct and return `Self`.
+					Ok(Self #cons)
 				}
-			)
-		});
+			}
+		));
 	}
 }
 
@@ -106,33 +109,36 @@ impl Request {
 			Some(quote_spanned!(trait_path.span()=> buf.advance(1);))
 		};
 
-		tokens.append_tokens({
-			quote_spanned!(trait_path.span()=>
-				#[automatically_derived]
-				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
-					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
-					fn read_from(
-						buf: &mut impl ::xrbk::Buf,
-					) -> Result<Self, ::xrbk::ReadError> {
-						#declare_x11_size
+		tokens.append_tokens(quote_spanned!(trait_path.span()=>
+			#[automatically_derived]
+			impl #impl_generics ::xrbk::Readable for #ident #type_generics #where_clause {
+				#[allow(
+					clippy::items_after_statements,
+					clippy::trivially_copy_pass_by_ref,
+					clippy::needless_borrow,
+					clippy::identity_op,
+				)]
+				fn read_from(
+					buf: &mut impl ::xrbk::Buf,
+				) -> Result<Self, ::xrbk::ReadError> {
+					#declare_x11_size
 
-						// If there is a metabyte element, read it, if not and
-						// there is no minor opcode, skip one byte. If there
-						// is a minor opcode, do nothing - it has already been
-						// read.
-						#metabyte
-						// Read the request's length.
-						let length = buf.get_u16();
+					// If there is a metabyte element, read it, if not and
+					// there is no minor opcode, skip one byte. If there
+					// is a minor opcode, do nothing - it has already been
+					// read.
+					#metabyte
+					// Read the request's length.
+					let length = buf.get_u16();
 
-						// Read other elements.
-						#reads
+					// Read other elements.
+					#reads
 
-						// Construct and return Self.
-						Ok(Self #cons)
-					}
+					// Construct and return Self.
+					Ok(Self #cons)
 				}
-			)
-		});
+			}
+		));
 	}
 }
 
@@ -178,32 +184,35 @@ impl Reply {
 			_ => panic!("replies must have a sequence field"),
 		};
 
-		tokens.append_tokens({
-			quote_spanned!(trait_path.span()=>
-				#[automatically_derived]
-				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
-					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
-					fn read_from(
-						buf: &mut impl ::xrbk::Buf,
-					) -> Result<Self, ::xrbk::ReadError> {
-						#declare_x11_size
+		tokens.append_tokens(quote_spanned!(trait_path.span()=>
+			#[automatically_derived]
+			impl #impl_generics ::xrbk::Readable for #ident #type_generics #where_clause {
+				#[allow(
+					clippy::items_after_statements,
+					clippy::trivially_copy_pass_by_ref,
+					clippy::needless_borrow,
+					clippy::identity_op,
+				)]
+				fn read_from(
+					buf: &mut impl ::xrbk::Buf,
+				) -> Result<Self, ::xrbk::ReadError> {
+					#declare_x11_size
 
-						// Metabyte position
-						#metabyte
-						// Sequence field
-						let #sequence = buf.get_u16();
-						// Length
-						let length = buf.get_u32();
+					// Metabyte position
+					#metabyte
+					// Sequence field
+					let #sequence = buf.get_u16();
+					// Length
+					let length = buf.get_u32();
 
-						// Other elements
-						#reads
+					// Other elements
+					#reads
 
-						// Construct and return Self.
-						Ok(Self #cons)
-					}
+					// Construct and return Self.
+					Ok(Self #cons)
 				}
-			)
-		});
+			}
+		));
 	}
 }
 
@@ -262,30 +271,33 @@ impl Event {
 			None
 		};
 
-		tokens.append_tokens({
-			quote_spanned!(trait_path.span()=>
-				#[automatically_derived]
-				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
-					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
-					fn read_from(
-						buf: &mut impl ::xrbk::Buf,
-					) -> Result<Self, ::xrbk::ReadError> {
-						#declare_x11_size
+		tokens.append_tokens(quote_spanned!(trait_path.span()=>
+			#[automatically_derived]
+			impl #impl_generics ::xrbk::Readable for #ident #type_generics #where_clause {
+				#[allow(
+					clippy::items_after_statements,
+					clippy::trivially_copy_pass_by_ref,
+					clippy::needless_borrow,
+					clippy::identity_op,
+				)]
+				fn read_from(
+					buf: &mut impl ::xrbk::Buf,
+				) -> Result<Self, ::xrbk::ReadError> {
+					#declare_x11_size
 
-						// Metabyte position
-						#metabyte
-						// Sequence field
-						#sequence
+					// Metabyte position
+					#metabyte
+					// Sequence field
+					#sequence
 
-						// Other elements
-						#reads
+					// Other elements
+					#reads
 
-						// Construct and return Self.
-						Ok(Self #cons)
-					}
+					// Construct and return Self.
+					Ok(Self #cons)
 				}
-			)
-		});
+			}
+		));
 	}
 }
 
@@ -305,23 +317,21 @@ impl Enum {
 				if let Some((_, expr)) = &variant.discriminant {
 					let ident = format_ident!("discrim_{}", variant.ident);
 
-					tokens.append_tokens({
-						quote_spanned!(trait_path.span()=>
-							// Isolate the discriminant's expression in a
-							// function so that it doesn't have access to
-							// identifiers used in the surrounding generated
-							// code.
-							#[allow(non_snake_case)]
-							fn #ident() -> #discrim_type {
-								(#expr) as #discrim_type
-							}
+					tokens.append_tokens(quote_spanned!(trait_path.span()=>
+						// Isolate the discriminant's expression in a
+						// function so that it doesn't have access to
+						// identifiers used in the surrounding generated
+						// code.
+						#[allow(non_snake_case)]
+						fn #ident() -> #discrim_type {
+							(#expr) as #discrim_type
+						}
 
-							// Call the discriminant's function just once and
-							// store it in a variable for later use.
-							#[allow(non_snake_case)]
-							let #ident = #ident();
-						)
-					});
+						// Call the discriminant's function just once and
+						// store it in a variable for later use.
+						#[allow(non_snake_case)]
+						let #ident = #ident();
+					));
 				}
 			}
 		});
@@ -364,17 +374,15 @@ impl Enum {
 					}
 				});
 
-				tokens.append_tokens({
-					quote_spanned!(trait_path.span()=>
-						discrim if discrim == #discrim => {
-							#declare_x11_size
+				tokens.append_tokens(quote_spanned!(trait_path.span()=>
+					discrim if discrim == #discrim => {
+						#declare_x11_size
 
-							#reads
+						#reads
 
-							Ok(Self::#ident #cons)
-						},
-					)
-				});
+						Ok(Self::#ident #cons)
+					},
+				));
 
 				quote_spanned!(trait_path.span()=> /* discrim */ + 1).to_tokens(&mut discrim);
 			}
@@ -384,34 +392,32 @@ impl Enum {
 			<#discrim_type as ::xrbk::Readable>
 		);
 
-		tokens.append_tokens({
-			quote_spanned!(trait_path.span()=>
-				#[automatically_derived]
-				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
-					#[allow(
-						clippy::items_after_statements,
-						clippy::trivially_copy_pass_by_ref,
-						clippy::needless_borrow,
-						clippy::identity_op,
-						clippy::unnecessary_cast,
-					)]
-					fn read_from(
-						buf: &mut impl ::xrbk::Buf,
-					) -> Result<Self, ::xrbk::ReadError> {
-						// Define functions and variables for variants which
-						// have custom discriminant expressions.
-						#discriminants
+		tokens.append_tokens(quote_spanned!(trait_path.span()=>
+			#[automatically_derived]
+			impl #impl_generics ::xrbk::Readable for #ident #type_generics #where_clause {
+				#[allow(
+					clippy::items_after_statements,
+					clippy::trivially_copy_pass_by_ref,
+					clippy::needless_borrow,
+					clippy::identity_op,
+					clippy::unnecessary_cast,
+				)]
+				fn read_from(
+					buf: &mut impl ::xrbk::Buf,
+				) -> Result<Self, ::xrbk::ReadError> {
+					// Define functions and variables for variants which
+					// have custom discriminant expressions.
+					#discriminants
 
-						match #discrim_type::read_from(buf)? {
-							#arms
+					match #discrim_type::read_from(buf)? {
+						#arms
 
-							other_discrim => Err(
-								::xrbk::ReadError::UnrecognizedDiscriminant(other_discrim as usize),
-							),
-						}
+						other_discrim => Err(
+							::xrbk::ReadError::UnrecognizedDiscriminant(other_discrim as usize),
+						),
 					}
 				}
-			)
-		});
+			}
+		));
 	}
 }
