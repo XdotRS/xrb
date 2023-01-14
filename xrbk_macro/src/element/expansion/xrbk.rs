@@ -73,7 +73,7 @@ impl Field {
 		let formatted = &self.formatted;
 		let r#type = &self.r#type;
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			let r#type = quote_spanned!(r#type.span()=>
 				<#r#type as ::xrbk::Writable>
 			);
@@ -107,7 +107,7 @@ impl Field {
 					context.source().call_to_tokens(tokens, formatted);
 				});
 
-				tokens.append_tokens(|| {
+				tokens.append_tokens({
 					let r#type = quote_spanned!(r#type.span()=>
 						<#r#type as ::xrbk::ReadableWithContext>
 					);
@@ -122,7 +122,7 @@ impl Field {
 			},
 
 			None => {
-				tokens.append_tokens(|| {
+				tokens.append_tokens({
 					let r#type = quote_spanned!(r#type.span()=>
 						<#r#type as ::xrbk::Readable>
 					);
@@ -136,7 +136,7 @@ impl Field {
 	}
 
 	pub fn add_x11_size_tokens(&self, tokens: &mut TokenStream2) {
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			let r#type = &self.r#type;
 			let formatted = &self.formatted;
 
@@ -165,12 +165,12 @@ impl Let {
 			self.source.call_to_tokens(tokens, formatted);
 		});
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(formatted.span()=>
 				let #formatted = #function_call;
 			)
 		});
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			let r#type = quote_spanned!(r#type.span()=>
 				<#r#type as ::xrbk::Writable>
 			);
@@ -195,7 +195,7 @@ impl Let {
 			self.source.call_to_tokens(tokens, formatted);
 		});
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(self.span()=>
 				let #formatted = #function_call;
 			)
@@ -223,7 +223,7 @@ impl Let {
 					context.source().call_to_tokens(tokens, formatted);
 				});
 
-				tokens.append_tokens(|| {
+				tokens.append_tokens({
 					let r#type = quote_spanned!(r#type.span()=>
 						<#r#type as ::xrbk::ReadableWithContext>
 					);
@@ -238,7 +238,7 @@ impl Let {
 			},
 
 			None => {
-				tokens.append_tokens(|| {
+				tokens.append_tokens({
 					let r#type = quote_spanned!(r#type.span()=>
 						<#r#type as ::xrbk::Readable>
 					);
@@ -255,7 +255,7 @@ impl Let {
 		let r#type = &self.r#type;
 		let formatted = &self.formatted;
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(self.span()=>
 				size += <#r#type as ::xrbk::X11Size>::x11_size(&#formatted);
 			)
@@ -267,7 +267,7 @@ impl Let {
 
 impl SingleUnused {
 	pub fn write_tokens(&self, tokens: &mut TokenStream2) {
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(self.span()=>
 				buf.put_u8(0);
 			)
@@ -279,7 +279,7 @@ impl SingleUnused {
 	}
 
 	pub fn read_tokens(&self, tokens: &mut TokenStream2) {
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(self.span()=>
 				buf.advance(1);
 			)
@@ -287,7 +287,7 @@ impl SingleUnused {
 	}
 
 	pub fn add_x11_size_tokens(&self, tokens: &mut TokenStream2) {
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(self.span()=>
 				size += 1;
 			)
@@ -303,7 +303,7 @@ impl ArrayUnused {
 
 		match &self.content {
 			UnusedContent::Infer { last_element, .. } => {
-				tokens.append_tokens(|| match definition_type.min_length() {
+				tokens.append_tokens(match definition_type.min_length() {
 					Some(min_length) if *last_element => {
 						quote_spanned!(self.span()=>
 							let #formatted = if size < #min_length {
@@ -325,7 +325,7 @@ impl ArrayUnused {
 			UnusedContent::Source(source) => {
 				source.function_to_tokens(tokens, Some(&self.attributes), formatted, quote!(usize));
 
-				tokens.append_tokens(|| {
+				tokens.append_tokens({
 					quote_spanned!(self.span()=>
 						let #formatted = #formatted();
 					)
@@ -339,7 +339,7 @@ impl ArrayUnused {
 
 		self.r#impl(tokens, definition_type);
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(self.span()=>
 				buf.put_bytes(0u8, #formatted);
 			)
@@ -356,7 +356,7 @@ impl ArrayUnused {
 
 		self.r#impl(tokens, definition_type);
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(self.span()=>
 				buf.advance(#formatted);
 			)
@@ -366,7 +366,7 @@ impl ArrayUnused {
 	pub fn add_x11_size_tokens(&self, tokens: &mut TokenStream2) {
 		let formatted = &self.formatted;
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(self.span()=>
 				size += #formatted;
 			)

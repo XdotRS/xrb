@@ -26,7 +26,7 @@ impl Struct {
 			}
 		});
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
@@ -67,7 +67,7 @@ impl Request {
 			}
 		});
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
@@ -110,7 +110,7 @@ impl Reply {
 			}
 		});
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
@@ -159,7 +159,7 @@ impl Event {
 			}
 		});
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
@@ -210,7 +210,7 @@ impl Enum {
 					}
 				});
 
-				tokens.append_tokens(|| {
+				tokens.append_tokens({
 					quote_spanned!(trait_path.span()=>
 						Self::#ident #pat => {
 							// Add the size of each element.
@@ -225,23 +225,21 @@ impl Enum {
 			<#discrim_type as ::xrbk::ConstantX11Size>
 		);
 
-		tokens.append_tokens(|| {
-			quote_spanned!(trait_path.span()=>
-				#[automatically_derived]
-				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
-					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op, unused_mut)]
-					fn x11_size(&self) -> usize {
-						let mut size: usize = #discrim_type::X11_SIZE;
+		tokens.append_tokens(quote_spanned!(trait_path.span()=>
+			#[automatically_derived]
+			impl #impl_generics #trait_path for #ident #type_generics #where_clause {
+				#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op, unused_mut)]
+				fn x11_size(&self) -> usize {
+					let mut size: usize = #discrim_type::X11_SIZE;
 
-						match self {
-							#arms
-						}
-
-						// Return the cumulative size.
-						size
+					match self {
+						#arms
 					}
+
+					// Return the cumulative size.
+					size
 				}
-			)
-		});
+			}
+		));
 	}
 }

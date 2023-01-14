@@ -36,7 +36,7 @@ impl Struct {
 			}
 		});
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
@@ -104,7 +104,7 @@ impl Request {
 			)
 		};
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
@@ -181,7 +181,7 @@ impl Reply {
 			_ => panic!("replies must have a sequence field"),
 		};
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
@@ -269,7 +269,7 @@ impl Event {
 			None
 		};
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
@@ -316,7 +316,7 @@ impl Enum {
 				if let Some((_, expr)) = &variant.discriminant {
 					let ident = format_ident!("discrim_{}", variant.ident);
 
-					tokens.append_tokens(|| {
+					tokens.append_tokens({
 						quote_spanned!(trait_path.span()=>
 							// Isolate the discriminant's expression in a
 							// function so that it doesn't have access to
@@ -379,22 +379,20 @@ impl Enum {
 					<#discrim_type as ::xrbk::Writable>
 				);
 
-				tokens.append_tokens(|| {
-					quote_spanned!(trait_path.span()=>
-						Self::#ident #pat => {
-							#declare_x11_size
-							#discrim_writable::write_to(&((#discrim) as #discrim_type), buf)?;
+				tokens.append_tokens(quote_spanned!(trait_path.span()=>
+					Self::#ident #pat => {
+						#declare_x11_size
+						#discrim_writable::write_to(&((#discrim) as #discrim_type), buf)?;
 
-							#writes
-						},
-					)
-				});
+						#writes
+					},
+				));
 
 				quote_spanned!(trait_path.span()=> /* discrim */ + 1).to_tokens(&mut discrim);
 			}
 		});
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {

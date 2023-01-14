@@ -39,7 +39,7 @@ impl Struct {
 			}
 		});
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
@@ -106,7 +106,7 @@ impl Request {
 			Some(quote_spanned!(trait_path.span()=> buf.advance(1);))
 		};
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
@@ -178,7 +178,7 @@ impl Reply {
 			_ => panic!("replies must have a sequence field"),
 		};
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
@@ -262,7 +262,7 @@ impl Event {
 			None
 		};
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
@@ -305,7 +305,7 @@ impl Enum {
 				if let Some((_, expr)) = &variant.discriminant {
 					let ident = format_ident!("discrim_{}", variant.ident);
 
-					tokens.append_tokens(|| {
+					tokens.append_tokens({
 						quote_spanned!(trait_path.span()=>
 							// Isolate the discriminant's expression in a
 							// function so that it doesn't have access to
@@ -364,7 +364,7 @@ impl Enum {
 					}
 				});
 
-				tokens.append_tokens(|| {
+				tokens.append_tokens({
 					quote_spanned!(trait_path.span()=>
 						discrim if discrim == #discrim => {
 							#declare_x11_size
@@ -384,7 +384,7 @@ impl Enum {
 			<#discrim_type as ::xrbk::Readable>
 		);
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {

@@ -33,7 +33,7 @@ impl ToTokens for SourceArg {
 impl ToTokens for SourceArgs {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		if let Some((_, r#type)) = &self.length_arg {
-			tokens.append_tokens(|| quote!(length: #r#type, ));
+			tokens.append_tokens(quote!(length: #r#type, ));
 		}
 
 		for pair in self.args.pairs() {
@@ -82,7 +82,7 @@ impl Source {
 			}
 		}
 
-		tokens.append_tokens(|| {
+		tokens.append_tokens({
 			quote_spanned!(ident.span()=>
 				fn #ident(#args) -> #return_type {
 					#expr
