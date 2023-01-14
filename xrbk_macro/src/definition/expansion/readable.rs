@@ -292,6 +292,10 @@ impl Event {
 impl Enum {
 	pub fn impl_readable(&self, tokens: &mut TokenStream2, trait_path: &Path) {
 		let ident = &self.ident;
+		let discrim_type = self.discriminant_type.as_ref().map_or_else(
+			|| quote_spanned!(trait_path.span()=> u8),
+			|(_, r#type)| r#type.to_token_stream(),
+		);
 
 		// TODO: add generic bounds
 		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
@@ -308,8 +312,8 @@ impl Enum {
 							// identifiers used in the surrounding generated
 							// code.
 							#[allow(non_snake_case)]
-							fn #ident() -> u8 {
-								#expr
+							fn #ident() -> #discrim_type {
+								(#expr) as #discrim_type
 							}
 
 							// Call the discriminant's function just once and
@@ -329,9 +333,13 @@ impl Enum {
 				let ident = &variant.ident;
 
 				let declare_x11_size = if variant.content.contains_infer() {
-					// The x11_size starts at `1` to account for the
-					// discriminant.
-					Some(quote_spanned!(trait_path.span()=> let mut size: usize = 1;))
+					let discrim_type = quote_spanned!(discrim_type.span()=>
+						<#discrim_type as ::xrbk::ConstantX11Size>
+					);
+
+					Some(quote_spanned!(trait_path.span()=>
+						let mut size: usize = #discrim_type::X11_SIZE;
+					))
 				} else {
 					None
 				};
@@ -372,6 +380,10 @@ impl Enum {
 			}
 		});
 
+		let discrim_type = quote_spanned!(discrim_type.span()=>
+			<#discrim_type as ::xrbk::Readable>
+		);
+
 		tokens.append_tokens(|| {
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
@@ -384,11 +396,11 @@ impl Enum {
 						// have custom discriminant expressions.
 						#discriminants
 
-						match buf.get_u8() {
+						match #discrim_type::read_from(buf)? {
 							#arms
 
 							other_discrim => Err(
-								::xrbk::ReadError::UnrecognizedDiscriminant(other_discrim),
+								::xrbk::ReadError::UnrecognizedDiscriminant(other_discrim as usize),
 							),
 						}
 					}
