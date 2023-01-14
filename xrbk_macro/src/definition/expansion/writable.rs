@@ -36,26 +36,29 @@ impl Struct {
 			}
 		});
 
-		tokens.append_tokens({
-			quote_spanned!(trait_path.span()=>
-				#[automatically_derived]
-				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
-					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
-					fn write_to(
-						&self,
-						buf: &mut impl ::xrbk::BufMut,
-					) -> Result<(), ::xrbk::WriteError> {
-						#declare_x11_size
-						// Destructure the struct's fields, if any.
-						let Self #pat = self;
+		tokens.append_tokens(quote_spanned!(trait_path.span()=>
+			#[automatically_derived]
+			impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
+				#[allow(
+					clippy::items_after_statements,
+					clippy::trivially_copy_pass_by_ref,
+					clippy::needless_borrow,
+					clippy::identity_op,
+				)]
+				fn write_to(
+					&self,
+					buf: &mut impl ::xrbk::BufMut,
+				) -> Result<(), ::xrbk::WriteError> {
+					#declare_x11_size
+					// Destructure the struct's fields, if any.
+					let Self #pat = self;
 
-						#writes
+					#writes
 
-						Ok(())
-					}
+					Ok(())
 				}
-			)
-		});
+			}
+		));
 	}
 }
 
@@ -104,34 +107,37 @@ impl Request {
 			)
 		};
 
-		tokens.append_tokens({
-			quote_spanned!(trait_path.span()=>
-				#[automatically_derived]
-				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
-					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
-					fn write_to(
-						&self,
-						buf: &mut impl ::xrbk::BufMut,
-					) -> Result<(), ::xrbk::WriteError> {
-						#declare_x11_size
-						// Destructure the request struct's fields, if any.
-						let Self #pat = self;
+		tokens.append_tokens(quote_spanned!(trait_path.span()=>
+			#[automatically_derived]
+			impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
+				#[allow(
+					clippy::items_after_statements,
+					clippy::trivially_copy_pass_by_ref,
+					clippy::needless_borrow,
+					clippy::identity_op,
+				)]
+				fn write_to(
+					&self,
+					buf: &mut impl ::xrbk::BufMut,
+				) -> Result<(), ::xrbk::WriteError> {
+					#declare_x11_size
+					// Destructure the request struct's fields, if any.
+					let Self #pat = self;
 
-						// Major opcode
-						buf.put_u8(<Self as xrb::message::Request>::MAJOR_OPCODE);
-						// Metabyte position
-						#metabyte
-						// Length
-						buf.put_u16(<Self as xrb::message::Request>::length(&self));
+					// Major opcode
+					buf.put_u8(<Self as xrb::message::Request>::MAJOR_OPCODE);
+					// Metabyte position
+					#metabyte
+					// Length
+					buf.put_u16(<Self as xrb::message::Request>::length(&self));
 
-						// Other elements
-						#writes
+					// Other elements
+					#writes
 
-						Ok(())
-					}
+					Ok(())
 				}
-			)
-		});
+			}
+		));
 	}
 }
 
@@ -181,36 +187,39 @@ impl Reply {
 			_ => panic!("replies must have a sequence field"),
 		};
 
-		tokens.append_tokens({
-			quote_spanned!(trait_path.span()=>
-				#[automatically_derived]
-				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
-					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
-					fn write_to(
-						&self,
-						buf: &mut impl ::xrbk::BufMut,
-					) -> Result<(), ::xrbk::WriteError> {
-						#declare_x11_size
-						// Destructure the reply struct's fields, if any.
-						let Self #pat = self;
+		tokens.append_tokens(quote_spanned!(trait_path.span()=>
+			#[automatically_derived]
+			impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
+				#[allow(
+					clippy::items_after_statements,
+					clippy::trivially_copy_pass_by_ref,
+					clippy::needless_borrow,
+					clippy::identity_op,
+				)]
+				fn write_to(
+					&self,
+					buf: &mut impl ::xrbk::BufMut,
+				) -> Result<(), ::xrbk::WriteError> {
+					#declare_x11_size
+					// Destructure the reply struct's fields, if any.
+					let Self #pat = self;
 
-						// `1` - indicates this is a reply
-						buf.put_u8(1);
-						// Metabyte position
-						#metabyte
-						// Sequence field
-						buf.put_u16(#sequence);
-						// Length
-						buf.put_u32(<Self as xrb::message::Reply>::length(&self));
+					// `1` - indicates this is a reply
+					buf.put_u8(1);
+					// Metabyte position
+					#metabyte
+					// Sequence field
+					buf.put_u16(#sequence);
+					// Length
+					buf.put_u32(<Self as xrb::message::Reply>::length(&self));
 
-						// Other elements
-						#writes
+					// Other elements
+					#writes
 
-						Ok(())
-					}
+					Ok(())
 				}
-			)
-		});
+			}
+		));
 	}
 }
 
@@ -269,34 +278,37 @@ impl Event {
 			None
 		};
 
-		tokens.append_tokens({
-			quote_spanned!(trait_path.span()=>
-				#[automatically_derived]
-				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
-					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
-					fn write_to(
-						&self,
-						buf: &mut impl ::xrbk::BufMut,
-					) -> Result<(), ::xrbk::WriteError> {
-						#declare_x11_size
-						// Destructure the event struct's fields, if any.
-						let Self #pat = self;
+		tokens.append_tokens(quote_spanned!(trait_path.span()=>
+			#[automatically_derived]
+			impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
+				#[allow(
+					clippy::items_after_statements,
+					clippy::trivially_copy_pass_by_ref,
+					clippy::needless_borrow,
+					clippy::identity_op,
+				)]
+				fn write_to(
+					&self,
+					buf: &mut impl ::xrbk::BufMut,
+				) -> Result<(), ::xrbk::WriteError> {
+					#declare_x11_size
+					// Destructure the event struct's fields, if any.
+					let Self #pat = self;
 
-						// Event code
-						buf.put_u8(<Self as xrb::message::Event>::CODE);
-						// Metabyte position
-						#metabyte
-						// Sequence field
-						#sequence
+					// Event code
+					buf.put_u8(<Self as xrb::message::Event>::CODE);
+					// Metabyte position
+					#metabyte
+					// Sequence field
+					#sequence
 
-						// Other elements
-						#writes
+					// Other elements
+					#writes
 
-						Ok(())
-					}
+					Ok(())
 				}
-			)
-		});
+			}
+		));
 	}
 }
 
@@ -316,23 +328,21 @@ impl Enum {
 				if let Some((_, expr)) = &variant.discriminant {
 					let ident = format_ident!("discrim_{}", variant.ident);
 
-					tokens.append_tokens({
-						quote_spanned!(trait_path.span()=>
-							// Isolate the discriminant's expression in a
-							// function so that it doesn't have access to
-							// identifiers used in the surrounding generated
-							// code.
-							#[allow(non_snake_case)]
-							fn #ident() -> #discrim_type {
-								(#expr) as #discrim_type
-							}
+					tokens.append_tokens(quote_spanned!(trait_path.span()=>
+						// Isolate the discriminant's expression in a
+						// function so that it doesn't have access to
+						// identifiers used in the surrounding generated
+						// code.
+						#[allow(non_snake_case)]
+						fn #ident() -> #discrim_type {
+							(#expr) as #discrim_type
+						}
 
-							// Call the discriminant's function just once and
-							// store it in a variable for later use.
-							#[allow(non_snake_case)]
-							let #ident = #ident();
-						)
-					});
+						// Call the discriminant's function just once and
+						// store it in a variable for later use.
+						#[allow(non_snake_case)]
+						let #ident = #ident();
+					));
 				}
 			}
 		});
@@ -392,34 +402,32 @@ impl Enum {
 			}
 		});
 
-		tokens.append_tokens({
-			quote_spanned!(trait_path.span()=>
-				#[automatically_derived]
-				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
-					#[allow(
-						clippy::items_after_statements,
-						clippy::trivially_copy_pass_by_ref,
-						clippy::needless_borrow,
-						clippy::identity_op,
-						clippy::cast_possible_truncation,
-						clippy::unnecessary_cast,
-					)]
-					fn write_to(
-						&self,
-						buf: &mut impl ::xrbk::BufMut,
-					) -> Result<(), ::xrbk::WriteError> {
-						// Define functions and variables for variants which
-						// have custom discriminant expressions.
-						#discriminants
+		tokens.append_tokens(quote_spanned!(trait_path.span()=>
+			#[automatically_derived]
+			impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
+				#[allow(
+					clippy::items_after_statements,
+					clippy::trivially_copy_pass_by_ref,
+					clippy::needless_borrow,
+					clippy::identity_op,
+					clippy::cast_possible_truncation,
+					clippy::unnecessary_cast,
+				)]
+				fn write_to(
+					&self,
+					buf: &mut impl ::xrbk::BufMut,
+				) -> Result<(), ::xrbk::WriteError> {
+					// Define functions and variables for variants which
+					// have custom discriminant expressions.
+					#discriminants
 
-						match self {
-							#arms
-						}
-
-						Ok(())
+					match self {
+						#arms
 					}
+
+					Ok(())
 				}
-			)
-		});
+			}
+		));
 	}
 }
