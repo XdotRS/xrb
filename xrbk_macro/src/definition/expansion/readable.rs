@@ -388,7 +388,13 @@ impl Enum {
 			quote_spanned!(trait_path.span()=>
 				#[automatically_derived]
 				impl #impl_generics #trait_path for #ident #type_generics #where_clause {
-					#[allow(clippy::items_after_statements, clippy::trivially_copy_pass_by_ref, clippy::needless_borrow, clippy::identity_op)]
+					#[allow(
+						clippy::items_after_statements,
+						clippy::trivially_copy_pass_by_ref,
+						clippy::needless_borrow,
+						clippy::identity_op,
+						clippy::unnecessary_cast,
+					)]
 					fn read_from(
 						buf: &mut impl ::xrbk::Buf,
 					) -> Result<Self, ::xrbk::ReadError> {
