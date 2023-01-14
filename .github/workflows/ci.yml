@@ -55,15 +55,15 @@ jobs:
         if: ${{ success() || failure() }}
         run: echo "::remove-matcher owner=rust-tests::"
 
-  # Automatically applies suggested fixes from `clippy`.
-  clippy-fixes:
+  # Automatically applies suggested fixes from `clippy` and formats with rustfmt.
+  fix-n-format:
     runs-on: ubuntu-latest
     continue-on-error: true
 
     outputs:
       # The ID of the commit made for the fixes, or, if no fixes were applied,
       # the commit that triggered the workflow.
-      commit-id: ${{ steps.commit-id.outputs.commit-id }}
+      commit-id: ${{ steps.commit-id.outputs.COMMIT_ID }}
 
     steps:
       # Check out (a.k.a. clones) the XRB repository.
@@ -77,7 +77,7 @@ jobs:
           profile: minimal
           toolchain: nightly
           override: true
-          components: clippy
+          components: [clippy, rustfmt]
 
       - name: Configure git credentials
         run: |
@@ -91,84 +91,41 @@ jobs:
           command: clippy
           args: --workspace --fix --color always
 
-      - name: Commit changes
+      - name: Commit clippy fix changes
         # Commit changes, or, if that fails, do nothing.
         run: |
           git pull origin ${{ github.ref }}
-          git commit -am "Applied recommended fixes ${{ github.run_number }}" || :
-
-      # This sets the `commit-id` to the latest commit. If there were changes
-      # made, that means it will be the commit for those changes, otherwise it
-      # will be the commit that triggered the workflow.
-      - name: Set the `commit-id` output
-        id: commit-id
-        run: echo ::set-output name=commit-id::$(git log --format="%H" -n 1)
-
-      - name: Push changes
-        run: git push origin HEAD:${{ github.ref }}
-
-  # Automatically formats the code with `rustfmt`.
-  auto-format:
-    runs-on: ubuntu-latest
-    needs: clippy-fixes
-    if: success() || failure()
-
-    outputs:
-      # The ID of the commit made for the automatic formatting, or, if no
-      # formatting was done, the commit made for clippy fixes, or, if no fixes
-      # were made, the commit that triggered the workflow.
-      commit-id: ${{ steps.commit-id.outputs.commit-id }}
-
-    steps:
-      # Check out (a.k.a. clones) the XRB repository with fixes made by `clippy`
-      # in `clippy-fixes`, if any.
-      - name: Checkout XRB
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ needs.clippy-fixes.outputs.commit-id }}
-
-      # Install the latest nightly release of the Rust toolchain.
-      - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: true
-          components: rustfmt
-
-      - name: Configure git credentials
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
+          git diff --quiet || echo "### Applied recommended clippy fixes." >> $GITHUB_STEP_SUMMARY
+          git diff --quiet || (git commit -am "[CI${{ github.run_number}}] applied recommended clippy fixes" && echo "$(git log --format='%H' -n 1)" >> $GITHUB_STEP_SUMMARY)
 
       # Automatically format the code with `rustfmt`.
       - name: Format code with `rustfmt`
         uses: actions-rs/cargo@v1
         with:
-          command: fmt
-          args: --all
+            command: fmt
+            args: --all
 
-      - name: Commit changes
-        # Commit changes, or, if that fails, do nothing.
+      - name: Commit rustfmt changes
         run: |
           git pull origin ${{ github.ref }}
-          git commit -am "Formatted code with rustfmt ${{ github.run_number }}" || :
+          git diff --quiet || echo "### Formatted code with rustfmt." >> $GITHUB_STEP_SUMMARY
+          git diff --quiet || (git commit -am "[CI${{ github.run_number}}] formatted code with rustfmt" && echo "$(git log --format='%H' -n 1)" >> $GITHUB_STEP_SUMMARY)
 
       # This sets the `commit-id` to the latest commit. If there were changes
       # made, that means it will be the commit for those changes, otherwise it
       # will be the commit that triggered the workflow.
       - name: Set the `commit-id` output
         id: commit-id
-        run: echo ::set-output name=commit-id::$(git log --format="%H" -n 1)
+        run: echo "COMMIT_ID=$(git log --format='%H' -n 1)" >> $GITHUB_OUTPUT
 
       - name: Push changes
         run: git push origin HEAD:${{ github.ref }}
 
   # Analyses the code with `clippy`.
-  clippy-analyse:
+  clippy-analysis:
     runs-on: ubuntu-latest
     # We run clippy analysis after any fixes that can be applied have been.
-    needs: clippy-fixes
+    needs: fix-n-format
     if: success() || failure()
 
     steps:
@@ -177,7 +134,7 @@ jobs:
       - name: Checkout XRB
         uses: actions/checkout@v3
         with:
-          ref: ${{ needs.clippy-fixes.outputs.commit-id }}
+          ref: ${{ needs.fix-n-format.outputs.commit-id }}
 
       # Install the latest nightly release of the Rust toolchain.
       - name: Install latest nightly
@@ -205,7 +162,7 @@ jobs:
     runs-on: ubuntu-latest
     # We only build the documentation after the code has been changed so that
     # the code sources linked in the documentation are up-to-date.
-    needs: auto-format
+    needs: fix-n-format
     if: success() || failure()
 
     steps:
@@ -215,7 +172,7 @@ jobs:
       - name: Checkout XRB
         uses: actions/checkout@v3
         with:
-          ref: ${{ needs.auto-format.outputs.commit-id }}
+          ref: ${{ needs.fix-n-format.outputs.commit-id }}
           path: xrb
 
       # Check out a template to put the generated docs in.
@@ -263,6 +220,7 @@ jobs:
 
   # Deploy the documentation with GitHub Pages.
   deploy-docs:
+    if: github.event_name == "push" && github.ref_type == "branch" && github.ref_name == "main"
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
