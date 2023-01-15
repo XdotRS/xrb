@@ -217,7 +217,7 @@ impl Error {
 		});
 
 		tokens.append_tokens(quote_spanned!(trait_path.span()=>
-			#[automaticall_derived]
+			#[automatically_derived]
 			impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
 				#[allow(
 					clippy::items_after_statements,

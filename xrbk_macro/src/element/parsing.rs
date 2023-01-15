@@ -354,13 +354,6 @@ impl ParseWithContext for Elements {
 				));
 			},
 
-			(DefinitionType::Error, None) => {
-				return Err(syn::Error::new(
-					Span::call_site(),
-					"errors must have an error data field with a constant size of 4 bytes",
-				));
-			},
-
 			_ => {},
 		}
 

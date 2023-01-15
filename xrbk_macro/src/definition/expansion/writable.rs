@@ -328,7 +328,7 @@ impl Error {
 			// - 4 bytes for its (optional) error data
 			// - 2 bytes for the request's minor opcode
 			// - 1 byte for the request's major opcode
-			Some(quote_spanned!(trait_path.span()=> let mut size: usize = 11))
+			Some(quote_spanned!(trait_path.span()=> let mut size: usize = 11;))
 		} else {
 			None
 		};
@@ -388,7 +388,7 @@ impl Error {
 		};
 
 		tokens.append_tokens(quote_spanned!(trait_path.span()=>
-			#[automatically_generated]
+			#[automatically_derived]
 			impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
 				#[allow(
 					clippy::items_after_statements,
