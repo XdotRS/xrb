@@ -124,8 +124,8 @@ impl ToTokens for Definition {
 
 				let attrs = &error.item_attributes;
 
-				for _path in &attrs.derive_writables {
-					// TODO: error.impl_writable(tokens, path);
+				for path in &attrs.derive_writables {
+					error.impl_writable(tokens, path);
 				}
 
 				for path in &attrs.derive_readables {

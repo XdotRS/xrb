@@ -249,7 +249,7 @@ impl Event {
 
 		let writes = TokenStream2::with_tokens(|tokens| {
 			for element in &self.content {
-				if !element.is_metabyte() && !element.is_sequence() {
+				if element.is_normal() {
 					element.write_tokens(tokens, DefinitionType::Event);
 
 					if self.content.contains_infer() {
@@ -304,6 +304,120 @@ impl Event {
 					#sequence
 
 					// Other elements
+					#writes
+
+					Ok(())
+				}
+			}
+		));
+	}
+}
+
+impl Error {
+	pub fn impl_writable(&self, tokens: &mut TokenStream2, trait_path: &Path) {
+		let ident = &self.ident;
+
+		// TODO: add generic bounds
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let declare_x11_size = if self.content.contains_infer() {
+			// 11 bytes includes:
+			// - 1 byte to say it's an error
+			// - 1 byte for its code
+			// - 2 bytes for its sequence number
+			// - 4 bytes for its (optional) error data
+			// - 2 bytes for the request's minor opcode
+			// - 1 byte for the request's major opcode
+			Some(quote_spanned!(trait_path.span()=> let mut size: usize = 11))
+		} else {
+			None
+		};
+
+		let pat = TokenStream2::with_tokens(|tokens| {
+			self.content.pat_cons_to_tokens(tokens);
+		});
+
+		let writes = TokenStream2::with_tokens(|tokens| {
+			for element in &self.content {
+				if element.is_normal() {
+					element.write_tokens(tokens, DefinitionType::Error);
+
+					if self.content.contains_infer() {
+						element.add_x11_size_tokens(tokens);
+					}
+				}
+			}
+		});
+
+		let sequence = match self.content.sequence_element() {
+			Some(Element::Field(field)) => {
+				let formatted = &field.formatted;
+
+				quote_spanned!(trait_path.span()=> buf.put_u16(*#formatted);)
+			},
+
+			_ => panic!("errors must have sequence fields"),
+		};
+
+		let minor_opcode = match self.content.minor_opcode_element() {
+			Some(Element::Field(field)) => {
+				let formatted = &field.formatted;
+
+				quote_spanned!(trait_path.span()=> buf.put_u16(*#formatted);)
+			},
+
+			_ => panic!("errors must have minor opcode fields"),
+		};
+
+		let major_opcode = match self.content.major_opcode_element() {
+			Some(Element::Field(field)) => {
+				let formatted = &field.formatted;
+
+				quote_spanned!(trait_path.span()=> buf.put_u8(*#formatted);)
+			},
+
+			_ => panic!("errors must have major opcode fields"),
+		};
+
+		let error_data = match self.content.error_data_element() {
+			Some(Element::Field(field)) => {
+				TokenStream2::with_tokens(|tokens| field.write_tokens(tokens))
+			},
+
+			_ => quote_spanned!(trait_path.span()=> buf.put_bytes(0, 4);),
+		};
+
+		tokens.append_tokens(quote_spanned!(trait_path.span()=>
+			#[automatically_generated]
+			impl #impl_generics ::xrbk::Writable for #ident #type_generics #where_clause {
+				#[allow(
+					clippy::items_after_statements,
+					clippy::trivially_copy_pass_by_ref,
+					clippy::needless_borrow,
+					clippy::identity_op,
+				)]
+				fn write_to(
+					&self,
+					buf: &mut impl ::xrbk::BufMut,
+				) -> Result<(), ::xrbk::WriteError> {
+					#declare_x11_size
+					// Destructure the error struct's fields, if any.
+					let Self #pat = self;
+
+					// A first byte of `0` means that this is an error.
+					buf.put_u8(0);
+					// Error code, uniquely identifying the error.
+					buf.put_u8(<Self as xrb::message::Error>::CODE);
+					// Sequence number.
+					#sequence
+					// An optional 4-byte data field.
+					#error_data
+					// The minor opcode of the request generating the error.
+					#minor_opcode
+					// The major opcode of the request generating the error.
+					#major_opcode
+
+					// Other elements.
 					#writes
 
 					Ok(())
