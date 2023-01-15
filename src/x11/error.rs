@@ -126,7 +126,7 @@ derive_xrb! {
 		/// The invalid [`Window`] ID.
 		///
 		/// This is of type `u32`, not [`Window`], because it does not refer to
-		/// a defined [window].
+		/// a defined [window], and so it shouldn't be used as such.
 		///
 		/// [`Window`]: crate::Window
 		/// [window]: crate::Window
@@ -153,6 +153,11 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	/// The [`Pixmap`] ID used in the [request] does not refer to a defined [pixmap].
+	///
+	/// [`Pixmap`]: crate::Pixmap
+	/// [pixmap]: crate::Pixmap
+	/// [request]: crate::message::Request
 	pub struct Pixmap: Error(4) {
 		#[sequence]
 		/// The [sequence number][sequence] identifying the [request] that was
@@ -165,7 +170,14 @@ derive_xrb! {
 		pub sequence: u16,
 
 		#[error_data]
-		pub bad_resource_id: u32,
+		/// The invalid [`Pixmap`] ID.
+		///
+		/// This is of type `u32`, not [`Pixmap`], because it does not refer to
+		/// a defined [pixmap], and so it shouldn't be used as such.
+		///
+		/// [`Pixmap`]: crate::Pixmap
+		/// [pixmap]: crate::Pixmap
+		pub invalid_pixmap_id: u32,
 
 		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
@@ -188,6 +200,11 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	/// The [`Atom`] ID used in the [request] does not refer to a defined [atom].
+	///
+	/// [`Atom`]: crate::Atom
+	/// [atom]: crate::Atom
+	/// [request]: crate::message::Request
 	pub struct Atom: Error(5) {
 		#[sequence]
 		/// The [sequence number][sequence] identifying the [request] that was
@@ -200,7 +217,14 @@ derive_xrb! {
 		pub sequence: u16,
 
 		#[error_data]
-		pub bad_atom_id: u32,
+		/// The invalid [`Atom`] ID.
+		///
+		/// This is of type `u32`, not [`Atom`], because it does not refer to
+		/// a defined [atom], and so it shouldn't be used as such.
+		///
+		/// [`Atom`]: crate::Atom
+		/// [atom]: crate::Atom
+		pub invalid_atom_id: u32,
 
 		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
@@ -223,6 +247,12 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	/// The [`CursorAppearance`] ID used in the [request] does not refer to a
+	/// defined [cursor appearance].
+	///
+	/// [`CursorAppearance`]: crate::CursorAppearance
+	/// [cursor appearance]: crate::CursorAppearance
+	/// [request]: crate::message::Request
 	pub struct CursorAppearance: Error(6) {
 		#[sequence]
 		/// The [sequence number][sequence] identifying the [request] that was
@@ -235,7 +265,15 @@ derive_xrb! {
 		pub sequence: u16,
 
 		#[error_data]
-		pub bad_resource_id: u32,
+		/// The invalid [`CursorAppearance`] ID.
+		///
+		/// This is of type `u32`, not [`CursorAppearance`], because it does
+		/// not refer to a defined [cursor appearance], and so it shouldn't be
+		/// used as such.
+		///
+		/// [`CursorAppearance`]: crate::CursorAppearance
+		/// [cursor appearance]: crate::CursorAppearance
+		pub invalid_cursor_appearance_id: u32,
 
 		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
@@ -258,6 +296,11 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	/// The [`Font`] ID used in the [request] does not refer to a defined [font].
+	///
+	/// [`Font`]: crate::Font
+	/// [font]: crate::Font
+	/// [request]: crate::message::Request
 	pub struct Font: Error(7) {
 		#[sequence]
 		/// The [sequence number][sequence] identifying the [request] that was
@@ -270,7 +313,14 @@ derive_xrb! {
 		pub sequence: u16,
 
 		#[error_data]
-		pub bad_resource_id: u32,
+		/// The invalid [`Font`] ID.
+		///
+		/// This is of type `u32`, not [`Font`], because it does not refer to
+		/// a defined [font], and so it shouldn't be used as such.
+		///
+		/// [`Font`]: crate::Font
+		/// [font]: crate::Font
+		pub invalid_font_id: u32,
 
 		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
@@ -325,6 +375,13 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	/// The [`Drawable`] ID used in the [request] does not refer to a defined
+	/// [window] or [pixmap].
+	///
+	/// [`Drawable`]: crate::Drawable
+	/// [window]: crate::Window
+	/// [pixmap]: crate::Pixmap
+	/// [request]: crate::message::Request
 	pub struct Drawable: Error(9) {
 		#[sequence]
 		/// The [sequence number][sequence] identifying the [request] that was
@@ -337,7 +394,15 @@ derive_xrb! {
 		pub sequence: u16,
 
 		#[error_data]
-		pub bad_resource_id: u32,
+		/// The invalid [`Drawable`] ID.
+		///
+		/// This is of type `u32`, not [`Drawable`], because it does not refer to
+		/// a defined [window] nor [pixmap], and so it shouldn't be used as such.
+		///
+		/// [`Drawable`]: crate::Drawable
+		/// [window]: crate::Window
+		/// [pixmap]: crate::Pixmap
+		pub invalid_drawable_id: u32,
 
 		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
@@ -424,6 +489,12 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	/// The [`Colormap`] ID used in the [request] does not refer to a defined
+	/// [colormap].
+	///
+	/// [`Colormap`]: crate::Colormap
+	/// [colormap]: crate::Colormap
+	/// [request]: crate::message::Request
 	pub struct Colormap: Error(12) {
 		#[sequence]
 		/// The [sequence number][sequence] identifying the [request] that was
@@ -436,7 +507,14 @@ derive_xrb! {
 		pub sequence: u16,
 
 		#[error_data]
-		pub bad_resource_id: u32,
+		/// The invalid [`Colormap`] ID.
+		///
+		/// This is of type `u32`, not [`Colormap`], because it does not refer to
+		/// a defined [colormap], and so it shouldn't be used as such.
+		///
+		/// [`Colormap`]: crate::Colormap
+		/// [colormap]: crate::Colormap
+		pub invalid_colormap_id: u32,
 
 		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
@@ -459,6 +537,12 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	/// The [`GraphicsContext`] ID used in the [request] does not refer to a
+	/// defined [graphics context].
+	///
+	/// [`GraphicsContext`]: crate::GraphicsContext
+	/// [graphics context]: crate::GraphicsContext
+	/// [request]: crate::message::Request
 	pub struct GraphicsContext: Error(13) {
 		#[sequence]
 		/// The [sequence number][sequence] identifying the [request] that was
@@ -471,7 +555,14 @@ derive_xrb! {
 		pub sequence: u16,
 
 		#[error_data]
-		pub bad_resource_id: u32,
+		/// The invalid [`GraphicsContext`] ID.
+		///
+		/// This is of type `u32`, not [`GraphicsContext`], because it does not refer to
+		/// a defined [graphics context], and so it shouldn't be used as such.
+		///
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		/// [graphics context]: crate::GraphicsContext
+		pub invalid_graphics_context_id: u32,
 
 		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
