@@ -162,7 +162,7 @@ impl Event {
 
 		let sizes = TokenStream2::with_tokens(|tokens| {
 			for element in &self.content {
-				if !element.is_metabyte() && !element.is_sequence() {
+				if element.is_normal() {
 					element.x11_size_tokens(tokens, DefinitionType::Event);
 				}
 			}
@@ -190,6 +190,49 @@ impl Event {
 					#sizes
 
 					// Return the cumulative size.
+					size
+				}
+			}
+		));
+	}
+}
+
+impl Error {
+	pub fn impl_x11_size(&self, tokens: &mut TokenStream2, trait_path: &Path) {
+		let ident = &self.ident;
+
+		// TODO: add generic bounds
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let pat = TokenStream2::with_tokens(|tokens| {
+			self.content.pat_cons_to_tokens(tokens);
+		});
+
+		let sizes = TokenStream2::with_tokens(|tokens| {
+			for element in &self.content {
+				if element.is_normal() {
+					element.x11_size_tokens(tokens, DefinitionType::Error);
+				}
+			}
+		});
+
+		tokens.append_tokens(quote_spanned!(trait_path.span()=>
+			#[automaticall_derived]
+			impl #impl_generics ::xrbk::X11Size for #ident #type_generics #where_clause {
+				#[allow(
+					clippy::items_after_statements,
+					clippy::trivially_copy_pass_by_ref,
+					clippy::needless_borrow,
+					clippy::identity_op,
+				)]
+				fn x11_size(&self) -> usize {
+					// At least 11 bytes including all the required fields.
+					let mut size: usize = 11;
+					// Destructure the error's fields, if any.
+					let Self #pat = self;
+
+					#sizes
+
 					size
 				}
 			}

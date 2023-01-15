@@ -132,8 +132,8 @@ impl ToTokens for Definition {
 					error.impl_readable(tokens, path);
 				}
 
-				for _path in &attrs.derive_x11_sizes {
-					// TODO: error.impl_x11_size(tokens, path);
+				for path in &attrs.derive_x11_sizes {
+					error.impl_x11_size(tokens, path);
 				}
 			},
 
