@@ -4,7 +4,7 @@
 
 //! Traits defining the format of messages sent via the X11 protocol.
 
-use crate::X11::error;
+use crate::x11::error;
 use xrbk::{Readable, Writable, X11Size};
 
 #[doc(notable_trait)]
