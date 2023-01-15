@@ -343,6 +343,22 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	/// An [error] generated when there is a mismatch of some kind.
+	///
+	/// This [error] is generated for a number of reasons:
+	/// - when an [`InputOnly`] [window] is used as a [drawable],
+	/// - in a graphics [request], the [graphics context] does not have the
+	///   same `root` [window] and `depth` as the `destination` [`Drawable`],
+	/// - or generally when a field or pair of fields has the correct type
+	///   and falls in the correct range, but it fails to match is some other
+	///   way required by the [request].
+	///
+	/// [error]: Error
+	/// [`InputOnly`]: crate::WindowClass::InputOnly
+	/// [window]: crate::Window
+	/// [drawable]: crate::Drawable
+	/// [request]: crate::message::Request
+	/// [graphics context]: crate::GraphicsContext
 	pub struct Match: Error(8) {
 		#[sequence]
 		/// The [sequence number][sequence] identifying the [request] that was
