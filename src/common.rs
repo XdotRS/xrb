@@ -134,7 +134,7 @@ impl From<Drawable> for Pixmap {
 	}
 }
 
-/// A resource ID referring to a particular cursor resource.
+/// A resource ID referring to a particular cursor appearance resource.
 #[derive(
 	Copy,
 	Clone,
@@ -153,7 +153,7 @@ impl From<Drawable> for Pixmap {
 	Readable,
 	Writable,
 )]
-pub struct Cursor(pub(crate) u32);
+pub struct CursorAppearance(pub(crate) u32);
 
 /// A resource ID referring to either a [`Font`] or a [`GraphicsContext`].
 #[derive(
