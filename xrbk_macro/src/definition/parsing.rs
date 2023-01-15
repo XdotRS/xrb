@@ -6,6 +6,7 @@ use super::*;
 use crate::{definition::DefinitionType, ParseWithContext, PsExt};
 use syn::{
 	parse::{discouraged::Speculative, Parse, ParseStream},
+	spanned::Spanned,
 	Attribute,
 	Token,
 	Visibility,
@@ -49,9 +50,19 @@ impl Parse for Definition {
 					})
 				} else {
 					let colon_token = input.parse()?;
-					let message_token: Ident = input.parse()?;
+					let message_path: Path = input.parse()?;
 
-					match &*message_token.to_string() {
+					let message_ident = match message_path.get_ident() {
+						Some(ident) => ident,
+
+						None => {
+							return Err(
+								input.error("expected `Request`, `Reply`, `Event`, or `Error`")
+							);
+						},
+					};
+
+					match &*message_ident.to_string() {
 						"Request" => Self::Request(input.parse_with((
 							item_attributes,
 							visibility,
@@ -59,7 +70,7 @@ impl Parse for Definition {
 							ident,
 							generics,
 							colon_token,
-							message_token,
+							message_path,
 						))?),
 
 						"Reply" => Self::Reply(input.parse_with((
@@ -69,7 +80,7 @@ impl Parse for Definition {
 							ident,
 							generics,
 							colon_token,
-							message_token,
+							message_path,
 						))?),
 
 						"Event" => Self::Event(input.parse_with((
@@ -79,13 +90,23 @@ impl Parse for Definition {
 							ident,
 							generics,
 							colon_token,
-							message_token,
+							message_path,
+						))?),
+
+						"Error" => Self::Error(input.parse_with((
+							item_attributes,
+							visibility,
+							struct_token,
+							ident,
+							generics,
+							colon_token,
+							message_path,
 						))?),
 
 						_ => {
-							return Err(Error::new(
-								message_token.span(),
-								"expected `Request`, `Reply`, or `Event` message type",
+							return Err(syn::Error::new(
+								message_path.span(),
+								"expected `Request`, `Reply`, `Event`, or `Error` message type",
 							))
 						},
 					}
@@ -110,7 +131,7 @@ type MetadataContext = (
 	Ident,
 	Generics,
 	Token![:],
-	Ident,
+	Path,
 );
 
 impl ParseWithContext for Request {
@@ -196,8 +217,35 @@ impl ParseWithContext for Event {
 			colon_token,
 			event_token,
 			paren_token: parenthesized!(content in input),
-			code: content.parse()?,
+			event_code: content.parse()?,
 			content: input.parse_with(DefinitionType::Event)?,
+		})
+	}
+}
+
+impl ParseWithContext for Error {
+	type Context<'a> = MetadataContext;
+
+	fn parse_with(
+		input: ParseStream,
+		(item_attributes, visibility, struct_token, ident, generics, colon_token, error_token): MetadataContext,
+	) -> Result<Self>
+	where
+		Self: Sized,
+	{
+		let content;
+
+		Ok(Self {
+			item_attributes,
+			visibility,
+			struct_token,
+			ident,
+			generics,
+			colon_token,
+			error_token,
+			paren_token: parenthesized!(content in input),
+			error_code: content.parse()?,
+			content: input.parse_with(DefinitionType::Error)?,
 		})
 	}
 }

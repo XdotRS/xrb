@@ -16,43 +16,73 @@ use syn::punctuated::{
 /// A borrowing iterator over [`Element`]s.
 pub struct Iter<'a> {
 	iter: Option<PuncIter<'a, ElementsItem>>,
+
 	metabyte_element: Option<&'a Element>,
 	sequence_element: Option<&'a Element>,
+
+	minor_opcode_element: Option<&'a Element>,
+	major_opcode_element: Option<&'a Element>,
+	error_data_element: Option<&'a Element>,
 }
 
 /// An owning iterator over [`Element`]s.
 pub struct IntoIter {
 	into_iter: Option<PuncIntoIter<ElementsItem>>,
+
 	metabyte_element: Option<Element>,
 	sequence_element: Option<Element>,
+
+	minor_opcode_element: Option<Element>,
+	major_opcode_element: Option<Element>,
+	error_data_element: Option<Element>,
 }
 
 /// A mutably borrowing iterator over [`Element`]s.
 pub struct IterMut<'a> {
 	iter_mut: Option<PuncIterMut<'a, ElementsItem>>,
+
 	metabyte_element: Option<&'a mut Element>,
 	sequence_element: Option<&'a mut Element>,
+
+	minor_opcode_element: Option<&'a mut Element>,
+	major_opcode_element: Option<&'a mut Element>,
+	error_data_element: Option<&'a mut Element>,
 }
 
 /// A borrowing iterator over pairs of [`Element`]s and possible commas.
 pub struct Pairs<'a> {
 	pairs: Option<PuncPairs<'a, ElementsItem, Token![,]>>,
+
 	metabyte_element: Option<&'a Element>,
 	sequence_element: Option<&'a Element>,
+
+	minor_opcode_element: Option<&'a Element>,
+	major_opcode_element: Option<&'a Element>,
+	error_data_element: Option<&'a Element>,
 }
 
 /// An owning iterator over pairs of [`Element`]s and possible commas.
 pub struct IntoPairs {
 	into_pairs: Option<PuncIntoPairs<ElementsItem, Token![,]>>,
+
 	metabyte_element: Option<Element>,
 	sequence_element: Option<Element>,
+
+	minor_opcode_element: Option<Element>,
+	major_opcode_element: Option<Element>,
+	error_data_element: Option<Element>,
 }
 
 /// A mutably borrowing iterator over pairs of [`Element`]s and possible commas.
 pub struct PairsMut<'a> {
 	pairs_mut: Option<PuncPairsMut<'a, ElementsItem, Token![,]>>,
+
 	metabyte_element: Option<&'a mut Element>,
 	sequence_element: Option<&'a mut Element>,
+
+	minor_opcode_element: Option<&'a mut Element>,
+	major_opcode_element: Option<&'a mut Element>,
+	error_data_element: Option<&'a mut Element>,
 }
 
 // impl Iterator {{{
@@ -64,8 +94,13 @@ impl<'a> Iterator for Iter<'a> {
 		if let Some(iter) = &mut self.iter {
 			match iter.next()? {
 				ElementsItem::Element(element) => Some(element),
+
 				ElementsItem::Metabyte => self.metabyte_element,
 				ElementsItem::Sequence => self.sequence_element,
+
+				ElementsItem::MinorOpcode => self.minor_opcode_element,
+				ElementsItem::MajorOpcode => self.major_opcode_element,
+				ElementsItem::ErrorData => self.error_data_element,
 			}
 		} else {
 			None
@@ -88,8 +123,13 @@ impl Iterator for IntoIter {
 		if let Some(into_iter) = &mut self.into_iter {
 			match into_iter.next()? {
 				ElementsItem::Element(element) => Some(element),
+
 				ElementsItem::Metabyte => self.metabyte_element.take(),
 				ElementsItem::Sequence => self.sequence_element.take(),
+
+				ElementsItem::MinorOpcode => self.minor_opcode_element.take(),
+				ElementsItem::MajorOpcode => self.major_opcode_element.take(),
+				ElementsItem::ErrorData => self.error_data_element.take(),
 			}
 		} else {
 			None
@@ -112,8 +152,13 @@ impl<'a> Iterator for IterMut<'a> {
 		if let Some(iter_mut) = &mut self.iter_mut {
 			match iter_mut.next()? {
 				ElementsItem::Element(element) => Some(element),
+
 				ElementsItem::Metabyte => self.metabyte_element.take(),
 				ElementsItem::Sequence => self.sequence_element.take(),
+
+				ElementsItem::MinorOpcode => self.minor_opcode_element.take(),
+				ElementsItem::MajorOpcode => self.major_opcode_element.take(),
+				ElementsItem::ErrorData => self.error_data_element.take(),
 			}
 		} else {
 			None
@@ -139,16 +184,18 @@ impl<'a> Iterator for Pairs<'a> {
 				Pair::End(item) => (item, None),
 			};
 
-			match item {
-				ElementsItem::Element(element) => Some((element, comma)),
+			let element = match item {
+				ElementsItem::Element(element) => Some(element),
 
-				ElementsItem::Metabyte => {
-					self.metabyte_element.take().map(|element| (element, comma))
-				},
-				ElementsItem::Sequence => {
-					self.sequence_element.take().map(|element| (element, comma))
-				},
-			}
+				ElementsItem::Metabyte => self.metabyte_element.take(),
+				ElementsItem::Sequence => self.sequence_element.take(),
+
+				ElementsItem::MinorOpcode => self.minor_opcode_element.take(),
+				ElementsItem::MajorOpcode => self.major_opcode_element.take(),
+				ElementsItem::ErrorData => self.error_data_element.take(),
+			};
+
+			element.map(|element| (element, comma))
 		} else {
 			None
 		}
@@ -173,16 +220,18 @@ impl Iterator for IntoPairs {
 				Pair::End(item) => (item, None),
 			};
 
-			match item {
-				ElementsItem::Element(element) => Some((element, comma)),
+			let element = match item {
+				ElementsItem::Element(element) => Some(element),
 
-				ElementsItem::Metabyte => {
-					self.metabyte_element.take().map(|element| (element, comma))
-				},
-				ElementsItem::Sequence => {
-					self.sequence_element.take().map(|element| (element, comma))
-				},
-			}
+				ElementsItem::Metabyte => self.metabyte_element.take(),
+				ElementsItem::Sequence => self.sequence_element.take(),
+
+				ElementsItem::MinorOpcode => self.minor_opcode_element.take(),
+				ElementsItem::MajorOpcode => self.major_opcode_element.take(),
+				ElementsItem::ErrorData => self.error_data_element.take(),
+			};
+
+			element.map(|element| (element, comma))
 		} else {
 			None
 		}
@@ -207,16 +256,18 @@ impl<'a> Iterator for PairsMut<'a> {
 				Pair::End(item) => (item, None),
 			};
 
-			match item {
-				ElementsItem::Element(element) => Some((element, comma)),
+			let element = match item {
+				ElementsItem::Element(element) => Some(element),
 
-				ElementsItem::Metabyte => {
-					self.metabyte_element.take().map(|element| (element, comma))
-				},
-				ElementsItem::Sequence => {
-					self.sequence_element.take().map(|element| (element, comma))
-				},
-			}
+				ElementsItem::Metabyte => self.metabyte_element.take(),
+				ElementsItem::Sequence => self.sequence_element.take(),
+
+				ElementsItem::MinorOpcode => self.minor_opcode_element.take(),
+				ElementsItem::MajorOpcode => self.major_opcode_element.take(),
+				ElementsItem::ErrorData => self.error_data_element.take(),
+			};
+
+			element.map(|element| (element, comma))
 		} else {
 			None
 		}
@@ -237,8 +288,13 @@ impl Iter<'_> {
 	fn with_none() -> Self {
 		Self {
 			iter: None,
+
 			metabyte_element: None,
 			sequence_element: None,
+
+			minor_opcode_element: None,
+			major_opcode_element: None,
+			error_data_element: None,
 		}
 	}
 }
@@ -247,8 +303,13 @@ impl IntoIter {
 	fn with_none() -> Self {
 		Self {
 			into_iter: None,
+
 			metabyte_element: None,
 			sequence_element: None,
+
+			minor_opcode_element: None,
+			major_opcode_element: None,
+			error_data_element: None,
 		}
 	}
 }
@@ -257,8 +318,13 @@ impl IterMut<'_> {
 	fn with_none() -> Self {
 		Self {
 			iter_mut: None,
+
 			metabyte_element: None,
 			sequence_element: None,
+
+			minor_opcode_element: None,
+			major_opcode_element: None,
+			error_data_element: None,
 		}
 	}
 }
@@ -267,8 +333,13 @@ impl Pairs<'_> {
 	fn with_none() -> Self {
 		Self {
 			pairs: None,
+
 			metabyte_element: None,
 			sequence_element: None,
+
+			minor_opcode_element: None,
+			major_opcode_element: None,
+			error_data_element: None,
 		}
 	}
 }
@@ -277,8 +348,13 @@ impl IntoPairs {
 	fn with_none() -> Self {
 		Self {
 			into_pairs: None,
+
 			metabyte_element: None,
 			sequence_element: None,
+
+			minor_opcode_element: None,
+			major_opcode_element: None,
+			error_data_element: None,
 		}
 	}
 }
@@ -287,8 +363,13 @@ impl PairsMut<'_> {
 	fn with_none() -> Self {
 		Self {
 			pairs_mut: None,
+
 			metabyte_element: None,
 			sequence_element: None,
+
+			minor_opcode_element: None,
+			major_opcode_element: None,
+			error_data_element: None,
 		}
 	}
 }
@@ -302,8 +383,13 @@ impl<'a> IntoIterator for &'a Elements {
 	fn into_iter(self) -> Self::IntoIter {
 		Iter {
 			iter: Some(self.elements.iter()),
+
 			metabyte_element: self.metabyte_element.as_ref(),
 			sequence_element: self.sequence_element.as_ref(),
+
+			minor_opcode_element: self.minor_opcode_element.as_ref(),
+			major_opcode_element: self.major_opcode_element.as_ref(),
+			error_data_element: self.error_data_element.as_ref(),
 		}
 	}
 }
@@ -316,8 +402,13 @@ impl IntoIterator for Elements {
 	fn into_iter(self) -> Self::IntoIter {
 		IntoIter {
 			into_iter: Some(self.elements.into_iter()),
+
 			metabyte_element: self.metabyte_element,
 			sequence_element: self.sequence_element,
+
+			minor_opcode_element: self.minor_opcode_element,
+			major_opcode_element: self.major_opcode_element,
+			error_data_element: self.error_data_element,
 		}
 	}
 }
@@ -329,8 +420,13 @@ impl<'a> IntoIterator for &'a mut Elements {
 	fn into_iter(self) -> Self::IntoIter {
 		IterMut {
 			iter_mut: Some(self.elements.iter_mut()),
+
 			metabyte_element: self.metabyte_element.as_mut(),
 			sequence_element: self.sequence_element.as_mut(),
+
+			minor_opcode_element: self.minor_opcode_element.as_mut(),
+			major_opcode_element: self.major_opcode_element.as_mut(),
+			error_data_element: self.error_data_element.as_mut(),
 		}
 	}
 }
@@ -498,8 +594,13 @@ impl<'a> Elements {
 	pub fn pairs(&'a self) -> Pairs<'a> {
 		Pairs {
 			pairs: Some(self.elements.pairs()),
+
 			metabyte_element: self.metabyte_element.as_ref(),
 			sequence_element: self.sequence_element.as_ref(),
+
+			minor_opcode_element: self.minor_opcode_element.as_ref(),
+			major_opcode_element: self.major_opcode_element.as_ref(),
+			error_data_element: self.error_data_element.as_ref(),
 		}
 	}
 
@@ -508,8 +609,13 @@ impl<'a> Elements {
 	pub fn into_pairs(self) -> IntoPairs {
 		IntoPairs {
 			into_pairs: Some(self.elements.into_pairs()),
+
 			metabyte_element: self.metabyte_element,
 			sequence_element: self.sequence_element,
+
+			minor_opcode_element: self.minor_opcode_element,
+			major_opcode_element: self.major_opcode_element,
+			error_data_element: self.error_data_element,
 		}
 	}
 
@@ -518,8 +624,13 @@ impl<'a> Elements {
 	pub fn pairs_mut(&'a mut self) -> PairsMut<'a> {
 		PairsMut {
 			pairs_mut: Some(self.elements.pairs_mut()),
+
 			metabyte_element: self.metabyte_element.as_mut(),
 			sequence_element: self.sequence_element.as_mut(),
+
+			minor_opcode_element: self.minor_opcode_element.as_mut(),
+			major_opcode_element: self.major_opcode_element.as_mut(),
+			error_data_element: self.error_data_element.as_mut(),
 		}
 	}
 }

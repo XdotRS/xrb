@@ -118,6 +118,25 @@ impl ToTokens for Definition {
 				}
 			},
 
+			Self::Error(error) => {
+				error.to_tokens(tokens);
+				error.impl_trait(tokens);
+
+				let attrs = &error.item_attributes;
+
+				for path in &attrs.derive_writables {
+					error.impl_writable(tokens, path);
+				}
+
+				for path in &attrs.derive_readables {
+					error.impl_readable(tokens, path);
+				}
+
+				for path in &attrs.derive_x11_sizes {
+					error.impl_x11_size(tokens, path);
+				}
+			},
+
 			Self::Other(item) => item.to_tokens(tokens),
 		}
 	}
@@ -142,9 +161,11 @@ macro_rules! structlike_to_tokens {
 }
 
 structlike_to_tokens!(Struct);
+
 structlike_to_tokens!(Request);
 structlike_to_tokens!(Reply);
 structlike_to_tokens!(Event);
+structlike_to_tokens!(Error);
 
 impl ToTokens for Enum {
 	fn to_tokens(&self, tokens: &mut TokenStream) {

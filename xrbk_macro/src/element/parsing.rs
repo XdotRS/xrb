@@ -10,7 +10,6 @@ use syn::{
 	parenthesized,
 	parse::{discouraged::Speculative, ParseStream},
 	spanned::Spanned,
-	Error,
 	Result,
 };
 
@@ -150,8 +149,13 @@ impl ParseWithContext for Elements {
 		let mut field_map = HashMap::new();
 
 		let mut elements = Punctuated::new();
+
 		let mut metabyte_element = None;
 		let mut sequence_element = None;
+
+		let mut minor_opcode_element = None;
+		let mut major_opcode_element = None;
+		let mut error_data_element = None;
 
 		let mut field_index = 0;
 		let mut unused_index = 0;
@@ -172,7 +176,7 @@ impl ParseWithContext for Elements {
 
 			if element.is_metabyte() {
 				if metabyte_element.is_some() {
-					return Err(Error::new(
+					return Err(syn::Error::new(
 						element.span(),
 						"no more than one metabyte element is allowed per message",
 					));
@@ -182,7 +186,7 @@ impl ParseWithContext for Elements {
 				elements.push_value(ElementsItem::Metabyte);
 			} else if let Element::Field(field) = &element && field.is_sequence() {
 				if sequence_element.is_some() {
-					return Err(Error::new(
+					return Err(syn::Error::new(
 						field.span(),
 						"no more than one sequence field is allowed per message",
 					));
@@ -190,6 +194,36 @@ impl ParseWithContext for Elements {
 
 				sequence_element = Some(element);
 				elements.push_value(ElementsItem::Sequence);
+			} else if let Element::Field(field) = &element && field.is_minor_opcode() {
+				if minor_opcode_element.is_some() {
+					return Err(syn::Error::new(
+						field.span(),
+						"no more than one minor opcode field is allowed per error",
+					))
+				}
+
+				minor_opcode_element = Some(element);
+				elements.push(ElementsItem::MinorOpcode)
+			} else if let Element::Field(field) = &element && field.is_major_opcode() {
+				if major_opcode_element.is_some() {
+					return Err(syn::Error::new(
+						field.span(),
+						"no more than one major opcode field is allowed per error",
+					))
+				}
+
+				major_opcode_element = Some(element);
+				elements.push(ElementsItem::MajorOpcode);
+			} else if let Element::Field(field) = &element && field.is_error_data() {
+				if error_data_element.is_some() {
+					return Err(syn::Error::new(
+						field.span(),
+						"no more than one error data field is allowed per error",
+					));
+				}
+
+				error_data_element = Some(element);
+				elements.push(ElementsItem::ErrorData);
 			} else {
 				elements.push_value(ElementsItem::Element(element));
 			}
@@ -218,7 +252,7 @@ impl ParseWithContext for Elements {
 								arg.r#type = Some(r#type.to_owned());
 								arg.formatted = Some(format_ident!("field_{}", arg.ident))
 							} else {
-								return Err(Error::new(
+								return Err(syn::Error::new(
 									arg.ident.span(),
 									"unrecognized source argument identifier",
 								));
@@ -247,17 +281,77 @@ impl ParseWithContext for Elements {
 
 		match (&definition_type, &sequence_element) {
 			(DefinitionType::Basic | DefinitionType::Request, Some(sequence)) => {
-				return Err(Error::new(
+				return Err(syn::Error::new(
 					sequence.span(),
-					"sequence fields are only allowed for events and replies",
-				))
+					"sequence fields are only allowed for replies, events, and errors",
+				));
 			},
 
 			(DefinitionType::Reply, None) => {
-				return Err(Error::new(
+				return Err(syn::Error::new(
 					Span::call_site(),
-					"replies must have a sequence field of type `u32`",
-				))
+					"replies must have a sequence field of type `u16`",
+				));
+			},
+
+			(DefinitionType::Error, None) => {
+				return Err(syn::Error::new(
+					Span::call_site(),
+					"errors must have a sequence field of type `u16`",
+				));
+			},
+
+			_ => {},
+		}
+
+		match (&definition_type, &minor_opcode_element) {
+			(DefinitionType::Error, Some(_)) => {},
+
+			(_, Some(minor_opcode)) => {
+				return Err(syn::Error::new(
+					minor_opcode.span(),
+					"minor opcode fields are only allowed for errors",
+				));
+			},
+
+			(DefinitionType::Error, None) => {
+				return Err(syn::Error::new(
+					Span::call_site(),
+					"errors must have a minor opcode field of type `u16`",
+				));
+			},
+
+			_ => {},
+		}
+
+		match (&definition_type, &major_opcode_element) {
+			(DefinitionType::Error, Some(_)) => {},
+
+			(_, Some(major_opcode)) => {
+				return Err(syn::Error::new(
+					major_opcode.span(),
+					"major opcode fields are only allowed for errors",
+				));
+			},
+
+			(DefinitionType::Error, None) => {
+				return Err(syn::Error::new(
+					Span::call_site(),
+					"errors must have a major opcode field of type `u8`",
+				));
+			},
+
+			_ => {},
+		}
+
+		match (&definition_type, &error_data_element) {
+			(DefinitionType::Error, Some(_)) => {},
+
+			(_, Some(error_data)) => {
+				return Err(syn::Error::new(
+					error_data.span(),
+					"error data fields are only allowed for errors",
+				));
 			},
 
 			_ => {},
@@ -268,6 +362,10 @@ impl ParseWithContext for Elements {
 
 			metabyte_element,
 			sequence_element,
+
+			minor_opcode_element,
+			major_opcode_element,
+			error_data_element,
 
 			contains_infer,
 		})
@@ -336,32 +434,56 @@ impl ParseWithContext for SingleUnused {
 			context_attribute,
 			metabyte_attribute,
 			sequence_attribute,
+			minor_opcode_attribute,
+			major_opcode_attribute,
+			error_data_attribute,
 			hide_attribute,
 		}: ParsedAttributes,
 	) -> Result<Self> {
 		if let Some(attribute) = attributes.first() {
-			return Err(Error::new(
+			return Err(syn::Error::new(
 				attribute.span(),
 				"normal attributes are not allowed for singular unused bytes elements",
 			));
 		}
 
 		if let Some(attribute) = context_attribute {
-			return Err(Error::new(
+			return Err(syn::Error::new(
 				attribute.span(),
 				"context attributes are not allowed for singular unused bytes elements",
 			));
 		}
 
 		if let Some(attribute) = sequence_attribute {
-			return Err(Error::new(
+			return Err(syn::Error::new(
 				attribute.span(),
 				"sequence attributes are not allowed for singular unused bytes elements",
 			));
 		}
 
+		if let Some(attribute) = minor_opcode_attribute {
+			return Err(syn::Error::new(
+				attribute.span(),
+				"minor opcode attributes are not allowed for singular unused bytes elements",
+			));
+		}
+
+		if let Some(attribute) = major_opcode_attribute {
+			return Err(syn::Error::new(
+				attribute.span(),
+				"major opcode attributes are not allowed for singular unused bytes elements",
+			));
+		}
+
+		if let Some(attribute) = error_data_attribute {
+			return Err(syn::Error::new(
+				attribute.span(),
+				"error data attributes ar e not allowed for singular unused bytes elements",
+			));
+		}
+
 		if let Some(attribute) = hide_attribute {
-			return Err(Error::new(
+			return Err(syn::Error::new(
 				attribute.span(),
 				"hide attributes are not allowed for singular unused bytes elements",
 			));
@@ -392,6 +514,9 @@ impl ParseWithContext for ArrayUnused {
 				metabyte_attribute,
 				context_attribute,
 				sequence_attribute,
+				minor_opcode_attribute,
+				major_opcode_attribute,
+				error_data_attribute,
 				hide_attribute,
 			},
 			bracket_token,
@@ -403,28 +528,49 @@ impl ParseWithContext for ArrayUnused {
 		Self: Sized,
 	{
 		if let Some(attribute) = metabyte_attribute {
-			return Err(Error::new(
+			return Err(syn::Error::new(
 				attribute.span(),
 				"metabyte attributes are not allowed for array-type unused bytes elements",
 			));
 		}
 
 		if let Some(attribute) = context_attribute {
-			return Err(Error::new(
+			return Err(syn::Error::new(
 				attribute.span(),
 				"context attributes are not allowed for array-type unused bytes elements",
 			));
 		}
 
 		if let Some(attribute) = sequence_attribute {
-			return Err(Error::new(
+			return Err(syn::Error::new(
 				attribute.span(),
 				"sequence attributes are not allowed for array-type unused bytes elements",
 			));
 		}
 
+		if let Some(attribute) = minor_opcode_attribute {
+			return Err(syn::Error::new(
+				attribute.span(),
+				"minor opcode attributes are not allowed for array-type unused bytes elements",
+			));
+		}
+
+		if let Some(attribute) = major_opcode_attribute {
+			return Err(syn::Error::new(
+				attribute.span(),
+				"major opcode attributes are not allowed for array-type unused bytes elements",
+			));
+		}
+
+		if let Some(attribute) = error_data_attribute {
+			return Err(syn::Error::new(
+				attribute.span(),
+				"error data attributes are not allowed for array-type unused bytes elements",
+			));
+		}
+
 		if let Some(attribute) = hide_attribute {
-			return Err(Error::new(
+			return Err(syn::Error::new(
 				attribute.span(),
 				"hide attributes are not allowed for array-type unused bytes elements",
 			));
@@ -480,6 +626,9 @@ impl ParseWithContext for Let {
 				metabyte_attribute,
 				context_attribute,
 				sequence_attribute,
+				minor_opcode_attribute,
+				major_opcode_attribute,
+				error_data_attribute,
 				hide_attribute,
 			},
 			let_map,
@@ -490,14 +639,35 @@ impl ParseWithContext for Let {
 		Self: Sized,
 	{
 		if let Some(attribute) = sequence_attribute {
-			return Err(Error::new(
+			return Err(syn::Error::new(
 				attribute.span(),
 				"sequence attributes are not allowed for let elements",
 			));
 		}
 
+		if let Some(attribute) = minor_opcode_attribute {
+			return Err(syn::Error::new(
+				attribute.span(),
+				"minor opcode attributes are not allowed for let elements",
+			));
+		}
+
+		if let Some(attribute) = major_opcode_attribute {
+			return Err(syn::Error::new(
+				attribute.span(),
+				"major opcode attributes are not allowed for let elements",
+			));
+		}
+
+		if let Some(attribute) = error_data_attribute {
+			return Err(syn::Error::new(
+				attribute.span(),
+				"error data attributes are not allowed for let elements",
+			));
+		}
+
 		if let Some(attribute) = hide_attribute {
-			return Err(Error::new(
+			return Err(syn::Error::new(
 				attribute.span(),
 				"hide attributes ar e not allowed for let elements",
 			));
@@ -548,6 +718,9 @@ impl ParseWithContext for Field {
 				metabyte_attribute,
 				context_attribute,
 				sequence_attribute,
+				minor_opcode_attribute,
+				major_opcode_attribute,
+				error_data_attribute,
 				hide_attribute,
 			},
 			map,
@@ -582,6 +755,9 @@ impl ParseWithContext for Field {
 			metabyte_attribute,
 			context_attribute,
 			sequence_attribute,
+			minor_opcode_attribute,
+			major_opcode_attribute,
+			error_data_attribute,
 			hide_attribute,
 
 			visibility,
