@@ -32,26 +32,26 @@ derive_xrb! {
 		/// sent.
 		///
 		/// In this case, the combination of this [minor opcode] and the
-		/// `major_opcode` did not actually refer to a valid [request].
+		/// `invalid_major_opcode` did not actually refer to a valid [request].
 		///
 		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
-		pub minor_opcode: u16,
+		pub invalid_minor_opcode: u16,
 
 		#[major_opcode]
 		/// The [major opcode] meant to refer to the type of [request] that was
 		/// sent.
 		///
 		/// In this case, the combination of this [major opcode] and the
-		/// `minor_opcode` did not actually refer to a valid [request].
+		/// `invalid_minor_opcode` did not actually refer to a valid [request].
 		///
 		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
-		pub major_opcode: u8,
+		pub invalid_major_opcode: u8,
 		[_; ..],
 	}
 
@@ -83,7 +83,7 @@ derive_xrb! {
 		/// `u32` value. Encoding it as such if it wasn't meant to be could
 		/// cause issues with byte-swapping, where the bytes of a value would
 		/// be swapped to translate it to a `u32` value on the target platform.
-		pub bad_value: [u8; 4],
+		pub invalid_value: [u8; 4],
 
 		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
@@ -106,6 +106,11 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	/// The [`Window`] ID used in the [request] does not refer to a defined [window].
+	///
+	/// [`Window`]: crate::Window
+	/// [window]: crate::Window
+	/// [request]: crate::message::Request
 	pub struct Window: Error(3) {
 		#[sequence]
 		/// The [sequence number][sequence] identifying the [request] that was
@@ -118,7 +123,14 @@ derive_xrb! {
 		pub sequence: u16,
 
 		#[error_data]
-		pub bad_resource_id: u32,
+		/// The invalid [`Window`] ID.
+		///
+		/// This is of type `u32`, not [`Window`], because it does not refer to
+		/// a defined [window].
+		///
+		/// [`Window`]: crate::Window
+		/// [window]: crate::Window
+		pub invalid_window_id: u32,
 
 		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
