@@ -2,6 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+//! [Errors] defined in the [core X11 protocol].
+//!
+//! [Errors] are messages sent from the X server to an X client in response to
+//! a failed [request].
+//!
+//! [Errors]: Error
+//! [request]: crate::message::Request
+//! [core X11 protocol]: super
+
 use crate::message::Error;
 
 use xrbk_macro::derive_xrb;
@@ -497,6 +506,10 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	/// An [error] generated when the X server failed to allocate the requested
+	/// resource.
+	///
+	/// [error]: Error
 	pub struct Alloc: Error(11) {
 		#[sequence]
 		/// The [sequence number][sequence] identifying the [request] that was
@@ -625,6 +638,10 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	/// An [error] generated when a chosen resource ID is not in the range of
+	/// resource IDs assigned to the client, or the ID is already in use.
+	///
+	/// [error]: Error
 	pub struct ResourceIdChoice: Error(14) {
 		#[sequence]
 		/// The [sequence number][sequence] identifying the [request] that was
@@ -637,7 +654,9 @@ derive_xrb! {
 		pub sequence: u16,
 
 		#[error_data]
-		pub bad_resource_id: u32,
+		/// The resource ID that was either not assigned to the client or was
+		/// already in use.
+		pub unavailable_resource_id: u32,
 
 		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
@@ -660,6 +679,12 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	/// An [error] generated when the [request] specifies the name of a [font]
+	/// or color which does not exist.
+	///
+	/// [error]: Error
+	/// [request]: crate::message::Request
+	/// [font]: crate::Font
 	pub struct Name: Error(15) {
 		#[sequence]
 		/// The [sequence number][sequence] identifying the [request] that was
@@ -692,6 +717,14 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	/// An [error] generated when a [request] is not of the correct length.
+	///
+	/// The length may be too short or too long to hold the fields defined for
+	/// the [request], or its length might exceed the maximum [request] length
+	/// accepted by the X server.
+	///
+	/// [error]: Error
+	/// [request]: crate::message::Request
 	pub struct Length: Error(16) {
 		#[sequence]
 		/// The [sequence number][sequence] identifying the [request] that was
@@ -724,6 +757,11 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	/// An [error] generated when the X server does not implement some aspect
+	/// of the [request].
+	///
+	/// [error]: Error
+	/// [request]: crate::message::Request
 	pub struct Implementation: Error(17) {
 		#[sequence]
 		/// The [sequence number][sequence] identifying the [request] that was
