@@ -128,8 +128,8 @@ impl ToTokens for Definition {
 					// TODO: error.impl_writable(tokens, path);
 				}
 
-				for _path in &attrs.derive_readables {
-					// TODO: error.impl_readable(tokens, path);
+				for path in &attrs.derive_readables {
+					error.impl_readable(tokens, path);
 				}
 
 				for _path in &attrs.derive_x11_sizes {

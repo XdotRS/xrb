@@ -302,6 +302,107 @@ impl Event {
 	}
 }
 
+impl Error {
+	pub fn impl_readable(&self, tokens: &mut TokenStream2, trait_path: &Path) {
+		let ident = &self.ident;
+
+		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let declare_x11_size = if self.content.contains_infer() {
+			// 11 bytes includes:
+			// - 1 byte to say it's an error
+			// - 1 byte for its code
+			// - 2 bytes for its sequence number
+			// - 4 bytes for its (optional) error data
+			// - 2 bytes for the request's minor opcode
+			// - 1 byte for the request's major opcode
+			Some(quote_spanned!(trait_path.span()=> let mut size: usize = 11))
+		} else {
+			None
+		};
+
+		let cons = TokenStream2::with_tokens(|tokens| {
+			self.content.pat_cons_to_tokens(tokens);
+		});
+
+		let reads = TokenStream2::with_tokens(|tokens| {
+			for element in &self.content {
+				if element.is_normal() {
+					element.read_tokens(tokens, DefinitionType::Error);
+
+					if self.content.contains_infer() {
+						element.add_x11_size_tokens(tokens);
+					}
+				}
+			}
+		});
+
+		let sequence = match self.content.sequence_element() {
+			Some(Element::Field(field)) => {
+				let formatted = &field.formatted;
+
+				quote_spanned!(trait_path.span()=> let #formatted = buf.get_u16();)
+			},
+
+			_ => panic!("errors must have sequence fields"),
+		};
+
+		let minor_opcode = match self.content.minor_opcode_element() {
+			Some(Element::Field(field)) => {
+				let formatted = &field.formatted;
+
+				quote_spanned!(trait_path.span()=> let #formatted = buf.get_u16();)
+			},
+
+			_ => panic!("errors must have minor opcode fields"),
+		};
+
+		let major_opcode = match self.content.major_opcode_element() {
+			Some(Element::Field(field)) => {
+				let formatted = &field.formatted;
+
+				quote_spanned!(trait_path.span()=> let #formatted = buf.get_u8();)
+			},
+
+			_ => panic!("errors must have major opcode fields"),
+		};
+
+		let error_data = match self.content.error_data_element() {
+			Some(Element::Field(field)) => {
+				TokenStream2::with_tokens(|tokens| field.read_tokens(tokens))
+			},
+
+			_ => quote_spanned!(trait_path.span()=> buf.advance(4);),
+		};
+
+		tokens.append_tokens(quote_spanned!(trait_path.span()=>
+			#[automatically_derived]
+			impl #impl_generics ::xrbk::Readable for #ident #type_generics #where_clause {
+				#[allow(
+					clippy::items_after_statements,
+					clippy::trivially_copy_pass_by_ref,
+					clippy::needless_borrow,
+					clippy::identity_op,
+				)]
+				fn read_from(
+					buf: &mut impl ::xrbk::Buf,
+				) -> Result<Self, ::xrbk::ReadError> {
+					#declare_x11_size
+
+					#sequence
+					#error_data
+					#minor_opcode
+					#major_opcode
+
+					#reads
+
+					Self #cons
+				}
+			}
+		));
+	}
+}
+
 impl Enum {
 	pub fn impl_readable(&self, tokens: &mut TokenStream2, trait_path: &Path) {
 		let ident = &self.ident;
