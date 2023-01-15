@@ -63,6 +63,7 @@ pub mod message;
 pub mod x11 {
 	pub mod event;
 	pub mod request;
+	pub mod error;
 }
 
 pub use common::*;
