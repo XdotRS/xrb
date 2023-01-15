@@ -51,6 +51,17 @@ impl ToTokens for MajorOpcodeAttribute {
 	}
 }
 
+impl ToTokens for ErrorDataAttribute {
+	fn to_tokens(&self, tokens: &mut TokenStream) {
+		// `#`.
+		self.hash_token.to_tokens(tokens);
+		// Square brackets surrounding `error_data`.
+		self.bracket_token.surround(tokens, |tokens| {
+			self.path.to_tokens(tokens);
+		});
+	}
+}
+
 impl ToTokens for HideAttribute {
 	fn to_tokens(&self, tokens: &mut TokenStream) {
 		// `#`.

@@ -22,6 +22,7 @@ pub struct Iter<'a> {
 
 	minor_opcode_element: Option<&'a Element>,
 	major_opcode_element: Option<&'a Element>,
+	error_data_element: Option<&'a Element>,
 }
 
 /// An owning iterator over [`Element`]s.
@@ -33,6 +34,7 @@ pub struct IntoIter {
 
 	minor_opcode_element: Option<Element>,
 	major_opcode_element: Option<Element>,
+	error_data_element: Option<Element>,
 }
 
 /// A mutably borrowing iterator over [`Element`]s.
@@ -44,6 +46,7 @@ pub struct IterMut<'a> {
 
 	minor_opcode_element: Option<&'a mut Element>,
 	major_opcode_element: Option<&'a mut Element>,
+	error_data_element: Option<&'a mut Element>,
 }
 
 /// A borrowing iterator over pairs of [`Element`]s and possible commas.
@@ -55,6 +58,7 @@ pub struct Pairs<'a> {
 
 	minor_opcode_element: Option<&'a Element>,
 	major_opcode_element: Option<&'a Element>,
+	error_data_element: Option<&'a Element>,
 }
 
 /// An owning iterator over pairs of [`Element`]s and possible commas.
@@ -66,6 +70,7 @@ pub struct IntoPairs {
 
 	minor_opcode_element: Option<Element>,
 	major_opcode_element: Option<Element>,
+	error_data_element: Option<Element>,
 }
 
 /// A mutably borrowing iterator over pairs of [`Element`]s and possible commas.
@@ -77,6 +82,7 @@ pub struct PairsMut<'a> {
 
 	minor_opcode_element: Option<&'a mut Element>,
 	major_opcode_element: Option<&'a mut Element>,
+	error_data_element: Option<&'a mut Element>,
 }
 
 // impl Iterator {{{
@@ -94,6 +100,7 @@ impl<'a> Iterator for Iter<'a> {
 
 				ElementsItem::MinorOpcode => self.minor_opcode_element,
 				ElementsItem::MajorOpcode => self.major_opcode_element,
+				ElementsItem::ErrorData => self.error_data_element,
 			}
 		} else {
 			None
@@ -122,6 +129,7 @@ impl Iterator for IntoIter {
 
 				ElementsItem::MinorOpcode => self.minor_opcode_element.take(),
 				ElementsItem::MajorOpcode => self.major_opcode_element.take(),
+				ElementsItem::ErrorData => self.error_data_element.take(),
 			}
 		} else {
 			None
@@ -150,6 +158,7 @@ impl<'a> Iterator for IterMut<'a> {
 
 				ElementsItem::MinorOpcode => self.minor_opcode_element.take(),
 				ElementsItem::MajorOpcode => self.major_opcode_element.take(),
+				ElementsItem::ErrorData => self.error_data_element.take(),
 			}
 		} else {
 			None
@@ -183,6 +192,7 @@ impl<'a> Iterator for Pairs<'a> {
 
 				ElementsItem::MinorOpcode => self.minor_opcode_element.take(),
 				ElementsItem::MajorOpcode => self.major_opcode_element.take(),
+				ElementsItem::ErrorData => self.error_data_element.take(),
 			};
 
 			element.map(|element| (element, comma))
@@ -218,6 +228,7 @@ impl Iterator for IntoPairs {
 
 				ElementsItem::MinorOpcode => self.minor_opcode_element.take(),
 				ElementsItem::MajorOpcode => self.major_opcode_element.take(),
+				ElementsItem::ErrorData => self.error_data_element.take(),
 			};
 
 			element.map(|element| (element, comma))
@@ -253,6 +264,7 @@ impl<'a> Iterator for PairsMut<'a> {
 
 				ElementsItem::MinorOpcode => self.minor_opcode_element.take(),
 				ElementsItem::MajorOpcode => self.major_opcode_element.take(),
+				ElementsItem::ErrorData => self.error_data_element.take(),
 			};
 
 			element.map(|element| (element, comma))
@@ -282,6 +294,7 @@ impl Iter<'_> {
 
 			minor_opcode_element: None,
 			major_opcode_element: None,
+			error_data_element: None,
 		}
 	}
 }
@@ -296,6 +309,7 @@ impl IntoIter {
 
 			minor_opcode_element: None,
 			major_opcode_element: None,
+			error_data_element: None,
 		}
 	}
 }
@@ -310,6 +324,7 @@ impl IterMut<'_> {
 
 			minor_opcode_element: None,
 			major_opcode_element: None,
+			error_data_element: None,
 		}
 	}
 }
@@ -324,6 +339,7 @@ impl Pairs<'_> {
 
 			minor_opcode_element: None,
 			major_opcode_element: None,
+			error_data_element: None,
 		}
 	}
 }
@@ -338,6 +354,7 @@ impl IntoPairs {
 
 			minor_opcode_element: None,
 			major_opcode_element: None,
+			error_data_element: None,
 		}
 	}
 }
@@ -352,6 +369,7 @@ impl PairsMut<'_> {
 
 			minor_opcode_element: None,
 			major_opcode_element: None,
+			error_data_element: None,
 		}
 	}
 }
@@ -371,6 +389,7 @@ impl<'a> IntoIterator for &'a Elements {
 
 			minor_opcode_element: self.minor_opcode_element.as_ref(),
 			major_opcode_element: self.major_opcode_element.as_ref(),
+			error_data_element: self.error_data_element.as_ref(),
 		}
 	}
 }
@@ -389,6 +408,7 @@ impl IntoIterator for Elements {
 
 			minor_opcode_element: self.minor_opcode_element,
 			major_opcode_element: self.major_opcode_element,
+			error_data_element: self.error_data_element,
 		}
 	}
 }
@@ -406,6 +426,7 @@ impl<'a> IntoIterator for &'a mut Elements {
 
 			minor_opcode_element: self.minor_opcode_element.as_mut(),
 			major_opcode_element: self.major_opcode_element.as_mut(),
+			error_data_element: self.error_data_element.as_mut(),
 		}
 	}
 }
@@ -579,6 +600,7 @@ impl<'a> Elements {
 
 			minor_opcode_element: self.minor_opcode_element.as_ref(),
 			major_opcode_element: self.major_opcode_element.as_ref(),
+			error_data_element: self.error_data_element.as_ref(),
 		}
 	}
 
@@ -593,6 +615,7 @@ impl<'a> Elements {
 
 			minor_opcode_element: self.minor_opcode_element,
 			major_opcode_element: self.major_opcode_element,
+			error_data_element: self.error_data_element,
 		}
 	}
 
@@ -607,6 +630,7 @@ impl<'a> Elements {
 
 			minor_opcode_element: self.minor_opcode_element.as_mut(),
 			major_opcode_element: self.major_opcode_element.as_mut(),
+			error_data_element: self.error_data_element.as_mut(),
 		}
 	}
 }

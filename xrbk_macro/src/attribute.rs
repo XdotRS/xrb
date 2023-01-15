@@ -82,6 +82,25 @@ pub struct MajorOpcodeAttribute {
 	pub path: Path,
 }
 
+/// An attribute which indicates that a [`Field`] for an [`Error`] represents
+/// the incorrect value which caused the error to be generated.
+///
+/// > **<sup>Syntax</sup>**\
+/// > _ErrorDataAttribute_ :\
+/// > &nbsp;&nbsp; `#` `[` `error_data` `]`
+///
+/// [`Field`]: crate::element::Field
+/// [`Error`]: crate::definition::Error
+pub struct ErrorDataAttribute {
+	/// A hash token: `#`.
+	pub hash_token: Token![#],
+	/// A pair of square brackets (`[` and `]`) surrounding the `path`.
+	pub bracket_token: token::Bracket,
+
+	/// The attribute path: `error_data` for an `ErrorDataAttribute`.
+	pub path: Path,
+}
+
 /// An attribute which indicates that a [`Field`] should not be taken into
 /// consideration when implementing XRBK traits.
 ///
