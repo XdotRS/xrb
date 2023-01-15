@@ -150,7 +150,7 @@ impl ParseWithContext for ParsedAttributes {
 					bracket_token,
 					path,
 				});
-			// If the name is `major_opcode`, parse it as a minor opcode
+			// If the name is `major_opcode`, parse it as a major opcode
 			// attribute.
 			} else if path.is_ident("major_opcode") {
 				if major_opcode_attribute.is_some() {
