@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use proc_macro2::TokenStream as TokenStream2;
-use quote::ToTokens;
+use quote::{format_ident, ToTokens};
 use syn::{
 	braced,
 	bracketed,
@@ -188,10 +188,16 @@ impl ParseWithContext for ParsedAttributes {
 					));
 				}
 
+				let inner_content;
+				let paren_token = parenthesized!(inner_content in content);
+				let hidden_traits = inner_content.parse_terminated(Path::parse)?;
+
 				hide_attribute = Some(HideAttribute {
 					hash_token,
 					bracket_token,
 					path,
+					paren_token,
+					hidden_traits,
 				});
 			// Otherwise, if the name was not `context`, `metabyte`, nor
 			// `sequence`, parse the attribute as a normal attribute.
@@ -207,11 +213,17 @@ impl ParseWithContext for ParsedAttributes {
 			}
 		}
 
-		if let Some(hide_attribute) = &hide_attribute && context_attribute.is_none() {
-			return Err(syn::Error::new(
-				hide_attribute.span(),
-				"hide attributes cannot be used without a context attribute to read the field",
-			));
+		if let Some(hide_attribute) = &hide_attribute
+			&& context_attribute.is_none()
+			&& hide_attribute
+				.hidden_traits
+				.iter()
+				.any(|r#trait| r#trait.is_ident(&format_ident!("Readable")))
+			{
+				return Err(syn::Error::new(
+					hide_attribute.span(),
+					"Cannot hide `Readable` without a context attribute to read the field",
+				));
 		}
 
 		Ok(Self {

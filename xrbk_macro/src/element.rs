@@ -473,6 +473,13 @@ impl Element {
 			false
 		}
 	}
+
+	pub fn is_ignoring_trait(&self, ident: Ident) -> bool {
+		if let Element::Field(field) = self {
+			return field.is_ignoring_trait(ident);
+		}
+		false
+	}
 }
 
 // }}} Field {{{
@@ -601,6 +608,15 @@ impl Field {
 	/// Whether this `Field` has an [`ErrorDataAttribute`].
 	pub const fn is_error_data(&self) -> bool {
 		self.error_data_attribute.is_some()
+	}
+
+	pub fn is_ignoring_trait(&self, ident: Ident) -> bool {
+		let Some(hide) = &self.hide_attribute else {
+			return false;
+		};
+		hide.hidden_traits
+			.iter()
+			.any(|r#trait| r#trait.is_ident(&ident))
 	}
 }
 

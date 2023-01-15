@@ -33,7 +33,7 @@ use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
 extern crate self as xrb;
 
 derive_xrb! {
-	#[derive(Debug, Hash, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	/// An [event] generated when a key is pressed.
 	///
 	/// This [event] is generated for all keys: that includes modifier keys.
@@ -47,6 +47,7 @@ derive_xrb! {
 	/// [`KEY_PRESS`]: crate::mask::EventMask::KEY_PRESS
 	pub struct KeyPress: Event(2) {
 		#[sequence]
+		#[hide(PartialEq)]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///

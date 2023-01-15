@@ -5,7 +5,7 @@
 mod expansion;
 pub mod parsing;
 
-use syn::{token, Path, Token};
+use syn::{punctuated::Punctuated, token, Path, Token};
 
 use crate::Source;
 
@@ -117,6 +117,10 @@ pub struct HideAttribute {
 
 	/// The attribute path: `hide` for a `HideAttribute`.
 	pub path: Path,
+
+	pub paren_token: token::Paren,
+
+	pub hidden_traits: Punctuated<Path, Token![,]>,
 }
 
 /// An attribute which provides the [`ContextualReadable::Context`] for a type
