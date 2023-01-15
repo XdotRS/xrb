@@ -441,6 +441,30 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	/// An [error] generated when access is not allowed for what the [request] is
+	/// trying to do.
+	///
+	/// This [error] is generated for a number of reasons:
+	/// - an attempt is made to grab a key/[button] combination already grabbed by
+	///   another client,
+	/// - an attempt is made to free a [colormap] entry not allocated by the
+	///   client,
+	/// - an attempt is made to free an entry in a [colormap] that was created
+	///   with all entries writable,
+	/// - an attempt is made to store into a read-only or unallocated [colormap]
+	///   entry,
+	/// - an attempt is made to modify the access control list from an external
+	///   host or otherwise unauthorized client,
+	/// - or an attempt is made to [select to receive] an [event] type that only one
+	///   client can select at a time when another client has already selected
+	///   it.
+	///
+	/// [error]: Error
+	/// [request]: crate::message::Request
+	/// [event]: crate::message::Event
+	/// [select to receive]: crate::mask::EventMask
+	/// [button]: crate::Button
+	/// [colormap]: crate::Colormap
 	pub struct Access: Error(10) {
 		#[sequence]
 		/// The [sequence number][sequence] identifying the [request] that was
