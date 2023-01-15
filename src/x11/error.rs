@@ -27,13 +27,10 @@ derive_xrb! {
 	/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 	pub struct Request: Error(1) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[minor_opcode]
@@ -75,13 +72,10 @@ derive_xrb! {
 	/// [error]: Error
 	pub struct Value: Error(2) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -122,13 +116,10 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct Window: Error(3) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -169,13 +160,10 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct Pixmap: Error(4) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -216,13 +204,10 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct Atom: Error(5) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -264,13 +249,10 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct CursorAppearance: Error(6) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -312,13 +294,10 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct Font: Error(7) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -370,13 +349,10 @@ derive_xrb! {
 	/// [graphics context]: crate::GraphicsContext
 	pub struct Match: Error(8) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[minor_opcode]
@@ -409,13 +385,10 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct Drawable: Error(9) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -476,13 +449,10 @@ derive_xrb! {
 	/// [colormap]: crate::Colormap
 	pub struct Access: Error(10) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[minor_opcode]
@@ -512,13 +482,10 @@ derive_xrb! {
 	/// [error]: Error
 	pub struct Alloc: Error(11) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[minor_opcode]
@@ -550,13 +517,10 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct Colormap: Error(12) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -598,13 +562,10 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct GraphicsContext: Error(13) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -644,13 +605,10 @@ derive_xrb! {
 	/// [error]: Error
 	pub struct ResourceIdChoice: Error(14) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -687,13 +645,10 @@ derive_xrb! {
 	/// [font]: crate::Font
 	pub struct Name: Error(15) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[minor_opcode]
@@ -727,13 +682,10 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct Length: Error(16) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[minor_opcode]
@@ -764,13 +716,10 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct Implementation: Error(17) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[minor_opcode]
