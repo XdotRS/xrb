@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+//! Traits defining the format of messages sent via the X11 protocol.
+
 use xrbk::{Readable, Writable, X11Size};
 
 #[doc(notable_trait)]
