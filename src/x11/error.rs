@@ -71,8 +71,21 @@ derive_xrb! {
 		pub bad_value: [u8; 4],
 
 		#[minor_opcode]
+		/// The [minor opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 		pub minor_opcode: u16,
+
 		#[major_opcode]
+		/// The [major opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		pub major_opcode: u8,
 		[_; ..],
 	}
@@ -93,8 +106,21 @@ derive_xrb! {
 		pub bad_resource_id: u32,
 
 		#[minor_opcode]
+		/// The [minor opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 		pub minor_opcode: u16,
+
 		#[major_opcode]
+		/// The [major opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		pub major_opcode: u8,
 		[_; ..],
 	}
@@ -115,8 +141,21 @@ derive_xrb! {
 		pub bad_resource_id: u32,
 
 		#[minor_opcode]
+		/// The [minor opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 		pub minor_opcode: u16,
+
 		#[major_opcode]
+		/// The [major opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		pub major_opcode: u8,
 		[_; ..],
 	}
@@ -137,8 +176,21 @@ derive_xrb! {
 		pub bad_atom_id: u32,
 
 		#[minor_opcode]
+		/// The [minor opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 		pub minor_opcode: u16,
+
 		#[major_opcode]
+		/// The [major opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		pub major_opcode: u8,
 		[_; ..],
 	}
@@ -159,8 +211,21 @@ derive_xrb! {
 		pub bad_resource_id: u32,
 
 		#[minor_opcode]
+		/// The [minor opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 		pub minor_opcode: u16,
+
 		#[major_opcode]
+		/// The [major opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		pub major_opcode: u8,
 		[_; ..],
 	}
@@ -181,8 +246,21 @@ derive_xrb! {
 		pub bad_resource_id: u32,
 
 		#[minor_opcode]
+		/// The [minor opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 		pub minor_opcode: u16,
+
 		#[major_opcode]
+		/// The [major opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		pub major_opcode: u8,
 		[_; ..],
 	}
@@ -200,8 +278,21 @@ derive_xrb! {
 		pub sequence: u16,
 
 		#[minor_opcode]
+		/// The [minor opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 		pub minor_opcode: u16,
+
 		#[major_opcode]
+		/// The [major opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		pub major_opcode: u8,
 		[_; ..],
 	}
@@ -222,8 +313,21 @@ derive_xrb! {
 		pub bad_resource_id: u32,
 
 		#[minor_opcode]
+		/// The [minor opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 		pub minor_opcode: u16,
+
 		#[major_opcode]
+		/// The [major opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		pub major_opcode: u8,
 		[_; ..],
 	}
@@ -241,8 +345,21 @@ derive_xrb! {
 		pub sequence: u16,
 
 		#[minor_opcode]
+		/// The [minor opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 		pub minor_opcode: u16,
+
 		#[major_opcode]
+		/// The [major opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		pub major_opcode: u8,
 		[_; ..],
 	}
@@ -260,8 +377,21 @@ derive_xrb! {
 		pub sequence: u16,
 
 		#[minor_opcode]
+		/// The [minor opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 		pub minor_opcode: u16,
+
 		#[major_opcode]
+		/// The [major opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		pub major_opcode: u8,
 		[_; ..],
 	}
@@ -282,8 +412,21 @@ derive_xrb! {
 		pub bad_resource_id: u32,
 
 		#[minor_opcode]
+		/// The [minor opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 		pub minor_opcode: u16,
+
 		#[major_opcode]
+		/// The [major opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		pub major_opcode: u8,
 		[_; ..],
 	}
@@ -304,8 +447,21 @@ derive_xrb! {
 		pub bad_resource_id: u32,
 
 		#[minor_opcode]
+		/// The [minor opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 		pub minor_opcode: u16,
+
 		#[major_opcode]
+		/// The [major opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		pub major_opcode: u8,
 		[_; ..],
 	}
@@ -326,8 +482,21 @@ derive_xrb! {
 		pub bad_resource_id: u32,
 
 		#[minor_opcode]
+		/// The [minor opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 		pub minor_opcode: u16,
+
 		#[major_opcode]
+		/// The [major opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		pub major_opcode: u8,
 		[_; ..],
 	}
@@ -345,8 +514,21 @@ derive_xrb! {
 		pub sequence: u16,
 
 		#[minor_opcode]
+		/// The [minor opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 		pub minor_opcode: u16,
+
 		#[major_opcode]
+		/// The [major opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		pub major_opcode: u8,
 		[_; ..],
 	}
@@ -364,8 +546,21 @@ derive_xrb! {
 		pub sequence: u16,
 
 		#[minor_opcode]
+		/// The [minor opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 		pub minor_opcode: u16,
+
 		#[major_opcode]
+		/// The [major opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		pub major_opcode: u8,
 		[_; ..],
 	}
@@ -383,8 +578,21 @@ derive_xrb! {
 		pub sequence: u16,
 
 		#[minor_opcode]
+		/// The [minor opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 		pub minor_opcode: u16,
+
 		#[major_opcode]
+		/// The [major opcode] referring to the type of [request] that was sent.
+		///
+		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		pub major_opcode: u8,
 		[_; ..],
 	}
