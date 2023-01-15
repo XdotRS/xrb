@@ -20,7 +20,15 @@ use syn::{
 };
 
 use crate::{
-	attribute::{ContextAttribute, HideAttribute, MetabyteAttribute, SequenceAttribute},
+	attribute::{
+		ContextAttribute,
+		ErrorDataAttribute,
+		HideAttribute,
+		MajorOpcodeAttribute,
+		MetabyteAttribute,
+		MinorOpcodeAttribute,
+		SequenceAttribute,
+	},
 	source::Source,
 };
 
@@ -54,6 +62,24 @@ impl RegularContent {
 	pub const fn sequence_element(&self) -> &Option<Element> {
 		&self.elements.sequence_element
 	}
+
+	/// The [`Element`] contained within this `RegularContent` which has a
+	/// [`MinorOpcodeAttribute`], if there is one.
+	pub const fn minor_opcode_element(&self) -> &Option<Element> {
+		&self.elements.minor_opcode_element
+	}
+
+	/// The [`Element`] contained within this `RegularContent` which has a
+	/// [`MajorOpcodeAttribute`], if there is one.
+	pub const fn major_opcode_element(&self) -> &Option<Element> {
+		&self.elements.major_opcode_element
+	}
+
+	/// The [`Element`] contained within this `RegularContent` which has an
+	/// [`ErrorDataAttribute`], if there is one.
+	pub const fn error_data_element(&self) -> &Option<Element> {
+		&self.elements.error_data_element
+	}
 }
 
 /// > **<sup>Syntax</sup>**\
@@ -85,6 +111,24 @@ impl TupleContent {
 	/// [`SequenceAttribute`], if there is one.
 	pub const fn sequence_element(&self) -> &Option<Element> {
 		&self.elements.sequence_element
+	}
+
+	/// The [`Element`] contained within this `TupleContent` which has a
+	/// [`MinorOpcodeAttribute`], if there is one.
+	pub const fn minor_opcode_element(&self) -> &Option<Element> {
+		&self.elements.minor_opcode_element
+	}
+
+	/// The [`Element`] contained within this `TupleContent` which has a
+	/// [`MajorOpcodeAttribute`], if there is one.
+	pub const fn major_opcode_element(&self) -> &Option<Element> {
+		&self.elements.major_opcode_element
+	}
+
+	/// The [`Element`] contained within this `TupleContent` which has an
+	/// [`ErrorDataAttribute`], if there is one.
+	pub const fn error_data_element(&self) -> &Option<Element> {
+		&self.elements.error_data_element
 	}
 }
 
@@ -140,6 +184,28 @@ impl Content {
 		match self {
 			Self::Regular(content) => content.sequence_element(),
 			Self::Tuple(content) => content.sequence_element(),
+
+			Self::Unit => &None,
+		}
+	}
+
+	/// The [`Element`] contained within this `Content` which has a
+	/// [`MinorOpcodeAttribute`], if there is one.
+	pub const fn minor_opcode_element(&self) -> &Option<Element> {
+		match self {
+			Self::Regular(content) => content.minor_opcode_element(),
+			Self::Tuple(content) => content.minor_opcode_element(),
+
+			Self::Unit => &None,
+		}
+	}
+
+	/// The [`Element`] contained within this `Content` which has a
+	/// [`MajorOpcodeAttribute`], if there is one.
+	pub const fn major_opcode_element(&self) -> &Option<Element> {
+		match self {
+			Self::Regular(content) => content.major_opcode_element(),
+			Self::Tuple(content) => content.major_opcode_element(),
 
 			Self::Unit => &None,
 		}
@@ -209,8 +275,8 @@ impl StructlikeContent {
 		}
 	}
 
-	/// The [`Element`]  contained within this `StructlikeContent` which has a
-	/// [`MetabyteAttribute`], if there is one.
+	/// The [`Element`] contained within this `StructlikeContent` which has a
+	/// [`SequenceAttribute`], if there is one.
 	pub const fn sequence_element(&self) -> &Option<Element> {
 		match self {
 			Self::Regular { content, .. } => content.sequence_element(),
@@ -219,12 +285,50 @@ impl StructlikeContent {
 			Self::Unit { .. } => &None,
 		}
 	}
+
+	/// The [`Element`] contained within this `StructlikeContent` which has a
+	/// [`MinorOpcodeAttribute`], if there is one.
+	pub const fn minor_opcode_element(&self) -> &Option<Element> {
+		match self {
+			Self::Regular { content, .. } => content.minor_opcode_element(),
+			Self::Tuple { content, .. } => content.minor_opcode_element(),
+
+			Self::Unit { .. } => &None,
+		}
+	}
+
+	/// The [`Element`] contained within this `StructlikeContent` which has a
+	/// [`MajorOpcodeAttribute`], if there is one.
+	pub const fn major_opcode_element(&self) -> &Option<Element> {
+		match self {
+			Self::Regular { content, .. } => content.major_opcode_element(),
+			Self::Tuple { content, .. } => content.major_opcode_element(),
+
+			Self::Unit { .. } => &None,
+		}
+	}
+
+	/// The [`Element`] contained within this `StructlikeContent` which has an
+	/// [`ErrorDataAttribute`], if there is one.
+	pub const fn error_data_element(&self) -> &Option<Element> {
+		match self {
+			Self::Regular { content, .. } => content.error_data_element(),
+			Self::Tuple { content, .. } => content.error_data_element(),
+
+			Self::Unit { .. } => &None,
+		}
+	}
 }
 
 enum ElementsItem {
 	Element(Element),
+
 	Metabyte,
 	Sequence,
+
+	MinorOpcode,
+	MajorOpcode,
+	ErrorData,
 }
 
 /// Multiple [`Element`]s.
@@ -244,6 +348,13 @@ pub struct Elements {
 	pub metabyte_element: Option<Element>,
 	/// The [`Element`] which has a [`SequenceAttribute`], if there is one.
 	pub sequence_element: Option<Element>,
+
+	/// The [`Element`] which has a [`MinorOpcodeAttribute`], if there is one.
+	pub minor_opcode_element: Option<Element>,
+	/// The [`Element`] which has a [`MajorOpcodeAttribute`], if there is one.
+	pub major_opcode_element: Option<Element>,
+	/// The [`Element`] which has an [`ErrorDataAttribute`], if t here is one.
+	pub error_data_element: Option<Element>,
 
 	/// Whether there is an [`ArrayUnused`] element with
 	/// [`UnusedContent::Infer`] within these `Elements`.
@@ -298,6 +409,22 @@ pub enum Element {
 }
 
 impl Element {
+	/// Whether this `Element` does not have any custom XRBK macro attributes.
+	///
+	/// Custom XRBK macro attributes include:
+	/// - [`MetabyteAttribute`]
+	/// - [`SequenceAttribute`]
+	/// - [`MinorOpcodeAttribute`]
+	/// - [`MajorOpcodeAttribute`]
+	/// - [`ErrorDataAttribute`]
+	pub const fn is_normal(&self) -> bool {
+		!self.is_metabyte()
+			&& !self.is_sequence()
+			&& !self.is_minor_opcode()
+			&& !self.is_major_opcode()
+			&& !self.is_error_data()
+	}
+
 	/// Whether this `Element` has a [`MetabyteAttribute`].
 	pub const fn is_metabyte(&self) -> bool {
 		match self {
@@ -315,6 +442,33 @@ impl Element {
 	pub const fn is_sequence(&self) -> bool {
 		if let Element::Field(field) = self {
 			field.is_sequence()
+		} else {
+			false
+		}
+	}
+
+	/// Whether this `Element` has a [`MinorOpcodeAttribute`].
+	pub const fn is_minor_opcode(&self) -> bool {
+		if let Element::Field(field) = self {
+			field.is_minor_opcode()
+		} else {
+			false
+		}
+	}
+
+	/// Whether this `Element` has a [`MajorOpcodeAttribute`].
+	pub const fn is_major_opcode(&self) -> bool {
+		if let Element::Field(field) = self {
+			field.is_major_opcode()
+		} else {
+			false
+		}
+	}
+
+	/// Whether this `Element` has an [`ErrorDataAttribute`].
+	pub const fn is_error_data(&self) -> bool {
+		if let Element::Field(field) = self {
+			field.is_error_data()
 		} else {
 			false
 		}
@@ -369,6 +523,24 @@ pub struct Field {
 	///
 	/// See [`SequenceAttribute`] for more information.
 	pub sequence_attribute: Option<SequenceAttribute>,
+	/// A [`MinorOpcodeAttribute`], required for errors but forbidden elsewhere,
+	/// which indicates that this field represents the request that generated an
+	/// error for that error.
+	///
+	/// See [`MinorOpcodeAttribute`] for more information.
+	pub minor_opcode_attribute: Option<MinorOpcodeAttribute>,
+	/// A [`MajorOpcodeAttribute`], required for errors but forbidden elsewhere,
+	/// which indicates that this field represents the request that generated an
+	/// error for that error.
+	///
+	/// See [`MajorOpcodeAttribute`] for more information.
+	pub major_opcode_attribute: Option<MajorOpcodeAttribute>,
+	/// An [`ErrorDataAttribute`], required for errors but forbidden elsewhere,
+	/// which indicates that this field represents the incorrect value that
+	/// caused the error to be generated.
+	///
+	/// See [`ErrorDataAttribute`] for more information.
+	pub error_data_attribute: Option<ErrorDataAttribute>,
 	/// An optional [`HideAttribute`] which indicates that this field should
 	/// not be taken into account when implementing XRBK traits.
 	///
@@ -390,6 +562,22 @@ pub struct Field {
 }
 
 impl Field {
+	/// Whether this `Field` does not have any custom XRBK macro attributes.
+	///
+	/// Custom XRBK macro attributes include:
+	/// - [`MetabyteAttribute`]
+	/// - [`SequenceAttribute`]
+	/// - [`MinorOpcodeAttribute`]
+	/// - [`MajorOpcodeAttribute`]
+	/// - [`ErrorDataAttribute`]
+	pub const fn is_normal(&self) -> bool {
+		!self.is_metabyte()
+			&& !self.is_sequence()
+			&& !self.is_minor_opcode()
+			&& !self.is_major_opcode()
+			&& !self.is_error_data()
+	}
+
 	/// Whether this `Field` has a [`MetabyteAttribute`].
 	pub const fn is_metabyte(&self) -> bool {
 		self.metabyte_attribute.is_some()
@@ -398,6 +586,21 @@ impl Field {
 	/// Whether this `Field` has a [`SequenceAttribute`].
 	pub const fn is_sequence(&self) -> bool {
 		self.sequence_attribute.is_some()
+	}
+
+	/// Whether this `Field` has a [`MinorOpcodeAttribute`].
+	pub const fn is_minor_opcode(&self) -> bool {
+		self.minor_opcode_attribute.is_some()
+	}
+
+	/// Whether this `Field` has a [`MajorOpcodeAttribute`].
+	pub const fn is_major_opcode(&self) -> bool {
+		self.major_opcode_attribute.is_some()
+	}
+
+	/// Whether this `Field` has an [`ErrorDataAttribute`].
+	pub const fn is_error_data(&self) -> bool {
+		self.error_data_attribute.is_some()
 	}
 }
 

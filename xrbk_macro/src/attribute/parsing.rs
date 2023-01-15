@@ -13,7 +13,6 @@ use syn::{
 	spanned::Spanned,
 	AttrStyle,
 	Attribute,
-	Error,
 };
 
 use super::*;
@@ -30,6 +29,12 @@ pub struct ParsedAttributes {
 	pub metabyte_attribute: Option<MetabyteAttribute>,
 	/// A sequence attribute, if one was parsed.
 	pub sequence_attribute: Option<SequenceAttribute>,
+	/// A minor opcode attribute, if one was parsed.
+	pub minor_opcode_attribute: Option<MinorOpcodeAttribute>,
+	/// A major opcode attribute, if one was parsed.
+	pub major_opcode_attribute: Option<MajorOpcodeAttribute>,
+	/// An error data attribute, if one was parsed.
+	pub error_data_attribute: Option<ErrorDataAttribute>,
 	/// A hide attribute, if one was parsed.
 	pub hide_attribute: Option<HideAttribute>,
 }
@@ -66,6 +71,9 @@ impl ParseWithContext for ParsedAttributes {
 		let mut context_attribute = None;
 		let mut metabyte_attribute = None;
 		let mut sequence_attribute = None;
+		let mut minor_opcode_attribute = None;
+		let mut major_opcode_attribute = None;
+		let mut error_data_attribute = None;
 		let mut hide_attribute = None;
 
 		// While there are still attributes remaining...
@@ -83,7 +91,7 @@ impl ParseWithContext for ParsedAttributes {
 			if path.is_ident("context") {
 				// If a context attribute has already been parsed, generate an error.
 				if context_attribute.is_some() {
-					return Err(Error::new(
+					return Err(syn::Error::new(
 						path.span(),
 						"no more than one context attribute is allowed per element",
 					));
@@ -101,7 +109,7 @@ impl ParseWithContext for ParsedAttributes {
 			} else if path.is_ident("metabyte") {
 				// If a metabyte attribute has already been parsed, generate an error.
 				if metabyte_attribute.is_some() {
-					return Err(Error::new(
+					return Err(syn::Error::new(
 						path.span(),
 						"no more than one metabyte attribute is allowed per element",
 					));
@@ -116,7 +124,7 @@ impl ParseWithContext for ParsedAttributes {
 			} else if path.is_ident("sequence") {
 				// If a sequence attribute has already been parsed, generate an error.
 				if sequence_attribute.is_some() {
-					return Err(Error::new(
+					return Err(syn::Error::new(
 						path.span(),
 						"no more than one sequence attribute is allowed per element",
 					));
@@ -127,10 +135,54 @@ impl ParseWithContext for ParsedAttributes {
 					bracket_token,
 					path,
 				});
+			// If the name is `minor_opcode`, parse it as a minor opcode
+			// attribute.
+			} else if path.is_ident("minor_opcode") {
+				if minor_opcode_attribute.is_some() {
+					return Err(syn::Error::new(
+						path.span(),
+						"no more than one minor opcode attribute is allowed per element",
+					));
+				}
+
+				minor_opcode_attribute = Some(MinorOpcodeAttribute {
+					hash_token,
+					bracket_token,
+					path,
+				});
+			// If the name is `major_opcode`, parse it as a major opcode
+			// attribute.
+			} else if path.is_ident("major_opcode") {
+				if major_opcode_attribute.is_some() {
+					return Err(syn::Error::new(
+						path.span(),
+						"no more than one major opcode attribute is allowed per element",
+					));
+				}
+
+				major_opcode_attribute = Some(MajorOpcodeAttribute {
+					hash_token,
+					bracket_token,
+					path,
+				});
+			// If the name is `error_data`, parse it as an error data attribute.
+			} else if path.is_ident("error_data") {
+				if error_data_attribute.is_some() {
+					return Err(syn::Error::new(
+						path.span(),
+						"no more than one error data attribute is allowed per element",
+					));
+				}
+
+				error_data_attribute = Some(ErrorDataAttribute {
+					hash_token,
+					bracket_token,
+					path,
+				});
 			// If the name is `hide`, parse it as a hide attribute.
 			} else if path.is_ident("hide") {
 				if hide_attribute.is_some() {
-					return Err(Error::new(
+					return Err(syn::Error::new(
 						path.span(),
 						"no more than one hide attribute is allowed per element",
 					));
@@ -156,7 +208,7 @@ impl ParseWithContext for ParsedAttributes {
 		}
 
 		if let Some(hide_attribute) = &hide_attribute && context_attribute.is_none() {
-			return Err(Error::new(
+			return Err(syn::Error::new(
 				hide_attribute.span(),
 				"hide attributes cannot be used without a context attribute to read the field",
 			));
@@ -168,6 +220,9 @@ impl ParseWithContext for ParsedAttributes {
 			context_attribute,
 			metabyte_attribute,
 			sequence_attribute,
+			minor_opcode_attribute,
+			major_opcode_attribute,
+			error_data_attribute,
 			hide_attribute,
 		})
 	}
