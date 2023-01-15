@@ -62,8 +62,8 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
-	/// A numerical value contained in the [request] falls outside of the range
-	/// of accepted values.
+	/// An [error] generated when a numerical value contained in the [request]
+	/// falls outside of the range of accepted values.
 	///
 	/// This [error] is commonly generated for enums, because any value which is
 	/// not one of the enum discriminants is invalid.
@@ -109,8 +109,10 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
-	/// The [`Window`] ID used in the [request] does not refer to a defined [window].
+	/// An [error] generated when the [`Window`] ID used in the [request] does
+	/// not refer to a defined [window].
 	///
+	/// [error]: Error
 	/// [`Window`]: crate::Window
 	/// [window]: crate::Window
 	/// [request]: crate::message::Request
@@ -153,8 +155,10 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
-	/// The [`Pixmap`] ID used in the [request] does not refer to a defined [pixmap].
+	/// An [error] generated when the [`Pixmap`] ID used in the [request] does
+	/// not refer to a defined [pixmap].
 	///
+	/// [error]: Error
 	/// [`Pixmap`]: crate::Pixmap
 	/// [pixmap]: crate::Pixmap
 	/// [request]: crate::message::Request
@@ -197,8 +201,10 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
-	/// The [`Atom`] ID used in the [request] does not refer to a defined [atom].
+	/// An [error] generated when the [`Atom`] ID used in the [request] does
+	/// not refer to a defined [atom].
 	///
+	/// [error]: Error
 	/// [`Atom`]: crate::Atom
 	/// [atom]: crate::Atom
 	/// [request]: crate::message::Request
@@ -241,9 +247,10 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
-	/// The [`CursorAppearance`] ID used in the [request] does not refer to a
-	/// defined [cursor appearance].
+	/// An [error] generated when the [`CursorAppearance`] ID used in the
+	/// [request] does not refer to a defined [cursor appearance].
 	///
+	/// [error]: Error
 	/// [`CursorAppearance`]: crate::CursorAppearance
 	/// [cursor appearance]: crate::CursorAppearance
 	/// [request]: crate::message::Request
@@ -287,8 +294,10 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
-	/// The [`Font`] ID used in the [request] does not refer to a defined [font].
+	/// An [error] generated when the [`Font`] ID used in the [request] does
+	/// not refer to a defined [font].
 	///
+	/// [error]: Error
 	/// [`Font`]: crate::Font
 	/// [font]: crate::Font
 	/// [request]: crate::message::Request
@@ -376,9 +385,10 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
-	/// The [`Drawable`] ID used in the [request] does not refer to a defined
-	/// [window] or [pixmap].
+	/// An [error] generated when the [`Drawable`] ID used in the [request]
+	/// does not refer to a defined [window] or [pixmap].
 	///
+	/// [error]: Error
 	/// [`Drawable`]: crate::Drawable
 	/// [window]: crate::Window
 	/// [pixmap]: crate::Pixmap
@@ -509,9 +519,10 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
-	/// The [`Colormap`] ID used in the [request] does not refer to a defined
-	/// [colormap].
+	/// An [error] generated when the [`Colormap`] ID used in the [request]
+	/// does not refer to a defined [colormap].
 	///
+	/// [error]: Error
 	/// [`Colormap`]: crate::Colormap
 	/// [colormap]: crate::Colormap
 	/// [request]: crate::message::Request
@@ -554,9 +565,10 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
-	/// The [`GraphicsContext`] ID used in the [request] does not refer to a
-	/// defined [graphics context].
+	/// An [error] generated when the [`GraphicsContext`] ID used in the [request]
+	/// does not refer to a defined [graphics context].
 	///
+	/// [error]: Error
 	/// [`GraphicsContext`]: crate::GraphicsContext
 	/// [graphics context]: crate::GraphicsContext
 	/// [request]: crate::message::Request
