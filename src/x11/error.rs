@@ -56,6 +56,14 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	/// A numerical value contained in the [request] falls outside of the range
+	/// of accepted values.
+	///
+	/// This [error] is commonly generated for enums, because any value which is
+	/// not one of the enum discriminants is invalid.
+	///
+	/// [request]: crate::message::Request
+	/// [error]: Error
 	pub struct Value: Error(2) {
 		#[sequence]
 		/// The [sequence number][sequence] identifying the [request] that was
@@ -68,6 +76,13 @@ derive_xrb! {
 		pub sequence: u16,
 
 		#[error_data]
+		/// The numerical value which fell outside of the accepted ranges.
+		///
+		/// This is represented as four bytes instead of a `u32` value because
+		/// it is not specified in the X11 protocol that this value is one
+		/// `u32` value. Encoding it as such if it wasn't meant to be could
+		/// cause issues with byte-swapping, where the bytes of a value would
+		/// be swapped to translate it to a `u32` value on the target platform.
 		pub bad_value: [u8; 4],
 
 		#[minor_opcode]
