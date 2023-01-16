@@ -474,6 +474,8 @@ impl Element {
 		}
 	}
 
+	/// Whether this `Element` has an `ignore` attribute that contains the trait specified by
+	/// `ident`.
 	pub fn is_ignoring_trait(&self, ident: Ident) -> bool {
 		if let Element::Field(field) = self {
 			return field.is_ignoring_trait(ident);
@@ -500,7 +502,7 @@ impl Element {
 /// >
 /// > _FieldAttribute_ :\
 /// > &nbsp;&nbsp; [_OuterAttribute_] | [_ContextAttribute_] |
-/// > [_MetabyteAttribute_] | [_SequenceAttribute_]
+/// > [_MetabyteAttribute_] | [_SequenceAttribute_] | [_HideAttribute_]
 /// >
 /// > [_Visibility_]: https://doc.rust-lang.org/reference/visibility-and-privacy.html
 /// > [IDENTIFIER]: https://doc.rust-lang.org/reference/identifiers.html
@@ -510,6 +512,7 @@ impl Element {
 /// > [_ContextAttribute_]: ContextAttribute
 /// > [_MetabyteAttribute_]: MetabyteAttribute
 /// > [_SequenceAttribute_]: SequenceAttribute
+/// > [_HideAttribute_]: HideAttribute
 pub struct Field {
 	/// Attributes associated with the `Field`.
 	pub attributes: Vec<Attribute>,
@@ -610,6 +613,8 @@ impl Field {
 		self.error_data_attribute.is_some()
 	}
 
+	/// Whether this `Element` has an `ignore` attribute that contains the trait specified by
+	/// `ident`.
 	pub fn is_ignoring_trait(&self, ident: Ident) -> bool {
 		let Some(hide) = &self.hide_attribute else {
 			return false;

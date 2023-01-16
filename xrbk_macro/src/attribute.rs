@@ -102,11 +102,24 @@ pub struct ErrorDataAttribute {
 }
 
 /// An attribute which indicates that a [`Field`] should not be taken into
-/// consideration when implementing XRBK traits.
+/// consideration when implementing traits.
 ///
 /// > **<sup>Syntax</sup>**\
 /// > _HideAttribute_ :\
-/// > &nbsp;&nbsp; `#` `[` `hide` `]`
+/// > &nbsp;&nbsp; `#` `[` `hide` `(` _HiddenTraits_ `)` `]`
+/// >
+/// > _HiddenTraits_ :\
+/// > &nbsp;&nbsp; _HiddenTrait_[^hidden-traits] ( `,` _HiddenTrait_[^hidden-traits] )<sup>\*</sup>
+/// >
+/// > _HiddenTrait_ :\
+/// > &nbsp;&nbsp; &nbsp;&nbsp; `Readable` \
+/// > &nbsp;&nbsp; | `Writable` \
+/// > &nbsp;&nbsp; | `X11Size` \
+/// > &nbsp;&nbsp; | `PartialEq` \
+/// > &nbsp;&nbsp; | `Hash` \
+/// >
+/// > [^hidden-traits]: *HideAttribute*s may only specify traits listed in *HiddenTraits*, any
+/// > other traits will have no effects.
 ///
 /// [`Field`]: crate::element::Field
 pub struct HideAttribute {
@@ -118,8 +131,11 @@ pub struct HideAttribute {
 	/// The attribute path: `hide` for a `HideAttribute`.
 	pub path: Path,
 
+	/// A pair of square brackets (`(` and `)`) surrounding the `hidden_traits`.
 	pub paren_token: token::Paren,
 
+	/// A list of traits which will ingore this field on their implementations.
+	/// It uses the same style has the derive macro.
 	pub hidden_traits: Punctuated<Path, Token![,]>,
 }
 

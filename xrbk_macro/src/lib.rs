@@ -303,14 +303,16 @@ pub fn derive_constant_x11_size(item: TokenStream) -> TokenStream {
 /// > &nbsp;&nbsp; ( [_OuterAttribute_]\
 /// > &nbsp;&nbsp; | _ContextAttribute_[^attr-once]\
 /// > &nbsp;&nbsp; | _MetabyteAttribute_[^attr-once]\
-/// > &nbsp;&nbsp; | _SequenceAttribute_[^attr-once][^sequence] )<sup>\*</sup>\
+/// > &nbsp;&nbsp; | _SequenceAttribute_[^attr-once][^sequence]\
+/// > &nbsp;&nbsp; | _HideAttribute_[^attr-once] )<sup>\*</sup>\
 /// > &nbsp;&nbsp; [_Visibility_]<sup>?</sup> [IDENTIFIER] `:` [_Type_]
 /// >
 /// > _UnnamedField_ :\
 /// > &nbsp;&nbsp; ( [_OuterAttribute_]\
 /// > &nbsp;&nbsp; | _ContextAttribute_[^attr-once]\
 /// > &nbsp;&nbsp; | _MetabyteAttribute_[^attr-once]\
-/// > &nbsp;&nbsp; | _SequenceAttribute_[^attr-once][^sequence] )<sup>\*</sup>\
+/// > &nbsp;&nbsp; | _SequenceAttribute_[^attr-once][^sequence]\
+/// > &nbsp;&nbsp; | _HideAttribute_[^attr-once] )<sup>\*</sup>\
 /// > &nbsp;&nbsp; [_Visibility_]<sup>?</sup> [_Type_]
 /// >
 /// > _LetElement_ :\
@@ -348,6 +350,22 @@ pub fn derive_constant_x11_size(item: TokenStream) -> TokenStream {
 /// >
 /// > _SequenceAttribute_ :\
 /// > &nbsp;&nbsp; `#` `[` `sequence` `]`
+/// >
+/// > _HideAttribute_ :\
+/// > &nbsp;&nbsp; `#` `[` `hide` `(` _HiddenTraits_ `)` `]`
+/// >
+/// > _HiddenTraits_ :\
+/// > &nbsp;&nbsp; _HiddenTrait_[^hidden-traits] ( `,` _HiddenTrait_[^hidden-traits] )<sup>\*</sup>
+/// >
+/// > _HiddenTrait_ :\
+/// > &nbsp;&nbsp; &nbsp;&nbsp; `Readable` \
+/// > &nbsp;&nbsp; | `Writable` \
+/// > &nbsp;&nbsp; | `X11Size` \
+/// > &nbsp;&nbsp; | `PartialEq` \
+/// > &nbsp;&nbsp; | `Hash` \
+/// >
+/// > [^hidden-traits]: *HideAttribute*s may only specify traits listed in *HiddenTraits*, any
+/// > other traits will have no effects.
 /// >
 /// > _Source_ :\
 /// > &nbsp;&nbsp; ( _SourceArgs_ `=>` )<sup>?</sup> [_Expression_]
