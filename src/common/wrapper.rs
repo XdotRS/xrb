@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use crate::{Timestamp, Window};
-use xrbk::{ConstantX11Size, Wrap};
+use xrbk::Wrap;
 use xrbk_macro::Wrapper;
 
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, Wrapper)]

@@ -382,6 +382,26 @@ derive_xrb! {
 	impl Wrap for WindowClass {
 		type Integer = u16;
 	}
+
+	impl From<u16> for WindowClass {
+		fn from(val: u16) -> Self {
+			match val {
+				val if val == 1 => Self::InputOutput,
+				val if val == 2 => Self::InputOnly,
+
+				val => panic!("unexpected discriminant - expected 1 or 2, found {val}"),
+			}
+		}
+	}
+
+	impl From<WindowClass> for u16 {
+		fn from(class: WindowClass) -> Self {
+			match class {
+				WindowClass::InputOutput => 1,
+				WindowClass::InputOnly => 2,
+			}
+		}
+	}
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
