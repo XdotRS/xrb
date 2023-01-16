@@ -40,9 +40,7 @@ impl Element {
 	pub fn read_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		match self {
 			Self::Field(field) => {
-				if !field.is_ignoring_trait("Readable")
-					|| field.context_attribute.is_some()
-				{
+				if !field.is_ignoring_trait("Readable") || field.context_attribute.is_some() {
 					field.read_tokens(tokens)
 				}
 			},

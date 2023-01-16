@@ -618,7 +618,8 @@ impl Field {
 	/// `trait`.
 	pub fn is_ignoring_trait(&self, r#trait: &str) -> bool {
 		if let Some(hide_attribute) = &self.hide_attribute {
-			hide_attribute.hidden_traits
+			hide_attribute
+				.hidden_traits
 				.iter()
 				.any(|path| path.is_ident(r#trait))
 		} else {
