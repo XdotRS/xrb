@@ -12,7 +12,7 @@ impl Element {
 	pub fn write_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		match self {
 			Self::Field(field) => {
-				if !field.is_ignoring_trait(format_ident!("Writable")) {
+				if !field.is_ignoring_trait("Writable") {
 					field.write_tokens(tokens)
 				}
 			},
@@ -26,7 +26,7 @@ impl Element {
 	pub fn x11_size_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		match self {
 			Self::Field(field) => {
-				if !field.is_ignoring_trait(format_ident!("X11Size")) {
+				if !field.is_ignoring_trait("X11Size") {
 					field.x11_size_tokens(tokens)
 				}
 			},
@@ -40,7 +40,7 @@ impl Element {
 	pub fn read_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		match self {
 			Self::Field(field) => {
-				if !field.is_ignoring_trait(format_ident!("Readable"))
+				if !field.is_ignoring_trait("Readable")
 					|| field.context_attribute.is_some()
 				{
 					field.read_tokens(tokens)
@@ -56,7 +56,7 @@ impl Element {
 	pub fn add_x11_size_tokens(&self, tokens: &mut TokenStream2) {
 		match self {
 			Self::Field(field) => {
-				if !field.is_ignoring_trait(format_ident!("X11Size")) {
+				if !field.is_ignoring_trait("X11Size") {
 					field.add_x11_size_tokens(tokens)
 				}
 			},
@@ -69,7 +69,7 @@ impl Element {
 
 	pub fn partial_eq_tokens(&self, tokens: &mut TokenStream2) {
 		if let Self::Field(field) = self {
-			if !field.is_ignoring_trait(format_ident!("PartialEq")) {
+			if !field.is_ignoring_trait("PartialEq") {
 				field.add_partial_eq_tokens(tokens)
 			}
 		}
@@ -77,7 +77,7 @@ impl Element {
 
 	pub fn hash_tokens(&self, tokens: &mut TokenStream2) {
 		if let Self::Field(field) = self {
-			if !field.is_ignoring_trait(format_ident!("Hash")) {
+			if !field.is_ignoring_trait("Hash") {
 				field.add_hash_tokens(tokens)
 			}
 		}

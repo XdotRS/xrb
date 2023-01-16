@@ -474,13 +474,14 @@ impl Element {
 		}
 	}
 
-	/// Whether this `Element` has an `ignore` attribute that contains the trait
-	/// specified by `ident`.
-	pub fn is_ignoring_trait(&self, ident: Ident) -> bool {
+	/// Whether this `Element` has a [`HideAttribute`] specifying the given
+	/// `trait`.
+	pub fn is_ignoring_trait(&self, r#trait: &str) -> bool {
 		if let Element::Field(field) = self {
-			return field.is_ignoring_trait(ident);
+			field.is_ignoring_trait(r#trait)
+		} else {
+			false
 		}
-		false
 	}
 }
 
@@ -613,15 +614,16 @@ impl Field {
 		self.error_data_attribute.is_some()
 	}
 
-	/// Whether this `Element` has an `ignore` attribute that contains the trait
-	/// specified by `ident`.
-	pub fn is_ignoring_trait(&self, ident: Ident) -> bool {
-		let Some(hide) = &self.hide_attribute else {
-			return false;
-		};
-		hide.hidden_traits
-			.iter()
-			.any(|r#trait| r#trait.is_ident(&ident))
+	/// Whether this `Field` has a [`HideAttribute`] specifying the given
+	/// `trait`.
+	pub fn is_ignoring_trait(&self, r#trait: &str) -> bool {
+		if let Some(hide_attribute) = &self.hide_attribute {
+			hide_attribute.hidden_traits
+				.iter()
+				.any(|path| path.is_ident(r#trait))
+		} else {
+			false
+		}
 	}
 }
 
