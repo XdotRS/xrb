@@ -27,10 +27,6 @@ pub enum ParentCopyable<T> where T: Wrap {
 	Other(T),
 }
 
-impl<T: Wrap> ConstantX11Size for ParentCopyable<T> {
-	const X11_SIZE: usize = T::X11_SIZE;
-}
-
 #[derive(Wrapper)]
 /// Values which may be the same as the 'parent' as long as the parent has the
 /// same `depth`.
@@ -85,10 +81,6 @@ pub enum CurrentableTime {
 	Other(Timestamp),
 }
 
-impl ConstantX11Size for CurrentableTime {
-	const X11_SIZE: usize = Timestamp::X11_SIZE;
-}
-
 #[derive(Wrapper)]
 /// The `destination` of a [`SendEvent` request].
 ///
@@ -109,10 +101,6 @@ pub enum DestinationWindow {
 	/// [window]: Window
 	#[wrapper(fallback)]
 	Other(Window),
-}
-
-impl ConstantX11Size for DestinationWindow {
-	const X11_SIZE: usize = Window::X11_SIZE;
 }
 
 #[derive(Wrapper)]
@@ -138,10 +126,6 @@ pub enum WindowFocus {
 	Other(Window),
 }
 
-impl ConstantX11Size for WindowFocus {
-	const X11_SIZE: usize = Window::X11_SIZE;
-}
-
 #[derive(Wrapper)]
 /// The target client(s) of a [`KillClient` request].
 ///
@@ -156,8 +140,4 @@ pub enum KillClientTarget {
 	#[wrapper(fallback)]
 	/// Kill the client which created the resource specified by this resource ID.
 	Other(u32),
-}
-
-impl ConstantX11Size for KillClientTarget {
-	const X11_SIZE: usize = u32::X11_SIZE;
 }
