@@ -7,7 +7,7 @@ extern crate self as xrb;
 use bytes::Buf;
 use derive_more::{From, Into};
 use xrbk::{ConstantX11Size, ReadResult, ReadableWithContext, Wrap};
-use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Writable, X11Size};
+use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Writable, X11Size, Wrap};
 
 pub mod atom;
 pub mod mask;
@@ -61,6 +61,7 @@ pub struct Color(
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Drawable(pub(crate) u32);
 
@@ -96,6 +97,7 @@ impl From<Pixmap> for Drawable {
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Window(pub(crate) u32);
 
@@ -124,6 +126,7 @@ impl From<Drawable> for Window {
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Pixmap(pub(crate) u32);
 
@@ -152,6 +155,7 @@ impl From<Drawable> for Pixmap {
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct CursorAppearance(pub(crate) u32);
 
@@ -173,6 +177,7 @@ pub struct CursorAppearance(pub(crate) u32);
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Fontable(pub(crate) u32);
 
@@ -208,6 +213,7 @@ impl From<GraphicsContext> for Fontable {
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Font(pub(crate) u32);
 
@@ -242,6 +248,7 @@ impl From<Fontable> for Font {
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct GraphicsContext(pub(crate) u32);
 
@@ -270,6 +277,7 @@ impl From<Fontable> for GraphicsContext {
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Colormap(pub(crate) u32);
 
@@ -294,6 +302,7 @@ pub struct Colormap(pub(crate) u32);
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Timestamp(pub(crate) u32);
 
@@ -314,6 +323,7 @@ pub struct Timestamp(pub(crate) u32);
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct VisualId(pub(crate) u32);
 
@@ -414,6 +424,7 @@ pub enum StackMode {
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Keysym(pub(crate) u32);
 
@@ -434,6 +445,7 @@ pub struct Keysym(pub(crate) u32);
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Keycode(pub u8);
 
@@ -454,6 +466,7 @@ pub struct Keycode(pub u8);
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Button(pub(crate) u8);
 
@@ -474,6 +487,7 @@ pub struct Button(pub(crate) u8);
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Char8(pub(crate) u8);
 
