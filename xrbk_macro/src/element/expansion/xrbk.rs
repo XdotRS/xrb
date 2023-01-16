@@ -77,6 +77,17 @@ impl Element {
 			_ => (),
 		}
 	}
+
+	pub fn hash_tokens(&self, tokens: &mut TokenStream2) {
+		match self {
+			Self::Field(field) => {
+				if !field.is_ignoring_trait(format_ident!("Hash")) {
+					field.add_hash_tokens(tokens)
+				}
+			},
+			_ => (),
+		}
+	}
 }
 
 // Field {{{
@@ -165,6 +176,16 @@ impl Field {
 
 			quote_spanned!(self.span()=>
 				&& self.#ident == other.#ident
+			)
+		});
+	}
+
+	pub fn add_hash_tokens(&self, tokens: &mut TokenStream2) {
+		tokens.append_tokens({
+			let ident = &self.id;
+
+			quote_spanned!(self.span()=>
+				::core::hash::Hash::hash(&self.#ident, state);
 			)
 		});
 	}

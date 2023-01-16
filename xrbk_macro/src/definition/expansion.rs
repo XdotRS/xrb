@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 mod message_trait;
-mod partial_eq;
+mod derives;
 mod readable;
 mod writable;
 mod x11_size;
@@ -46,6 +46,10 @@ impl ToTokens for Definition {
 				for path in &attrs.derive_partial_eqs {
 					r#struct.impl_partial_eq(tokens, path);
 				}
+
+				for path in &attrs.derive_hashes {
+					r#struct.impl_hash(tokens, path);
+				}
 			},
 
 			Self::Enum(r#enum) => {
@@ -67,6 +71,10 @@ impl ToTokens for Definition {
 
 				for path in &attrs.derive_partial_eqs {
 					r#enum.impl_partial_eq(tokens, path);
+				}
+
+				for path in &attrs.derive_hashes {
+					r#enum.impl_hash(tokens, path);
 				}
 			},
 
@@ -91,6 +99,10 @@ impl ToTokens for Definition {
 				for path in &attrs.derive_partial_eqs {
 					request.impl_partial_eq(tokens, path);
 				}
+
+				for path in &attrs.derive_hashes {
+					request.impl_hash(tokens, path);
+				}
 			},
 
 			Self::Reply(reply) => {
@@ -114,6 +126,10 @@ impl ToTokens for Definition {
 				for path in &attrs.derive_partial_eqs {
 					reply.impl_partial_eq(tokens, path);
 				}
+
+				for path in &attrs.derive_hashes {
+					reply.impl_hash(tokens, path);
+				}
 			},
 
 			Self::Event(event) => {
@@ -136,6 +152,10 @@ impl ToTokens for Definition {
 
 				for path in &attrs.derive_partial_eqs {
 					event.impl_partial_eq(tokens, path);
+				}
+
+				for path in &attrs.derive_hashes {
+					event.impl_hash(tokens, path);
 				}
 			},
 

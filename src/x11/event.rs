@@ -47,7 +47,7 @@ derive_xrb! {
 	/// [`KEY_PRESS`]: crate::mask::EventMask::KEY_PRESS
 	pub struct KeyPress: Event(2) {
 		#[sequence]
-		#[hide(PartialEq)]
+		#[hide(PartialEq, Hash)]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
