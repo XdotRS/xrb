@@ -61,9 +61,9 @@ pub mod message;
 
 /// Implementation of the core X11 protocol.
 pub mod x11 {
+	pub mod error;
 	pub mod event;
 	pub mod request;
-	pub mod error;
 }
 
 pub use common::*;
