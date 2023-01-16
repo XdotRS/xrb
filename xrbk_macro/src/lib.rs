@@ -355,7 +355,8 @@ pub fn derive_constant_x11_size(item: TokenStream) -> TokenStream {
 /// > &nbsp;&nbsp; `#` `[` `hide` `(` _HiddenTraits_ `)` `]`
 /// >
 /// > _HiddenTraits_ :\
-/// > &nbsp;&nbsp; _HiddenTrait_[^hidden-traits] ( `,` _HiddenTrait_[^hidden-traits] )<sup>\*</sup>
+/// > &nbsp;&nbsp; _HiddenTrait_[^hidden-traits] ( `,`
+/// > _HiddenTrait_[^hidden-traits] )<sup>\*</sup>
 /// >
 /// > _HiddenTrait_ :\
 /// > &nbsp;&nbsp; &nbsp;&nbsp; `Readable` \
@@ -364,7 +365,8 @@ pub fn derive_constant_x11_size(item: TokenStream) -> TokenStream {
 /// > &nbsp;&nbsp; | `PartialEq` \
 /// > &nbsp;&nbsp; | `Hash` \
 /// >
-/// > [^hidden-traits]: *HideAttribute*s may only specify traits listed in *HiddenTraits*, any
+/// > [^hidden-traits]: *HideAttribute*s may only specify traits listed in
+/// > *HiddenTraits*, any
 /// > other traits will have no effects.
 /// >
 /// > _Source_ :\
