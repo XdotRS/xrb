@@ -197,9 +197,9 @@ derive_xrb! {
 		let reason_len: u8 = reason => reason.len() as u8,
 
 		/// The major version of the X11 protocol used by the X server.
-		protocol_major_version: u16,
+		pub protocol_major_version: u16,
 		/// The minor version of the X11 protocol used by the X server.
-		protocol_minor_version: u16,
+		pub protocol_minor_version: u16,
 
 		// Length in 4-byte units of "additional data".
 		#[allow(clippy::cast_possible_truncation)]
@@ -210,7 +210,7 @@ derive_xrb! {
 
 		/// The reason for the failure.
 		#[context(reason_len => *reason_len as usize)]
-		reason: String8,
+		pub reason: String8,
 		[_; ..],
 	}
 
@@ -219,9 +219,9 @@ derive_xrb! {
 	pub struct ConnectionSuccess {
 		_,
 		/// The major version of the X11 protocol used by the X server.
-		protocol_major_version: u16,
+		pub protocol_major_version: u16,
 		/// The minor version of the X11 protocol used by the X server.
-		protocol_minor_version: u16,
+		pub protocol_minor_version: u16,
 
 		#[allow(clippy::cast_possible_truncation)]
 		let additional_data_len: u16 = pixmap_formats, vendor, roots => {
@@ -231,40 +231,40 @@ derive_xrb! {
 			(len / 4) as u16
 		},
 
-		release_number: u32,
+		pub release_number: u32,
 
-		resource_id_base: u32,
-		resource_id_mask: u32,
+		pub resource_id_base: u32,
+		pub resource_id_mask: u32,
 
-		motion_buffer_size: u32,
+		pub motion_buffer_size: u32,
 
 		#[allow(clippy::cast_possible_truncation)]
 		let vendor_len: u16 = vendor => vendor.len() as u16,
 
-		maximum_request_length: u16,
+		pub maximum_request_length: u16,
 
 		#[allow(clippy::cast_possible_truncation)]
 		let roots_len: u8 = roots => roots.len() as u8,
 		#[allow(clippy::cast_possible_truncation)]
 		let pixmap_formats_len: u8 = pixmap_formats => pixmap_formats.len() as u8,
 
-		image_byte_order: ImageEndianness,
-		bitmap_format_bit_order: ImageEndianness,
-		bitmap_format_scanline_unit: u8,
-		bitmap_format_scanline_pad: u8,
+		pub image_byte_order: ImageEndianness,
+		pub bitmap_format_bit_order: ImageEndianness,
+		pub bitmap_format_scanline_unit: u8,
+		pub bitmap_format_scanline_pad: u8,
 
-		min_keycode: Keycode,
-		max_keycode: Keycode,
+		pub min_keycode: Keycode,
+		pub max_keycode: Keycode,
 		[_; 4],
 
 		#[context(vendor_len => *vendor_len as usize)]
-		vendor: String8,
+		pub vendor: String8,
 		[_; ..],
 
 		#[context(pixmap_formats_len => *pixmap_formats_len as usize)]
-		pixmap_formats: Vec<Format>,
+		pub pixmap_formats: Vec<Format>,
 		#[context(roots_len => *roots_len as usize)]
-		roots: Vec<Screen>,
+		pub roots: Vec<Screen>,
 	}
 
 	#[derive(Debug, X11Size, Readable, Writable)]
@@ -283,7 +283,7 @@ derive_xrb! {
 			// FIXME: but... how do you separate the reason and padding?
 			(*additional_data_len as usize) * 4
 		})]
-		reason: String8,
+		pub reason: String8,
 		[_; ..],
 	}
 }
