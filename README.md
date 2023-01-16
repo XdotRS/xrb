@@ -21,19 +21,18 @@
 </p>
 
 X Rust Bindings, better known as XRB, is a [Rust crate] implementing data structures
-(and their serialization/deserialization) for the X Window System protocol version
-11. It provides a foundation upon which more opinionated APIs and connection
-handling may be built in order to create an 'X library'.
-
-XRB serves as a foundation for [X.RS (WIP)][X.RS] in particular.
+(and their serialization/deserialization) for the X Window System protocol v11.
+It provides a foundation upon which more opinionated APIs and connection
+handling may be built in order to create an 'X library'. In particular, XRB will
+serve as the foundation for [X.RS] in the future.
 
 [Rust crate]: https://crates.io/crates/xrb/
 [X.RS]: https://github.com/XdotRS/xrs/
 
 > ### Disclaimer
 > XRB is not an X library: it cannot be used in an application binary without
-> extensive connection logic, nor is it meant to be. Instead, you can use an X
-> library built on XRB such as [X.RS (WIP)][X.RS].
+> extensive connection logic, nor is it meant to be. Instead, you will be able
+> to use [X.RS] in the future - an X library built on XRB.
 
 ## Contributing
 Contributions are welcome and encouraged for XRB! Please see [CONTRIBUTING] for more information :)
