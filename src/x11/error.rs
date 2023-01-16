@@ -27,13 +27,10 @@ derive_xrb! {
 	/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 	pub struct Request: Error(1) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[minor_opcode]
@@ -65,8 +62,8 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
-	/// A numerical value contained in the [request] falls outside of the range
-	/// of accepted values.
+	/// An [error] generated when a numerical value contained in the [request]
+	/// falls outside of the range of accepted values.
 	///
 	/// This [error] is commonly generated for enums, because any value which is
 	/// not one of the enum discriminants is invalid.
@@ -75,13 +72,10 @@ derive_xrb! {
 	/// [error]: Error
 	pub struct Value: Error(2) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -115,20 +109,19 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
-	/// The [`Window`] ID used in the [request] does not refer to a defined [window].
+	/// An [error] generated when the [`Window`] ID used in the [request] does
+	/// not refer to a defined [window].
 	///
+	/// [error]: Error
 	/// [`Window`]: crate::Window
 	/// [window]: crate::Window
 	/// [request]: crate::message::Request
 	pub struct Window: Error(3) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -162,20 +155,19 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
-	/// The [`Pixmap`] ID used in the [request] does not refer to a defined [pixmap].
+	/// An [error] generated when the [`Pixmap`] ID used in the [request] does
+	/// not refer to a defined [pixmap].
 	///
+	/// [error]: Error
 	/// [`Pixmap`]: crate::Pixmap
 	/// [pixmap]: crate::Pixmap
 	/// [request]: crate::message::Request
 	pub struct Pixmap: Error(4) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -209,20 +201,19 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
-	/// The [`Atom`] ID used in the [request] does not refer to a defined [atom].
+	/// An [error] generated when the [`Atom`] ID used in the [request] does
+	/// not refer to a defined [atom].
 	///
+	/// [error]: Error
 	/// [`Atom`]: crate::Atom
 	/// [atom]: crate::Atom
 	/// [request]: crate::message::Request
 	pub struct Atom: Error(5) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -256,21 +247,19 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
-	/// The [`CursorAppearance`] ID used in the [request] does not refer to a
-	/// defined [cursor appearance].
+	/// An [error] generated when the [`CursorAppearance`] ID used in the
+	/// [request] does not refer to a defined [cursor appearance].
 	///
+	/// [error]: Error
 	/// [`CursorAppearance`]: crate::CursorAppearance
 	/// [cursor appearance]: crate::CursorAppearance
 	/// [request]: crate::message::Request
 	pub struct CursorAppearance: Error(6) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -305,20 +294,19 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
-	/// The [`Font`] ID used in the [request] does not refer to a defined [font].
+	/// An [error] generated when the [`Font`] ID used in the [request] does
+	/// not refer to a defined [font].
 	///
+	/// [error]: Error
 	/// [`Font`]: crate::Font
 	/// [font]: crate::Font
 	/// [request]: crate::message::Request
 	pub struct Font: Error(7) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -370,13 +358,10 @@ derive_xrb! {
 	/// [graphics context]: crate::GraphicsContext
 	pub struct Match: Error(8) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[minor_opcode]
@@ -400,22 +385,20 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
-	/// The [`Drawable`] ID used in the [request] does not refer to a defined
-	/// [window] or [pixmap].
+	/// An [error] generated when the [`Drawable`] ID used in the [request]
+	/// does not refer to a defined [window] or [pixmap].
 	///
+	/// [error]: Error
 	/// [`Drawable`]: crate::Drawable
 	/// [window]: crate::Window
 	/// [pixmap]: crate::Pixmap
 	/// [request]: crate::message::Request
 	pub struct Drawable: Error(9) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -476,13 +459,10 @@ derive_xrb! {
 	/// [colormap]: crate::Colormap
 	pub struct Access: Error(10) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[minor_opcode]
@@ -512,13 +492,10 @@ derive_xrb! {
 	/// [error]: Error
 	pub struct Alloc: Error(11) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[minor_opcode]
@@ -542,21 +519,19 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
-	/// The [`Colormap`] ID used in the [request] does not refer to a defined
-	/// [colormap].
+	/// An [error] generated when the [`Colormap`] ID used in the [request]
+	/// does not refer to a defined [colormap].
 	///
+	/// [error]: Error
 	/// [`Colormap`]: crate::Colormap
 	/// [colormap]: crate::Colormap
 	/// [request]: crate::message::Request
 	pub struct Colormap: Error(12) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -590,21 +565,19 @@ derive_xrb! {
 	}
 
 	#[derive(Debug, Hash, Writable, Readable, X11Size)]
-	/// The [`GraphicsContext`] ID used in the [request] does not refer to a
-	/// defined [graphics context].
+	/// An [error] generated when the [`GraphicsContext`] ID used in the [request]
+	/// does not refer to a defined [graphics context].
 	///
+	/// [error]: Error
 	/// [`GraphicsContext`]: crate::GraphicsContext
 	/// [graphics context]: crate::GraphicsContext
 	/// [request]: crate::message::Request
 	pub struct GraphicsContext: Error(13) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -644,13 +617,10 @@ derive_xrb! {
 	/// [error]: Error
 	pub struct ResourceIdChoice: Error(14) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[error_data]
@@ -687,13 +657,10 @@ derive_xrb! {
 	/// [font]: crate::Font
 	pub struct Name: Error(15) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[minor_opcode]
@@ -727,13 +694,10 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct Length: Error(16) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[minor_opcode]
@@ -764,13 +728,10 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct Implementation: Error(17) {
 		#[sequence]
-		/// The [sequence number][sequence] identifying the [request] that was
+		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
-		/// See [`Request::sequence`][sequence] for more information.
-		///
 		/// [request]: crate::message::Request
-		/// [sequence]: crate::message::Request::sequence
 		pub sequence: u16,
 
 		#[minor_opcode]

@@ -36,23 +36,6 @@ XRB serves as a foundation for [X.RS (WIP)][X.RS] in particular.
 > library built on XRB such as [X.RS (WIP)][X.RS].
 
 ## Contributing
-Contributions are welcome and encouraged for XRB! You can see tasks that need to be done (see, in particular, the 'Unassigned' column) on the [X Rust Bindings project][XRB project]. Additionally, here's a list of resources that you may find useful:
- - [X Window System protocol version 11](https://x.org/releases/X11R7.7/doc/xproto/x11protocol.html)
-   – The protocol itself.
-   - [1. Protocol Formats](https://x.org/releases/X11R7.7/doc/xproto/x11protocol.html#Protocol_Formats)
-     – An overview of the format of messages in the X11 protocol.
-   - [Appendix B. Protocol Encoding](https://x.org/releases/X11R7.7/doc/xproto/x11protocol.html#protocol_encoding)
-     – The encoding of X11 types and data structures as bytes. Probably the most
-	 directly important section for the development of XRB.
-   - [Glossary](https://x.org/releases/X11R7.7/doc/xproto/x11protocol.html#glossary)
-     – A glossary of terms used in X, helpful to understand what's going on and
-	 especially to write documentation.
- - [The Rust Programming Language](https://doc.rust-lang.org/book/) – A great
-   resource to learn Rust in general.
- - [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/) –
-   Recommendations for the design and presentation of Rust APIs.
- - [Mozilla License Headers](https://www.mozilla.org/en-US/MPL/headers/) –
-   Copy-and-pasteable headers the MPL-v2.0 license. This header must be added to
-   every source file in XRB, preferably as a comment at the beginning of the file.
+Contributions are welcome and encouraged for XRB! Please see [CONTRIBUTING] for more information :)
 
-[XRB project]: https://github.com/orgs/XdotRS/projects/1/views/1
+[CONTRIBUTING]: ./CONTRIBUTING.md
