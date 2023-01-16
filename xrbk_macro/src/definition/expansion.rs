@@ -2,8 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-mod message_trait;
 mod derives;
+mod message_trait;
 mod readable;
 mod writable;
 mod x11_size;
