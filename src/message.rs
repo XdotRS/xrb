@@ -113,15 +113,9 @@ pub trait Request: X11Size + Writable {
 	///
 	///         #[allow(clippy::cast_possible_truncation)]
 	///         let name_len: u16 = name => name.len() as u16,
-	///         // This could also work here, because these two unused bytes
-	///         // serve as padding, but it is recommended that if the exact
-	///         // number of bytes is known, it is written explicitly. This
-	///         // helps to catch any mistakes with previous elements because
-	///         // the total length wouldn't be a multiple of 4.
-	///         //
-	///         // `[_; ..]`
 	///         [_; 2],
 	///
+	///         #[context(name_len => *name_len as usize)]
 	///         pub name: String8,
 	///         [_; ..], // <-- inferred unused bytes element
 	///     }
