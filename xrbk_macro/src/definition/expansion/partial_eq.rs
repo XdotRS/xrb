@@ -8,34 +8,43 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote_spanned;
 use syn::Path;
 
-impl Struct {
-	pub fn impl_partial_eq(&self, tokens: &mut TokenStream2, trait_path: &Path) {
-		let ident = &self.ident;
+macro_rules! structlike_impl_partial_eq {
+    ($def:path) => {
+        impl $def {
+            pub fn impl_partial_eq(&self, tokens: &mut TokenStream2, trait_path: &Path) {
+                let ident = &self.ident;
 
-		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+                // TODO: add generic bounds
+                let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
 
-		// Expand the tokens to read each element.
-		let eqs = TokenStream2::with_tokens(|tokens| {
-			for element in &self.content {
-				element.partial_eq_tokens(tokens);
-			}
-		});
+                // Expand the tokens to read each element.
+                let eqs = TokenStream2::with_tokens(|tokens| {
+                    for element in &self.content {
+                        element.partial_eq_tokens(tokens);
+                    }
+                });
 
-		tokens.append_tokens(quote_spanned!(trait_path.span()=>
-			#[automatically_derived]
-			impl #impl_generics ::std::cmp::PartialEq for #ident #type_generics #where_clause {
-				fn eq(&self, other: &Self) -> bool {
-					// Default value which will be compared to all checked fields
-					true
+                tokens.append_tokens(quote_spanned!(trait_path.span()=>
+                    #[automatically_derived]
+                    impl #impl_generics ::std::cmp::PartialEq for #ident #type_generics #where_clause {
+                        fn eq(&self, other: &Self) -> bool {
+                            // Default value which will be compared to all checked fields
+                            true
 
-					// All the fields checks
-					#eqs
-				}
-			}
-		));
-	}
+                            // All the fields checks
+                            #eqs
+                        }
+                    }
+                ));
+            }
+        }
+    };
 }
+
+structlike_impl_partial_eq!(Struct);
+structlike_impl_partial_eq!(Request);
+structlike_impl_partial_eq!(Reply);
+structlike_impl_partial_eq!(Event);
 
 impl Enum {
 	pub fn impl_partial_eq(&self, tokens: &mut TokenStream2, trait_path: &Path) {
@@ -77,93 +86,6 @@ impl Enum {
 					match self {
 						#arms
 					}
-				}
-			}
-		));
-	}
-}
-
-impl Request {
-	pub fn impl_partial_eq(&self, tokens: &mut TokenStream2, trait_path: &Path) {
-		let ident = &self.ident;
-
-		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
-
-		// Expand the tokens to read each element.
-		let eqs = TokenStream2::with_tokens(|tokens| {
-			for element in &self.content {
-				element.partial_eq_tokens(tokens);
-			}
-		});
-
-		tokens.append_tokens(quote_spanned!(trait_path.span()=>
-			#[automatically_derived]
-			impl #impl_generics ::std::cmp::PartialEq for #ident #type_generics #where_clause {
-				fn eq(&self, other: &Self) -> bool {
-					// Default value which will be compared to all checked fields
-					true
-
-					// All the fields checks
-					#eqs
-				}
-			}
-		));
-	}
-}
-
-impl Reply {
-	pub fn impl_partial_eq(&self, tokens: &mut TokenStream2, trait_path: &Path) {
-		let ident = &self.ident;
-
-		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
-
-		// Expand the tokens to read each element.
-		let eqs = TokenStream2::with_tokens(|tokens| {
-			for element in &self.content {
-				element.partial_eq_tokens(tokens);
-			}
-		});
-
-		tokens.append_tokens(quote_spanned!(trait_path.span()=>
-			#[automatically_derived]
-			impl #impl_generics ::std::cmp::PartialEq for #ident #type_generics #where_clause {
-				fn eq(&self, other: &Self) -> bool {
-					// Default value which will be compared to all checked fields
-					true
-
-					// All the fields checks
-					#eqs
-				}
-			}
-		));
-	}
-}
-
-impl Event {
-	pub fn impl_partial_eq(&self, tokens: &mut TokenStream2, trait_path: &Path) {
-		let ident = &self.ident;
-
-		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
-
-		// Expand the tokens to read each element.
-		let eqs = TokenStream2::with_tokens(|tokens| {
-			for element in &self.content {
-				element.partial_eq_tokens(tokens);
-			}
-		});
-
-		tokens.append_tokens(quote_spanned!(trait_path.span()=>
-			#[automatically_derived]
-			impl #impl_generics ::std::cmp::PartialEq for #ident #type_generics #where_clause {
-				fn eq(&self, other: &Self) -> bool {
-					// Default value which will be compared to all checked fields
-					true
-
-					// All the fields checks
-					#eqs
 				}
 			}
 		));
