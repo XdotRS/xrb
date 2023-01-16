@@ -17,7 +17,13 @@ XRB might not yet be ready for users, contributions can help bring that goal muc
 closer!
 
 ## Ask questions!
-TODO <!-- (add Discord server URL) -->
+If you ever have any questions about contributing, whether that be about the X11
+protocol, about Rust, about how to submit contributions, or anything else, please
+feel free to ask! You can ask questions by either creating a [discussion] here on
+GitHub, or by asking in the #xrb-dev-chat channel in [the Discord server]!
+
+[discussion]: https://github.com/XdotRS/xrb/discussions
+[the Discord server]: https://discord.gg/CmsZBEsf5N
 
 ## Interpreting the X11 protocol
 TODO
