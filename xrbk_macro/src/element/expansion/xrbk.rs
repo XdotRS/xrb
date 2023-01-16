@@ -68,24 +68,18 @@ impl Element {
 	}
 
 	pub fn partial_eq_tokens(&self, tokens: &mut TokenStream2) {
-		match self {
-			Self::Field(field) => {
-				if !field.is_ignoring_trait(format_ident!("PartialEq")) {
-					field.add_partial_eq_tokens(tokens)
-				}
-			},
-			_ => (),
+		if let Self::Field(field) = self {
+			if !field.is_ignoring_trait(format_ident!("PartialEq")) {
+				field.add_partial_eq_tokens(tokens)
+			}
 		}
 	}
 
 	pub fn hash_tokens(&self, tokens: &mut TokenStream2) {
-		match self {
-			Self::Field(field) => {
-				if !field.is_ignoring_trait(format_ident!("Hash")) {
-					field.add_hash_tokens(tokens)
-				}
-			},
-			_ => (),
+		if let Self::Field(field) = self {
+			if !field.is_ignoring_trait(format_ident!("Hash")) {
+				field.add_hash_tokens(tokens)
+			}
 		}
 	}
 }

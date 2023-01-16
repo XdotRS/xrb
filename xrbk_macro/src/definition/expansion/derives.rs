@@ -27,6 +27,7 @@ macro_rules! structlike_impl_partial_eq {
                 tokens.append_tokens(quote_spanned!(trait_path.span()=>
                     #[automatically_derived]
                     impl #impl_generics ::std::cmp::PartialEq for #ident #type_generics #where_clause {
+				        #[allow(clippy::nonminimal_bool)]
                         fn eq(&self, other: &Self) -> bool {
                             // Default value which will be compared to all checked fields
                             true
@@ -54,7 +55,7 @@ macro_rules! structlike_impl_partial_eq {
                 tokens.append_tokens(quote_spanned!(trait_path.span()=>
                     #[automatically_derived]
                     impl #impl_generics ::core::hash::Hash for #ident #type_generics #where_clause {
-                        fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) -> () {
+                        fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) {
                             // All the hashes for all fiels
                             #hashes
                         }
@@ -147,7 +148,7 @@ impl Enum {
 		tokens.append_tokens(quote_spanned!(trait_path.span()=>
 			#[automatically_derived]
 			impl #impl_generics ::core::hash::Hash for #ident #type_generics #where_clause {
-				fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) -> () {
+				fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) {
 					match self {
 						#arms
 					}
