@@ -32,15 +32,29 @@
 #![allow(clippy::module_name_repetitions)]
 #![warn(missing_docs)]
 
-//! # X Rust Bindings
-//! X Rust Bindings is a Rust library directly implementing the types and
-//! protocol messages of the
-//! [X11 protocol specification](https://x.org/releases/X11R7.7/doc/xproto/x11protocol.html/).
-//! XRB is _not_ a high-level API library, and it does not provide a direct
-//! connection to an X server, nor does it do anything else on its own. XRB's
-//! development purpose is to provide a foundation for higher-level Rust API
-//! wrapper libraries. It is used by [X.RS](https://crates.io/crates/xrs), the
-//! official accompanying API library for XRB.
+//! <h1 align="center" style="margin-bottom: 0;">
+//!     X Rust Bindings
+//! </h1>
+//! <p align="center">
+//!     <a href="https://github.com/XdotRS/xrb/blob/main/LICENSE">
+//!         <img src="https://img.shields.io/crates/l/xrb?style=for-the-badge" /></a>
+//!     <a href="https://github.com/XdotRS/xrb/issues">
+//!         <img src="https://img.shields.io/github/issues-raw/XdotRS/xrb?style=for-the-badge" /></a>
+//!     <a href="https://github.com/orgs/XdotRS/projects/1/views/1">
+//!         <img src="https://img.shields.io/badge/todo-project-8860b8?style=for-the-badge" /></a>
+//!     <a href="https://github.com/XdotRS/xrb/actions/workflows/ci.yml">
+//!         <img src="https://img.shields.io/github/actions/workflow/status/XdotRS/xrb/ci.yml?event=push&branch=main&label=ci&style=for-the-badge" /></a>
+//! </p>
+//!
+//! X Rust Bindings, better known as XRB, is a crate implementing messages,
+//! types, data structures, and their serialization/deserialization for the
+//! [X Window System protocol v11 (a.k.a. X11)][X11]. It provides a
+//! foundation upon which more opinionated APIs and connection handling may
+//! be built in order to form an 'X library'. In particular, XRB will server
+//! as the foundation for [X.RS] in the future.
+//!
+//! [X11]: https://x.org/releases/X11R7.7/doc/x11protocol.html
+//! [X.RS]: https://github.com/XdotRS/xrs/
 
 /// The major version of the X protocol used in XRB.
 ///
