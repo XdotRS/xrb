@@ -26,12 +26,18 @@ impl Request {
 		} else {
 			quote!(None)
 		};
+		let other_errors = if let Some((_, other_errors)) = &self.other_errors {
+			other_errors.to_token_stream()
+		} else {
+			quote!(::std::convert::Infallible)
+		};
 
 		tokens.append_tokens({
 			quote_spanned!(self.request_token.span()=>
 				#[automatically_derived]
 				impl #impl_generics xrb::message::Request for #name #type_generics #where_clause {
 					type Reply = #reply;
+					type OtherErrors = #other_errors;
 
 					const MAJOR_OPCODE: u8 = {
 						#major_opcode
@@ -83,7 +89,7 @@ impl Reply {
 					}
 
 					fn sequence(&self) -> u16 {
-						#sequence
+						self.#sequence
 					}
 				}
 			)
