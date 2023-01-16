@@ -8,9 +8,9 @@
 //! commands for the X server to carry out. Some requests generate replies
 //! that are sent back to the client.
 
-use crate::{Inheritable, VisualId, Window, WindowClass};
+use crate::{Window};
 use bytes::BufMut;
-use xrbk::{Buf, ConstantX11Size, ReadError, ReadResult, Readable, Writable, WriteResult, X11Size};
+use xrbk::{Buf};
 
 use crate::mask::AttributeMask;
 
