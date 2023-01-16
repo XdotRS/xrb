@@ -66,6 +66,17 @@ impl Element {
 			Self::ArrayUnused(unused) => unused.add_x11_size_tokens(tokens),
 		}
 	}
+
+	pub fn partial_eq_tokens(&self, tokens: &mut TokenStream2) {
+		match self {
+			Self::Field(field) => {
+				if !field.is_ignoring_trait(format_ident!("PartialEq")) {
+					field.add_partial_eq_tokens(tokens)
+				}
+			},
+			_ => (),
+		}
+	}
 }
 
 // Field {{{
@@ -144,6 +155,16 @@ impl Field {
 
 			quote_spanned!(self.span()=>
 				size += <#r#type as ::xrbk::X11Size>::x11_size(&#formatted);
+			)
+		});
+	}
+
+	pub fn add_partial_eq_tokens(&self, tokens: &mut TokenStream2) {
+		tokens.append_tokens({
+			let ident = &self.id;
+
+			quote_spanned!(self.span()=>
+				&& self.#ident == other.#ident
 			)
 		});
 	}
