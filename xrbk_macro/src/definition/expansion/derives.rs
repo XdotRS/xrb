@@ -29,9 +29,7 @@ macro_rules! structlike_impl_partial_eq {
                     impl #impl_generics ::std::cmp::PartialEq for #ident #type_generics #where_clause {
 				        #[allow(clippy::nonminimal_bool)]
                         fn eq(&self, other: &Self) -> bool {
-                            // Default value which will be compared to all checked fields
                             true
-
                             // All the fields checks
                             #eqs
                         }
@@ -94,9 +92,7 @@ impl Enum {
 
 				tokens.append_tokens(quote_spanned!(trait_path.span()=>
 					Self::#ident #pat => {
-						// Default value which will be compared to all checked fields
 						true
-
 						// All the fields checks
 						#eqs
 					},

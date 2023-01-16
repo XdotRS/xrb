@@ -136,8 +136,11 @@ pub struct HideAttribute {
 	/// A pair of square brackets (`(` and `)`) surrounding the `hidden_traits`.
 	pub paren_token: token::Paren,
 
-	/// A list of traits which will ingore this field on their implementations.
-	/// It uses the same style has the derive macro.
+	/// A list of traits which will ignore this field in their derived
+	/// implementations.
+	///
+	/// See the [`HideAttribute`] syntax section for which traits are allowed
+	/// here.
 	pub hidden_traits: Punctuated<Path, Token![,]>,
 }
 

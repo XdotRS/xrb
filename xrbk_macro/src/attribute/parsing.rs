@@ -224,7 +224,7 @@ impl ParseWithContext for ParsedAttributes {
 			{
 				return Err(syn::Error::new(
 					hide_attribute.span(),
-					"Cannot hide `Readable` without a context attribute to read the field",
+					"cannot hide this field when implementing Readable without a #[context(...)] attribute",
 				));
 		}
 
