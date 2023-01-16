@@ -99,6 +99,27 @@ pub fn derive_unwrap(item: TokenStream) -> TokenStream {
 	.into()
 }
 
+#[proc_macro_derive(Wrap)]
+pub fn derive_wrap(item: TokenStream) -> TokenStream {
+	let item = parse_macro_input!(item as DeriveInput);
+
+	let ident = &item.ident;
+
+	// TODO: add generic bounds
+	let (impl_generics, type_generics, where_clause) = item.generics.split_for_impl();
+
+	let integer_type = integer_type(&item.data);
+
+	let expanded = quote! {
+		#[automatically_derived]
+		impl #impl_generics ::xrbk::Wrap for #ident	#type_generics #where_clause {
+			type Integer = #integer_type;
+		}
+	};
+
+	expanded.into()
+}
+
 #[proc_macro_derive(Wrapper, attributes(wrapper))]
 pub fn derive_wrapper(item: TokenStream) -> TokenStream {
 	let item = parse_macro_input!(item as DeriveInput);

@@ -6,7 +6,7 @@ extern crate self as xrb;
 
 use bytes::Buf;
 use derive_more::{From, Into};
-use xrbk::{ConstantX11Size, ReadResult, ReadableWithContext, Wrapper};
+use xrbk::{ConstantX11Size, ReadResult, ReadableWithContext, Wrap};
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Writable, X11Size};
 
 pub mod atom;
@@ -369,26 +369,8 @@ derive_xrb! {
 		const X11_SIZE: usize = 2;
 	}
 
-	impl Wrapper for WindowClass {
-		type Wrapped = u16;
-
-		fn wrap(val: Self::Wrapped) -> Self {
-			match val {
-				discrim if discrim == 1 => Self::InputOutput,
-				discrim if discrim == 2 => Self::InputOnly,
-
-				other_discrim => panic!(
-					"WindowClass: expected a discriminant of 1 or 2, found {other_discrim}"
-				),
-			}
-		}
-
-		fn unwrap(&self) -> &Self::Wrapped {
-			match self {
-				Self::InputOutput => &1,
-				Self::InputOnly => &2,
-			}
-		}
+	impl Wrap for WindowClass {
+		type Integer = u16;
 	}
 }
 

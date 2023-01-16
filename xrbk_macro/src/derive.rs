@@ -6,7 +6,7 @@ pub mod wrapper;
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, ToTokens};
-use syn::{punctuated::Pair, Attribute, Data, Fields, FieldsNamed, FieldsUnnamed, Index};
+use syn::{punctuated::Pair, Attribute, Data, Fields, FieldsNamed, FieldsUnnamed, Index, Type};
 
 use crate::TsExt;
 
@@ -140,6 +140,33 @@ pub fn unwrap_return(fields: &Fields) -> TokenStream2 {
 
 		Fields::Unit => {},
 	})
+}
+
+pub fn integer_type(data: &Data) -> &Type {
+	match data {
+		Data::Struct(data) => {
+			match &data.fields {
+				Fields::Named(FieldsNamed {
+					named: fields,
+					..
+				})
+				| Fields::Unnamed(FieldsUnnamed {
+					unnamed: fields,
+					..
+				}) => {
+					if let Some(field) = fields.first() && fields.len() == 1 {
+						&field.ty
+					} else {
+						panic!("expected a single integer field");
+					}
+				},
+
+				_ => panic!("expected a single integer field"),
+			}
+		},
+
+		Data::Enum(_) | Data::Union(_) => unimplemented!("only structs are supported"),
+	}
 }
 
 pub fn derive_writes(attributes: &[Attribute], data: &Data) -> TokenStream2 {
