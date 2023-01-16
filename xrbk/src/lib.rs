@@ -292,7 +292,7 @@ pub trait Wrapper: ConstantX11Size {
 /// type `T` and choose the appropriate integer type to encode the discriminant
 /// of its discrete alternative `CopyFromParent`.
 pub trait Wrap: Clone + TryFrom<Self::Integer> + Into<Self::Integer> + ConstantX11Size {
-	type Integer: Copy + TryFrom<usize> + Into<usize> + ConstantX11Size + Readable + Writable;
+	type Integer: Copy + TryFrom<u64> + Into<u64> + ConstantX11Size + Readable + Writable;
 
 	/// Referencing this associated `const` causes a compilation error if
 	/// `Self::X11_SIZE` does not equal `Self::Integer::X11_SIZE`.
@@ -317,7 +317,7 @@ where
 		Self: Sized,
 	{
 		Ok(match <T::Integer>::read_from(buf).unwrap() {
-			discrim if discrim.into() == 0_usize => None,
+			discrim if discrim.into() == 0_u64 => None,
 			value => Some(match T::try_from(value) {
 				Ok(value) => value,
 				Err(error) => return Err(ReadError::FailedConversion(Box::new(error))),
@@ -328,11 +328,11 @@ where
 
 impl<T: Wrap> Writable for Option<T>
 where
-	<T::Integer as TryFrom<usize>>::Error: 'static,
+	<T::Integer as TryFrom<u64>>::Error: 'static,
 {
 	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
 		match self {
-			None => match T::Integer::try_from(0_usize) {
+			None => match T::Integer::try_from(0_u64) {
 				Ok(val) => val,
 				Err(error) => return Err(WriteError::FailedConversion(Box::new(error))),
 			}
