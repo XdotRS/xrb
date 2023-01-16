@@ -146,8 +146,8 @@ impl Enum {
 
 		tokens.append_tokens(quote_spanned!(trait_path.span()=>
 			#[automatically_derived]
-            impl #impl_generics ::core::hash::Hash for #ident #type_generics #where_clause {
-                fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) -> () {
+			impl #impl_generics ::core::hash::Hash for #ident #type_generics #where_clause {
+				fn hash<__H: ::core::hash::Hasher>(&self, state: &mut __H) -> () {
 					match self {
 						#arms
 					}
