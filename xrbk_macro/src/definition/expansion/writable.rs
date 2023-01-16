@@ -210,7 +210,7 @@ impl Reply {
 					// Metabyte position
 					#metabyte
 					// Sequence field
-					buf.put_u16(#sequence);
+					buf.put_u16(*#sequence);
 					// Length
 					buf.put_u32(<Self as xrb::message::Reply>::length(&self));
 
