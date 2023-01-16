@@ -4,9 +4,9 @@
 
 use crate::{Timestamp, Window};
 use xrbk::{ConstantX11Size, Wrap};
-use xrbk_macro::{Readable, Wrapper, Writable};
+use xrbk_macro::Wrapper;
 
-#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, Wrapper, Readable, Writable)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, Wrapper)]
 /// Values which may be copied from the 'parent'.
 #[wrapper(T::Integer)]
 pub enum ParentCopyable<T> where T: Wrap {
@@ -27,7 +27,7 @@ pub enum ParentCopyable<T> where T: Wrap {
 	Other(T),
 }
 
-#[derive(Wrapper)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, Wrapper)]
 /// Values which may be the same as the 'parent' as long as the parent has the
 /// same `depth`.
 ///
@@ -47,11 +47,7 @@ pub enum ParentRelatable<T> where T: Wrap {
 	Other(T),
 }
 
-impl<T: Wrap> ConstantX11Size for ParentRelatable<T> {
-	const X11_SIZE: usize = T::X11_SIZE;
-}
-
-#[derive(Wrapper)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, Wrapper)]
 /// Either [`Any`] value or a specific value.
 ///
 /// [`Any`]: MaybeAny::Any
@@ -65,11 +61,7 @@ pub enum MaybeAny<T> where T: Wrap {
 	Other(T),
 }
 
-impl<T: Wrap> ConstantX11Size for MaybeAny<T> {
-	const X11_SIZE: usize = T::X11_SIZE;
-}
-
-#[derive(Wrapper)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, Wrapper)]
 /// A time which may simply fill in for the current server time.
 #[wrapper(u32)]
 pub enum CurrentableTime {
@@ -81,7 +73,7 @@ pub enum CurrentableTime {
 	Other(Timestamp),
 }
 
-#[derive(Wrapper)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, Wrapper)]
 /// The `destination` of a [`SendEvent` request].
 ///
 /// [`SendEvent` request]: crate::x11::request::SendEvent
@@ -103,7 +95,7 @@ pub enum DestinationWindow {
 	Other(Window),
 }
 
-#[derive(Wrapper)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, Wrapper)]
 /// The [window] which is focused.
 ///
 /// [window]: Window
@@ -126,7 +118,7 @@ pub enum WindowFocus {
 	Other(Window),
 }
 
-#[derive(Wrapper)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, Wrapper)]
 /// The target client(s) of a [`KillClient` request].
 ///
 /// [`KillClient` request]: crate::request::KillClient
