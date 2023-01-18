@@ -52,35 +52,50 @@ pub struct Color(
 /// is greater than `0xffffff`.
 ///
 /// This is returned from [`Color::from_hex`].
-struct ColorValueTooHigh;
+pub struct ColorValueTooHigh;
 
 impl Color {
+	/// Converts a hex color code to a `Color`.
+	///
+	/// # Errors
+	/// If the provided `u32` color value is greater than `0x_ffffff`, a
+	/// [`ColorValueToHigh`] error will be generated.
 	pub fn from_hex(hex: u32) -> Result<Self, ColorValueTooHigh> {
-		if hex > 0xffffff {
+		if hex > 0x_ffffff {
 			return Err(ColorValueTooHigh);
 		}
 
 		// Red color channel gets moved over 16 bits so that it is represented as one
 		// byte.
-		let red = ((hex & 0xff0000) >> 16) as u16;
+		let red = ((hex & 0x_ff0000) >> 16) as u16;
 		// Green color channel gets moved over 8 bits so that is is represented as one
 		// byte.
-		let green = ((hex & 0x00ff00) >> 8) as u16;
+		let green = ((hex & 0x_00ff00) >> 8) as u16;
 		// Blue color channel is already represented as one byte.
-		let blue = (hex & 0x0000ff) as u16;
+		let blue = (hex & 0x_0000ff) as u16;
 
 		// Since the color channels for `Color` are actually `u16` values, not `u8`,
 		// they are shifted one byte to the left.
 		Ok(Self(red << 8, green << 8, blue << 8))
 	}
 
+	/// Converts a `Color` to a hex color code.
+	///
+	/// # Lossy
+	/// This function is lossy: a `Color` is made up of three `u16` values,
+	/// while a hex color code represents three `u8` values. The least
+	/// significant byte of each color channel will be lost during conversion.
 	pub fn to_hex(&self) -> u32 {
 		let Self(red, green, blue) = self;
 
 		// The color channels are all shifted 8 bits to the right to scale their values
 		// from `u16` to `u8`. They are then cast to `u32` so they can be combined into
 		// one `u32` value.
-		let (red, green, blue) = ((red >> 8) as u32, (green >> 8) as u32, (blue >> 8) as u32);
+		let (red, green, blue) = (
+			u32::from(red >> 8),
+			u32::from(green >> 8),
+			u32::from(blue >> 8),
+		);
 
 		// We can now union the channels into one `u32` value - red and green are
 		// shifted over into `0xff0000` and `0x00ff00` positions respectively to do so.
@@ -89,6 +104,12 @@ impl Color {
 }
 
 impl From<(u32, u32, u32)> for Color {
+	#[allow(
+		clippy::cast_possible_truncation,
+		reason = "for purposes of the X11 protocol, a color represented by (u32, u32, u32) is \
+		          just a (u16, u16, u16) color with two unused bytes for each channel - \
+		          truncation is intended behavior"
+	)]
 	fn from((red, green, blue): (u32, u32, u32)) -> Self {
 		Self(red as u16, green as u16, blue as u16)
 	}
@@ -96,7 +117,7 @@ impl From<(u32, u32, u32)> for Color {
 
 impl From<Color> for (u32, u32, u32) {
 	fn from(Color(red, green, blue): Color) -> Self {
-		(red as u32, green as u32, blue as u32)
+		(u32::from(red), u32::from(green), u32::from(blue))
 	}
 }
 
