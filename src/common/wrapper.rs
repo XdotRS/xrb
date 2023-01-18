@@ -357,6 +357,8 @@ impl_writable!(FocusWindow: &self, buf {
 	match self {
 		Self::None => buf.put_u32(0),
 		Self::CursorRoot => buf.put_u32(1),
+
+		Self::Other(window) => window.write_to(buf)?,
 	}
 
 	Ok(())
