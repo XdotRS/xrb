@@ -153,98 +153,6 @@ pub trait Writable: X11Size {
 	fn write_to(&self, writer: &mut impl BufMut) -> WriteResult;
 }
 
-/// Trait for enums wrapping either a specific value of type [`Wrapped`], or one
-/// of a discrete number of equally sized alternative unit variants.
-///
-/// A type implementing [`Wrapper`] must be an enum with one variant that has a
-/// single tuple field of type [`Wrapped`], and zero or more unit variants (i.e.
-/// variants with no fields) to serve as 'alternatives'.
-///
-/// A type implementing [`Wrapper`] is read by comparing a value of
-/// [`Wrapped::Integer`] to each unit variant's discriminant. If it matches the
-/// discriminant of a unit variant, it is read as that unit variant. If all unit
-/// variants fail to match, it falls back to the tuple variant wrapping the
-/// [`Wrapped`] type, constructing it with the use of
-/// <code>[From]<[Wrapped::Integer]></code>.
-///
-/// [wraps]: Wrap
-/// [`Wrapped`]: Self::Wrapped
-/// [`Wrapped::Integer`]: Wrap::Integer
-/// [Wrapped::Integer]: Wrap::Integer
-///
-/// # Examples
-/// For example, this trait is implemented for <code>[Option]<T></code>, where
-/// `T` becomes the [`Wrapped`] associated type. [`Option`] is an enum
-/// containing two variants: one, <code>[Some]\(T)</code>, which [wraps] the
-/// [`Wrapped`] type, and another, [`None`], which is a unit variant which has
-/// an equivalent size to <code>[Some]\(T)</code>.
-///
-/// The following is an example of a `Maybe<T>` type equivalent to
-/// <code>[Option]<T></code>.
-/// ```
-/// use xrbk::{
-///     ConstantX11Size,
-///     Readable,
-///     Wrap,
-///     Wrapper,
-///     Buf,
-///     ReadResult,
-///     X11Size,
-///     Writable,
-///     WriteResult,
-///     BufMut,
-/// };
-///
-/// enum Maybe<T> {
-///     Nothing,
-///     Just(T),
-/// }
-///
-/// impl<T: Wrap> Wrapper for Maybe<T> {
-///     type Wrapped = T;
-/// }
-///
-/// impl<T: Wrap> ConstantX11Size for Maybe<T> {
-///     const X11_SIZE: usize = T::Integer::X11_SIZE;
-/// }
-///
-/// impl<T: Wrap> X11Size for Maybe<T> {
-///     fn x11_size(&self) -> usize {
-///         Self::X11_SIZE
-///     }
-/// }
-///
-/// impl<T: Wrap> Readable for Maybe<T> {
-///     fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
-///     where
-///         Self: Sized,
-///     {
-///         Ok(match <Self::Wrapped::Integer>::read_from(buf)? {
-///             discrim if usize::from(discrim) == 0 => Self::Nothing,
-///             val => Self::Just(val),
-///         })
-///     }
-/// }
-///
-/// impl<T: Wrap> Writable for Maybe<T> {
-///     fn write_to(&self, writer: &mut impl BufMut) -> WriteResult {
-///         match self {
-///             Self::Nothing => <Self::Wrapped::Integer>::from(0usize).write_to(buf)?,
-///             Self::Just(val) => <Self::Wrapped::Integer>::from(val).write_to(buf)?,
-///         }
-///
-///         Ok(())
-///     }
-/// }
-/// ```
-pub trait Wrapper: ConstantX11Size {
-	/// The type wrapped in the value-containing tuple variant of this
-	/// `Wrapper`.
-	///
-	/// See [`Wrapper`] docs for more information.
-	type Wrapped: Wrap;
-}
-
 /// A trait implemented for types which 'wrap' some primitive integer type.
 ///
 /// The purpose of this trait is for use with [`Wrapper`]s which may either have
@@ -302,10 +210,6 @@ pub trait Wrap: Clone + TryFrom<Self::Integer> + Into<Self::Integer> + ConstantX
 			"Wrap-implementing types must have an equal X11_SIZE to their Integer"
 		);
 	};
-}
-
-impl<T: Wrap> Wrapper for Option<T> {
-	type Wrapped = T;
 }
 
 impl<T: Wrap> Readable for Option<T>
