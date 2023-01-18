@@ -2,7 +2,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use xrbk::{Buf, BufMut, ConstantX11Size, X11Size, Readable, Writable, ReadResult, WriteResult, ReadError};
+use xrbk::{
+	Buf,
+	BufMut,
+	ConstantX11Size,
+	ReadError,
+	ReadResult,
+	Readable,
+	Writable,
+	WriteResult,
+	X11Size,
+};
 
 use crate::{Atom, Button, Colormap, Keycode, Pixmap, Timestamp, Window, WindowClass};
 
@@ -51,9 +61,10 @@ macro_rules! impl_writable {
 pub enum CopyableFromParent<T> {
 	/// A value is initialized by copying the matching value of the parent.
 	///
-	/// For example, when creating a [window] with a [`CreateWindow` request], the
-	/// class is <code>ParentCopyable<[WindowClass]></code> - `CopyFromParent`
-	/// in that case means to copy the [`WindowClass`] of the [window]'s parent.
+	/// For example, when creating a [window] with a [`CreateWindow` request],
+	/// the class is <code>ParentCopyable<[WindowClass]></code> -
+	/// `CopyFromParent` in that case means to copy the [`WindowClass`] of the
+	/// [window]'s parent.
 	///
 	/// [`CreateWindow` request]: crate::x11::request::CreateWindow
 	/// [window]: Window
@@ -375,7 +386,8 @@ pub enum KillClientTarget {
 	// FIXME: correct CloseDownMode link
 	AllTemporarilyRetainedClients,
 
-	/// Kill the client which created the resource specified by this resource ID.
+	/// Kill the client which created the resource specified by this resource
+	/// ID.
 	Other(u32),
 }
 
