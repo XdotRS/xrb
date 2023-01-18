@@ -28,9 +28,11 @@
 //! The XRB Kit, a collection of traits and types to help with
 //! (de)serialization of types in XRB.
 
-use std::error::Error;
+use std::{
+	any::Any,
+	fmt::{Debug, Display},
+};
 
-use num_traits::Zero;
 use thiserror::Error;
 
 pub type ReadResult<T> = Result<T, ReadError>;
@@ -38,21 +40,28 @@ pub type WriteResult = Result<(), WriteError>;
 
 pub use bytes::{Buf, BufMut};
 
+pub trait DebugDisplay: Debug + Display {}
+impl<T: Debug + Display> DebugDisplay for T {}
+
 #[non_exhaustive]
 #[derive(Error, Debug)]
 pub enum ReadError {
 	#[error("unrecognized variant discriminant: {0}")]
 	UnrecognizedDiscriminant(usize),
 
+	#[error("a conversion failed")]
+	FailedConversion(Box<dyn Any>),
 	#[error("{0}")]
-	Other(Box<dyn Error>),
+	Other(Box<dyn DebugDisplay>),
 }
 
 #[non_exhaustive]
 #[derive(Error, Debug)]
 pub enum WriteError {
+	#[error("a conversion failed")]
+	FailedConversion(Box<dyn Any>),
 	#[error("{0}")]
-	Other(Box<dyn Error>),
+	Other(Box<dyn DebugDisplay>),
 }
 
 mod readable;
@@ -144,37 +153,58 @@ pub trait Writable: X11Size {
 	fn write_to(&self, writer: &mut impl BufMut) -> WriteResult;
 }
 
-// TODO: see if this is actually a good way to do things
-pub trait Wrapper: ConstantX11Size {
-	type WrappedType: Writable + Readable + ConstantX11Size;
+/// A trait implemented for types which 'wrap' some primitive integer type.
+///
+/// This trait is used so that XRBK traits may be implemented for
+/// <code>[Option]<T: [Wrap]></code>.
+pub trait Wrap: Clone + TryFrom<Self::Integer> + Into<Self::Integer> + ConstantX11Size {
+	type Integer: Copy + TryFrom<u64> + Into<u64> + ConstantX11Size + Readable + Writable;
 
-	fn wrap(val: Self::WrappedType) -> Self;
-	fn unwrap(&self) -> &Self::WrappedType;
+	/// Referencing this associated `const` causes a compilation error if
+	/// `Self::X11_SIZE` does not equal `Self::Integer::X11_SIZE`.
+	const WRAPS_X11_SIZE: () = {
+		assert!(
+			Self::X11_SIZE == Self::Integer::X11_SIZE,
+			"Wrap-implementing types must have an equal X11_SIZE to their Integer"
+		);
+	};
 }
 
-impl<T: Wrapper> Readable for Option<T>
+impl<T: Wrap> Readable for Option<T>
 where
-	T::WrappedType: Zero,
+	<T as TryFrom<T::Integer>>::Error: 'static,
 {
 	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
 	where
 		Self: Sized,
 	{
-		Ok(match T::WrappedType::read_from(buf)? {
-			x if x.is_zero() => None,
-			val => Some(T::wrap(val)),
+		Ok(match <T::Integer>::read_from(buf).unwrap() {
+			discrim if discrim.into() == 0_u64 => None,
+			value => Some(match T::try_from(value) {
+				Ok(value) => value,
+				Err(error) => return Err(ReadError::FailedConversion(Box::new(error))),
+			}),
 		})
 	}
 }
 
-impl<T: Wrapper> Writable for Option<T>
+impl<T: Wrap> Writable for Option<T>
 where
-	T::WrappedType: Zero,
+	<T::Integer as TryFrom<u64>>::Error: 'static,
 {
 	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
 		match self {
-			None => T::WrappedType::zero().write_to(buf)?,
-			Some(val) => val.unwrap().write_to(buf)?,
+			None => match T::Integer::try_from(0_u64) {
+				Ok(val) => val,
+				Err(error) => return Err(WriteError::FailedConversion(Box::new(error))),
+			}
+			.write_to(buf)?,
+
+			Some(val) => match <T::Integer as TryFrom<T>>::try_from(val.clone()) {
+				Ok(val) => val,
+				Err(error) => return Err(WriteError::FailedConversion(Box::new(error))),
+			}
+			.write_to(buf)?,
 		}
 
 		Ok(())
