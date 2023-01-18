@@ -11,12 +11,14 @@ use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writa
 
 pub mod atom;
 
-pub mod mask;
-pub mod res_id;
-pub mod visual;
-pub mod wrapper;
+pub(crate) mod attribute;
+pub(crate) mod mask;
+pub(crate) mod res_id;
+pub(crate) mod visual;
+pub(crate) mod wrapper;
 
 pub use atom::Atom;
+pub use attribute::*;
 pub use mask::*;
 pub use res_id::*;
 pub use visual::*;
@@ -127,7 +129,7 @@ derive_xrb! {
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
-pub enum BackingStores {
+pub enum BackingStore {
 	Never,
 	WhenMapped,
 	Always,
