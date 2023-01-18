@@ -6,7 +6,7 @@ extern crate self as xrb;
 
 use bytes::Buf;
 use derive_more::{From, Into};
-use xrbk::{ConstantX11Size, ReadResult, ReadableWithContext, Wrap};
+use xrbk::{ConstantX11Size, ReadResult, ReadableWithContext, Wrap, ReadError};
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
 pub mod atom;
@@ -383,13 +383,15 @@ derive_xrb! {
 		type Integer = u16;
 	}
 
-	impl From<u16> for WindowClass {
-		fn from(val: u16) -> Self {
-			match val {
-				val if val == 1 => Self::InputOutput,
-				val if val == 2 => Self::InputOnly,
+	impl TryFrom<u16> for WindowClass {
+		type Error = ReadError;
 
-				val => panic!("unexpected discriminant - expected 1 or 2, found {val}"),
+		fn try_from(val: u16) -> ReadResult<Self> {
+			match val {
+				discrim if discrim == 1 => Ok(Self::InputOutput),
+				discrim if discrim == 2 => Ok(Self::InputOnly),
+
+				other_discrim => Err(ReadError::UnrecognizedDiscriminant(other_discrim as usize)),
 			}
 		}
 	}
