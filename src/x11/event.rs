@@ -10,13 +10,14 @@
 //! [core X11 protocol]: super
 
 use crate::{
-	mask::{ConfigureWindowMask, ModifierMask},
-	Atom,
+	atom::Atom,
 	Button,
+	ConfigureWindowMask,
 	CurrentableTime,
 	Drawable,
 	GrabMode,
 	Keycode,
+	ModifierMask,
 	Point,
 	Rectangle,
 	Region,
@@ -26,8 +27,7 @@ use crate::{
 };
 
 use bitflags::bitflags;
-use bytes::Buf;
-use xrbk::{ConstantX11Size, ReadResult, Readable, ReadableWithContext, X11Size};
+use xrbk::{Buf, ConstantX11Size, ReadResult, Readable, ReadableWithContext, X11Size};
 
 use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
 extern crate self as xrb;
