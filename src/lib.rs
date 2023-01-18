@@ -26,11 +26,11 @@
 // Warn for pedantic & cargo lints. They are allowed completely by default.
 #![warn(clippy::pedantic)]
 #![warn(clippy::cargo)]
+//#![warn(missing_docs)]
 // Continue to allow these though.
 #![allow(clippy::doc_markdown)]
 #![allow(clippy::wildcard_imports)]
 #![allow(clippy::module_name_repetitions)]
-#![warn(missing_docs)]
 
 //! <h1 align="center" style="margin-bottom: 0;">
 //!     X Rust Bindings
@@ -74,12 +74,6 @@ pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 mod common;
 pub mod connection;
 pub mod message;
-
-/// Implementation of the core X11 protocol.
-pub mod x11 {
-	pub mod event;
-	// pub mod request;
-	pub mod error;
-}
+pub mod x11;
 
 pub use common::*;

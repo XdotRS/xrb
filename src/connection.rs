@@ -7,11 +7,21 @@
 	reason = "It makes sense for `Screen` to have many arguments because it has many fields."
 )]
 
+//! Messages to initialize a connection with an X server.
+
 use derive_more::{From, Into};
 use xrbk::X11Size;
 use xrbk_macro::{derive_xrb, new, unwrap, Readable, Writable, X11Size};
 
-use crate::{mask::EventMask, BackingStores, Color, Colormap, Keycode, String8, VisualId, Window};
+use crate::{
+	mask::EventMask,
+	res_id::{Colormap, Window},
+	BackingStores,
+	Color,
+	Keycode,
+	String8,
+	VisualId,
+};
 
 /// Calculates the number of bytes used to reach the next 4-byte boundary.
 const fn pad(n: usize) -> usize {
