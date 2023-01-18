@@ -64,7 +64,7 @@ impl From<Pixmap> for Drawable {
 /// - [`Pixmap`s](Pixmap)
 /// - [`Window`s](Window)
 ///
-/// [screen]: crate::connection::Screen
+/// [screen]: crate::common::visual::Screen
 #[derive(
 	Copy,
 	Clone,

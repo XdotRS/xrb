@@ -11,163 +11,16 @@ use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writa
 
 pub mod atom;
 
-mod mask;
-mod res_id;
-mod wrapper;
+pub mod mask;
+pub mod res_id;
+pub mod visual;
+pub mod wrapper;
 
 pub use atom::Atom;
 pub use mask::*;
 pub use res_id::*;
+pub use visual::*;
 pub use wrapper::*;
-
-/// A color comprised of red, green, and blue color channels.
-///
-/// Each of the channels is a `u16` value, where `0` is the minimum intensity
-/// and `65535` is the maximum intensity. The X server scales the values to
-/// match the display hardware.
-#[derive(
-	Copy,
-	Clone,
-	Eq,
-	PartialEq,
-	Hash,
-	Debug,
-	From,
-	Into,
-	// `new` and `unwrap` const fns
-	new,
-	unwrap,
-	// XRBK traits
-	X11Size,
-	ConstantX11Size,
-	Readable,
-	Writable,
-)]
-pub struct Color(
-	/// Red.
-	pub u16,
-	/// Green.
-	pub u16,
-	/// Blue.
-	pub u16,
-);
-
-/// An error returned when a value meant to be interpreted as a hex color code
-/// is greater than `0xffffff`.
-///
-/// This is returned from [`Color::from_hex`].
-#[derive(Debug, Hash, PartialEq, Eq)]
-pub struct ColorValueTooHigh;
-
-impl Color {
-	/// Converts a hex color code to a `Color`.
-	///
-	/// # Errors
-	/// If the provided `u32` color value is greater than `0x_ffffff`, a
-	/// [`ColorValueTooHigh`] error will be generated.
-	///
-	/// # Examples
-	/// ```
-	/// use xrb::{Color, ColorValueTooHigh};
-	///
-	/// # fn main() -> Result<(), ColorValueTooHigh> {
-	/// #
-	/// let red = Color::from_hex(0xff0000)?;
-	/// assert_eq!(red, Color(0xff00, 0x0000, 0x0000));
-	///
-	/// let blue = Color::from_hex(0x0000ff)?;
-	/// assert_eq!(blue, Color(0x0000, 0x0000, 0xff00));
-	/// #
-	/// #     Ok(())
-	/// # }
-	/// ```
-	pub const fn from_hex(hex: u32) -> Result<Self, ColorValueTooHigh> {
-		/// The maximum value which a hex color code can be.
-		const COLOR_MASK: u32 = 0x00ff_ffff;
-
-		const RED_MASK: u32 = 0x00ff_0000;
-		const GREEN_MASK: u32 = 0x0000_ff00;
-		const BLUE_MASK: u32 = 0x0000_00ff;
-
-		/// The number of bits in a byte. Used to make the bitshifts more
-		/// readable.
-		const BYTE: u32 = u8::BITS;
-
-		if hex > COLOR_MASK {
-			return Err(ColorValueTooHigh);
-		}
-
-		// Red color channel gets moved over 16 bits so that it is represented as one
-		// byte.
-		let red = ((hex & RED_MASK) >> (2 * BYTE)) as u16;
-		// Green color channel gets moved over 8 bits so that is is represented as one
-		// byte.
-		let green = ((hex & GREEN_MASK) >> BYTE) as u16;
-		// Blue color channel is already represented as one byte.
-		let blue = (hex & BLUE_MASK) as u16;
-
-		// Since the color channels for `Color` are actually `u16` values, not `u8`,
-		// they are shifted one byte to the left.
-		Ok(Self(red << BYTE, green << BYTE, blue << BYTE))
-	}
-
-	/// Converts a `Color` to a hex color code.
-	///
-	/// # Lossy
-	/// This function is lossy: a `Color` is made up of three `u16` values,
-	/// while a hex color code represents three `u8` values. The least
-	/// significant byte of each color channel will be lost during conversion.
-	///
-	/// # Examples
-	/// ```
-	/// use xrb::Color;
-	///
-	/// let red: Color = Color(0xff80, 0x00ff, 0x0000);
-	/// assert_eq!(red.to_hex(), 0xff0000);
-	///
-	/// let blue: Color = Color(0x0000, 0x0080, 0xffff);
-	/// assert_eq!(blue.to_hex(), 0x0000ff);
-	/// ```
-	#[must_use]
-	pub fn to_hex(&self) -> u32 {
-		/// The number of bits in a byte. Used to make the bitshifts more
-		/// readable.
-		const BYTE: u32 = u8::BITS;
-
-		let Self(red, green, blue) = self;
-
-		// The color channels are all shifted 8 bits to the right to scale their values
-		// from `u16` to `u8`. They are then cast to `u32` so they can be combined into
-		// one `u32` value.
-		let (red, green, blue) = (
-			u32::from(red >> BYTE),
-			u32::from(green >> BYTE),
-			u32::from(blue >> BYTE),
-		);
-
-		// We can now union the channels into one `u32` value - red and green are
-		// shifted over into `0xff0000` and `0x00ff00` positions respectively to do so.
-		(red << (2 * BYTE)) | (green << BYTE) | blue
-	}
-}
-
-impl From<(u32, u32, u32)> for Color {
-	#[allow(
-		clippy::cast_possible_truncation,
-		reason = "for purposes of the X11 protocol, a color represented by (u32, u32, u32) is \
-		          just a (u16, u16, u16) color with two unused bytes for each channel - \
-		          truncation is intended behavior"
-	)]
-	fn from((red, green, blue): (u32, u32, u32)) -> Self {
-		Self(red as u16, green as u16, blue as u16)
-	}
-}
-
-impl From<Color> for (u32, u32, u32) {
-	fn from(Color(red, green, blue): Color) -> Self {
-		(u32::from(red), u32::from(green), u32::from(blue))
-	}
-}
 
 /// Represents a particular time, expressed in milliseconds.
 ///
@@ -193,30 +46,6 @@ impl From<Color> for (u32, u32, u32) {
 	Wrap,
 )]
 pub struct Timestamp(pub(crate) u32);
-
-/// The ID of a [`VisualType`].
-///
-/// [`VisualType`]: crate::connection::VisualType
-#[derive(
-	Copy,
-	Clone,
-	Eq,
-	PartialEq,
-	Hash,
-	Debug,
-	From,
-	Into,
-	// `new` and `unwrap` const fns
-	new,
-	unwrap,
-	// XRBK traits
-	X11Size,
-	ConstantX11Size,
-	Readable,
-	Writable,
-	Wrap,
-)]
-pub struct VisualId(pub(crate) u32);
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum BitGravity {

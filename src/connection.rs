@@ -2,18 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#![allow(
-	clippy::too_many_arguments,
-	reason = "It makes sense for `Screen` to have many arguments because it has many fields."
-)]
-
 //! Messages to initialize a connection with an X server.
 
-use derive_more::{From, Into};
 use xrbk::X11Size;
-use xrbk_macro::{derive_xrb, new, unwrap, Readable, Writable, X11Size};
+use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
-use crate::{BackingStores, Color, Colormap, EventMask, Keycode, String8, VisualId, Window};
+use crate::{Format, Keycode, Screen, String8};
 
 /// Calculates the number of bytes used to reach the next 4-byte boundary.
 const fn pad(n: usize) -> usize {
@@ -61,108 +55,6 @@ pub enum ImageEndianness {
 }
 
 derive_xrb! {
-	#[derive(
-		Copy,
-		Clone,
-		Eq,
-		PartialEq,
-		Hash,
-		Debug,
-		new,
-		// XRBK traits
-		X11Size,
-		Readable,
-		Writable,
-	)]
-	pub struct Format {
-		pub depth: u8,
-		pub bits_per_pixel: u8,
-		pub scanline_pad: u8,
-		[_; 5],
-	}
-
-	#[derive(
-		Copy,
-		Clone,
-		Eq,
-		PartialEq,
-		Hash,
-		Debug,
-		From,
-		Into,
-		// `new` and `unwrap` const fns
-		new,
-		unwrap,
-		// XRBK traits
-		X11Size,
-		Readable,
-		Writable,
-	)]
-	pub struct Millimeters(u16);
-
-	#[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, Readable, Writable)]
-	pub struct Screen {
-		pub root: Window,
-		pub default_colormap: Colormap,
-
-		pub white_pixel: u32,
-		pub black_pixel: u32,
-
-		pub current_input_masks: EventMask,
-
-		pub width_px: u16,
-		pub height_px: u16,
-		pub width_mm: Millimeters,
-		pub height_mm: Millimeters,
-
-		pub min_installed_maps: u16,
-		pub max_installed_maps: u16,
-
-		pub root_visual: VisualId,
-		pub backing_stores: BackingStores,
-		pub save_unders: bool,
-		pub root_depth: u8,
-
-		#[allow(clippy::cast_possible_truncation)]
-		let allowed_depths_len: u8 = allowed_depths => allowed_depths.len() as u8,
-
-		#[context(allowed_depths_len => *allowed_depths_len as usize)]
-		pub allowed_depths: Vec<Depth>,
-	}
-
-	#[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, Readable, Writable)]
-	pub struct Depth {
-		pub depth: u8,
-		_,
-
-		#[allow(clippy::cast_possible_truncation)]
-		let visuals_len: u16 = visuals => visuals.len() as u16,
-		[_; 4],
-
-		#[context(visuals_len => *visuals_len as usize)]
-		pub visuals: Vec<VisualType>,
-	}
-
-	#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
-	pub enum VisualClass {
-		StaticGray,
-		GrayScale,
-		StaticColor,
-		PseudoColor,
-		TrueColor,
-		DirectColor,
-	}
-
-	#[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, Readable, Writable)]
-	pub struct VisualType {
-		pub visual_id: VisualId,
-		pub class: VisualClass,
-		pub bits_per_rgb_value: u8,
-		pub colormap_entries: u16,
-		pub color_mask: Color,
-		[_; 4],
-	}
-
 	#[derive(Debug, X11Size, Readable, Writable)]
 	pub enum ConnectionResponse {
 		/// There was a failure in attempting the connection.
