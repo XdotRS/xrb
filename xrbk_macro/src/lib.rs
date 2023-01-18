@@ -14,7 +14,6 @@ mod ext;
 mod source;
 
 use proc_macro::TokenStream;
-use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
 use syn::{parse_macro_input, Data, DeriveInput, Fields, FieldsNamed, FieldsUnnamed};
 
@@ -116,25 +115,6 @@ pub fn derive_wrap(item: TokenStream) -> TokenStream {
 			type Integer = #integer_type;
 		}
 	};
-
-	expanded.into()
-}
-
-#[proc_macro_derive(Wrapper, attributes(wrapper))]
-pub fn derive_wrapper(item: TokenStream) -> TokenStream {
-	let item = parse_macro_input!(item as DeriveInput);
-
-	let data = match &item.data {
-		Data::Enum(r#enum) => r#enum,
-
-		Data::Struct(_) | Data::Union(_) => {
-			unimplemented!("#[derive(Wrapper)] is only meant to be used with enums")
-		},
-	};
-
-	let expanded = TokenStream2::with_tokens(|tokens| {
-		wrapper::derive(tokens, &item.attrs, &item, data);
-	});
 
 	expanded.into()
 }
