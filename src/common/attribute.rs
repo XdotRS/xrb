@@ -206,7 +206,7 @@ pub struct Attributes {
 }
 
 impl Attributes {
-	pub fn new(
+	#[must_use] pub fn new(
 		background_pixmap: Option<ParentRelatable<Option<Pixmap>>>,
 		background_pixel: Option<Pixel>, border_pixmap: Option<CopyableFromParent<Pixmap>>,
 		border_pixel: Option<Pixel>, bit_gravity: Option<BitGravity>,
@@ -307,8 +307,8 @@ impl Attributes {
 
 			// These booleans are converted into our [`Bool`] type so that they can easily be
 			// written as four bytes.
-			override_redirect: override_redirect.map(|bool| bool.into()),
-			save_under: save_under.map(|bool| bool.into()),
+			override_redirect: override_redirect.map(std::convert::Into::into),
+			save_under: save_under.map(std::convert::Into::into),
 
 			event_mask,
 			do_not_propagate_mask,
@@ -319,56 +319,56 @@ impl Attributes {
 		}
 	}
 
-	pub fn background_pixmap(&self) -> &Option<ParentRelatable<Option<Pixmap>>> {
+	#[must_use] pub fn background_pixmap(&self) -> &Option<ParentRelatable<Option<Pixmap>>> {
 		&self.background_pixmap
 	}
-	pub fn background_pixel(&self) -> &Option<Pixel> {
+	#[must_use] pub fn background_pixel(&self) -> &Option<Pixel> {
 		&self.background_pixel
 	}
 
-	pub fn border_pixmap(&self) -> &Option<CopyableFromParent<Pixmap>> {
+	#[must_use] pub fn border_pixmap(&self) -> &Option<CopyableFromParent<Pixmap>> {
 		&self.border_pixmap
 	}
-	pub fn border_pixel(&self) -> &Option<Pixel> {
+	#[must_use] pub fn border_pixel(&self) -> &Option<Pixel> {
 		&self.border_pixel
 	}
 
-	pub fn bit_gravity(&self) -> &Option<BitGravity> {
+	#[must_use] pub fn bit_gravity(&self) -> &Option<BitGravity> {
 		&self.bit_gravity
 	}
-	pub fn win_gravity(&self) -> &Option<WinGravity> {
+	#[must_use] pub fn win_gravity(&self) -> &Option<WinGravity> {
 		&self.win_gravity
 	}
 
-	pub fn backing_store(&self) -> &Option<BackingStore> {
+	#[must_use] pub fn backing_store(&self) -> &Option<BackingStore> {
 		&self.backing_store
 	}
-	pub fn backing_planes(&self) -> &Option<u32> {
+	#[must_use] pub fn backing_planes(&self) -> &Option<u32> {
 		&self.backing_planes
 	}
-	pub fn backing_pixel(&self) -> &Option<Pixel> {
+	#[must_use] pub fn backing_pixel(&self) -> &Option<Pixel> {
 		&self.backing_pixel
 	}
 
-	pub fn override_redirect(&self) -> Option<bool> {
-		self.override_redirect.map(|bool| bool.into())
+	#[must_use] pub fn override_redirect(&self) -> Option<bool> {
+		self.override_redirect.map(std::convert::Into::into)
 	}
-	pub fn save_under(&self) -> Option<bool> {
-		self.save_under.map(|bool| bool.into())
+	#[must_use] pub fn save_under(&self) -> Option<bool> {
+		self.save_under.map(std::convert::Into::into)
 	}
 
-	pub fn event_mask(&self) -> &Option<EventMask> {
+	#[must_use] pub fn event_mask(&self) -> &Option<EventMask> {
 		&self.event_mask
 	}
-	pub fn do_not_propagate_mask(&self) -> &Option<DeviceEventMask> {
+	#[must_use] pub fn do_not_propagate_mask(&self) -> &Option<DeviceEventMask> {
 		&self.do_not_propagate_mask
 	}
 
-	pub fn colormap(&self) -> &Option<CopyableFromParent<Colormap>> {
+	#[must_use] pub fn colormap(&self) -> &Option<CopyableFromParent<Colormap>> {
 		&self.colormap
 	}
 
-	pub fn cursor_appearance(&self) -> &Option<Option<CursorAppearance>> {
+	#[must_use] pub fn cursor_appearance(&self) -> &Option<Option<CursorAppearance>> {
 		&self.cursor_appearance
 	}
 }
