@@ -2,11 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#![allow(
-	clippy::too_many_arguments,
-	reason = "It makes sense for `Screen` to have many arguments because it has many fields."
-)]
-
 //! Messages to initialize a connection with an X server.
 
 use xrbk::X11Size;

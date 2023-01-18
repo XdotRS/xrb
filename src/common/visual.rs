@@ -2,6 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+#![allow(
+	clippy::too_many_arguments,
+	reason = "It makes sense for `Screen` to have many arguments because it has many fields."
+)]
+
 use crate::{BackingStores, Colormap, EventMask, Window};
 use derive_more::{From, Into};
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
