@@ -191,7 +191,7 @@ derive_xrb! {
 
 		/// Whether the cursor is on the same [screen] as the `event_window`.
 		///
-		/// [screen]: crate::connection::Screen
+		/// [screen]: crate::Screen
 		pub same_screen: bool,
 		_,
 	}
@@ -271,7 +271,7 @@ derive_xrb! {
 
 		/// Whether the cursor is on the same [screen] as the `event_window`.
 		///
-		/// [screen]: crate::connection::Screen
+		/// [screen]: crate::Screen
 		pub same_screen: bool,
 		_,
 	}
@@ -350,7 +350,7 @@ derive_xrb! {
 
 		/// Whether the cursor is on the same [screen] as the `event_window`.
 		///
-		/// [screen]: crate::connection::Screen
+		/// [screen]: crate::Screen
 		pub same_screen: bool,
 		_,
 	}
@@ -492,7 +492,7 @@ derive_xrb! {
 
 		/// Whether the cursor is on the same [screen] as the `event_window`.
 		///
-		/// [screen]: crate::connection::Screen
+		/// [screen]: crate::Screen
 		pub same_screen: bool,
 		_,
 	}
@@ -610,7 +610,7 @@ bitflags! {
 		const FOCUS = 0x01;
 		/// Whether the cursor is on the same [screen] as the `event_window`.
 		///
-		/// [screen]: crate::connection::Screen
+		/// [screen]: crate::Screen
 		const SAME_SCREEN = 0x02;
 	}
 }
@@ -778,7 +778,7 @@ derive_xrb! {
 		///
 		/// [event]: crate::message::Event
 		/// [`SAME_SCREEN`]: EnterLeaveMask::SAME_SCREEN
-		/// [screen]: crate::connection::Screen
+		/// [screen]: crate::Screen
 		pub event_coords: Point,
 
 		/// The state of [mouse buttons] and modifier keys immediately
