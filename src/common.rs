@@ -10,9 +10,15 @@ use xrbk::{ConstantX11Size, ReadError, ReadResult, ReadableWithContext, Wrap};
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
 pub mod atom;
-pub mod mask;
-pub mod res_id;
-pub mod wrapper;
+
+mod mask;
+mod res_id;
+mod wrapper;
+
+pub use atom::Atom;
+pub use mask::*;
+pub use res_id::*;
+pub use wrapper::*;
 
 /// A color comprised of red, green, and blue color channels.
 ///
@@ -39,17 +45,18 @@ pub mod wrapper;
 )]
 pub struct Color(
 	/// Red.
-	u16,
+	pub u16,
 	/// Green.
-	u16,
+	pub u16,
 	/// Blue.
-	u16,
+	pub u16,
 );
 
 /// An error returned when a value meant to be interpreted as a hex color code
 /// is greater than `0xffffff`.
 ///
 /// This is returned from [`Color::from_hex`].
+#[derive(Debug, Hash, PartialEq, Eq)]
 pub struct ColorValueTooHigh;
 
 impl Color {
@@ -57,7 +64,23 @@ impl Color {
 	///
 	/// # Errors
 	/// If the provided `u32` color value is greater than `0x_ffffff`, a
-	/// [`ColorValueToHigh`] error will be generated.
+	/// [`ColorValueTooHigh`] error will be generated.
+	///
+	/// # Examples
+	/// ```
+	/// use xrb::{Color, ColorValueTooHigh};
+	///
+	/// # fn main() -> Result<(), ColorValueTooHigh> {
+	/// #
+	/// let red = Color::from_hex(0xff0000)?;
+	/// assert_eq!(red, Color(0xff00, 0x0000, 0x0000));
+	///
+	/// let blue = Color::from_hex(0x0000ff)?;
+	/// assert_eq!(blue, Color(0x0000, 0x0000, 0xff00));
+	/// #
+	/// #     Ok(())
+	/// # }
+	/// ```
 	pub const fn from_hex(hex: u32) -> Result<Self, ColorValueTooHigh> {
 		/// The maximum value which a hex color code can be.
 		const COLOR_MASK: u32 = 0x00ff_ffff;
@@ -94,6 +117,17 @@ impl Color {
 	/// This function is lossy: a `Color` is made up of three `u16` values,
 	/// while a hex color code represents three `u8` values. The least
 	/// significant byte of each color channel will be lost during conversion.
+	///
+	/// # Examples
+	/// ```
+	/// use xrb::Color;
+	///
+	/// let red: Color = Color(0xff80, 0x00ff, 0x0000);
+	/// assert_eq!(red.to_hex(), 0xff0000);
+	///
+	/// let blue: Color = Color(0x0000, 0x0080, 0xffff);
+	/// assert_eq!(blue.to_hex(), 0x0000ff);
+	/// ```
 	#[must_use]
 	pub fn to_hex(&self) -> u32 {
 		/// The number of bits in a byte. Used to make the bitshifts more

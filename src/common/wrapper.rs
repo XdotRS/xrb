@@ -14,14 +14,7 @@ use xrbk::{
 	X11Size,
 };
 
-use crate::{
-	atom::Atom,
-	res_id::{Colormap, Pixmap, Window},
-	Button,
-	Keycode,
-	Timestamp,
-	WindowClass,
-};
+use crate::{atom::Atom, Button, Colormap, Keycode, Pixmap, Timestamp, Window, WindowClass};
 
 macro_rules! impl_constant_x11_size { // {{{
 	($type:ty {

@@ -11,17 +11,19 @@
 
 use crate::{
 	atom::Atom,
-	mask::{ConfigureWindowMask, ModifierMask},
-	res_id::{self, Drawable, Window},
-	wrapper::CurrentableTime,
 	Button,
+	ConfigureWindowMask,
+	CurrentableTime,
+	Drawable,
 	GrabMode,
 	Keycode,
+	ModifierMask,
 	Point,
 	Rectangle,
 	Region,
 	StackMode,
 	Timestamp,
+	Window,
 };
 
 use bitflags::bitflags;
@@ -2159,7 +2161,7 @@ derive_xrb! {
 		AttributeChanged,
 		/// The `window`'s [colormap] was installed or uninstalled.
 		///
-		/// [colormap]: res_id::Colormap
+		/// [colormap]: crate::Colormap
 		InstalledOrUninstalled,
 	}
 
@@ -2167,17 +2169,17 @@ derive_xrb! {
 	/// Whether a [window]'s [colormap] is currently installed.
 	///
 	/// [window]: Window
-	/// [colormap]: res_id::Colormap
+	/// [colormap]: crate::Colormap
 	pub enum ColormapState {
 		/// The [window]'s [colormap] is not currently installed.
 		///
 		/// [window]: Window
-		/// [colormap]: res_id::Colormap
+		/// [colormap]: crate::Colormap
 		Uninstalled,
 		/// The [window]'s [colormap] is currently installed.
 		///
 		/// [window]: Window
-		/// [colormap]: res_id::Colormap
+		/// [colormap]: crate::Colormap
 		Installed,
 	}
 
@@ -2191,7 +2193,7 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [colormap]: res_id::Colormap
+	/// [colormap]: crate::Colormap
 	/// [`COLORMAP` attribute]: crate::mask::AttributeMask::COLORMAP
 	///
 	/// [`COLORMAP_CHANGE`]: crate::mask::EventMask::COLORMAP_CHANGE
@@ -2211,8 +2213,8 @@ derive_xrb! {
 		pub window: Window,
 		/// The `window`'s [colormap].
 		///
-		/// [colormap]: res_id::Colormap
-		pub colormap: Option<res_id::Colormap>,
+		/// [colormap]: crate::Colormap
+		pub colormap: Option<crate::Colormap>,
 
 		/// Whether this [event] was generated because the `window`'s
 		/// [`COLORMAP` attribute] was changed or because the `window`'s
