@@ -2,12 +2,13 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at https://mozilla.org/MPL/2.0/. -->
 
-[![Documentation (dev build)](https://img.shields.io/badge/docs-dev%20build-forestgreen?style=for-the-badge)](https://docs.aquariwm.org/doc/xrb/)
-[![XRB GitHub project](https://img.shields.io/badge/todo-project-8860b8?style=for-the-badge)](https://github.com/orgs/XdotRS/projects/1/views/1)
-
-[![License: MPL-2.0](https://img.shields.io/crates/l/xrb?style=for-the-badge)](https://github.com/XdotRS/xrb/blob/main/LICENSE)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr-raw/XdotRS/xrb?color=%23a060d8&label=Open%20PRs&style=for-the-badge)](https://github.com/XdotRS/xrb/pulls)
 [![Issues](https://img.shields.io/github/issues-raw/XdotRS/xrb?style=for-the-badge)](https://github.com/XdotRS/xrb/issues)
 [![CI status](https://img.shields.io/github/actions/workflow/status/XdotRS/xrb/ci.yml?event=push&branch=main&label=ci&style=for-the-badge)](https://github.com/XdotRS/xrb/actions/workflows/ci.yml)
+
+[![License: MPL-2.0](https://img.shields.io/crates/l/xrb?style=for-the-badge)](https://github.com/XdotRS/xrb/blob/main/LICENSE)
+[![Documentation (dev build)](https://img.shields.io/badge/docs-dev%20build-forestgreen?style=for-the-badge)](https://docs.aquariwm.org/doc/xrb/)
+[![XRB GitHub project](https://img.shields.io/badge/todo-project-303048?style=for-the-badge)](https://github.com/orgs/XdotRS/projects/1/views/1)
 
 # Contributing to XRB
 First of all, thank you for looking into contributing to XRB.
