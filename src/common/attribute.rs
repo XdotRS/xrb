@@ -202,11 +202,13 @@ pub struct Attributes {
 
 	colormap: Option<CopyableFromParent<Colormap>>,
 
+	#[allow(clippy::option_option)]
 	cursor_appearance: Option<Option<CursorAppearance>>,
 }
 
 impl Attributes {
 	#[must_use]
+	#[allow(clippy::too_many_arguments)]
 	pub fn new(
 		background_pixmap: Option<ParentRelatable<Option<Pixmap>>>,
 		background_pixel: Option<Pixel>, border_pixmap: Option<CopyableFromParent<Pixmap>>,
@@ -309,7 +311,7 @@ impl Attributes {
 			// These booleans are converted into our [`Bool`] type so that they can easily be
 			// written as four bytes.
 			override_redirect: override_redirect.map(std::convert::Into::into),
-			save_under: save_under.map(std::convert::Into::into),
+			save_under: save_under.map(Into::into),
 
 			event_mask,
 			do_not_propagate_mask,
@@ -321,70 +323,70 @@ impl Attributes {
 	}
 
 	#[must_use]
-	pub fn background_pixmap(&self) -> &Option<ParentRelatable<Option<Pixmap>>> {
+	pub const fn background_pixmap(&self) -> &Option<ParentRelatable<Option<Pixmap>>> {
 		&self.background_pixmap
 	}
 	#[must_use]
-	pub fn background_pixel(&self) -> &Option<Pixel> {
+	pub const fn background_pixel(&self) -> &Option<Pixel> {
 		&self.background_pixel
 	}
 
 	#[must_use]
-	pub fn border_pixmap(&self) -> &Option<CopyableFromParent<Pixmap>> {
+	pub const fn border_pixmap(&self) -> &Option<CopyableFromParent<Pixmap>> {
 		&self.border_pixmap
 	}
 	#[must_use]
-	pub fn border_pixel(&self) -> &Option<Pixel> {
+	pub const fn border_pixel(&self) -> &Option<Pixel> {
 		&self.border_pixel
 	}
 
 	#[must_use]
-	pub fn bit_gravity(&self) -> &Option<BitGravity> {
+	pub const fn bit_gravity(&self) -> &Option<BitGravity> {
 		&self.bit_gravity
 	}
 	#[must_use]
-	pub fn win_gravity(&self) -> &Option<WinGravity> {
+	pub const fn win_gravity(&self) -> &Option<WinGravity> {
 		&self.win_gravity
 	}
 
 	#[must_use]
-	pub fn backing_store(&self) -> &Option<BackingStore> {
+	pub const fn backing_store(&self) -> &Option<BackingStore> {
 		&self.backing_store
 	}
 	#[must_use]
-	pub fn backing_planes(&self) -> &Option<u32> {
+	pub const fn backing_planes(&self) -> &Option<u32> {
 		&self.backing_planes
 	}
 	#[must_use]
-	pub fn backing_pixel(&self) -> &Option<Pixel> {
+	pub const fn backing_pixel(&self) -> &Option<Pixel> {
 		&self.backing_pixel
 	}
 
 	#[must_use]
 	pub fn override_redirect(&self) -> Option<bool> {
-		self.override_redirect.map(std::convert::Into::into)
+		self.override_redirect.map(Into::into)
 	}
 	#[must_use]
 	pub fn save_under(&self) -> Option<bool> {
-		self.save_under.map(std::convert::Into::into)
+		self.save_under.map(Into::into)
 	}
 
 	#[must_use]
-	pub fn event_mask(&self) -> &Option<EventMask> {
+	pub const fn event_mask(&self) -> &Option<EventMask> {
 		&self.event_mask
 	}
 	#[must_use]
-	pub fn do_not_propagate_mask(&self) -> &Option<DeviceEventMask> {
+	pub const fn do_not_propagate_mask(&self) -> &Option<DeviceEventMask> {
 		&self.do_not_propagate_mask
 	}
 
 	#[must_use]
-	pub fn colormap(&self) -> &Option<CopyableFromParent<Colormap>> {
+	pub const fn colormap(&self) -> &Option<CopyableFromParent<Colormap>> {
 		&self.colormap
 	}
 
 	#[must_use]
-	pub fn cursor_appearance(&self) -> &Option<Option<CursorAppearance>> {
+	pub const fn cursor_appearance(&self) -> &Option<Option<CursorAppearance>> {
 		&self.cursor_appearance
 	}
 }
@@ -396,6 +398,7 @@ impl X11Size for Attributes {
 }
 
 impl Readable for Attributes {
+	#[allow(clippy::too_many_lines)]
 	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
 	where
 		Self: Sized,
