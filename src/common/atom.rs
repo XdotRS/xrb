@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+//! [`Atom`] and predefined atom `const`s defined in the core protocol.
+
 use derive_more::{From, Into};
 use xrbk_macro::{ConstantX11Size, Readable, Wrap, Writable, X11Size};
 

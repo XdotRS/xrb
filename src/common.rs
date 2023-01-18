@@ -16,6 +16,11 @@ mod wrapper;
 pub use atom::Atom;
 pub use wrapper::*;
 
+/// A color comprised of red, green, and blue color channels.
+///
+/// Each of the channels is a `u16` value, where `0` is the minimum intensity
+/// and `65535` is the maximum intensity. The X server scales the values to
+/// match the display hardware.
 #[derive(
 	Copy,
 	Clone,
@@ -36,14 +41,76 @@ pub use wrapper::*;
 )]
 pub struct Color(
 	/// Red.
-	u32,
+	u16,
 	/// Green.
-	u32,
+	u16,
 	/// Blue.
-	u32,
+	u16,
 );
 
+/// An error returned when a value meant to be interpreted as a hex color code
+/// is greater than `0xffffff`.
+///
+/// This is returned from [`Color::from_hex`].
+struct ColorValueTooHigh;
+
+impl Color {
+	pub fn from_hex(hex: u32) -> Result<Self, ColorValueTooHigh> {
+		if hex > 0xffffff {
+			return Err(ColorValueTooHigh);
+		}
+
+		// Red color channel gets moved over 16 bits so that it is represented as one
+		// byte.
+		let red = ((hex & 0xff0000) >> 16) as u16;
+		// Green color channel gets moved over 8 bits so that is is represented as one
+		// byte.
+		let green = ((hex & 0x00ff00) >> 8) as u16;
+		// Blue color channel is already represented as one byte.
+		let blue = (hex & 0x0000ff) as u16;
+
+		// Since the color channels for `Color` are actually `u16` values, not `u8`,
+		// they are shifted one byte to the left.
+		Ok(Self(red << 8, green << 8, blue << 8))
+	}
+
+	pub fn to_hex(&self) -> u32 {
+		let Self(red, green, blue) = self;
+
+		// The color channels are all shifted 8 bits to the right to scale their values
+		// from `u16` to `u8`. They are then cast to `u32` so they can be combined into
+		// one `u32` value.
+		let (red, green, blue) = ((red >> 8) as u32, (green >> 8) as u32, (blue >> 8) as u32);
+
+		// We can now union the channels into one `u32` value - red and green are
+		// shifted over into `0xff0000` and `0x00ff00` positions respectively to do so.
+		(red << 16) | (green << 8) | blue
+	}
+}
+
+impl From<(u32, u32, u32)> for Color {
+	fn from((red, green, blue): (u32, u32, u32)) -> Self {
+		Self(red as u16, green as u16, blue as u16)
+	}
+}
+
+impl From<Color> for (u32, u32, u32) {
+	fn from(Color(red, green, blue): Color) -> Self {
+		(red as u32, green as u32, blue as u32)
+	}
+}
+
 /// A resource ID referring to either a [`Window`] or a [`Pixmap`].
+///
+/// Both [windows] and [pixmaps] can be used in graphics operations as `source`s
+/// and `destination`s. Collectively, they are known as `Drawable`s.
+///
+/// [`InputOnly`] [windows], however, cannot be used in graphics operations, and
+/// so cannot be `Drawable`s.
+///
+/// [windows]: Window
+/// [pixmaps]: Pixmap
+/// [`InputOnly`]: WindowClass::InputOnly
 #[derive(
 	Copy,
 	Clone,
@@ -80,6 +147,19 @@ impl From<Pixmap> for Drawable {
 }
 
 /// A resource ID referring to a particular window resource.
+///
+/// Every [screen] has a root window which covers the whole screen. Any other
+/// windows on that screen are descendents of that root Window.
+///
+/// This is a resource ID, which means it cannot collide with the ID of any
+/// other resource. These are the types considered resources:
+/// - [`Colormap`s](Colormap)
+/// - [`CursorAppearance`s](CursorAppearance)
+/// - [`GraphicsContext`s](GraphicsContext)
+/// - [`Pixmap`s](Pixmap)
+/// - [`Window`s](Window)
+///
+/// [screen]: connection::Screen
 #[derive(
 	Copy,
 	Clone,
@@ -109,6 +189,15 @@ impl From<Drawable> for Window {
 }
 
 /// A resource ID referring to a particular pixmap resource.
+///
+/// This is a resource ID, which means it cannot collide with the ID of any
+/// other resource. These are the types considered resources:
+/// - [`Colormap`s](Colormap)
+/// - [`CursorAppearance`s](CursorAppearance)
+/// - [`GraphicsContext`s](GraphicsContext) ([`Fontable`])
+/// - [`Font`s](Font) ([`Fontable`])
+/// - [`Pixmap`s](Pixmap) ([`Drawable`])
+/// - [`Window`s](Window) ([`Drawable`])
 #[derive(
 	Copy,
 	Clone,
@@ -138,6 +227,15 @@ impl From<Drawable> for Pixmap {
 }
 
 /// A resource ID referring to a particular cursor appearance resource.
+///
+/// This is a resource ID, which means it cannot collide with the ID of any
+/// other resource. These are the types considered resources:
+/// - [`Colormap`s](Colormap)
+/// - [`CursorAppearance`s](CursorAppearance)
+/// - [`GraphicsContext`s](GraphicsContext) ([`Fontable`])
+/// - [`Font`s](Font) ([`Fontable`])
+/// - [`Pixmap`s](Pixmap) ([`Drawable`])
+/// - [`Window`s](Window) ([`Drawable`])
 #[derive(
 	Copy,
 	Clone,
@@ -196,6 +294,15 @@ impl From<GraphicsContext> for Fontable {
 }
 
 /// A resource ID referring to a particular font resource.
+///
+/// This is a resource ID, which means it cannot collide with the ID of any
+/// other resource. These are the types considered resources:
+/// - [`Colormap`s](Colormap)
+/// - [`CursorAppearance`s](CursorAppearance)
+/// - [`GraphicsContext`s](GraphicsContext) ([`Fontable`])
+/// - [`Font`s](Font) ([`Fontable`])
+/// - [`Pixmap`s](Pixmap) ([`Drawable`])
+/// - [`Window`s](Window) ([`Drawable`])
 #[derive(
 	Copy,
 	Clone,
@@ -231,6 +338,15 @@ impl From<Fontable> for Font {
 /// clipping region, etc. A graphics context can only be used with
 /// [`Drawable`]s that have the same `root` and `depth` as the
 /// `GraphicsContext`.
+///
+/// This is a resource ID, which means it cannot collide with the ID of any
+/// other resource. These are the types considered resources:
+/// - [`Colormap`s](Colormap)
+/// - [`CursorAppearance`s](CursorAppearance)
+/// - [`GraphicsContext`s](GraphicsContext) ([`Fontable`])
+/// - [`Font`s](Font) ([`Fontable`])
+/// - [`Pixmap`s](Pixmap) ([`Drawable`])
+/// - [`Window`s](Window) ([`Drawable`])
 #[derive(
 	Copy,
 	Clone,
@@ -260,6 +376,15 @@ impl From<Fontable> for GraphicsContext {
 }
 
 /// A resource ID referring to a particular colormap resource.
+///
+/// This is a resource ID, which means it cannot collide with the ID of any
+/// other resource. These are the types considered resources:
+/// - [`Colormap`s](Colormap)
+/// - [`CursorAppearance`s](CursorAppearance)
+/// - [`GraphicsContext`s](GraphicsContext) ([`Fontable`])
+/// - [`Font`s](Font) ([`Fontable`])
+/// - [`Pixmap`s](Pixmap) ([`Drawable`])
+/// - [`Window`s](Window) ([`Drawable`])
 #[derive(
 	Copy,
 	Clone,
