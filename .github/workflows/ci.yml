@@ -206,7 +206,7 @@ jobs:
       # Build documentation with `rustdoc`.
       - name: Build documentation
         working-directory: xrb
-        run: cargo doc --no-deps --workspace --document-private-items --color never
+        run: cargo doc --no-deps --workspace --color never
 
       - name: Remove Rust problem matching
         if: ${{ success() || failure() }}
