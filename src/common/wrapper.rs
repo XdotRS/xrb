@@ -6,7 +6,7 @@ use xrbk::{Buf, BufMut, ConstantX11Size, X11Size, Readable, Writable, ReadResult
 
 use crate::{Atom, Button, Colormap, Keycode, Pixmap, Timestamp, Window, WindowClass};
 
-macro_rules! impl_constant_x11_size {
+macro_rules! impl_constant_x11_size { // {{{
 	($type:ty {
 		$($token:tt)*
 	}) => {
@@ -44,14 +44,28 @@ macro_rules! impl_writable {
 			}
 		}
 	}
-}
+} // }}}
 
-pub enum CopyableFromParent<T> { // {{{
+/// Values which may be copied from the 'parent'.
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
+pub enum CopyableFromParent<T> {
+	/// A value is initialized by copying the matching value of the parent.
+	///
+	/// For example, when creating a [window] with a [`CreateWindow` request], the
+	/// class is <code>ParentCopyable<[WindowClass]></code> - `CopyFromParent`
+	/// in that case means to copy the [`WindowClass`] of the [window]'s parent.
+	///
+	/// [`CreateWindow` request]: crate::x11::request::CreateWindow
+	/// [window]: Window
+	/// [`WindowClass`]: WindowClass
+	/// [WindowClass]: WindowClass
 	CopyFromParent,
+
+	/// The value is initialized as this value.
 	Other(T),
 }
 
-impl_constant_x11_size!(CopyableFromParent<WindowClass> {
+impl_constant_x11_size!(CopyableFromParent<WindowClass> { // {{{
 	WindowClass::X11_SIZE
 });
 
@@ -115,12 +129,25 @@ impl_writable!(CopyableFromParent<Colormap>: &self, buf {
 	Ok(())
 }); // }}}
 
-pub enum ParentRelatable<T> { // {{{
+/// Values which may be the same as the 'parent' as long as the parent has the
+/// same `depth`.
+///
+/// This is only used for [pixmaps]. The purpose of specifying `T` is to clearly
+/// show that it 'wraps' a [pixmap].
+///
+/// [pixmaps]: Pixmap
+/// [pixmap]: Pixmap
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
+pub enum ParentRelatable<T> {
+	/// The value of the 'parent' is used, as long as the parent has the same
+	/// `depth`.
 	ParentRelative,
+
+	/// This value is used.
 	Other(T),
 }
 
-impl_constant_x11_size!(ParentRelatable<Option<Pixmap>> {
+impl_constant_x11_size!(ParentRelatable<Option<Pixmap>> { // {{{
 	Pixmap::X11_SIZE
 });
 
@@ -145,12 +172,19 @@ impl_writable!(ParentRelatable<Option<Pixmap>>: &self, buf {
 	Ok(())
 }); // }}}
 
-pub enum Any<T> { // {{{
+/// Either [`Any`] value or a specific value.
+///
+/// [`Any`]: Any::Any
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
+pub enum Any<T> {
+	/// Any value.
 	Any,
+
+	/// This specific value.
 	Other(T),
 }
 
-impl_constant_x11_size!(Any<Atom> {
+impl_constant_x11_size!(Any<Atom> { // {{{
 	Atom::X11_SIZE
 });
 
@@ -210,12 +244,17 @@ impl_writable!(Any<Keycode>: &self, buf {
 	Ok(())
 }); // }}}
 
-pub enum CurrentableTime { // {{{
+/// A time which may simply fill in for the current server time.
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
+pub enum CurrentableTime {
+	/// The X server should treat this time as its current time.
 	CurrentTime,
+
+	/// The X server should treat this time as this `Timestamp`.
 	Other(Timestamp),
 }
 
-impl_constant_x11_size!(CurrentableTime {
+impl_constant_x11_size!(CurrentableTime { // {{{
 	Timestamp::X11_SIZE
 });
 
@@ -235,13 +274,27 @@ impl_writable!(CurrentableTime: &self, buf {
 	Ok(())
 }); // }}}
 
-pub enum DestinationWindow { // {{{
+/// The `destination` of a [`SendEvent` request].
+///
+/// [`SendEvent` request]: crate::x11::request::SendEvent
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
+pub enum DestinationWindow {
+	/// The [window] that the cursor is currently located within.
+	///
+	/// [window]: Window
 	Cursor,
+	/// The [window] which is currently focused.
+	///
+	/// [window]: Window
 	Focus,
+
+	/// This [window] in particular.
+	///
+	/// [window]: Window
 	Other(Window),
 }
 
-impl_constant_x11_size!(DestinationWindow {
+impl_constant_x11_size!(DestinationWindow { // {{{
 	Window::X11_SIZE
 });
 
@@ -265,13 +318,29 @@ impl_writable!(DestinationWindow: &self, buf {
 	Ok(())
 }); // }}}
 
-pub enum FocusWindow { // {{{
+/// The [window] which is focused.
+///
+/// [window]: Window
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
+pub enum FocusWindow {
+	/// No [window] is focused.
+	///
+	/// [window]: Window
 	None,
+	/// The root [window] of whichever [window] the cursor is located within is
+	/// focused.
+	///
+	/// This dynamically changes root [window] based on the location of the
+	/// cursor.
+	///
+	/// [window]: Window
 	CursorRoot,
+
+	/// This specific [window].
 	Other(Window),
 }
 
-impl_constant_x11_size!(FocusWindow {
+impl_constant_x11_size!(FocusWindow { // {{{
 	Window::X11_SIZE
 });
 
@@ -293,12 +362,22 @@ impl_writable!(FocusWindow: &self, buf {
 	Ok(())
 }); // }}}
 
-pub enum KillClientTarget { // {{{
+/// The target client(s) of a [`KillClient` request].
+///
+/// [`KillClient` request]: crate::request::KillClient
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
+pub enum KillClientTarget {
+	/// Kill all clients with [`CloseDownMode::RetainTemporary`].
+	///
+	/// [`CloseDownMode::RetainTemporary`]: crate::CloseDownMode::RetainTemporary
+	// FIXME: correct CloseDownMode link
 	AllTemporarilyRetainedClients,
+
+	/// Kill the client which created the resource specified by this resource ID.
 	Other(u32),
 }
 
-impl_constant_x11_size!(KillClientTarget {
+impl_constant_x11_size!(KillClientTarget { // {{{
 	u32::X11_SIZE
 });
 
