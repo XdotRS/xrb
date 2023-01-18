@@ -102,7 +102,7 @@ pub trait Request: X11Size + Writable {
 	///
 	/// ```
 	/// use xrbk_macro::derive_xrb;
-	/// use xrb::{mask::ColorChannelMask, res_id::Colormap, String8};
+	/// use xrb::{ColorChannelMask, Colormap, String8};
 	///
 	/// derive_xrb! {
 	///     #[derive(Debug, Hash, PartialEq, Eq, Readable, Writable, X11Size)]
@@ -262,13 +262,13 @@ pub trait Reply: X11Size + Readable {
 	///
 	/// ```
 	/// use xrbk_macro::derive_xrb;
-	/// use xrb::{atom::Atom, message::Reply, Rectangle, res_id::Window};
+	/// use xrb::{atom::Atom, message::Reply, Rectangle, Window};
 	/// # use xrb::message::Request;
 	///
 	/// derive_xrb! {
 	///     # #[derive(Debug, Hash, PartialEq, Eq, Readable, Writable, X11Size)]
 	///     # pub struct GetGeometry: Request(14) -> GetGeometryReply {
-	///     #     pub drawable: xrb::res_id::Drawable,
+	///     #     pub drawable: xrb::Drawable,
 	///     # }
 	///     #
 	///     #[derive(Debug, Hash, Readable, Writable, X11Size)]
