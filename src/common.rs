@@ -85,7 +85,8 @@ impl Color {
 	/// This function is lossy: a `Color` is made up of three `u16` values,
 	/// while a hex color code represents three `u8` values. The least
 	/// significant byte of each color channel will be lost during conversion.
-	#[must_use] pub fn to_hex(&self) -> u32 {
+	#[must_use]
+	pub fn to_hex(&self) -> u32 {
 		let Self(red, green, blue) = self;
 
 		// The color channels are all shifted 8 bits to the right to scale their values
