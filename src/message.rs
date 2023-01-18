@@ -262,13 +262,13 @@ pub trait Reply: X11Size + Readable {
 	///
 	/// ```
 	/// use xrbk_macro::derive_xrb;
-	/// use xrb::{Atom, message::Reply, Rectangle, Window};
+	/// use xrb::{atom::Atom, message::Reply, Rectangle, res_id::Window};
 	/// # use xrb::message::Request;
 	///
 	/// derive_xrb! {
 	///     # #[derive(Debug, Hash, PartialEq, Eq, Readable, Writable, X11Size)]
 	///     # pub struct GetGeometry: Request(14) -> GetGeometryReply {
-	///     #     pub drawable: xrb::Drawable,
+	///     #     pub drawable: xrb::res_id::Drawable,
 	///     # }
 	///     #
 	///     #[derive(Debug, Hash, Readable, Writable, X11Size)]

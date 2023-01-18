@@ -58,24 +58,34 @@ impl Color {
 	/// # Errors
 	/// If the provided `u32` color value is greater than `0x_ffffff`, a
 	/// [`ColorValueToHigh`] error will be generated.
-	#[allow(clippy::unreadable_literal)]
-	pub fn from_hex(hex: u32) -> Result<Self, ColorValueTooHigh> {
-		if hex > 0x00ff_ffff {
+	pub const fn from_hex(hex: u32) -> Result<Self, ColorValueTooHigh> {
+		/// The maximum value which a hex color code can be.
+		const COLOR_MASK: u32 = 0xffffff;
+
+		const RED_MASK: u32 = 0xff0000;
+		const GREEN_MASK: u32 = 0x00ff00;
+		const BLUE_MASK: u32 = 0x0000ff;
+
+		/// The number of bits in a byte. Used to make the bitshifts more
+		/// readable.
+		const BYTE: u32 = u8::BITS;
+
+		if hex > COLOR_MASK {
 			return Err(ColorValueTooHigh);
 		}
 
 		// Red color channel gets moved over 16 bits so that it is represented as one
 		// byte.
-		let red = ((hex & 0x00ff_0000) >> 16) as u16;
+		let red = ((hex & RED_MASK) >> 2 * BYTE) as u16;
 		// Green color channel gets moved over 8 bits so that is is represented as one
 		// byte.
-		let green = ((hex & 0x0000_ff00) >> 8) as u16;
+		let green = ((hex & GREEN_MASK) >> BYTE) as u16;
 		// Blue color channel is already represented as one byte.
-		let blue = (hex & 0x0000_00ff) as u16;
+		let blue = (hex & BLUE_MASK) as u16;
 
 		// Since the color channels for `Color` are actually `u16` values, not `u8`,
 		// they are shifted one byte to the left.
-		Ok(Self(red << 8, green << 8, blue << 8))
+		Ok(Self(red << BYTE, green << BYTE, blue << BYTE))
 	}
 
 	/// Converts a `Color` to a hex color code.
@@ -86,20 +96,24 @@ impl Color {
 	/// significant byte of each color channel will be lost during conversion.
 	#[must_use]
 	pub fn to_hex(&self) -> u32 {
+		/// The number of bits in a byte. Used to make the bitshifts more
+		/// readable.
+		const BYTE: u32 = u8::BITS;
+
 		let Self(red, green, blue) = self;
 
 		// The color channels are all shifted 8 bits to the right to scale their values
 		// from `u16` to `u8`. They are then cast to `u32` so they can be combined into
 		// one `u32` value.
 		let (red, green, blue) = (
-			u32::from(red >> 8),
-			u32::from(green >> 8),
-			u32::from(blue >> 8),
+			u32::from(red >> BYTE),
+			u32::from(green >> BYTE),
+			u32::from(blue >> BYTE),
 		);
 
 		// We can now union the channels into one `u32` value - red and green are
 		// shifted over into `0xff0000` and `0x00ff00` positions respectively to do so.
-		(red << 16) | (green << 8) | blue
+		(red << 2 * BYTE) | (green << BYTE) | blue
 	}
 }
 
