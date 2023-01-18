@@ -62,7 +62,7 @@ pub enum CopyableFromParent<T> {
 	/// A value is initialized by copying the matching value of the parent.
 	///
 	/// For example, when creating a [window] with a [`CreateWindow` request],
-	/// the class is <code>ParentCopyable<[WindowClass]></code> -
+	/// the class is <code>CopyableFromParent<[WindowClass]></code> -
 	/// `CopyFromParent` in that case means to copy the [`WindowClass`] of the
 	/// [window]'s parent.
 	///
