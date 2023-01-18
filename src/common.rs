@@ -11,10 +11,8 @@ use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writa
 
 pub mod atom;
 pub mod mask;
-mod wrapper;
-
-pub use atom::Atom;
-pub use wrapper::*;
+pub mod res_id;
+pub mod wrapper;
 
 /// A color comprised of red, green, and blue color channels.
 ///
@@ -61,18 +59,18 @@ impl Color {
 	/// If the provided `u32` color value is greater than `0x_ffffff`, a
 	/// [`ColorValueToHigh`] error will be generated.
 	pub fn from_hex(hex: u32) -> Result<Self, ColorValueTooHigh> {
-		if hex > 0x00ff_ffff {
+		if hex > 0x_ffffff {
 			return Err(ColorValueTooHigh);
 		}
 
 		// Red color channel gets moved over 16 bits so that it is represented as one
 		// byte.
-		let red = ((hex & 0x00ff_0000) >> 16) as u16;
+		let red = ((hex & 0x_ff0000) >> 16) as u16;
 		// Green color channel gets moved over 8 bits so that is is represented as one
 		// byte.
-		let green = ((hex & 0x0000_ff00) >> 8) as u16;
+		let green = ((hex & 0x_00ff00) >> 8) as u16;
 		// Blue color channel is already represented as one byte.
-		let blue = (hex & 0x0000_00ff) as u16;
+		let blue = (hex & 0x_0000ff) as u16;
 
 		// Since the color channels for `Color` are actually `u16` values, not `u8`,
 		// they are shifted one byte to the left.
@@ -122,312 +120,6 @@ impl From<Color> for (u32, u32, u32) {
 	}
 }
 
-/// A resource ID referring to either a [`Window`] or a [`Pixmap`].
-///
-/// Both [windows] and [pixmaps] can be used in graphics operations as `source`s
-/// and `destination`s. Collectively, they are known as `Drawable`s.
-///
-/// [`InputOnly`] [windows], however, cannot be used in graphics operations, and
-/// so cannot be `Drawable`s.
-///
-/// [windows]: Window
-/// [pixmaps]: Pixmap
-/// [`InputOnly`]: WindowClass::InputOnly
-#[derive(
-	Copy,
-	Clone,
-	Eq,
-	PartialEq,
-	Hash,
-	Debug,
-	From,
-	Into,
-	// `new` and `unwrap` const fns
-	new,
-	unwrap,
-	// XRBK traits
-	X11Size,
-	ConstantX11Size,
-	Readable,
-	Writable,
-	Wrap,
-)]
-pub struct Drawable(pub(crate) u32);
-
-impl From<Window> for Drawable {
-	fn from(window: Window) -> Self {
-		let Window(id) = window;
-		Self(id)
-	}
-}
-
-impl From<Pixmap> for Drawable {
-	fn from(pixmap: Pixmap) -> Self {
-		let Pixmap(id) = pixmap;
-		Self(id)
-	}
-}
-
-/// A resource ID referring to a particular window resource.
-///
-/// Every [screen] has a root window which covers the whole screen. Any other
-/// windows on that screen are descendents of that root Window.
-///
-/// This is a resource ID, which means it cannot collide with the ID of any
-/// other resource. These are the types considered resources:
-/// - [`Colormap`s](Colormap)
-/// - [`CursorAppearance`s](CursorAppearance)
-/// - [`GraphicsContext`s](GraphicsContext)
-/// - [`Pixmap`s](Pixmap)
-/// - [`Window`s](Window)
-///
-/// [screen]: connection::Screen
-#[derive(
-	Copy,
-	Clone,
-	Eq,
-	PartialEq,
-	Hash,
-	Debug,
-	From,
-	Into,
-	// `new` and `unwrap` const fns
-	new,
-	unwrap,
-	// XRBK traits
-	X11Size,
-	ConstantX11Size,
-	Readable,
-	Writable,
-	Wrap,
-)]
-pub struct Window(pub(crate) u32);
-
-impl From<Drawable> for Window {
-	fn from(drawable: Drawable) -> Self {
-		let Drawable(id) = drawable;
-		Self(id)
-	}
-}
-
-/// A resource ID referring to a particular pixmap resource.
-///
-/// This is a resource ID, which means it cannot collide with the ID of any
-/// other resource. These are the types considered resources:
-/// - [`Colormap`s](Colormap)
-/// - [`CursorAppearance`s](CursorAppearance)
-/// - [`GraphicsContext`s](GraphicsContext) ([`Fontable`])
-/// - [`Font`s](Font) ([`Fontable`])
-/// - [`Pixmap`s](Pixmap) ([`Drawable`])
-/// - [`Window`s](Window) ([`Drawable`])
-#[derive(
-	Copy,
-	Clone,
-	Eq,
-	PartialEq,
-	Hash,
-	Debug,
-	From,
-	Into,
-	// `new` and `unwrap` const fns
-	new,
-	unwrap,
-	// XRBK traits
-	X11Size,
-	ConstantX11Size,
-	Readable,
-	Writable,
-	Wrap,
-)]
-pub struct Pixmap(pub(crate) u32);
-
-impl From<Drawable> for Pixmap {
-	fn from(drawable: Drawable) -> Self {
-		let Drawable(id) = drawable;
-		Self(id)
-	}
-}
-
-/// A resource ID referring to a particular cursor appearance resource.
-///
-/// This is a resource ID, which means it cannot collide with the ID of any
-/// other resource. These are the types considered resources:
-/// - [`Colormap`s](Colormap)
-/// - [`CursorAppearance`s](CursorAppearance)
-/// - [`GraphicsContext`s](GraphicsContext) ([`Fontable`])
-/// - [`Font`s](Font) ([`Fontable`])
-/// - [`Pixmap`s](Pixmap) ([`Drawable`])
-/// - [`Window`s](Window) ([`Drawable`])
-#[derive(
-	Copy,
-	Clone,
-	Eq,
-	PartialEq,
-	Hash,
-	Debug,
-	From,
-	Into,
-	// `new` and `unwrap` const fns
-	new,
-	unwrap,
-	// XRBK traits
-	X11Size,
-	ConstantX11Size,
-	Readable,
-	Writable,
-	Wrap,
-)]
-pub struct CursorAppearance(pub(crate) u32);
-
-/// A resource ID referring to either a [`Font`] or a [`GraphicsContext`].
-#[derive(
-	Copy,
-	Clone,
-	Eq,
-	PartialEq,
-	Hash,
-	Debug,
-	From,
-	Into,
-	// `new` and `unwrap` const fns
-	new,
-	unwrap,
-	// XRBK traits
-	X11Size,
-	ConstantX11Size,
-	Readable,
-	Writable,
-	Wrap,
-)]
-pub struct Fontable(pub(crate) u32);
-
-impl From<Font> for Fontable {
-	fn from(font: Font) -> Self {
-		let Font(id) = font;
-		Self(id)
-	}
-}
-
-impl From<GraphicsContext> for Fontable {
-	fn from(context: GraphicsContext) -> Self {
-		let GraphicsContext(id) = context;
-		Self(id)
-	}
-}
-
-/// A resource ID referring to a particular font resource.
-///
-/// This is a resource ID, which means it cannot collide with the ID of any
-/// other resource. These are the types considered resources:
-/// - [`Colormap`s](Colormap)
-/// - [`CursorAppearance`s](CursorAppearance)
-/// - [`GraphicsContext`s](GraphicsContext) ([`Fontable`])
-/// - [`Font`s](Font) ([`Fontable`])
-/// - [`Pixmap`s](Pixmap) ([`Drawable`])
-/// - [`Window`s](Window) ([`Drawable`])
-#[derive(
-	Copy,
-	Clone,
-	Eq,
-	PartialEq,
-	Hash,
-	Debug,
-	From,
-	Into,
-	// `new` and `unwrap` const fns
-	new,
-	unwrap,
-	// XRBK traits
-	X11Size,
-	ConstantX11Size,
-	Readable,
-	Writable,
-	Wrap,
-)]
-pub struct Font(pub(crate) u32);
-
-impl From<Fontable> for Font {
-	fn from(fontable: Fontable) -> Self {
-		let Fontable(id) = fontable;
-		Self(id)
-	}
-}
-
-/// A resource ID referring to a particular graphics context resource.
-///
-/// Information relating to graphics output is stored in a graphics
-/// context such as foreground pixel, background pixel, line width,
-/// clipping region, etc. A graphics context can only be used with
-/// [`Drawable`]s that have the same `root` and `depth` as the
-/// `GraphicsContext`.
-///
-/// This is a resource ID, which means it cannot collide with the ID of any
-/// other resource. These are the types considered resources:
-/// - [`Colormap`s](Colormap)
-/// - [`CursorAppearance`s](CursorAppearance)
-/// - [`GraphicsContext`s](GraphicsContext) ([`Fontable`])
-/// - [`Font`s](Font) ([`Fontable`])
-/// - [`Pixmap`s](Pixmap) ([`Drawable`])
-/// - [`Window`s](Window) ([`Drawable`])
-#[derive(
-	Copy,
-	Clone,
-	Eq,
-	PartialEq,
-	Hash,
-	Debug,
-	From,
-	Into,
-	// `new` and `unwrap` const fns
-	new,
-	unwrap,
-	// XRBK traits
-	X11Size,
-	ConstantX11Size,
-	Readable,
-	Writable,
-	Wrap,
-)]
-pub struct GraphicsContext(pub(crate) u32);
-
-impl From<Fontable> for GraphicsContext {
-	fn from(fontable: Fontable) -> Self {
-		let Fontable(id) = fontable;
-		Self(id)
-	}
-}
-
-/// A resource ID referring to a particular colormap resource.
-///
-/// This is a resource ID, which means it cannot collide with the ID of any
-/// other resource. These are the types considered resources:
-/// - [`Colormap`s](Colormap)
-/// - [`CursorAppearance`s](CursorAppearance)
-/// - [`GraphicsContext`s](GraphicsContext) ([`Fontable`])
-/// - [`Font`s](Font) ([`Fontable`])
-/// - [`Pixmap`s](Pixmap) ([`Drawable`])
-/// - [`Window`s](Window) ([`Drawable`])
-#[derive(
-	Copy,
-	Clone,
-	Eq,
-	PartialEq,
-	Hash,
-	Debug,
-	From,
-	Into,
-	// `new` and `unwrap` const fns
-	new,
-	unwrap,
-	// XRBK traits
-	X11Size,
-	ConstantX11Size,
-	Readable,
-	Writable,
-	Wrap,
-)]
-pub struct Colormap(pub(crate) u32);
-
 /// Represents a particular time, expressed in milliseconds.
 ///
 /// Timestamps are typically the time since the last server reset. After
@@ -453,6 +145,9 @@ pub struct Colormap(pub(crate) u32);
 )]
 pub struct Timestamp(pub(crate) u32);
 
+/// The ID of a [`VisualType`].
+///
+/// [`VisualType`]: crate::connection::VisualType
 #[derive(
 	Copy,
 	Clone,

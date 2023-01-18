@@ -10,11 +10,11 @@
 //! [core X11 protocol]: super
 
 use crate::{
+	atom::Atom,
 	mask::{ConfigureWindowMask, ModifierMask},
-	Atom,
+	res_id::{self, Drawable, Window},
+	wrapper::CurrentableTime,
 	Button,
-	CurrentableTime,
-	Drawable,
 	GrabMode,
 	Keycode,
 	Point,
@@ -22,12 +22,10 @@ use crate::{
 	Region,
 	StackMode,
 	Timestamp,
-	Window,
 };
 
 use bitflags::bitflags;
-use bytes::Buf;
-use xrbk::{ConstantX11Size, ReadResult, Readable, ReadableWithContext, X11Size};
+use xrbk::{Buf, ConstantX11Size, ReadResult, Readable, ReadableWithContext, X11Size};
 
 use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
 extern crate self as xrb;
@@ -2161,7 +2159,7 @@ derive_xrb! {
 		AttributeChanged,
 		/// The `window`'s [colormap] was installed or uninstalled.
 		///
-		/// [colormap]: crate::Colormap
+		/// [colormap]: res_id::Colormap
 		InstalledOrUninstalled,
 	}
 
@@ -2169,17 +2167,17 @@ derive_xrb! {
 	/// Whether a [window]'s [colormap] is currently installed.
 	///
 	/// [window]: Window
-	/// [colormap]: crate::Colormap
+	/// [colormap]: res_id::Colormap
 	pub enum ColormapState {
 		/// The [window]'s [colormap] is not currently installed.
 		///
 		/// [window]: Window
-		/// [colormap]: crate::Colormap
+		/// [colormap]: res_id::Colormap
 		Uninstalled,
 		/// The [window]'s [colormap] is currently installed.
 		///
 		/// [window]: Window
-		/// [colormap]: crate::Colormap
+		/// [colormap]: res_id::Colormap
 		Installed,
 	}
 
@@ -2193,7 +2191,7 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [colormap]: crate::Colormap
+	/// [colormap]: res_id::Colormap
 	/// [`COLORMAP` attribute]: crate::mask::AttributeMask::COLORMAP
 	///
 	/// [`COLORMAP_CHANGE`]: crate::mask::EventMask::COLORMAP_CHANGE
@@ -2213,8 +2211,8 @@ derive_xrb! {
 		pub window: Window,
 		/// The `window`'s [colormap].
 		///
-		/// [colormap]: crate::Colormap
-		pub colormap: Option<crate::Colormap>,
+		/// [colormap]: res_id::Colormap
+		pub colormap: Option<res_id::Colormap>,
 
 		/// Whether this [event] was generated because the `window`'s
 		/// [`COLORMAP` attribute] was changed or because the `window`'s

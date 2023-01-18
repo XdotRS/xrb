@@ -26,11 +26,11 @@
 // Warn for pedantic & cargo lints. They are allowed completely by default.
 #![warn(clippy::pedantic)]
 #![warn(clippy::cargo)]
+//#![warn(missing_docs)]
 // Continue to allow these though.
 #![allow(clippy::doc_markdown)]
 #![allow(clippy::wildcard_imports)]
 #![allow(clippy::module_name_repetitions)]
-#![warn(missing_docs)]
 
 //! <h1 align="center" style="margin-bottom: 0;">
 //!     X Rust Bindings
