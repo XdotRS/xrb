@@ -60,11 +60,11 @@ impl Color {
 	/// [`ColorValueToHigh`] error will be generated.
 	pub const fn from_hex(hex: u32) -> Result<Self, ColorValueTooHigh> {
 		/// The maximum value which a hex color code can be.
-		const COLOR_MASK: u32 = 0xffffff;
+		const COLOR_MASK: u32 = 0x00ff_ffff;
 
-		const RED_MASK: u32 = 0xff0000;
-		const GREEN_MASK: u32 = 0x00ff00;
-		const BLUE_MASK: u32 = 0x0000ff;
+		const RED_MASK: u32 = 0x00ff_0000;
+		const GREEN_MASK: u32 = 0x0000_ff00;
+		const BLUE_MASK: u32 = 0x0000_00ff;
 
 		/// The number of bits in a byte. Used to make the bitshifts more
 		/// readable.
@@ -76,7 +76,7 @@ impl Color {
 
 		// Red color channel gets moved over 16 bits so that it is represented as one
 		// byte.
-		let red = ((hex & RED_MASK) >> 2 * BYTE) as u16;
+		let red = ((hex & RED_MASK) >> (2 * BYTE)) as u16;
 		// Green color channel gets moved over 8 bits so that is is represented as one
 		// byte.
 		let green = ((hex & GREEN_MASK) >> BYTE) as u16;
@@ -113,7 +113,7 @@ impl Color {
 
 		// We can now union the channels into one `u32` value - red and green are
 		// shifted over into `0xff0000` and `0x00ff00` positions respectively to do so.
-		(red << 2 * BYTE) | (green << BYTE) | blue
+		(red << (2 * BYTE)) | (green << BYTE) | blue
 	}
 }
 
