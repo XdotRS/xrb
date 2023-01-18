@@ -3,7 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use derive_more::{From, Into};
-use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
+use xrbk_macro::{ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
 /// A unique ID corresponding to a string name.
 ///
@@ -22,6 +22,7 @@ use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Atom(pub(crate) u32);
 
