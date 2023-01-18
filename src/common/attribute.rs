@@ -350,11 +350,11 @@ impl Attributes {
 		&self.backing_pixel
 	}
 
-	pub fn override_redirect(&self) -> &Option<bool> {
-		&self.override_redirect.map(|bool| bool.into())
+	pub fn override_redirect(&self) -> Option<bool> {
+		self.override_redirect.map(|bool| bool.into())
 	}
-	pub fn save_under(&self) -> &Option<bool> {
-		&self.save_under.map(|bool| bool.into())
+	pub fn save_under(&self) -> Option<bool> {
+		self.save_under.map(|bool| bool.into())
 	}
 
 	pub fn event_mask(&self) -> &Option<EventMask> {
