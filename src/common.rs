@@ -61,18 +61,18 @@ impl Color {
 	/// If the provided `u32` color value is greater than `0x_ffffff`, a
 	/// [`ColorValueToHigh`] error will be generated.
 	pub fn from_hex(hex: u32) -> Result<Self, ColorValueTooHigh> {
-		if hex > 0x_ffffff {
+		if hex > 0x00ff_ffff {
 			return Err(ColorValueTooHigh);
 		}
 
 		// Red color channel gets moved over 16 bits so that it is represented as one
 		// byte.
-		let red = ((hex & 0x_ff0000) >> 16) as u16;
+		let red = ((hex & 0x00ff_0000) >> 16) as u16;
 		// Green color channel gets moved over 8 bits so that is is represented as one
 		// byte.
-		let green = ((hex & 0x_00ff00) >> 8) as u16;
+		let green = ((hex & 0x0000_ff00) >> 8) as u16;
 		// Blue color channel is already represented as one byte.
-		let blue = (hex & 0x_0000ff) as u16;
+		let blue = (hex & 0x0000_00ff) as u16;
 
 		// Since the color channels for `Color` are actually `u16` values, not `u8`,
 		// they are shifted one byte to the left.
@@ -85,7 +85,7 @@ impl Color {
 	/// This function is lossy: a `Color` is made up of three `u16` values,
 	/// while a hex color code represents three `u8` values. The least
 	/// significant byte of each color channel will be lost during conversion.
-	pub fn to_hex(&self) -> u32 {
+	#[must_use] pub fn to_hex(&self) -> u32 {
 		let Self(red, green, blue) = self;
 
 		// The color channels are all shifted 8 bits to the right to scale their values
