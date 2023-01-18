@@ -58,6 +58,7 @@ impl Color {
 	/// # Errors
 	/// If the provided `u32` color value is greater than `0x_ffffff`, a
 	/// [`ColorValueToHigh`] error will be generated.
+	#[allow(clippy::unreadable_literal)]
 	pub fn from_hex(hex: u32) -> Result<Self, ColorValueTooHigh> {
 		if hex > 0x_ffffff {
 			return Err(ColorValueTooHigh);
