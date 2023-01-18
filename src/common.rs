@@ -6,8 +6,8 @@ extern crate self as xrb;
 
 use bytes::Buf;
 use derive_more::{From, Into};
-use xrbk::{ConstantX11Size, ReadResult, ReadableWithContext, Wrapper};
-use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Writable, X11Size};
+use xrbk::{ConstantX11Size, ReadError, ReadResult, ReadableWithContext, Wrap};
+use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
 pub mod atom;
 pub mod mask;
@@ -61,6 +61,7 @@ pub struct Color(
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Drawable(pub(crate) u32);
 
@@ -96,6 +97,7 @@ impl From<Pixmap> for Drawable {
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Window(pub(crate) u32);
 
@@ -124,6 +126,7 @@ impl From<Drawable> for Window {
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Pixmap(pub(crate) u32);
 
@@ -152,6 +155,7 @@ impl From<Drawable> for Pixmap {
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct CursorAppearance(pub(crate) u32);
 
@@ -173,6 +177,7 @@ pub struct CursorAppearance(pub(crate) u32);
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Fontable(pub(crate) u32);
 
@@ -208,6 +213,7 @@ impl From<GraphicsContext> for Fontable {
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Font(pub(crate) u32);
 
@@ -242,6 +248,7 @@ impl From<Fontable> for Font {
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct GraphicsContext(pub(crate) u32);
 
@@ -270,6 +277,7 @@ impl From<Fontable> for GraphicsContext {
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Colormap(pub(crate) u32);
 
@@ -294,6 +302,7 @@ pub struct Colormap(pub(crate) u32);
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Timestamp(pub(crate) u32);
 
@@ -314,6 +323,7 @@ pub struct Timestamp(pub(crate) u32);
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct VisualId(pub(crate) u32);
 
@@ -369,24 +379,28 @@ derive_xrb! {
 		const X11_SIZE: usize = 2;
 	}
 
-	impl Wrapper for WindowClass {
-		type WrappedType = u16;
+	impl Wrap for WindowClass {
+		type Integer = u16;
+	}
 
-		fn wrap(val: Self::WrappedType) -> Self {
+	impl TryFrom<u16> for WindowClass {
+		type Error = ReadError;
+
+		fn try_from(val: u16) -> ReadResult<Self> {
 			match val {
-				discrim if discrim == 1 => Self::InputOutput,
-				discrim if discrim == 2 => Self::InputOnly,
+				discrim if discrim == 1 => Ok(Self::InputOutput),
+				discrim if discrim == 2 => Ok(Self::InputOnly),
 
-				other_discrim => panic!(
-					"WindowClass: expected a discriminant of 1 or 2, found {other_discrim}"
-				),
+				other_discrim => Err(ReadError::UnrecognizedDiscriminant(other_discrim as usize)),
 			}
 		}
+	}
 
-		fn unwrap(&self) -> &Self::WrappedType {
-			match self {
-				Self::InputOutput => &1,
-				Self::InputOnly => &2,
+	impl From<WindowClass> for u16 {
+		fn from(class: WindowClass) -> Self {
+			match class {
+				WindowClass::InputOutput => 1,
+				WindowClass::InputOnly => 2,
 			}
 		}
 	}
@@ -432,6 +446,7 @@ pub enum StackMode {
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Keysym(pub(crate) u32);
 
@@ -452,6 +467,7 @@ pub struct Keysym(pub(crate) u32);
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Keycode(pub u8);
 
@@ -472,6 +488,7 @@ pub struct Keycode(pub u8);
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Button(pub(crate) u8);
 
@@ -492,6 +509,7 @@ pub struct Button(pub(crate) u8);
 	ConstantX11Size,
 	Readable,
 	Writable,
+	Wrap,
 )]
 pub struct Char8(pub(crate) u8);
 
