@@ -155,50 +155,8 @@ pub trait Writable: X11Size {
 
 /// A trait implemented for types which 'wrap' some primitive integer type.
 ///
-/// The purpose of this trait is for use with [`Wrapper`]s which may either have
-/// a specific value (implementing `Wrap`), or one out of one or more possible
-/// discrete alternatives, where these alternatives' discriminants use the
-/// [`Integer`] associated type defined by `Wrap`.
-///
-/// The <code>[TryFrom]<[usize]></code> and <code>[Into]<[usize]></code> bounds
-/// on [`Integer`] are arbitrarily chosen for the sake of easily comparing the
-/// [`Integer`] value against the discriminants of other [`Wrapper`] variants.
-///
-/// [`Integer`]: Self::Integer
-///
-/// # Examples
-/// For example, take the following [`Wrapper`]:
-/// ```
-/// use xrbk::{ConstantX11Size, Wrap, Wrapper, X11Size};
-///
-/// // The #[repr(u8)] attribute here is required because of the enum's layout
-/// // in Rust - this is not the same layout as the Wrapper trait describes for
-/// // the X11 protocol format.
-/// #[repr(u8)]
-/// pub enum Inheritable<T: Wrap> {
-///     CopyFromParent,
-///     Other(T),
-/// }
-///
-/// impl<T: Wrap> Wrapper for Inheritable<T> {
-///     type Wrapped = T;
-/// }
-///
-/// impl<T: Wrap> ConstantX11Size for Inheritable<T> {
-///     const X11_SIZE: usize = T::Integer::X11_SIZE;
-/// }
-///
-/// // ... implementations of X11Size, Readable, Writable not shown ...
-/// #
-/// # impl<T: Wrap> X11Size for Inheritable<T> {
-/// #     fn x11_size(&self) -> usize {
-/// #         Self::X11_SIZE
-/// #     }
-/// # }
-/// ```
-/// It makes use of the `Wrap` trait so that it can have a value of a generic
-/// type `T` and choose the appropriate integer type to encode the discriminant
-/// of its discrete alternative `CopyFromParent`.
+/// This trait is used so that XRBK traits may be implemented for
+/// <code>[Option]<T: [Wrap]></code>.
 pub trait Wrap: Clone + TryFrom<Self::Integer> + Into<Self::Integer> + ConstantX11Size {
 	type Integer: Copy + TryFrom<u64> + Into<u64> + ConstantX11Size + Readable + Writable;
 
