@@ -4,20 +4,22 @@
 
 <h1 align="center">X Rust Bindings</h1>
 <p align="center">
-	<a href="https://github.com/XdotRS/xrb/blob/main/LICENSE">
-		<img src="https://img.shields.io/crates/l/xrb?style=for-the-badge" /></a>
 	<a href="https://crates.io/crates/xrb">
-		<img src="https://img.shields.io/crates/v/xrb?style=for-the-badge" /></a>
+		<img alt="crates.io xrb crate" src="https://img.shields.io/crates/v/xrb?style=for-the-badge" /></a>
 	<a href="https://github.com/XdotRS/xrb/issues">
-		<img src="https://img.shields.io/github/issues-raw/XdotRS/xrb?style=for-the-badge" /></a>
+		<img alt="GitHub issues" src="https://img.shields.io/github/issues-raw/XdotRS/xrb?style=for-the-badge" /></a>
+	<a href="https://github.com/XdotRS/xrb/pulls">
+		<img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr-raw/XdotRS/xrb?color=%23a060d8&label=Open%20PRs&style=for-the-badge"></a>
 	<a href="https://github.com/XdotRS/xrb/actions/workflows/ci.yml">
-		<img src="https://img.shields.io/github/actions/workflow/status/XdotRS/xrb/ci.yml?event=push&branch=main&label=ci&style=for-the-badge" /></a>
+		<img alt="GitHub CI workflow" src="https://img.shields.io/github/actions/workflow/status/XdotRS/xrb/ci.yml?event=push&branch=main&label=ci&style=for-the-badge" /></a>
 </p>
 <p align="center">
+	<a href="https://github.com/XdotRS/xrb/blob/main/LICENSE">
+		<img alt="License: MPL-2.0" src="https://img.shields.io/crates/l/xrb?style=for-the-badge" /></a>
 	<a href="https://docs.aquariwm.org/doc/xrb/">
 		<img src="https://img.shields.io/badge/docs-dev build-forestgreen?style=for-the-badge" /></a>
 	<a href="https://github.com/orgs/XdotRS/projects/1/views/1">
-		<img src="https://img.shields.io/badge/todo-project-8860b8?style=for-the-badge" /></a>
+		<img src="https://img.shields.io/badge/todo-project-303048?style=for-the-badge" /></a>
 </p>
 
 X Rust Bindings, better known as XRB, is a [Rust crate] implementing data structures
