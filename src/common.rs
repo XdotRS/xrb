@@ -10,18 +10,42 @@ use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writa
 
 pub mod atom;
 
-mod attribute;
 mod mask;
 mod res_id;
+mod set;
 mod visual;
 mod wrapper;
 
 pub use atom::Atom;
-pub use attribute::*;
 pub use mask::*;
 pub use res_id::*;
+pub use set::*;
 pub use visual::*;
 pub use wrapper::*;
+
+/// Whether something is enabled or disabled.
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+pub enum Toggle {
+	/// The thing is disabled.
+	Disabled,
+	/// The thing is enabled.
+	Enabled,
+}
+
+/// Whether something is enabled, disabled, or the default is chosen.
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+pub enum ToggleOrDefault {
+	/// The thing is disabled.
+	Disabled,
+	/// The thing is enabled.
+	Enabled,
+
+	/// The default choice (out of [`Disabled`] or [`Enabled`]) is chosen.
+	///
+	/// Which is the default depends on what this `ToggleOrDefault` is applied
+	/// to.
+	Default,
+}
 
 /// Represents a particular time, expressed in milliseconds.
 ///
