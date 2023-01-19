@@ -14,6 +14,7 @@ mod attribute;
 mod mask;
 mod res_id;
 mod visual;
+mod window_configs;
 mod wrapper;
 
 pub use atom::Atom;
@@ -21,6 +22,7 @@ pub use attribute::*;
 pub use mask::*;
 pub use res_id::*;
 pub use visual::*;
+pub use window_configs::*;
 pub use wrapper::*;
 
 /// Represents a particular time, expressed in milliseconds.

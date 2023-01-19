@@ -3,6 +3,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 use crate::{
+	util,
 	BackingStore,
 	BitGravity,
 	Colormap,
@@ -28,7 +29,6 @@ use xrbk::{
 };
 
 use bitflags::bitflags;
-use derive_more::{From, Into};
 use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
 
 bitflags! {
@@ -37,6 +37,7 @@ bitflags! {
 	/// For more information, and for the attributes themselves, please see [`Attributes`].
 	///
 	/// [attributes]: Attributes
+	/// [window]: crate::Window
 	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
 	pub struct AttributeMask: u32 {
 		/// See also: [`background_pixmap`], <code>[ParentRelatable]<[Option]<[Pixmap]>></code>.
@@ -263,12 +264,12 @@ impl Attributes {
 			mask |= AttributeMask::BORDER_PIXEL;
 		}
 
-		if let Some(bit_gravity) = &bit_gravity {
-			x11_size += bit_gravity.x11_size();
+		if bit_gravity.is_some() {
+			x11_size += __BitGravity::X11_SIZE;
 			mask |= AttributeMask::BIT_GRAVITY;
 		}
-		if let Some(window_gravity) = &window_gravity {
-			x11_size += window_gravity.x11_size();
+		if window_gravity.is_some() {
+			x11_size += __WindowGravity::X11_SIZE;
 			mask |= AttributeMask::WINDOW_GRAVITY;
 		}
 
@@ -285,12 +286,12 @@ impl Attributes {
 			mask |= AttributeMask::BACKING_PIXEL;
 		}
 
-		if let Some(override_redirect) = &override_redirect {
-			x11_size += override_redirect.x11_size();
+		if override_redirect.is_some() {
+			x11_size += __bool::X11_SIZE;
 			mask |= AttributeMask::OVERRIDE_REDIRECT;
 		}
-		if let Some(save_under) = &save_under {
-			x11_size += save_under.x11_size();
+		if save_under.is_some() {
+			x11_size += __bool::X11_SIZE;
 			mask |= AttributeMask::SAVE_UNDER;
 		}
 
@@ -323,11 +324,11 @@ impl Attributes {
 			border_pixmap,
 			border_pixel,
 
-			/// These gravities are converted into out [`__BitGravity`] and
+			/// These gravities are converted into our [`__BitGravity`] and
 			/// [`__WindowGravity`] types respectively so that they can be
 			/// easily written as four bytes.
-			bit_gravity: bit_gravity.map(std::convert::Into::into),
-			window_gravity: window_gravity.map(std::convert::Into::into),
+			bit_gravity: bit_gravity.map(__BitGravity),
+			window_gravity: window_gravity.map(__WindowGravity),
 
 			backing_store,
 			backing_planes,
@@ -335,8 +336,8 @@ impl Attributes {
 
 			// These booleans are converted into our [`__bool`] type so that they can easily be
 			// written as four bytes.
-			override_redirect: override_redirect.map(std::convert::Into::into),
-			save_under: save_under.map(std::convert::Into::into),
+			override_redirect: override_redirect.map(__bool),
+			save_under: save_under.map(__bool),
 
 			event_mask,
 			do_not_propagate_mask,
@@ -366,12 +367,16 @@ impl Attributes {
 	}
 
 	#[must_use]
-	pub fn bit_gravity(&self) -> Option<BitGravity> {
-		self.bit_gravity.map(std::convert::Into::into)
+	pub fn bit_gravity(&self) -> Option<&BitGravity> {
+		self.bit_gravity
+			.as_ref()
+			.map(|__BitGravity(gravity)| gravity)
 	}
 	#[must_use]
-	pub fn window_gravity(&self) -> Option<WindowGravity> {
-		self.window_gravity.map(std::convert::Into::into)
+	pub fn window_gravity(&self) -> Option<&WindowGravity> {
+		self.window_gravity
+			.as_ref()
+			.map(|__WindowGravity(gravity)| gravity)
 	}
 
 	#[must_use]
@@ -388,12 +393,12 @@ impl Attributes {
 	}
 
 	#[must_use]
-	pub fn override_redirect(&self) -> Option<bool> {
-		self.override_redirect.map(std::convert::Into::into)
+	pub fn override_redirect(&self) -> Option<&bool> {
+		self.override_redirect.as_ref().map(|__bool(bool)| bool)
 	}
 	#[must_use]
-	pub fn save_under(&self) -> Option<bool> {
-		self.save_under.map(std::convert::Into::into)
+	pub fn save_under(&self) -> Option<&bool> {
+		self.save_under.as_ref().map(|__bool(bool)| bool)
 	}
 
 	#[must_use]
@@ -422,19 +427,6 @@ impl X11Size for Attributes {
 	}
 }
 
-fn read_attribute<T: Readable>(
-	buf: &mut impl Buf, x11_size: &mut usize, condition: bool,
-) -> ReadResult<Option<T>> {
-	Ok(if condition {
-		let ret = T::read_from(buf)?;
-		*x11_size += ret.x11_size();
-
-		Some(ret)
-	} else {
-		None
-	})
-}
-
 impl Readable for Attributes {
 	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
 	where
@@ -443,74 +435,75 @@ impl Readable for Attributes {
 		let mut x11_size = 0;
 		let mask = AttributeMask::read_from(buf)?;
 
-		let background_pixmap = read_attribute(
+		let background_pixmap = util::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::BACKGROUND_PIXMAP),
 		)?;
-		let background_pixel = read_attribute(
+		let background_pixel = util::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::BACKGROUND_PIXEL),
 		)?;
 
-		let border_pixmap = read_attribute(
+		let border_pixmap = util::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::BORDER_PIXMAP),
 		)?;
-		let border_pixel = read_attribute(
+		let border_pixel = util::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::BORDER_PIXEL),
 		)?;
 
-		let bit_gravity = read_attribute(
+		let bit_gravity = util::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::BIT_GRAVITY),
 		)?;
-		let window_gravity = read_attribute(
+		let window_gravity = util::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::WINDOW_GRAVITY),
 		)?;
 
-		let backing_store = read_attribute(
+		let backing_store = util::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::BACKING_STORE),
 		)?;
-		let backing_planes = read_attribute(
+		let backing_planes = util::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::BACKING_PLANES),
 		)?;
-		let backing_pixel = read_attribute(
+		let backing_pixel = util::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::BACKING_PIXEL),
 		)?;
 
-		let override_redirect = read_attribute(
+		let override_redirect = util::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::OVERRIDE_REDIRECT),
 		)?;
 		let save_under =
-			read_attribute(buf, &mut x11_size, mask.contains(AttributeMask::SAVE_UNDER))?;
+			util::read_set_value(buf, &mut x11_size, mask.contains(AttributeMask::SAVE_UNDER))?;
 
 		let event_mask =
-			read_attribute(buf, &mut x11_size, mask.contains(AttributeMask::EVENT_MASK))?;
-		let do_not_propagate_mask = read_attribute(
+			util::read_set_value(buf, &mut x11_size, mask.contains(AttributeMask::EVENT_MASK))?;
+		let do_not_propagate_mask = util::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::DO_NOT_PROPAGATE_MASK),
 		)?;
 
-		let colormap = read_attribute(buf, &mut x11_size, mask.contains(AttributeMask::COLORMAP))?;
+		let colormap =
+			util::read_set_value(buf, &mut x11_size, mask.contains(AttributeMask::COLORMAP))?;
 
-		let cursor_appearance = read_attribute(
+		let cursor_appearance = util::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::CURSOR_APPEARANCE),
@@ -617,7 +610,7 @@ impl Writable for Attributes {
 	reason = "This is an internal representation of a `bool`. Its naming scheme is `__` to \
 	          indicate that it is internal, and `bool` to indicate its wrapped type."
 )]
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, From, Into)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 struct __bool(bool);
 
 impl ConstantX11Size for __bool {
@@ -653,11 +646,11 @@ impl Writable for __bool {
 	}
 }
 
-/// A type wrapping a `u32` value to represent [bit gravities] in
-/// [`Attributes`].
+/// A type wrapping a [`BitGravity`] to represent [bit gravities] in
+/// [`Attributes`] as four bytes.
 ///
 /// [bit gravities]: BitGravity
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, From, Into)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 struct __BitGravity(BitGravity);
 
 impl ConstantX11Size for __BitGravity {
@@ -714,11 +707,11 @@ impl Writable for __BitGravity {
 	}
 }
 
-/// A type wrapping a `u32` value to represent [window gravities] in
-/// [`Attributes`].
+/// A type wrapping a [`WindowGravity`] to represent [window gravities] in
+/// [`Attributes`] as four bytes.
 ///
 /// [window gravities]: WindowGravity
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, From, Into)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 struct __WindowGravity(WindowGravity);
 
 impl ConstantX11Size for __WindowGravity {
@@ -776,20 +769,3 @@ impl Writable for __WindowGravity {
 }
 
 // }}}
-
-#[cfg(test)]
-mod test {
-	use super::*;
-
-	#[test]
-	fn test_read_attribute_x11_size() {
-		let mut x11_size = 0;
-		let mut buf = &[0u8; 7][..];
-
-		let _: Option<u32> = read_attribute(&mut buf, &mut x11_size, true).unwrap();
-		let _: Option<u16> = read_attribute(&mut buf, &mut x11_size, true).unwrap();
-		let _: Option<u8> = read_attribute(&mut buf, &mut x11_size, true).unwrap();
-
-		assert_eq!(x11_size, 7);
-	}
-}
