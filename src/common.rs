@@ -23,6 +23,30 @@ pub use set::*;
 pub use visual::*;
 pub use wrapper::*;
 
+/// Whether something is enabled or disabled.
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+pub enum Toggle {
+	/// The thing is disabled.
+	Disabled,
+	/// The thing is enabled.
+	Enabled,
+}
+
+/// Whether something is enabled, disabled, or the default is chosen.
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+pub enum ToggleOrDefault {
+	/// The thing is disabled.
+	Disabled,
+	/// The thing is enabled.
+	Enabled,
+
+	/// The default choice (out of [`Disabled`] or [`Enabled`]) is chosen.
+	///
+	/// Which is the default depends on what this `ToggleOrDefault` is applied
+	/// to.
+	Default,
+}
+
 /// Represents a particular time, expressed in milliseconds.
 ///
 /// Timestamps are typically the time since the last server reset. After

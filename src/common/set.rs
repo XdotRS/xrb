@@ -6,10 +6,12 @@ use xrbk::{Buf, BufMut, ConstantX11Size, ReadResult, Readable, Writable, WriteRe
 
 mod attribute;
 mod graphics_options;
+mod keyboard_options;
 mod window_configs;
 
 pub use attribute::*;
 pub use graphics_options::*;
+pub use keyboard_options::*;
 pub use window_configs::*;
 
 pub fn read_set_value<T: Readable>(
