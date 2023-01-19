@@ -10,11 +10,11 @@ use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writa
 
 pub mod atom;
 
-pub mod attribute;
-pub mod mask;
-pub mod res_id;
-pub mod visual;
-pub mod wrapper;
+mod attribute;
+mod mask;
+mod res_id;
+mod visual;
+mod wrapper;
 
 pub use atom::Atom;
 pub use attribute::*;
