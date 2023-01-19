@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-mod derives;
 mod message_trait;
 mod readable;
 mod writable;
@@ -42,14 +41,6 @@ impl ToTokens for Definition {
 				for path in &attrs.derive_x11_sizes {
 					r#struct.impl_x11_size(tokens, path);
 				}
-
-				for path in &attrs.derive_partial_eqs {
-					r#struct.impl_partial_eq(tokens, path);
-				}
-
-				for path in &attrs.derive_hashes {
-					r#struct.impl_hash(tokens, path);
-				}
 			},
 
 			Self::Enum(r#enum) => {
@@ -67,14 +58,6 @@ impl ToTokens for Definition {
 
 				for path in &attrs.derive_x11_sizes {
 					r#enum.impl_x11_size(tokens, path);
-				}
-
-				for path in &attrs.derive_partial_eqs {
-					r#enum.impl_partial_eq(tokens, path);
-				}
-
-				for path in &attrs.derive_hashes {
-					r#enum.impl_hash(tokens, path);
 				}
 			},
 
@@ -95,14 +78,6 @@ impl ToTokens for Definition {
 				for path in &attrs.derive_x11_sizes {
 					request.impl_x11_size(tokens, path);
 				}
-
-				for path in &attrs.derive_partial_eqs {
-					request.impl_partial_eq(tokens, path);
-				}
-
-				for path in &attrs.derive_hashes {
-					request.impl_hash(tokens, path);
-				}
 			},
 
 			Self::Reply(reply) => {
@@ -122,14 +97,6 @@ impl ToTokens for Definition {
 				for path in &attrs.derive_x11_sizes {
 					reply.impl_x11_size(tokens, path);
 				}
-
-				for path in &attrs.derive_partial_eqs {
-					reply.impl_partial_eq(tokens, path);
-				}
-
-				for path in &attrs.derive_hashes {
-					reply.impl_hash(tokens, path);
-				}
 			},
 
 			Self::Event(event) => {
@@ -148,14 +115,6 @@ impl ToTokens for Definition {
 
 				for path in &attrs.derive_x11_sizes {
 					event.impl_x11_size(tokens, path);
-				}
-
-				for path in &attrs.derive_partial_eqs {
-					event.impl_partial_eq(tokens, path);
-				}
-
-				for path in &attrs.derive_hashes {
-					event.impl_hash(tokens, path);
 				}
 			},
 

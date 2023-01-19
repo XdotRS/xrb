@@ -27,13 +27,15 @@ use crate::{
 };
 
 use bitflags::bitflags;
+use derivative::Derivative;
 use xrbk::{Buf, ConstantX11Size, ReadResult, Readable, ReadableWithContext, X11Size};
 
 use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
 extern crate self as xrb;
 
 derive_xrb! {
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+    #[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a key is pressed.
 	///
 	/// This [event] is generated for all keys: that includes modifier keys.
@@ -47,7 +49,7 @@ derive_xrb! {
 	/// [`KEY_PRESS`]: crate::mask::EventMask::KEY_PRESS
 	pub struct KeyPress: Event(2) {
 		#[sequence]
-		#[hide(PartialEq, Hash)]
+		#[derivative(PartialEq="ignore", Hash="ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///

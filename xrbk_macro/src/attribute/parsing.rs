@@ -47,8 +47,6 @@ pub struct ParsedItemAttributes {
 	pub derive_writables: Punctuated<Path, Token![,]>,
 	pub derive_readables: Punctuated<Path, Token![,]>,
 	pub derive_readable_with_contexts: Punctuated<Path, Token![,]>,
-	pub derive_partial_eqs: Punctuated<Path, Token![,]>,
-	pub derive_hashes: Punctuated<Path, Token![,]>,
 }
 
 impl ParsedItemAttributes {
@@ -251,8 +249,6 @@ impl Parse for ParsedItemAttributes {
 		let mut derive_writables = Punctuated::new();
 		let mut derive_readables = Punctuated::new();
 		let mut derive_readable_with_contexts = Punctuated::new();
-		let mut derive_partial_eqs = Punctuated::new();
-		let mut derive_hashes = Punctuated::new();
 
 		while input.peek(Token![#]) && input.peek2(token::Bracket) {
 			let content;
@@ -307,18 +303,6 @@ impl Parse for ParsedItemAttributes {
 						if let Some(comma) = comma {
 							derive_readable_with_contexts.push_punct(comma);
 						}
-					} else if path.is_ident("PartialEq") {
-						derive_partial_eqs.push_value(path);
-
-						if let Some(comma) = comma {
-							derive_partial_eqs.push_punct(comma);
-						}
-					} else if path.is_ident("Hash") {
-						derive_hashes.push_value(path);
-
-						if let Some(comma) = comma {
-							derive_hashes.push_punct(comma);
-						}
 					} else {
 						paths.push(path);
 
@@ -364,8 +348,6 @@ impl Parse for ParsedItemAttributes {
 			derive_writables,
 			derive_readables,
 			derive_readable_with_contexts,
-			derive_partial_eqs,
-			derive_hashes,
 		})
 	}
 }

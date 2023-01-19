@@ -383,8 +383,6 @@ pub fn derive_constant_x11_size(item: TokenStream) -> TokenStream {
 /// > &nbsp;&nbsp; &nbsp;&nbsp; `Readable` \
 /// > &nbsp;&nbsp; | `Writable` \
 /// > &nbsp;&nbsp; | `X11Size` \
-/// > &nbsp;&nbsp; | `PartialEq` \
-/// > &nbsp;&nbsp; | `Hash` \
 /// >
 /// > [^hidden-traits]: *HideAttribute*s may only specify traits listed in
 /// > *HiddenTraits*, any

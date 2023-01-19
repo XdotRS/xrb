@@ -64,22 +64,6 @@ impl Element {
 			Self::ArrayUnused(unused) => unused.add_x11_size_tokens(tokens),
 		}
 	}
-
-	pub fn partial_eq_tokens(&self, tokens: &mut TokenStream2) {
-		if let Self::Field(field) = self {
-			if !field.is_ignoring_trait("PartialEq") {
-				field.add_partial_eq_tokens(tokens)
-			}
-		}
-	}
-
-	pub fn hash_tokens(&self, tokens: &mut TokenStream2) {
-		if let Self::Field(field) = self {
-			if !field.is_ignoring_trait("Hash") {
-				field.add_hash_tokens(tokens)
-			}
-		}
-	}
 }
 
 // Field {{{
@@ -158,26 +142,6 @@ impl Field {
 
 			quote_spanned!(self.span()=>
 				size += <#r#type as ::xrbk::X11Size>::x11_size(&#formatted);
-			)
-		});
-	}
-
-	pub fn add_partial_eq_tokens(&self, tokens: &mut TokenStream2) {
-		tokens.append_tokens({
-			let ident = &self.id;
-
-			quote_spanned!(self.span()=>
-				&& self.#ident == other.#ident
-			)
-		});
-	}
-
-	pub fn add_hash_tokens(&self, tokens: &mut TokenStream2) {
-		tokens.append_tokens({
-			let ident = &self.id;
-
-			quote_spanned!(self.span()=>
-				::core::hash::Hash::hash(&self.#ident, state);
 			)
 		});
 	}
