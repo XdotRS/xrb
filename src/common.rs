@@ -10,19 +10,17 @@ use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writa
 
 pub mod atom;
 
-mod attribute;
 mod mask;
 mod res_id;
+mod set;
 mod visual;
-mod window_configs;
 mod wrapper;
 
 pub use atom::Atom;
-pub use attribute::*;
 pub use mask::*;
 pub use res_id::*;
+pub use set::*;
 pub use visual::*;
-pub use window_configs::*;
 pub use wrapper::*;
 
 /// Represents a particular time, expressed in milliseconds.

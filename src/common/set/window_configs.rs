@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::{util, StackMode, Window};
+use crate::{StackMode, Window};
 
 use bitflags::bitflags;
 use xrbk::{
@@ -191,23 +191,23 @@ impl Readable for WindowConfigs {
 		// 2 unused bytes after the mask.
 		buf.advance(2);
 
-		let x = util::read_set_value(buf, &mut x11_size, mask.contains(WindowConfigMask::X))?;
-		let y = util::read_set_value(buf, &mut x11_size, mask.contains(WindowConfigMask::Y))?;
+		let x = super::read_set_value(buf, &mut x11_size, mask.contains(WindowConfigMask::X))?;
+		let y = super::read_set_value(buf, &mut x11_size, mask.contains(WindowConfigMask::Y))?;
 		let width =
-			util::read_set_value(buf, &mut x11_size, mask.contains(WindowConfigMask::WIDTH))?;
+			super::read_set_value(buf, &mut x11_size, mask.contains(WindowConfigMask::WIDTH))?;
 		let height =
-			util::read_set_value(buf, &mut x11_size, mask.contains(WindowConfigMask::HEIGHT))?;
+			super::read_set_value(buf, &mut x11_size, mask.contains(WindowConfigMask::HEIGHT))?;
 
-		let border_width = util::read_set_value(
+		let border_width = super::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(WindowConfigMask::BORDER_WIDTH),
 		)?;
 
 		let sibling =
-			util::read_set_value(buf, &mut x11_size, mask.contains(WindowConfigMask::SIBLING))?;
+			super::read_set_value(buf, &mut x11_size, mask.contains(WindowConfigMask::SIBLING))?;
 
-		let stack_mode = util::read_set_value(
+		let stack_mode = super::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(WindowConfigMask::STACK_MODE),

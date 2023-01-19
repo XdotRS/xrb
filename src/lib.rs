@@ -75,6 +75,4 @@ pub mod connection;
 pub mod message;
 pub mod x11;
 
-pub(crate) mod util;
-
 pub use common::*;

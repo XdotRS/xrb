@@ -2,8 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+use super::__bool;
 use crate::{
-	util,
 	BackingStore,
 	BitGravity,
 	Colormap,
@@ -435,75 +435,75 @@ impl Readable for Attributes {
 		let mut x11_size = 0;
 		let mask = AttributeMask::read_from(buf)?;
 
-		let background_pixmap = util::read_set_value(
+		let background_pixmap = super::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::BACKGROUND_PIXMAP),
 		)?;
-		let background_pixel = util::read_set_value(
+		let background_pixel = super::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::BACKGROUND_PIXEL),
 		)?;
 
-		let border_pixmap = util::read_set_value(
+		let border_pixmap = super::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::BORDER_PIXMAP),
 		)?;
-		let border_pixel = util::read_set_value(
+		let border_pixel = super::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::BORDER_PIXEL),
 		)?;
 
-		let bit_gravity = util::read_set_value(
+		let bit_gravity = super::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::BIT_GRAVITY),
 		)?;
-		let window_gravity = util::read_set_value(
+		let window_gravity = super::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::WINDOW_GRAVITY),
 		)?;
 
-		let backing_store = util::read_set_value(
+		let backing_store = super::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::BACKING_STORE),
 		)?;
-		let backing_planes = util::read_set_value(
+		let backing_planes = super::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::BACKING_PLANES),
 		)?;
-		let backing_pixel = util::read_set_value(
+		let backing_pixel = super::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::BACKING_PIXEL),
 		)?;
 
-		let override_redirect = util::read_set_value(
+		let override_redirect = super::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::OVERRIDE_REDIRECT),
 		)?;
 		let save_under =
-			util::read_set_value(buf, &mut x11_size, mask.contains(AttributeMask::SAVE_UNDER))?;
+			super::read_set_value(buf, &mut x11_size, mask.contains(AttributeMask::SAVE_UNDER))?;
 
 		let event_mask =
-			util::read_set_value(buf, &mut x11_size, mask.contains(AttributeMask::EVENT_MASK))?;
-		let do_not_propagate_mask = util::read_set_value(
+			super::read_set_value(buf, &mut x11_size, mask.contains(AttributeMask::EVENT_MASK))?;
+		let do_not_propagate_mask = super::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::DO_NOT_PROPAGATE_MASK),
 		)?;
 
 		let colormap =
-			util::read_set_value(buf, &mut x11_size, mask.contains(AttributeMask::COLORMAP))?;
+			super::read_set_value(buf, &mut x11_size, mask.contains(AttributeMask::COLORMAP))?;
 
-		let cursor_appearance = util::read_set_value(
+		let cursor_appearance = super::read_set_value(
 			buf,
 			&mut x11_size,
 			mask.contains(AttributeMask::CURSOR_APPEARANCE),
@@ -601,50 +601,6 @@ impl Writable for Attributes {
 }
 
 // Internal 4-byte representations of types {{{
-
-/// Wraps a `bool` but writes it as four bytes in the X11 format.
-///
-/// This is not part of the public API.
-#[allow(
-	non_camel_case_types,
-	reason = "This is an internal representation of a `bool`. Its naming scheme is `__` to \
-	          indicate that it is internal, and `bool` to indicate its wrapped type."
-)]
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-struct __bool(bool);
-
-impl ConstantX11Size for __bool {
-	const X11_SIZE: usize = 4;
-}
-
-impl X11Size for __bool {
-	fn x11_size(&self) -> usize {
-		Self::X11_SIZE
-	}
-}
-
-impl Readable for __bool {
-	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
-	where
-		Self: Sized,
-	{
-		Ok(Self(buf.get_u32() != 0))
-	}
-}
-
-impl Writable for __bool {
-	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
-		let Self(bool) = self;
-
-		if *bool {
-			buf.put_u32(1);
-		} else {
-			buf.put_u32(0);
-		}
-
-		Ok(())
-	}
-}
 
 /// A type wrapping a [`BitGravity`] to represent [bit gravities] in
 /// [`Attributes`] as four bytes.
