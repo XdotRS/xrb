@@ -4,9 +4,8 @@
 
 extern crate self as xrb;
 
-use bytes::Buf;
 use derive_more::{From, Into};
-use xrbk::{ConstantX11Size, ReadError, ReadResult, ReadableWithContext, Wrap};
+use xrbk::{Buf, ConstantX11Size, ReadError, ReadResult, ReadableWithContext, Wrap};
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
 pub mod atom;
@@ -65,7 +64,7 @@ pub enum BitGravity {
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
-pub enum WinGravity {
+pub enum WindowGravity {
 	Unmap,
 	Static,
 	NorthWest,

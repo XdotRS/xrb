@@ -14,20 +14,19 @@
 // `allow`.
 #![feature(lint_reasons)]
 #![cfg_attr(feature = "try", feature(try_trait_v2))]
-// Deny the following clippy lints to enforce them:
-#![deny(clippy::complexity)]
+// Deny these lints.
 #![deny(clippy::correctness)]
 #![deny(clippy::nursery)]
 #![deny(clippy::perf)]
 #![deny(clippy::style)]
 #![deny(clippy::suspicious)]
-// Warn for these lints, rather than denying them.
+// Warn for these lints.
 #![warn(clippy::use_self)]
-// Warn for pedantic & cargo lints. They are allowed completely by default.
 #![warn(clippy::pedantic)]
+#![warn(clippy::complexity)]
 #![warn(clippy::cargo)]
-//#![warn(missing_docs)]
-// Continue to allow these though.
+#![warn(missing_docs)]
+// Allow these lints.
 #![allow(clippy::doc_markdown)]
 #![allow(clippy::wildcard_imports)]
 #![allow(clippy::module_name_repetitions)]

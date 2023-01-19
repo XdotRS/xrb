@@ -13,11 +13,22 @@ use crate::{
 	ParentRelatable,
 	Pixel,
 	Pixmap,
-	WinGravity,
+	WindowGravity,
 };
-use xrbk::{Buf, BufMut, ReadResult, Readable, Writable, WriteResult, X11Size};
+use xrbk::{
+	Buf,
+	BufMut,
+	ConstantX11Size,
+	ReadError,
+	ReadResult,
+	Readable,
+	Writable,
+	WriteResult,
+	X11Size,
+};
 
 use bitflags::bitflags;
+use derive_more::{From, Into};
 use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
 
 bitflags! {
@@ -37,7 +48,7 @@ bitflags! {
 	/// |[`background_pixmap`]    |[`None`]                 |[`InputOutput`] only             |
 	/// |[`border_pixmap`]        |[`CopyFromParent`]       |[`InputOutput`] only             |
 	/// |[`bit_gravity`]          |[`Forget`]               |[`InputOutput`] only             |
-	/// |[`win_gravity`]          |[`NorthWest`]            |[`InputOutput`] and [`InputOnly`]|
+	/// |[`window_gravity`]       |[`NorthWest`]            |[`InputOutput`] and [`InputOnly`]|
 	/// |[`backing_store`]        |[`NotUseful`]            |[`InputOutput`] only             |
 	/// |[`backing_planes`]       |`0x_ffff_ffff`           |[`InputOutput`] only             |
 	/// |[`backing_pixel`]        |`0x_0000_0000`           |[`InputOutput`] only             |
@@ -51,7 +62,7 @@ bitflags! {
 	/// [`background_pixmap`]: Attributes::background_pixmap
 	/// [`border_pixmap`]: Attributes::border_pixmap
 	/// [`bit_gravity`]: Attributes::bit_gravity
-	/// [`win_gravity`]: Attributes::win_gravity
+	/// [`window_gravity`]: Attributes::window_gravity
 	/// [`backing_store`]: Attributes::backing_store
 	/// [`backing_planes`]: Attributes::backing_planes
 	/// [`backing_pixel`]: Attributes::backing_pixel
@@ -64,10 +75,10 @@ bitflags! {
 	///
 	/// [`CopyFromParent`]: CopyableFromParent::CopyFromParent
 	/// [`Forget`]: BitGravity::Forget
-	/// [`NorthWest`]: WinGravity::NorthWest
+	/// [`NorthWest`]: WindowGravity::NorthWest
 	/// [`NotUseful`]: BackingStore::NotUseful
-	/// [event none]: EventMask::empty
-	/// [device none]: DeviceEventMask::empty
+	/// [event empty]: EventMask::empty
+	/// [device empty]: DeviceEventMask::empty
 	///
 	/// [`InputOutput`]: crate::WindowClass::InputOutput
 	/// [`InputOnly`]: crate::WindowClass::InputOnly
@@ -95,10 +106,10 @@ bitflags! {
 		///
 		/// [`bit_gravity`]: Attributes::bit_gravity
 		const BIT_GRAVITY = 0x0000_0010;
-		/// See also: [`win_gravity`], [`WinGravity`].
+		/// See also: [`window_gravity`], [`WindowGravity`].
 		///
-		/// [`win_gravity`]: Attributes::win_gravity
-		const WIN_GRAVITY = 0x0000_0020;
+		/// [`window_gravity`]: Attributes::window_gravity
+		const WINDOW_GRAVITY = 0x0000_0020;
 
 		/// See also: [`backing_store`], [`BackingStore`].
 		///
@@ -143,28 +154,36 @@ bitflags! {
 	}
 }
 
-/// A boolean type wrapping a `u32` value for use in [`Attributes`].
+/// This is a type alias for <code>[ParentRelatable]<[Option]<[Pixmap]>></code>.
 ///
-/// This is used to easily encode booleans as four bytes. It is not part of the
-/// public API.
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, ConstantX11Size, X11Size, Readable, Writable)]
-struct Bool(u32);
-
-impl From<bool> for Bool {
-	fn from(value: bool) -> Self {
-		if value {
-			Self(1)
-		} else {
-			Self(0)
-		}
-	}
-}
-
-impl From<Bool> for bool {
-	fn from(value: Bool) -> Self {
-		value.0 != 0
-	}
-}
+/// This represents the type used in [`background_pixmap` attributes].
+///
+/// [`background_pixmap` attributes]: Attributes::background_pixmap
+pub type BackgroundPixmap = ParentRelatable<Option<Pixmap>>;
+/// This is a type alias for <code>[CopyableFromParent]<[Pixmap]></code>.
+///
+/// This represents the type used in [`border_pixmap` attributes].
+///
+/// [`border_pixmap` attributes]: Attributes::border_pixmap
+pub type BorderPixmap = CopyableFromParent<Pixmap>;
+/// This is a type alias for <code>[Option]<[CursorAppearance]></code>.
+///
+/// This represents the type used in [`cursor_appearance` attributes].
+///
+/// This type alias exists because there can be confusion where the
+/// [`cursor_appearance` attribute] may be missing:
+/// <code>[Option]<[Option]<[CursorAppearance]>></code>. The outer `Option`
+/// refers to whether this attribute is specified, whereas the inner `Option`
+/// refers to whether the cursor has an appearance.
+///
+/// [`cursor_appearance` attributes]: Attributes::cursor_appearance
+pub type CursorAppearanceAttribute = Option<CursorAppearance>;
+/// This is a type alias for <code>[CopyableFromParent]<[Colormap]></code>.
+///
+/// This represents the type used in [`colormap` attributes].
+///
+/// [`colormap` attributes]: Attributes::colormap
+pub type ColormapAttribute = CopyableFromParent<Colormap>;
 
 /// A set of attributes for a [window].
 ///
@@ -181,44 +200,43 @@ pub struct Attributes {
 
 	mask: AttributeMask,
 
-	background_pixmap: Option<ParentRelatable<Option<Pixmap>>>,
+	background_pixmap: Option<BackgroundPixmap>,
 	background_pixel: Option<Pixel>,
 
-	border_pixmap: Option<CopyableFromParent<Pixmap>>,
+	border_pixmap: Option<BorderPixmap>,
 	border_pixel: Option<Pixel>,
 
-	bit_gravity: Option<BitGravity>,
-	win_gravity: Option<WinGravity>,
+	bit_gravity: Option<__BitGravity>,
+	window_gravity: Option<__WindowGravity>,
 
 	backing_store: Option<BackingStore>,
 	backing_planes: Option<u32>,
 	backing_pixel: Option<Pixel>,
 
-	override_redirect: Option<Bool>,
-	save_under: Option<Bool>,
+	override_redirect: Option<__bool>,
+	save_under: Option<__bool>,
 
 	event_mask: Option<EventMask>,
 	do_not_propagate_mask: Option<DeviceEventMask>,
 
-	colormap: Option<CopyableFromParent<Colormap>>,
+	colormap: Option<ColormapAttribute>,
 
 	#[allow(clippy::option_option)]
-	cursor_appearance: Option<Option<CursorAppearance>>,
+	cursor_appearance: Option<CursorAppearanceAttribute>,
 }
 
 impl Attributes {
 	#[must_use]
-	#[allow(clippy::too_many_arguments)]
+	// FIXME: ask in Rust community about alternatives to using so many arguments -
+	//        should this be an `AttributesBuilder` of some sort?
 	pub fn new(
-		background_pixmap: Option<ParentRelatable<Option<Pixmap>>>,
-		background_pixel: Option<Pixel>, border_pixmap: Option<CopyableFromParent<Pixmap>>,
-		border_pixel: Option<Pixel>, bit_gravity: Option<BitGravity>,
-		win_gravity: Option<WinGravity>, backing_store: Option<BackingStore>,
-		backing_planes: Option<u32>, backing_pixel: Option<Pixel>, override_redirect: Option<bool>,
-		save_under: Option<bool>, event_mask: Option<EventMask>,
-		do_not_propagate_mask: Option<DeviceEventMask>,
-		colormap: Option<CopyableFromParent<Colormap>>,
-		cursor_appearance: Option<Option<CursorAppearance>>,
+		background_pixmap: Option<BackgroundPixmap>, background_pixel: Option<Pixel>,
+		border_pixmap: Option<BorderPixmap>, border_pixel: Option<Pixel>,
+		bit_gravity: Option<BitGravity>, window_gravity: Option<WindowGravity>,
+		backing_store: Option<BackingStore>, backing_planes: Option<u32>,
+		backing_pixel: Option<Pixel>, override_redirect: Option<bool>, save_under: Option<bool>,
+		event_mask: Option<EventMask>, do_not_propagate_mask: Option<DeviceEventMask>,
+		colormap: Option<ColormapAttribute>, cursor_appearance: Option<CursorAppearanceAttribute>,
 	) -> Self {
 		let mut x11_size = 0;
 		let mut mask = AttributeMask::empty();
@@ -245,9 +263,9 @@ impl Attributes {
 			x11_size += bit_gravity.x11_size();
 			mask |= AttributeMask::BIT_GRAVITY;
 		}
-		if let Some(win_gravity) = &win_gravity {
-			x11_size += win_gravity.x11_size();
-			mask |= AttributeMask::WIN_GRAVITY;
+		if let Some(window_gravity) = &window_gravity {
+			x11_size += window_gravity.x11_size();
+			mask |= AttributeMask::WINDOW_GRAVITY;
 		}
 
 		if let Some(backing_store) = &backing_store {
@@ -301,17 +319,20 @@ impl Attributes {
 			border_pixmap,
 			border_pixel,
 
-			bit_gravity,
-			win_gravity,
+			/// These gravities are converted into out [`__BitGravity`] and
+			/// [`__WindowGravity`] types respectively so that they can be
+			/// easily written as four bytes.
+			bit_gravity: bit_gravity.map(std::convert::Into::into),
+			window_gravity: window_gravity.map(std::convert::Into::into),
 
 			backing_store,
 			backing_planes,
 			backing_pixel,
 
-			// These booleans are converted into our [`Bool`] type so that they can easily be
+			// These booleans are converted into our [`__bool`] type so that they can easily be
 			// written as four bytes.
 			override_redirect: override_redirect.map(std::convert::Into::into),
-			save_under: save_under.map(Into::into),
+			save_under: save_under.map(std::convert::Into::into),
 
 			event_mask,
 			do_not_propagate_mask,
@@ -323,7 +344,7 @@ impl Attributes {
 	}
 
 	#[must_use]
-	pub const fn background_pixmap(&self) -> &Option<ParentRelatable<Option<Pixmap>>> {
+	pub const fn background_pixmap(&self) -> &Option<BackgroundPixmap> {
 		&self.background_pixmap
 	}
 	#[must_use]
@@ -332,7 +353,7 @@ impl Attributes {
 	}
 
 	#[must_use]
-	pub const fn border_pixmap(&self) -> &Option<CopyableFromParent<Pixmap>> {
+	pub const fn border_pixmap(&self) -> &Option<BorderPixmap> {
 		&self.border_pixmap
 	}
 	#[must_use]
@@ -341,12 +362,12 @@ impl Attributes {
 	}
 
 	#[must_use]
-	pub const fn bit_gravity(&self) -> &Option<BitGravity> {
-		&self.bit_gravity
+	pub fn bit_gravity(&self) -> Option<BitGravity> {
+		self.bit_gravity.map(std::convert::Into::into)
 	}
 	#[must_use]
-	pub const fn win_gravity(&self) -> &Option<WinGravity> {
-		&self.win_gravity
+	pub fn window_gravity(&self) -> Option<WindowGravity> {
+		self.window_gravity.map(std::convert::Into::into)
 	}
 
 	#[must_use]
@@ -364,11 +385,11 @@ impl Attributes {
 
 	#[must_use]
 	pub fn override_redirect(&self) -> Option<bool> {
-		self.override_redirect.map(Into::into)
+		self.override_redirect.map(std::convert::Into::into)
 	}
 	#[must_use]
 	pub fn save_under(&self) -> Option<bool> {
-		self.save_under.map(Into::into)
+		self.save_under.map(std::convert::Into::into)
 	}
 
 	#[must_use]
@@ -381,12 +402,12 @@ impl Attributes {
 	}
 
 	#[must_use]
-	pub const fn colormap(&self) -> &Option<CopyableFromParent<Colormap>> {
+	pub const fn colormap(&self) -> &Option<ColormapAttribute> {
 		&self.colormap
 	}
 
 	#[must_use]
-	pub const fn cursor_appearance(&self) -> &Option<Option<CursorAppearance>> {
+	pub const fn cursor_appearance(&self) -> &Option<CursorAppearanceAttribute> {
 		&self.cursor_appearance
 	}
 }
@@ -397,8 +418,20 @@ impl X11Size for Attributes {
 	}
 }
 
+fn read_attribute<T: Readable>(
+	buf: &mut impl Buf, x11_size: &mut usize, condition: bool,
+) -> ReadResult<Option<T>> {
+	Ok(if condition {
+		let ret = T::read_from(buf)?;
+		*x11_size += ret.x11_size();
+
+		Some(ret)
+	} else {
+		None
+	})
+}
+
 impl Readable for Attributes {
-	#[allow(clippy::too_many_lines)]
 	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
 	where
 		Self: Sized,
@@ -406,133 +439,78 @@ impl Readable for Attributes {
 		let mut x11_size = 0;
 		let mask = AttributeMask::read_from(buf)?;
 
-		let background_pixmap = if mask.contains(AttributeMask::BACKGROUND_PIXMAP) {
-			let ret = <ParentRelatable<Option<Pixmap>>>::read_from(buf)?;
-			x11_size += ret.x11_size();
+		let background_pixmap = read_attribute(
+			buf,
+			&mut x11_size,
+			mask.contains(AttributeMask::BACKGROUND_PIXMAP),
+		)?;
+		let background_pixel = read_attribute(
+			buf,
+			&mut x11_size,
+			mask.contains(AttributeMask::BACKGROUND_PIXEL),
+		)?;
 
-			Some(ret)
-		} else {
-			None
-		};
-		let background_pixel = if mask.contains(AttributeMask::BACKGROUND_PIXEL) {
-			let ret = Pixel::read_from(buf)?;
-			x11_size += ret.x11_size();
+		let border_pixmap = read_attribute(
+			buf,
+			&mut x11_size,
+			mask.contains(AttributeMask::BORDER_PIXMAP),
+		)?;
+		let border_pixel = read_attribute(
+			buf,
+			&mut x11_size,
+			mask.contains(AttributeMask::BORDER_PIXEL),
+		)?;
 
-			Some(ret)
-		} else {
-			None
-		};
+		let bit_gravity = read_attribute(
+			buf,
+			&mut x11_size,
+			mask.contains(AttributeMask::BIT_GRAVITY),
+		)?;
+		let window_gravity = read_attribute(
+			buf,
+			&mut x11_size,
+			mask.contains(AttributeMask::WINDOW_GRAVITY),
+		)?;
 
-		let border_pixmap = if mask.contains(AttributeMask::BORDER_PIXMAP) {
-			let ret = <CopyableFromParent<Pixmap>>::read_from(buf)?;
-			x11_size += ret.x11_size();
+		let backing_store = read_attribute(
+			buf,
+			&mut x11_size,
+			mask.contains(AttributeMask::BACKING_STORE),
+		)?;
+		let backing_planes = read_attribute(
+			buf,
+			&mut x11_size,
+			mask.contains(AttributeMask::BACKING_PLANES),
+		)?;
+		let backing_pixel = read_attribute(
+			buf,
+			&mut x11_size,
+			mask.contains(AttributeMask::BACKING_PIXEL),
+		)?;
 
-			Some(ret)
-		} else {
-			None
-		};
-		let border_pixel = if mask.contains(AttributeMask::BORDER_PIXEL) {
-			let ret = Pixel::read_from(buf)?;
-			x11_size += ret.x11_size();
+		let override_redirect = read_attribute(
+			buf,
+			&mut x11_size,
+			mask.contains(AttributeMask::OVERRIDE_REDIRECT),
+		)?;
+		let save_under =
+			read_attribute(buf, &mut x11_size, mask.contains(AttributeMask::SAVE_UNDER))?;
 
-			Some(ret)
-		} else {
-			None
-		};
+		let event_mask =
+			read_attribute(buf, &mut x11_size, mask.contains(AttributeMask::EVENT_MASK))?;
+		let do_not_propagate_mask = read_attribute(
+			buf,
+			&mut x11_size,
+			mask.contains(AttributeMask::DO_NOT_PROPAGATE_MASK),
+		)?;
 
-		let bit_gravity = if mask.contains(AttributeMask::BIT_GRAVITY) {
-			let ret = BitGravity::read_from(buf)?;
-			x11_size += ret.x11_size();
+		let colormap = read_attribute(buf, &mut x11_size, mask.contains(AttributeMask::COLORMAP))?;
 
-			Some(ret)
-		} else {
-			None
-		};
-		let win_gravity = if mask.contains(AttributeMask::WIN_GRAVITY) {
-			let ret = WinGravity::read_from(buf)?;
-			x11_size += ret.x11_size();
-
-			Some(ret)
-		} else {
-			None
-		};
-
-		let backing_store = if mask.contains(AttributeMask::BACKING_STORE) {
-			let ret = BackingStore::read_from(buf)?;
-			x11_size += ret.x11_size();
-
-			Some(ret)
-		} else {
-			None
-		};
-		let backing_planes = if mask.contains(AttributeMask::BACKING_PLANES) {
-			let ret = u32::read_from(buf)?;
-			x11_size += ret.x11_size();
-
-			Some(ret)
-		} else {
-			None
-		};
-		let backing_pixel = if mask.contains(AttributeMask::BACKING_PIXEL) {
-			let ret = Pixel::read_from(buf)?;
-			x11_size += ret.x11_size();
-
-			Some(ret)
-		} else {
-			None
-		};
-
-		let override_redirect = if mask.contains(AttributeMask::OVERRIDE_REDIRECT) {
-			let ret = Bool::read_from(buf)?;
-			x11_size += ret.x11_size();
-
-			Some(ret)
-		} else {
-			None
-		};
-		let save_under = if mask.contains(AttributeMask::SAVE_UNDER) {
-			let ret = Bool::read_from(buf)?;
-			x11_size += ret.x11_size();
-
-			Some(ret)
-		} else {
-			None
-		};
-
-		let event_mask = if mask.contains(AttributeMask::EVENT_MASK) {
-			let ret = EventMask::read_from(buf)?;
-			x11_size += ret.x11_size();
-
-			Some(ret)
-		} else {
-			None
-		};
-		let do_not_propagate_mask = if mask.contains(AttributeMask::DO_NOT_PROPAGATE_MASK) {
-			let ret = DeviceEventMask::read_from(buf)?;
-			x11_size += ret.x11_size();
-
-			Some(ret)
-		} else {
-			None
-		};
-
-		let colormap = if mask.contains(AttributeMask::COLORMAP) {
-			let ret = <CopyableFromParent<Colormap>>::read_from(buf)?;
-			x11_size += ret.x11_size();
-
-			Some(ret)
-		} else {
-			None
-		};
-
-		let cursor_appearance = if mask.contains(AttributeMask::CURSOR_APPEARANCE) {
-			let ret = <Option<CursorAppearance>>::read_from(buf)?;
-			x11_size += ret.x11_size();
-
-			Some(ret)
-		} else {
-			None
-		};
+		let cursor_appearance = read_attribute(
+			buf,
+			&mut x11_size,
+			mask.contains(AttributeMask::CURSOR_APPEARANCE),
+		)?;
 
 		Ok(Self {
 			x11_size,
@@ -545,7 +523,7 @@ impl Readable for Attributes {
 			border_pixel,
 
 			bit_gravity,
-			win_gravity,
+			window_gravity,
 
 			backing_store,
 			backing_planes,
@@ -585,8 +563,8 @@ impl Writable for Attributes {
 		if let Some(bit_gravity) = &self.bit_gravity {
 			bit_gravity.write_to(buf)?;
 		}
-		if let Some(win_gravity) = &self.win_gravity {
-			win_gravity.write_to(buf)?;
+		if let Some(window_gravity) = &self.window_gravity {
+			window_gravity.write_to(buf)?;
 		}
 
 		if let Some(backing_store) = &self.backing_store {
@@ -622,5 +600,192 @@ impl Writable for Attributes {
 		}
 
 		Ok(())
+	}
+}
+
+// Internal 4-byte representations of types {{{
+
+/// Wraps a `bool` but writes it as four bytes in the X11 format.
+///
+/// This is not part of the public API.
+#[allow(
+	non_camel_case_types,
+	reason = "This is an internal representation of a `bool`. Its naming scheme is `__` to \
+	          indicate that it is internal, and `bool` to indicate its wrapped type."
+)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, From, Into)]
+struct __bool(bool);
+
+impl ConstantX11Size for __bool {
+	const X11_SIZE: usize = 4;
+}
+
+impl X11Size for __bool {
+	fn x11_size(&self) -> usize {
+		Self::X11_SIZE
+	}
+}
+
+impl Readable for __bool {
+	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		Ok(Self(buf.get_u32() != 0))
+	}
+}
+
+impl Writable for __bool {
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		let Self(bool) = self;
+
+		if *bool {
+			buf.put_u32(1);
+		} else {
+			buf.put_u32(0);
+		}
+
+		Ok(())
+	}
+}
+
+/// A type wrapping a `u32` value to represent [bit gravities] in
+/// [`Attributes`].
+///
+/// [bit gravities]: BitGravity
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, From, Into)]
+struct __BitGravity(BitGravity);
+
+impl ConstantX11Size for __BitGravity {
+	const X11_SIZE: usize = 4;
+}
+
+impl X11Size for __BitGravity {
+	fn x11_size(&self) -> usize {
+		Self::X11_SIZE
+	}
+}
+
+impl Readable for __BitGravity {
+	fn read_from(buf: &mut impl Buf) -> ReadResult<Self> {
+		Ok(Self(match buf.get_u32() {
+			discrim if discrim == 0 => BitGravity::Forget,
+			discrim if discrim == 1 => BitGravity::Static,
+			discrim if discrim == 2 => BitGravity::NorthWest,
+			discrim if discrim == 3 => BitGravity::North,
+			discrim if discrim == 4 => BitGravity::NorthEast,
+			discrim if discrim == 5 => BitGravity::West,
+			discrim if discrim == 6 => BitGravity::Center,
+			discrim if discrim == 7 => BitGravity::East,
+			discrim if discrim == 8 => BitGravity::SouthWest,
+			discrim if discrim == 9 => BitGravity::South,
+			discrim if discrim == 10 => BitGravity::SouthEast,
+
+			other_discrim => {
+				return Err(ReadError::UnrecognizedDiscriminant(other_discrim as usize))
+			},
+		}))
+	}
+}
+
+impl Writable for __BitGravity {
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		let Self(bit_gravity) = self;
+
+		match bit_gravity {
+			BitGravity::Forget => buf.put_u32(0),
+			BitGravity::Static => buf.put_u32(1),
+			BitGravity::NorthWest => buf.put_u32(2),
+			BitGravity::North => buf.put_u32(3),
+			BitGravity::NorthEast => buf.put_u32(4),
+			BitGravity::West => buf.put_u32(5),
+			BitGravity::Center => buf.put_u32(6),
+			BitGravity::East => buf.put_u32(7),
+			BitGravity::SouthWest => buf.put_u32(8),
+			BitGravity::South => buf.put_u32(9),
+			BitGravity::SouthEast => buf.put_u32(10),
+		}
+
+		Ok(())
+	}
+}
+
+/// A type wrapping a `u32` value to represent [window gravities] in
+/// [`Attributes`].
+///
+/// [window gravities]: WindowGravity
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, From, Into)]
+struct __WindowGravity(WindowGravity);
+
+impl ConstantX11Size for __WindowGravity {
+	const X11_SIZE: usize = 4;
+}
+
+impl X11Size for __WindowGravity {
+	fn x11_size(&self) -> usize {
+		Self::X11_SIZE
+	}
+}
+
+impl Readable for __WindowGravity {
+	fn read_from(buf: &mut impl Buf) -> ReadResult<Self> {
+		Ok(Self(match buf.get_u32() {
+			discrim if discrim == 0 => WindowGravity::Unmap,
+			discrim if discrim == 1 => WindowGravity::Static,
+			discrim if discrim == 2 => WindowGravity::NorthWest,
+			discrim if discrim == 3 => WindowGravity::North,
+			discrim if discrim == 4 => WindowGravity::NorthEast,
+			discrim if discrim == 5 => WindowGravity::West,
+			discrim if discrim == 6 => WindowGravity::Center,
+			discrim if discrim == 7 => WindowGravity::East,
+			discrim if discrim == 8 => WindowGravity::SouthWest,
+			discrim if discrim == 9 => WindowGravity::South,
+			discrim if discrim == 10 => WindowGravity::SouthEast,
+
+			other_discrim => {
+				return Err(ReadError::UnrecognizedDiscriminant(other_discrim as usize))
+			},
+		}))
+	}
+}
+
+impl Writable for __WindowGravity {
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		let Self(window_gravity) = self;
+
+		match window_gravity {
+			WindowGravity::Unmap => buf.put_u32(0),
+			WindowGravity::Static => buf.put_u32(1),
+			WindowGravity::NorthWest => buf.put_u32(2),
+			WindowGravity::North => buf.put_u32(3),
+			WindowGravity::NorthEast => buf.put_u32(4),
+			WindowGravity::West => buf.put_u32(5),
+			WindowGravity::Center => buf.put_u32(6),
+			WindowGravity::East => buf.put_u32(7),
+			WindowGravity::SouthWest => buf.put_u32(8),
+			WindowGravity::South => buf.put_u32(9),
+			WindowGravity::SouthEast => buf.put_u32(10),
+		}
+
+		Ok(())
+	}
+}
+
+// }}}
+
+#[cfg(test)]
+mod test {
+	use super::*;
+
+	#[test]
+	fn test_read_attribute_x11_size() {
+		let mut x11_size = 0;
+		let mut buf = &[0u8; 7][..];
+
+		let _: Option<u32> = read_attribute(&mut buf, &mut x11_size, true).unwrap();
+		let _: Option<u16> = read_attribute(&mut buf, &mut x11_size, true).unwrap();
+		let _: Option<u8> = read_attribute(&mut buf, &mut x11_size, true).unwrap();
+
+		assert_eq!(x11_size, 7);
 	}
 }

@@ -1492,11 +1492,11 @@ derive_xrb! {
 		pub window: Window,
 
 		/// Whether this [event] was generated as a result of its parent being
-		/// resized when the unmapped [window] had [`WinGravity::Unmap`].
+		/// resized when the unmapped [window] had [`WindowGravity::Unmap`].
 		///
 		/// [event]: crate::message::Event
 		/// [window]: Window
-		/// [`WinGravity::Unmap`]: crate::WinGravity::Unmap
+		/// [`WindowGravity::Unmap`]: crate::WindowGravity::Unmap
 		pub from_configure: bool,
 		[_; ..],
 	}
