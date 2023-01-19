@@ -35,7 +35,7 @@ extern crate self as xrb;
 
 derive_xrb! {
 	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-    #[derivative(Hash, PartialEq, Eq)]
+	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a key is pressed.
 	///
 	/// This [event] is generated for all keys: that includes modifier keys.
