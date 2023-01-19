@@ -362,22 +362,22 @@ impl GraphicsOptions {
 
 	// option functions {{{
 
-	pub fn function(&self) -> Option<&Function> {
+	#[must_use] pub fn function(&self) -> Option<&Function> {
 		self.function.as_ref().map(|__Function(function)| function)
 	}
 
-	pub const fn plane_mask(&self) -> &Option<u32> {
+	#[must_use] pub const fn plane_mask(&self) -> &Option<u32> {
 		&self.plane_mask
 	}
 
-	pub const fn foreground(&self) -> &Option<Pixel> {
+	#[must_use] pub const fn foreground(&self) -> &Option<Pixel> {
 		&self.foreground
 	}
-	pub const fn background(&self) -> &Option<Pixel> {
+	#[must_use] pub const fn background(&self) -> &Option<Pixel> {
 		&self.background
 	}
 
-	pub fn line_width(&self) -> Option<u16> {
+	#[must_use] pub fn line_width(&self) -> Option<u16> {
 		self.line_width.map(|line_width| {
 			line_width
 				.try_into()
@@ -385,47 +385,47 @@ impl GraphicsOptions {
 		})
 	}
 
-	pub fn line_style(&self) -> Option<&LineStyle> {
+	#[must_use] pub fn line_style(&self) -> Option<&LineStyle> {
 		self.line_style
 			.as_ref()
 			.map(|__LineStyle(line_style)| line_style)
 	}
-	pub fn cap_style(&self) -> Option<&CapStyle> {
+	#[must_use] pub fn cap_style(&self) -> Option<&CapStyle> {
 		self.cap_style
 			.as_ref()
 			.map(|__CapStyle(cap_style)| cap_style)
 	}
-	pub fn join_style(&self) -> Option<&JoinStyle> {
+	#[must_use] pub fn join_style(&self) -> Option<&JoinStyle> {
 		self.join_style
 			.as_ref()
 			.map(|__JoinStyle(join_style)| join_style)
 	}
-	pub fn fill_style(&self) -> Option<&FillStyle> {
+	#[must_use] pub fn fill_style(&self) -> Option<&FillStyle> {
 		self.fill_style
 			.as_ref()
 			.map(|__FillStyle(fill_style)| fill_style)
 	}
-	pub fn fill_rule(&self) -> Option<&FillRule> {
+	#[must_use] pub fn fill_rule(&self) -> Option<&FillRule> {
 		self.fill_rule
 			.as_ref()
 			.map(|__FillRule(fill_rule)| fill_rule)
 	}
 
-	pub const fn tile(&self) -> &Option<Pixmap> {
+	#[must_use] pub const fn tile(&self) -> &Option<Pixmap> {
 		&self.tile
 	}
-	pub const fn stipple(&self) -> &Option<Pixmap> {
+	#[must_use] pub const fn stipple(&self) -> &Option<Pixmap> {
 		&self.stipple
 	}
 
-	pub fn tile_stipple_x_origin(&self) -> Option<i16> {
+	#[must_use] pub fn tile_stipple_x_origin(&self) -> Option<i16> {
 		self.tile_stipple_x_origin.map(|tile_stipple_x_origin| {
 			tile_stipple_x_origin
 				.try_into()
 				.expect("must fit into i16; represents i16 value")
 		})
 	}
-	pub fn tile_stipple_y_origin(&self) -> Option<i16> {
+	#[must_use] pub fn tile_stipple_y_origin(&self) -> Option<i16> {
 		self.tile_stipple_y_origin.map(|tile_stipple_y_origin| {
 			tile_stipple_y_origin
 				.try_into()
@@ -433,46 +433,46 @@ impl GraphicsOptions {
 		})
 	}
 
-	pub const fn font(&self) -> &Option<Font> {
+	#[must_use] pub const fn font(&self) -> &Option<Font> {
 		&self.font
 	}
 
-	pub fn subwindow_mode(&self) -> Option<&SubwindowMode> {
+	#[must_use] pub fn subwindow_mode(&self) -> Option<&SubwindowMode> {
 		self.subwindow_mode
 			.as_ref()
 			.map(|__SubwindowMode(subwindow_mode)| subwindow_mode)
 	}
 
-	pub fn graphics_exposure(&self) -> Option<&bool> {
+	#[must_use] pub fn graphics_exposure(&self) -> Option<&bool> {
 		self.graphics_exposures.as_ref().map(|__bool(bool)| bool)
 	}
 
-	pub fn clip_x_origin(&self) -> Option<i16> {
+	#[must_use] pub fn clip_x_origin(&self) -> Option<i16> {
 		self.clip_x_origin.map(|clip_x_origin| {
 			clip_x_origin
 				.try_into()
 				.expect("must fit into i16; represents i16 value")
 		})
 	}
-	pub fn clip_y_origin(&self) -> Option<i16> {
+	#[must_use] pub fn clip_y_origin(&self) -> Option<i16> {
 		self.clip_y_origin.map(|clip_y_origin| {
 			clip_y_origin
 				.try_into()
 				.expect("must fit into i16; represents i16 value")
 		})
 	}
-	pub const fn clip_mask(&self) -> &Option<ClipMask> {
+	#[must_use] pub const fn clip_mask(&self) -> &Option<ClipMask> {
 		&self.clip_mask
 	}
 
-	pub fn dash_offset(&self) -> Option<u16> {
+	#[must_use] pub fn dash_offset(&self) -> Option<u16> {
 		self.dash_offset.map(|dash_offset| {
 			dash_offset
 				.try_into()
 				.expect("must fit into u16; represents u16 value")
 		})
 	}
-	pub fn dashes(&self) -> Option<u8> {
+	#[must_use] pub fn dashes(&self) -> Option<u8> {
 		self.dashes.map(|dashes| {
 			dashes
 				.try_into()
@@ -480,7 +480,7 @@ impl GraphicsOptions {
 		})
 	}
 
-	pub fn arc_mode(&self) -> Option<&ArcMode> {
+	#[must_use] pub fn arc_mode(&self) -> Option<&ArcMode> {
 		self.arc_mode.as_ref().map(|__ArcMode(arc_mode)| arc_mode)
 	}
 
