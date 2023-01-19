@@ -126,7 +126,7 @@ impl KeyboardOptions {
 		}
 	}
 
-	pub fn key_click_percent(&self) -> Option<i8> {
+	#[must_use] pub fn key_click_percent(&self) -> Option<i8> {
 		self.key_click_percent.map(|key_click_percent| {
 			key_click_percent
 				.try_into()
@@ -134,21 +134,21 @@ impl KeyboardOptions {
 		})
 	}
 
-	pub fn bell_percent(&self) -> Option<i8> {
+	#[must_use] pub fn bell_percent(&self) -> Option<i8> {
 		self.bell_percent.map(|bell_percent| {
 			bell_percent
 				.try_into()
 				.expect("must fit into i8; represents an i8 value")
 		})
 	}
-	pub fn bell_pitch(&self) -> Option<i16> {
+	#[must_use] pub fn bell_pitch(&self) -> Option<i16> {
 		self.bell_pitch.map(|bell_pitch| {
 			bell_pitch
 				.try_into()
 				.expect("must fit into i16; represents an i16 value")
 		})
 	}
-	pub fn bell_duration(&self) -> Option<i16> {
+	#[must_use] pub fn bell_duration(&self) -> Option<i16> {
 		self.bell_duration.map(|bell_duration| {
 			bell_duration
 				.try_into()
@@ -156,21 +156,21 @@ impl KeyboardOptions {
 		})
 	}
 
-	pub fn led(&self) -> Option<u8> {
+	#[must_use] pub fn led(&self) -> Option<u8> {
 		self.led.map(|led| {
 			led.try_into()
 				.expect("must fit into u8; represents a u8 value")
 		})
 	}
-	pub fn led_mode(&self) -> Option<&Toggle> {
+	#[must_use] pub fn led_mode(&self) -> Option<&Toggle> {
 		self.led_mode.as_ref().map(|__Toggle(toggle)| toggle)
 	}
 
-	pub fn key(&self) -> Option<&Keycode> {
+	#[must_use] pub fn key(&self) -> Option<&Keycode> {
 		self.key.as_ref().map(|__Keycode(keycode)| keycode)
 	}
 
-	pub fn auto_repeat_mode(&self) -> Option<&ToggleOrDefault> {
+	#[must_use] pub fn auto_repeat_mode(&self) -> Option<&ToggleOrDefault> {
 		self.auto_repeat_mode
 			.as_ref()
 			.map(|__ToggleOrDefault(toggle_or_default)| toggle_or_default)
