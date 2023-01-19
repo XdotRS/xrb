@@ -34,54 +34,9 @@ use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
 bitflags! {
 	/// A mask of [attributes] given for a [window].
 	///
-	/// The following table shows each attribute, its default value if it is
-	/// not explicitly initialized in the [`CreateWindow` request], and the
-	/// [window classes] that it can be set with.
+	/// For more information, and for the attributes themselves, please see [`Attributes`].
 	///
 	/// [attributes]: Attributes
-	/// [window]: Window
-	/// [`CreateWindow` request]: crate::x11::request::CreateWindow
-	/// [window classes]: crate::WindowClass
-	///
-	/// |Attribute                |Default value            |Classes                          |
-	/// |-------------------------|-------------------------|---------------------------------|
-	/// |[`background_pixmap`]    |[`None`]                 |[`InputOutput`] only             |
-	/// |[`border_pixmap`]        |[`CopyFromParent`]       |[`InputOutput`] only             |
-	/// |[`bit_gravity`]          |[`Forget`]               |[`InputOutput`] only             |
-	/// |[`window_gravity`]       |[`NorthWest`]            |[`InputOutput`] and [`InputOnly`]|
-	/// |[`backing_store`]        |[`NotUseful`]            |[`InputOutput`] only             |
-	/// |[`backing_planes`]       |`0x_ffff_ffff`           |[`InputOutput`] only             |
-	/// |[`backing_pixel`]        |`0x_0000_0000`           |[`InputOutput`] only             |
-	/// |[`save_under`]           |`false`                  |[`InputOutput`] only             |
-	/// |[`event_mask`]           |[`empty()`][event empty] |[`InputOutput`] and [`InputOnly`]|
-	/// |[`do_not_propagate_mask`]|[`empty()`][device empty]|[`InputOutput`] and [`InputOnly`]|
-	/// |[`override_redirect`]    |`false`                  |[`InputOutput`] and [`InputOnly`]|
-	/// |[`colormap`]             |[`CopyFromParent`]       |[`InputOutput`] only             |
-	/// |[`cursor_appearance`]    |[`None`]                 |[`InputOutput`] and [`InputOnly`]|
-	///
-	/// [`background_pixmap`]: Attributes::background_pixmap
-	/// [`border_pixmap`]: Attributes::border_pixmap
-	/// [`bit_gravity`]: Attributes::bit_gravity
-	/// [`window_gravity`]: Attributes::window_gravity
-	/// [`backing_store`]: Attributes::backing_store
-	/// [`backing_planes`]: Attributes::backing_planes
-	/// [`backing_pixel`]: Attributes::backing_pixel
-	/// [`save_under`]: Attributes::save_under
-	/// [`event_mask`]: Attributes::event_mask
-	/// [`do_not_propagate_mask`]: Attributes::do_not_propagate_mask
-	/// [`override_redirect`]: Attributes::override_redirect
-	/// [`colormap`]: Attributes::colormap
-	/// [`cursor_appearance`]: Attributes::cursor_appearance
-	///
-	/// [`CopyFromParent`]: CopyableFromParent::CopyFromParent
-	/// [`Forget`]: BitGravity::Forget
-	/// [`NorthWest`]: WindowGravity::NorthWest
-	/// [`NotUseful`]: BackingStore::NotUseful
-	/// [event empty]: EventMask::empty
-	/// [device empty]: DeviceEventMask::empty
-	///
-	/// [`InputOutput`]: crate::WindowClass::InputOutput
-	/// [`InputOnly`]: crate::WindowClass::InputOnly
 	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
 	pub struct AttributeMask: u32 {
 		/// See also: [`background_pixmap`], <code>[ParentRelatable]<[Option]<[Pixmap]>></code>.
@@ -168,15 +123,16 @@ pub type BackgroundPixmap = ParentRelatable<Option<Pixmap>>;
 pub type BorderPixmap = CopyableFromParent<Pixmap>;
 /// This is a type alias for <code>[Option]<[CursorAppearance]></code>.
 ///
-/// This represents the type used in [`cursor_appearance` attributes].
+/// This represents the type used in
+/// [`cursor_appearance` attributes][attribute].
 ///
 /// This type alias exists because there can be confusion where the
-/// [`cursor_appearance` attribute] may be missing:
+/// [`cursor_appearance` attribute][attribute] may be missing:
 /// <code>[Option]<[Option]<[CursorAppearance]>></code>. The outer `Option`
 /// refers to whether this attribute is specified, whereas the inner `Option`
 /// refers to whether the cursor has an appearance.
 ///
-/// [`cursor_appearance` attributes]: Attributes::cursor_appearance
+/// [attribute]: Attributes::cursor_appearance
 pub type CursorAppearanceAttribute = Option<CursorAppearance>;
 /// This is a type alias for <code>[CopyableFromParent]<[Colormap]></code>.
 ///
@@ -186,6 +142,54 @@ pub type CursorAppearanceAttribute = Option<CursorAppearance>;
 pub type ColormapAttribute = CopyableFromParent<Colormap>;
 
 /// A set of attributes for a [window].
+///
+/// The following table shows each attribute, its default value if it is
+/// not explicitly initialized in the [`CreateWindow` request], and the
+/// [window classes] that it can be set with.
+///
+/// [window]: Window
+/// [`CreateWindow` request]: crate::x11::request::CreateWindow
+/// [window classes]: crate::WindowClass
+///
+/// |Attribute                |Default value     |Classes                      |
+/// |-------------------------|------------------|-----------------------------|
+/// |[`background_pixmap`]    |[`None`]          |[`InputOutput`] only         |
+/// |[`border_pixmap`]        |[`CopyFromParent`]|[`InputOutput`] only         |
+/// |[`bit_gravity`]          |[`Forget`]        |[`InputOutput`] only         |
+/// |[`window_gravity`]       |[`NorthWest`] |[`InputOutput`] and [`InputOnly`]|
+/// |[`backing_store`]        |[`NotUseful`]     |[`InputOutput`] only         |
+/// |[`backing_planes`]       |`0x_ffff_ffff`    |[`InputOutput`] only         |
+/// |[`backing_pixel`]        |`0x_0000_0000`    |[`InputOutput`] only         |
+/// |[`save_under`]           |`false`           |[`InputOutput`] only         |
+/// |[`event_mask`]           |[`empty()`][e]|[`InputOutput`] and [`InputOnly`]|
+/// |[`do_not_propagate_mask`]|[`empty()`][d]|[`InputOutput`] and [`InputOnly`]|
+/// |[`override_redirect`]    |`false`       |[`InputOutput`] and [`InputOnly`]|
+/// |[`colormap`]             |[`CopyFromParent`]|[`InputOutput`] only         |
+/// |[`cursor_appearance`]    |[`None`]      |[`InputOutput`] and [`InputOnly`]|
+///
+/// [`background_pixmap`]: Attributes::background_pixmap
+/// [`border_pixmap`]: Attributes::border_pixmap
+/// [`bit_gravity`]: Attributes::bit_gravity
+/// [`window_gravity`]: Attributes::window_gravity
+/// [`backing_store`]: Attributes::backing_store
+/// [`backing_planes`]: Attributes::backing_planes
+/// [`backing_pixel`]: Attributes::backing_pixel
+/// [`save_under`]: Attributes::save_under
+/// [`event_mask`]: Attributes::event_mask
+/// [`do_not_propagate_mask`]: Attributes::do_not_propagate_mask
+/// [`override_redirect`]: Attributes::override_redirect
+/// [`colormap`]: Attributes::colormap
+/// [`cursor_appearance`]: Attributes::cursor_appearance
+///
+/// [`CopyFromParent`]: CopyableFromParent::CopyFromParent
+/// [`Forget`]: BitGravity::Forget
+/// [`NorthWest`]: WindowGravity::NorthWest
+/// [`NotUseful`]: BackingStore::NotUseful
+/// [e]: EventMask::empty
+/// [d]: DeviceEventMask::empty
+///
+/// [`InputOutput`]: crate::WindowClass::InputOutput
+/// [`InputOnly`]: crate::WindowClass::InputOnly
 ///
 /// [window]: Window
 #[derive(Debug, Hash, PartialEq, Eq)]
