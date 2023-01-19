@@ -76,13 +76,13 @@ derive_xrb! {
 		/// with that window, then going to its parent, etc.) to find the first
 		/// window which any client has selected interest in this event
 		/// (provided no window between the two prohibits this event from
-		/// generating in its [`DO_NOT_PROPAGATE_MASK`]).
+		/// generating in its [`do_not_propagate_mask`]).
 		///
 		/// Active grabs or the currently focused window may modify how the
 		/// `event_window` is chosen.
 		///
 		/// [event]: crate::message::Event
-		/// [`DO_NOT_PROPAGATE_MASK`]: crate::mask::AttributeMask::DO_NOT_PROPAGATE_MASK
+		/// [`do_not_propagate_mask`]: crate::Attributes::do_not_propagate_mask
 		pub event_window: Window,
 		/// If a child of the `event_window` contains the cursor, this is that
 		/// child.
@@ -156,13 +156,13 @@ derive_xrb! {
 		/// with that window, then going to its parent, etc.) to find the first
 		/// window which any client has selected interest in this event
 		/// (provided no window between the two prohibits this event from
-		/// generating in its [`DO_NOT_PROPAGATE_MASK`]).
+		/// generating in its [`do_not_propagate_mask`]).
 		///
 		/// Active grabs or the currently focused window may modify how the
 		/// `event_window` is chosen.
 		///
 		/// [event]: crate::message::Event
-		/// [`DO_NOT_PROPAGATE_MASK`]: crate::mask::AttributeMask::DO_NOT_PROPAGATE_MASK
+		/// [`do_not_propagate_mask`]: crate::Attributes::do_not_propagate_mask
 		pub event_window: Window,
 		/// If a child of the `event_window` contains the cursor, this is that
 		/// child.
@@ -237,12 +237,12 @@ derive_xrb! {
 		/// with that window, then going to its parent, etc.) to find the first
 		/// window which any client has selected interest in this event
 		/// (provided no window between the two prohibits this event from
-		/// generating in its [`DO_NOT_PROPAGATE_MASK`]).
+		/// generating in its [`do_not_propagate_mask`]).
 		///
 		/// Active grabs may modify how the `event_window` is chosen.
 		///
 		/// [event]: crate::message::Event
-		/// [`DO_NOT_PROPAGATE_MASK`]: crate::mask::AttributeMask::DO_NOT_PROPAGATE_MASK
+		/// [`do_not_propagate_mask`]: crate::Attributes::do_not_propagate_mask
 		pub event_window: Window,
 		/// If a child of the `event_window` contains the cursor, this is that
 		/// child.
@@ -317,12 +317,12 @@ derive_xrb! {
 		/// with that window, then going to its parent, etc.) to find the first
 		/// window which any client has selected interest in this event
 		/// (provided no window between the two prohibits this event from
-		/// generating in its [`DO_NOT_PROPAGATE_MASK`]).
+		/// generating in its [`do_not_propagate_mask`]).
 		///
 		/// Active grabs may modify how the `event_window` is chosen.
 		///
 		/// [event]: crate::message::Event
-		/// [`DO_NOT_PROPAGATE_MASK`]: crate::mask::AttributeMask::DO_NOT_PROPAGATE_MASK
+		/// [`do_not_propagate_mask`]: crate::Attributes::do_not_propagate_mask
 		pub event_window: Window,
 		/// If a child of the `event_window` contains the cursor, this is that
 		/// child.
@@ -458,12 +458,12 @@ derive_xrb! {
 		/// with that window, then going to its parent, etc.) to find the first
 		/// window which any client has selected interest in this event
 		/// (provided no window between the two prohibits this event from
-		/// generating in its [`DO_NOT_PROPAGATE_MASK`]).
+		/// generating in its [`do_not_propagate_mask`]).
 		///
 		/// Active grabs may modify how the `event_window` is chosen.
 		///
 		/// [event]: crate::message::Event
-		/// [`DO_NOT_PROPAGATE_MASK`]: crate::mask::AttributeMask::DO_NOT_PROPAGATE_MASK
+		/// [`do_not_propagate_mask`]: crate::Attributes::do_not_propagate_mask
 		pub event_window: Window,
 		/// If a child of the `event_window` contains the cursor, this is that
 		/// child.
@@ -1137,7 +1137,7 @@ derive_xrb! {
 	/// - the regions are viewable and the server is maintaining a backing store
 	///   on the window; or
 	/// - the window is not viewable but the server is honoring the window's
-	///   [`BackingStore` attribute] of [`Always`] or [`WhenMapped`].
+	///   [`backing_store` attribute] of [`Always`] or [`WhenMapped`].
 	///
 	/// The regions are decomposed into an arbitrary set of rectangles, and an
 	/// `Expose` event is generated for each one.
@@ -1151,9 +1151,9 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [window]: Window
 	///
-	/// [`BackingStore` attribute]: crate::Attribute::BackingStore
-	/// [`Always`]: crate::BackingStores::Always
-	/// [`WhenMapped`]: crate::BackingStores::WhenMapped
+	/// [`backing_store` attribute]: crate::Attributes::backing_store
+	/// [`Always`]: crate::BackingStore::Always
+	/// [`WhenMapped`]: crate::BackingStore::WhenMapped
 	/// [`WindowClass::InputOnly`]: crate::WindowClass::InputOnly
 	///
 	/// [`EXPOSURE`]: crate::mask::EventMask::EXPOSURE
@@ -1492,11 +1492,11 @@ derive_xrb! {
 		pub window: Window,
 
 		/// Whether this [event] was generated as a result of its parent being
-		/// resized when the unmapped [window] had [`WinGravity::Unmap`].
+		/// resized when the unmapped [window] had [`WindowGravity::Unmap`].
 		///
 		/// [event]: crate::message::Event
 		/// [window]: Window
-		/// [`WinGravity::Unmap`]: crate::WinGravity::Unmap
+		/// [`WindowGravity::Unmap`]: crate::WindowGravity::Unmap
 		pub from_configure: bool,
 		[_; ..],
 	}
@@ -1554,7 +1554,7 @@ derive_xrb! {
 
 	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when an unmapped [window] with an
-	/// [`OverrideRedirect` attribute] of `false` sends a [`MapWindow` request].
+	/// [`override_redirect` attribute] of `false` sends a [`MapWindow` request].
 	///
 	/// # Recipients
 	/// This [event] is reported to clients selecting [`SUBSTRUCTURE_REDIRECT`]
@@ -1564,7 +1564,7 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [`OverrideRedirect` attribute]: crate::WinAttribute::OverrideRedirect
+	/// [`override_redirect` attribute]: crate::Attributes::override_redirect
 	/// [`MapWindow` request]: super::request::MapWindow
 	///
 	/// [`SUBSTRUCTURE_REDIRECT`]: crate::mask::EventMask::SUBSTRUCTURE_REDIRECT
@@ -2155,9 +2155,9 @@ derive_xrb! {
 	///
 	/// [`Colormap` event]: Colormap
 	pub enum ColormapDetail {
-		/// The `window`'s [`COLORMAP` attribute] was changed.
+		/// The `window`'s [`colormap` attribute] was changed.
 		///
-		/// [`COLORMAP` attribute]: crate::mask::AttributeMask::COLORMAP
+		/// [`colormap` attribute]: crate::Attributes::colormap
 		AttributeChanged,
 		/// The `window`'s [colormap] was installed or uninstalled.
 		///
@@ -2185,7 +2185,7 @@ derive_xrb! {
 
 	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window]'s [colormap] is installed,
-	/// uninstalled, or its [`COLORMAP` attribute] is changed.
+	/// uninstalled, or its [`colormap` attribute] is changed.
 	///
 	/// # Recipients
 	/// This [event] is reported to clients selecting [`COLORMAP_CHANGE`] on the
@@ -2194,7 +2194,7 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [colormap]: crate::Colormap
-	/// [`COLORMAP` attribute]: crate::mask::AttributeMask::COLORMAP
+	/// [`colormap` attribute]: crate::Attributes::colormap
 	///
 	/// [`COLORMAP_CHANGE`]: crate::mask::EventMask::COLORMAP_CHANGE
 	pub struct Colormap: Event(32) {
@@ -2217,11 +2217,11 @@ derive_xrb! {
 		pub colormap: Option<crate::Colormap>,
 
 		/// Whether this [event] was generated because the `window`'s
-		/// [`COLORMAP` attribute] was changed or because the `window`'s
+		/// [`colormap` attribute] was changed or because the `window`'s
 		/// `colormap` was installed or uninstalled.
 		///
 		/// [event]: crate::message::Event
-		/// [`COLORMAP` attribute]: crate::mask::AttributeMask::COLORMAP
+		/// [`colormap` attribute]: crate::Attributes::colormap
 		pub detail: ColormapDetail,
 		/// Whether the `window`'s `colormap` is currently installed.
 		pub state: ColormapState,

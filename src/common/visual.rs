@@ -7,7 +7,7 @@
 	reason = "It makes sense for `Screen` to have many arguments because it has many fields."
 )]
 
-use crate::{BackingStores, Colormap, EventMask, Window};
+use crate::{BackingStore, Colormap, EventMask, Window};
 use derive_more::{From, Into};
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
@@ -286,7 +286,7 @@ derive_xrb! {
 		pub max_installed_maps: u16,
 
 		pub root_visual: VisualId,
-		pub backing_stores: BackingStores,
+		pub backing_stores: BackingStore,
 		pub save_unders: bool,
 		pub root_depth: u8,
 
