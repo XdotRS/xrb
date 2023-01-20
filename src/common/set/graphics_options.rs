@@ -59,48 +59,173 @@ bitflags! {
 	}
 }
 
+/// Given a source and destination pixel, represents a bitwise operation applied
+/// to the source and destination to determine the resultant pixel.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 pub enum Function {
+	/// The resultant pixel is bitwise zero; that is, it has a `0` for each bit.
 	Clear = 0,
+	/// The resultant pixel is the bitwise AND of the source and the
+	/// destination: `source & destination`.
 	And = 1,
+	/// The resultant pixel is the bitwise AND of the source and the NOT of
+	/// the destination: `source & (!destination)`.
 	AndReverse = 2,
+	/// The resultant pixel is simply the source pixel: `source`.
 	Copy = 3,
 
+	/// The resultant pixel is the bitwise AND of the NOT of the source and
+	/// the destination: `(!source) & destination`.
 	AndInverted = 4,
+	/// The resultant pixel is simply the destination pixel: `destination`.
 	NoOp = 5,
+	/// The resultant pixel is the bitwise XOR of the source and the
+	/// destination: `source ^ destination`.
 	Xor = 6,
+	/// The resultant pixel is the bitwise OR of the source and the destination
+	/// `source | destination`.
 	Or = 7,
 
+	/// The resultant pixel is the bitwise AND of the NOT of the source and the
+	/// NOT of the destination: `(!source) & (!destination)`.
 	Nor = 8,
+	/// The resultant pixel is the bitwise XOR of the NOT of the source and the
+	/// destination: `(!source) ^ destination`.
 	Equiv = 9,
+	/// The resultant pixel is the bitwise NOT of the destination:
+	/// `!destination`.
 	Invert = 10,
+	/// The resultant pixel is the bitwise OR of the source and the NOT of the
+	/// destination: `source | (!destination)`.
 	OrReverse = 11,
 
+	/// The resultant pixel is the bitwise NOT of the source: `!source`.
 	CopyInverted = 12,
+	/// The resultant pixel is the bitwise OR of the NOT of the source and the
+	/// destination: `(!source) | destination`.
 	OrInverted = 13,
+	/// The resultant pixel is the bitwise OR of the NOT of the source and the
+	/// NOT of the destination: `(!source) | (!destination)`.
 	Nand = 14,
+	/// The resultant pixel is bitwise one; that is, it has a `1` for each bit.
 	Set = 15,
 }
 
+/// The width of a line.
+///
+/// The line can either be [`Thin`] (if it has the special value of zero), or
+/// [`Wide`] for any width greater than or equal to one.
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
+pub enum LineWidth {
+	/// A thin line, having the special width value of zero.
+	Thin,
+	/// A thick line, having a `LineWidth` of greater than or equal to one.
+	Thick(u16),
+}
+
+impl LineWidth {
+	/// Creates a new `LineWidth` with the given width.
+	///
+	/// If the width is zero, this is [`LineWidth::Thin`]. Otherwise, it is
+	/// [`LineWidth::Thick(width)`].
+	///
+	/// The width is measured in pixels.
+	///
+	/// [`LineWidth::Thick(width)`]: LineWidth::Thick
+	#[must_use]
+	pub const fn new(width: u16) -> Self {
+		if width == 0 {
+			Self::Thin
+		} else {
+			Self::Thick(width)
+		}
+	}
+
+	/// Unwraps the `u16` width of the line.
+	///
+	/// If this is [`LineWidth::Thin`], this is `0`. Otherwise, it is the width
+	/// wrapped by [`LineWidth::Thick`].
+	///
+	/// The width is measured in pixels.
+	#[must_use]
+	pub const fn unwrap(&self) -> u16 {
+		match self {
+			Self::Thin => 0,
+			Self::Thick(width) => *width,
+		}
+	}
+}
+
+/// Defines which sections of a line are drawn.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 pub enum LineStyle {
+	/// The full path of the line is drawn.
 	Solid = 0,
+
+	/// Only the even dashes are drawn.
+	///
+	/// The [`CapStyle`] applies to all internal ends of the individual dashes,
+	/// with the exception of [`CapStyle::NotLast`], which is treated as
+	/// [`CapStyle::Butt`].
 	OnOffDash = 1,
+
+	/// The full path of the line is drawn, but the even dashes are [filled
+	/// differently] than the odd dashes.
+	///
+	/// [`CapStyle::Butt`] is used where even and odd dashes meet.
+	///
+	/// [filled differently]: FillStyle
 	DoubleDash = 2,
 }
 
+/// Defines how the endpoints of a path are drawn.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 pub enum CapStyle {
+	/// Equivalent to [`Butt`], except in the case of [`LineWidth::Thin`], where
+	/// the final endpoint is not drawn.
+	///
+	/// [`Butt`]: CapStyle::Butt
 	NotLast = 0,
+
+	/// The end of the path is square, perpendicular to the slope of the line,
+	/// with no projection beyond the endpoint.
 	Butt = 1,
+
+	/// The end of the path is a circular arc with a diameter equal to the
+	/// [`LineWidth`], centered on the endpoint.
+	///
+	/// For [`LineWidth::Thin`], this is equivalent to [`Butt`].
+	///
+	/// [`Butt`]: CapStyle::Butt
 	Round = 2,
+
+	/// The end of the path is square, but the path projects beyond the endpoint
+	/// for a distance equal to half of the [`LineWidth`].
+	///
+	/// For [`LineWidth::Thin`], this is equivalent to [`Butt`].
+	///
+	/// [`Butt`]: CapStyle::Butt
 	Projecting = 3,
 }
 
+/// Defines how the corners of [`Thick`] lines are drawn.
+///
+/// [`Thick`]: LineWidth::Thick
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 pub enum JoinStyle {
+	/// The outer edges of the two lines extend to meet at an angle, if that
+	/// angle is at least 11 degrees.
+	///
+	/// If the angle is less than 11 degrees, this is treated as
+	/// [`JoinStyle::Bevel`].
 	Miter = 0,
+
+	/// A circular arc with a diameter equal to the [`LineWidth`] is centered on
+	/// the joinpoint.
 	Round = 1,
+
+	/// [`CapStyle::Butt`] endpoint styles are used, then the triangular notch
+	/// is filled.
 	Bevel = 2,
 }
 
@@ -144,8 +269,7 @@ pub struct GraphicsOptions {
 	foreground: Option<Pixel>,
 	background: Option<Pixel>,
 
-	// This represents a `u16` value.
-	line_width: Option<u32>,
+	line_width: Option<__LineWidth>,
 
 	line_style: Option<__LineStyle>,
 	cap_style: Option<__CapStyle>,
@@ -194,7 +318,7 @@ pub struct GraphicsOptionsBuilder {
 	foreground: Option<Pixel>,
 	background: Option<Pixel>,
 
-	line_width: Option<u16>,
+	line_width: Option<LineWidth>,
 
 	line_style: Option<LineStyle>,
 	cap_style: Option<CapStyle>,
@@ -313,7 +437,7 @@ impl GraphicsOptionsBuilder {
 		self
 	}
 
-	pub fn line_width(&mut self, line_width: u16) -> &mut Self {
+	pub fn line_width(&mut self, line_width: LineWidth) -> &mut Self {
 		if self.line_width.is_none() {
 			self.x11_size += 4;
 		}
@@ -527,7 +651,7 @@ impl GraphicsOptionsBuilder {
 			foreground: self.foreground,
 			background: self.background,
 
-			line_width: self.line_width.map(Into::into),
+			line_width: self.line_width.map(__LineWidth),
 
 			line_style: self.line_style.map(__LineStyle),
 			cap_style: self.cap_style.map(__CapStyle),
@@ -580,12 +704,10 @@ impl GraphicsOptions {
 	}
 
 	#[must_use]
-	pub fn line_width(&self) -> Option<u16> {
-		self.line_width.map(|line_width| {
-			line_width
-				.try_into()
-				.expect("must fit into u16; represents u16 value")
-		})
+	pub fn line_width(&self) -> Option<&LineWidth> {
+		self.line_width
+			.as_ref()
+			.map(|__LineWidth(line_width)| line_width)
 	}
 
 	#[must_use]
@@ -1051,6 +1173,48 @@ impl Writable for __Function {
 			Function::OrInverted => buf.put_u32(13),
 			Function::Nand => buf.put_u32(14),
 			Function::Set => buf.put_u32(15),
+		}
+
+		Ok(())
+	}
+}
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+struct __LineWidth(LineWidth);
+
+impl ConstantX11Size for __LineWidth {
+	const X11_SIZE: usize = 4;
+}
+
+impl X11Size for __LineWidth {
+	fn x11_size(&self) -> usize {
+		Self::X11_SIZE
+	}
+}
+
+impl Readable for __LineWidth {
+	#[allow(
+		clippy::cast_possible_truncation,
+		reason = "truncation is intended behavior if the width is too large for a u16 value"
+	)]
+	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		Ok(Self(match buf.get_u32() {
+			discrim if discrim == 0 => LineWidth::Thin,
+			other_width => LineWidth::Thick(other_width as u16),
+		}))
+	}
+}
+
+impl Writable for __LineWidth {
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		let Self(line_width) = self;
+
+		match line_width {
+			LineWidth::Thin => buf.put_u32(0),
+			LineWidth::Thick(width) => buf.put_u32(*width as u32),
 		}
 
 		Ok(())
