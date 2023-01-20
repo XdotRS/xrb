@@ -231,7 +231,7 @@ pub struct Attributes {
 }
 
 impl Attributes {
-	pub const fn builder() -> AttributesBuilder {
+	#[must_use] pub const fn builder() -> AttributesBuilder {
 		AttributesBuilder::new()
 	}
 }
