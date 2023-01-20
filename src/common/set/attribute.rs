@@ -231,123 +231,250 @@ pub struct Attributes {
 }
 
 impl Attributes {
+	pub const fn builder() -> AttributesBuilder {
+		AttributesBuilder::new()
+	}
+}
+
+#[derive(Default)]
+pub struct AttributesBuilder {
+	x11_size: usize,
+
+	mask: AttributeMask,
+
+	background_pixmap: Option<BackgroundPixmap>,
+	background_pixel: Option<Pixel>,
+
+	border_pixmap: Option<BorderPixmap>,
+	border_pixel: Option<Pixel>,
+
+	bit_gravity: Option<BitGravity>,
+	window_gravity: Option<WindowGravity>,
+
+	backing_store: Option<BackingStore>,
+	backing_planes: Option<u32>,
+	backing_pixel: Option<Pixel>,
+
+	override_redirect: Option<bool>,
+	save_under: Option<bool>,
+
+	event_mask: Option<EventMask>,
+	do_not_propagate_mask: Option<DeviceEventMask>,
+
+	colormap: Option<ColormapAttribute>,
+
+	cursor_appearance: Option<CursorAppearanceAttribute>,
+}
+
+impl AttributesBuilder {
 	#[must_use]
-	// FIXME: ask in Rust community about alternatives to using so many arguments -
-	//        should this be an `AttributesBuilder` of some sort?
-	pub fn new(
-		background_pixmap: Option<BackgroundPixmap>, background_pixel: Option<Pixel>,
-		border_pixmap: Option<BorderPixmap>, border_pixel: Option<Pixel>,
-		bit_gravity: Option<BitGravity>, window_gravity: Option<WindowGravity>,
-		backing_store: Option<BackingStore>, backing_planes: Option<u32>,
-		backing_pixel: Option<Pixel>, override_redirect: Option<bool>, save_under: Option<bool>,
-		event_mask: Option<EventMask>, do_not_propagate_mask: Option<DeviceEventMask>,
-		colormap: Option<ColormapAttribute>, cursor_appearance: Option<CursorAppearanceAttribute>,
-	) -> Self {
-		let mut mask = AttributeMask::empty();
-		let mut x11_size = AttributeMask::X11_SIZE;
-
-		if let Some(background_pixmap) = &background_pixmap {
-			x11_size += background_pixmap.x11_size();
-			mask |= AttributeMask::BACKGROUND_PIXMAP;
-		}
-		if let Some(background_pixel) = &background_pixel {
-			x11_size += background_pixel.x11_size();
-			mask |= AttributeMask::BACKGROUND_PIXEL;
-		}
-
-		if let Some(border_pixmap) = &border_pixmap {
-			x11_size += border_pixmap.x11_size();
-			mask |= AttributeMask::BORDER_PIXMAP;
-		}
-		if let Some(border_pixel) = &border_pixel {
-			x11_size += border_pixel.x11_size();
-			mask |= AttributeMask::BORDER_PIXEL;
-		}
-
-		if bit_gravity.is_some() {
-			x11_size += __BitGravity::X11_SIZE;
-			mask |= AttributeMask::BIT_GRAVITY;
-		}
-		if window_gravity.is_some() {
-			x11_size += __WindowGravity::X11_SIZE;
-			mask |= AttributeMask::WINDOW_GRAVITY;
-		}
-
-		if let Some(backing_store) = &backing_store {
-			x11_size += backing_store.x11_size();
-			mask |= AttributeMask::BACKING_STORE;
-		}
-		if let Some(backing_planes) = &backing_planes {
-			x11_size += backing_planes.x11_size();
-			mask |= AttributeMask::BACKING_PLANES;
-		}
-		if let Some(backing_pixel) = &backing_pixel {
-			x11_size += backing_pixel.x11_size();
-			mask |= AttributeMask::BACKING_PIXEL;
-		}
-
-		if override_redirect.is_some() {
-			x11_size += __bool::X11_SIZE;
-			mask |= AttributeMask::OVERRIDE_REDIRECT;
-		}
-		if save_under.is_some() {
-			x11_size += __bool::X11_SIZE;
-			mask |= AttributeMask::SAVE_UNDER;
-		}
-
-		if let Some(event_mask) = &event_mask {
-			x11_size += event_mask.x11_size();
-			mask |= AttributeMask::EVENT_MASK;
-		}
-		if let Some(do_not_propagate_mask) = &do_not_propagate_mask {
-			x11_size += do_not_propagate_mask.x11_size();
-			mask |= AttributeMask::DO_NOT_PROPAGATE_MASK;
-		}
-
-		if let Some(colormap) = &colormap {
-			x11_size += colormap.x11_size();
-			mask |= AttributeMask::COLORMAP;
-		}
-
-		if let Some(cursor_appearance) = &cursor_appearance {
-			x11_size += cursor_appearance.x11_size();
-			mask |= AttributeMask::CURSOR_APPEARANCE;
-		}
-
+	pub const fn new() -> Self {
 		Self {
-			x11_size,
-			mask,
+			x11_size: AttributeMask::X11_SIZE,
 
-			background_pixmap,
-			background_pixel,
+			mask: AttributeMask::empty(),
 
-			border_pixmap,
-			border_pixel,
+			background_pixmap: None,
+			background_pixel: None,
 
-			/// These gravities are converted into our [`__BitGravity`] and
-			/// [`__WindowGravity`] types respectively so that they can be
-			/// easily written as four bytes.
-			bit_gravity: bit_gravity.map(__BitGravity),
-			window_gravity: window_gravity.map(__WindowGravity),
+			border_pixmap: None,
+			border_pixel: None,
 
-			backing_store,
-			backing_planes,
-			backing_pixel,
+			bit_gravity: None,
+			window_gravity: None,
 
-			// These booleans are converted into our [`__bool`] type so that they can easily be
-			// written as four bytes.
-			override_redirect: override_redirect.map(__bool),
-			save_under: save_under.map(__bool),
+			backing_store: None,
+			backing_planes: None,
+			backing_pixel: None,
 
-			event_mask,
-			do_not_propagate_mask,
+			override_redirect: None,
+			save_under: None,
 
-			colormap,
+			event_mask: None,
+			do_not_propagate_mask: None,
 
-			cursor_appearance,
+			colormap: None,
+
+			cursor_appearance: None,
 		}
 	}
 
+	#[must_use]
+	pub fn background_pixmap(&mut self, background_pixmap: BackgroundPixmap) -> &mut Self {
+		self.background_pixmap = Some(background_pixmap);
+		self.mask |= AttributeMask::BACKGROUND_PIXMAP;
+
+		self.x11_size += 4;
+
+		self
+	}
+	#[must_use]
+	pub fn background_pixel(&mut self, background_pixel: Pixel) -> &mut Self {
+		self.background_pixel = Some(background_pixel);
+		self.mask |= AttributeMask::BACKGROUND_PIXEL;
+
+		self.x11_size += 4;
+
+		self
+	}
+
+	#[must_use]
+	pub fn border_pixmap(&mut self, border_pixmap: BorderPixmap) -> &mut Self {
+		self.border_pixmap = Some(border_pixmap);
+		self.mask |= AttributeMask::BORDER_PIXMAP;
+
+		self.x11_size += 4;
+
+		self
+	}
+	#[must_use]
+	pub fn border_pixel(&mut self, border_pixel: Pixel) -> &mut Self {
+		self.border_pixel = Some(border_pixel);
+		self.mask |= AttributeMask::BORDER_PIXEL;
+
+		self.x11_size += 4;
+
+		self
+	}
+
+	#[must_use]
+	pub fn bit_gravity(&mut self, bit_gravity: BitGravity) -> &mut Self {
+		self.bit_gravity = Some(bit_gravity);
+		self.mask |= AttributeMask::BIT_GRAVITY;
+
+		self.x11_size += 4;
+
+		self
+	}
+	#[must_use]
+	pub fn window_gravity(&mut self, window_gravity: WindowGravity) -> &mut Self {
+		self.window_gravity = Some(window_gravity);
+		self.mask |= AttributeMask::WINDOW_GRAVITY;
+
+		self.x11_size += 4;
+
+		self
+	}
+
+	#[must_use]
+	pub fn backing_store(&mut self, backing_store: BackingStore) -> &mut Self {
+		self.backing_store = Some(backing_store);
+		self.mask |= AttributeMask::BACKING_STORE;
+
+		self.x11_size += 4;
+
+		self
+	}
+	#[must_use]
+	pub fn backing_planes(&mut self, backing_planes: u32) -> &mut Self {
+		self.backing_planes = Some(backing_planes);
+		self.mask |= AttributeMask::BACKING_PLANES;
+
+		self.x11_size += 4;
+
+		self
+	}
+	#[must_use]
+	pub fn backing_pixel(&mut self, backing_pixel: Pixel) -> &mut Self {
+		self.backing_pixel = Some(backing_pixel);
+		self.mask |= AttributeMask::BACKING_PIXEL;
+
+		self.x11_size += 4;
+
+		self
+	}
+
+	#[must_use]
+	pub fn override_redirect(&mut self, override_redirect: bool) -> &mut Self {
+		self.override_redirect = Some(override_redirect);
+		self.mask |= AttributeMask::OVERRIDE_REDIRECT;
+
+		self.x11_size += 4;
+
+		self
+	}
+	#[must_use]
+	pub fn save_under(&mut self, save_under: bool) -> &mut Self {
+		self.save_under = Some(save_under);
+		self.mask |= AttributeMask::SAVE_UNDER;
+
+		self.x11_size += 4;
+
+		self
+	}
+
+	#[must_use]
+	pub fn event_mask(&mut self, event_mask: EventMask) -> &mut Self {
+		self.event_mask = Some(event_mask);
+		self.mask |= AttributeMask::EVENT_MASK;
+
+		self.x11_size += 4;
+
+		self
+	}
+	#[must_use]
+	pub fn do_not_propagate_mask(&mut self, do_not_propagate_mask: DeviceEventMask) -> &mut Self {
+		self.do_not_propagate_mask = Some(do_not_propagate_mask);
+		self.mask |= AttributeMask::DO_NOT_PROPAGATE_MASK;
+
+		self.x11_size += 4;
+
+		self
+	}
+
+	#[must_use]
+	pub fn colormap(&mut self, colormap: ColormapAttribute) -> &mut Self {
+		self.colormap = Some(colormap);
+		self.mask |= AttributeMask::COLORMAP;
+
+		self.x11_size += 4;
+
+		self
+	}
+
+	#[must_use]
+	pub fn cursor_appearance(&mut self, cursor_appearance: CursorAppearanceAttribute) -> &mut Self {
+		self.cursor_appearance = Some(cursor_appearance);
+		self.mask |= AttributeMask::CURSOR_APPEARANCE;
+
+		self.x11_size += 4;
+
+		self
+	}
+
+	pub fn build(self) -> Attributes {
+		Attributes {
+			x11_size: self.x11_size,
+
+			mask: self.mask,
+
+			background_pixmap: self.background_pixmap,
+			background_pixel: self.background_pixel,
+
+			border_pixmap: self.border_pixmap,
+			border_pixel: self.border_pixel,
+
+			bit_gravity: self.bit_gravity.map(__BitGravity),
+			window_gravity: self.window_gravity.map(__WindowGravity),
+
+			backing_store: self.backing_store,
+			backing_planes: self.backing_planes,
+			backing_pixel: self.backing_pixel,
+
+			override_redirect: self.override_redirect.map(__bool),
+			save_under: self.save_under.map(__bool),
+
+			event_mask: self.event_mask,
+			do_not_propagate_mask: self.do_not_propagate_mask,
+
+			colormap: self.colormap,
+
+			cursor_appearance: self.cursor_appearance,
+		}
+	}
+}
+
+impl Attributes {
 	#[must_use]
 	pub const fn background_pixmap(&self) -> &Option<BackgroundPixmap> {
 		&self.background_pixmap
