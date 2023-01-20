@@ -9,18 +9,16 @@ use xrbk::{Buf, ConstantX11Size, ReadError, ReadResult, ReadableWithContext, Wra
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
 pub mod atom;
+pub mod set;
+pub mod visual;
 
 mod mask;
 mod res_id;
-mod set;
-mod visual;
 mod wrapper;
 
 pub use atom::Atom;
 pub use mask::*;
 pub use res_id::*;
-pub use set::*;
-pub use visual::*;
 pub use wrapper::*;
 
 /// Whether something is enabled or disabled.

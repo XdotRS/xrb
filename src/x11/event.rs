@@ -11,8 +11,8 @@
 
 use crate::{
 	atom::Atom,
+	set::WindowConfigMask,
 	Button,
-	ConfigureWindowMask,
 	CurrentableTime,
 	Drawable,
 	GrabMode,
@@ -30,6 +30,7 @@ use bitflags::bitflags;
 use xrbk::{Buf, ConstantX11Size, ReadResult, Readable, ReadableWithContext, X11Size};
 
 use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
+
 extern crate self as xrb;
 
 derive_xrb! {
@@ -1785,7 +1786,7 @@ derive_xrb! {
 		/// [`ConfigureWindow` request].
 		///
 		/// [`ConfigureWindow` request]: super::request::ConfigureWindow
-		pub mask: ConfigureWindowMask,
+		pub mask: WindowConfigMask,
 		[_; ..],
 	}
 
