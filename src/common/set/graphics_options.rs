@@ -1214,7 +1214,7 @@ impl Writable for __LineWidth {
 
 		match line_width {
 			LineWidth::Thin => buf.put_u32(0),
-			LineWidth::Thick(width) => buf.put_u32(*width as u32),
+			LineWidth::Thick(width) => buf.put_u32(u32::from(*width)),
 		}
 
 		Ok(())
