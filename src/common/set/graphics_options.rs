@@ -181,187 +181,384 @@ pub struct GraphicsOptions {
 	arc_mode: Option<__ArcMode>,
 }
 
-impl GraphicsOptions {
-	#[allow(clippy::similar_names)]
-	pub fn new(
-		// {{{
-		function: Option<Function>,
-		plane_mask: Option<u32>,
-		foreground: Option<Pixel>,
-		background: Option<Pixel>,
-		line_width: Option<u16>,
-		line_style: Option<LineStyle>,
-		cap_style: Option<CapStyle>,
-		join_style: Option<JoinStyle>,
-		fill_style: Option<FillStyle>,
-		fill_rule: Option<FillRule>,
-		tile: Option<Pixmap>,
-		stipple: Option<Pixmap>,
-		tile_stipple_x_origin: Option<i16>,
-		tile_stipple_y_origin: Option<i16>,
-		font: Option<Font>,
-		subwindow_mode: Option<SubwindowMode>,
-		graphics_exposure: Option<bool>,
-		clip_x_origin: Option<i16>,
-		clip_y_origin: Option<i16>,
-		clip_mask: Option<ClipMask>,
-		dash_offset: Option<u16>,
-		dashes: Option<u8>,
-		arc_mode: Option<ArcMode>,
-	) -> Self {
-		let mut mask = GraphicsOptionMask::empty();
-		let mut x11_size = GraphicsOptionMask::X11_SIZE;
+pub struct GraphicsOptionsBuilder {
+	x11_size: usize,
 
-		if function.is_some() {
-			x11_size += __Function::X11_SIZE;
-			mask |= GraphicsOptionMask::FUNCTION;
-		}
+	mask: GraphicsOptionMask,
 
-		if let Some(plane_mask) = &plane_mask {
-			x11_size += plane_mask.x11_size();
-			mask |= GraphicsOptionMask::PLANE_MASK;
-		}
+	function: Option<Function>,
 
-		if let Some(foreground) = &foreground {
-			x11_size += foreground.x11_size();
-			mask |= GraphicsOptionMask::FOREGROUND;
-		}
-		if let Some(background) = &background {
-			x11_size += background.x11_size();
-			mask |= GraphicsOptionMask::BACKGROUND;
-		}
+	plane_mask: Option<u32>,
 
-		if let Some(line_width) = &line_width {
-			x11_size += line_width.x11_size();
-			mask |= GraphicsOptionMask::LINE_WIDTH;
-		}
+	foreground: Option<Pixel>,
+	background: Option<Pixel>,
 
-		if line_style.is_some() {
-			x11_size += __LineStyle::X11_SIZE;
-			mask |= GraphicsOptionMask::LINE_STYLE;
-		}
-		if cap_style.is_some() {
-			x11_size += __CapStyle::X11_SIZE;
-			mask |= GraphicsOptionMask::CAP_STYLE;
-		}
-		if join_style.is_some() {
-			x11_size += __JoinStyle::X11_SIZE;
-			mask |= GraphicsOptionMask::JOIN_STYLE;
-		}
-		if fill_style.is_some() {
-			x11_size += __FillStyle::X11_SIZE;
-			mask |= GraphicsOptionMask::FILL_STYLE;
-		}
-		if fill_rule.is_some() {
-			x11_size += __FillRule::X11_SIZE;
-			mask |= GraphicsOptionMask::FILL_RULE;
-		}
+	line_width: Option<u16>,
 
-		if let Some(tile) = &tile {
-			x11_size += tile.x11_size();
-			mask |= GraphicsOptionMask::TILE;
-		}
-		if let Some(stipple) = &stipple {
-			x11_size += stipple.x11_size();
-			mask |= GraphicsOptionMask::STIPPLE;
-		}
+	line_style: Option<LineStyle>,
+	cap_style: Option<CapStyle>,
+	join_style: Option<JoinStyle>,
+	fill_style: Option<FillStyle>,
+	fill_rule: Option<FillRule>,
 
-		if tile_stipple_x_origin.is_some() {
-			x11_size += i32::X11_SIZE;
-			mask |= GraphicsOptionMask::TILE_STIPPLE_X_ORIGIN;
-		}
-		if tile_stipple_y_origin.is_some() {
-			x11_size += i32::X11_SIZE;
-			mask |= GraphicsOptionMask::TILE_STIPPLE_Y_ORIGIN;
-		}
+	tile: Option<Pixmap>,
+	stipple: Option<Pixmap>,
 
-		if let Some(font) = &font {
-			x11_size += font.x11_size();
-			mask |= GraphicsOptionMask::FONT;
-		}
+	tile_stipple_x_origin: Option<i16>,
+	tile_stipple_y_origin: Option<i16>,
 
-		if subwindow_mode.is_some() {
-			x11_size += __SubwindowMode::X11_SIZE;
-			mask |= GraphicsOptionMask::SUBWINDOW_MODE;
-		}
+	font: Option<Font>,
 
-		if graphics_exposure.is_some() {
-			x11_size += __bool::X11_SIZE;
-			mask |= GraphicsOptionMask::GRAPHICS_EXPOSURES;
-		}
+	subwindow_mode: Option<SubwindowMode>,
 
-		if clip_x_origin.is_some() {
-			x11_size += i32::X11_SIZE;
-			mask |= GraphicsOptionMask::CLIP_X_ORIGIN;
-		}
-		if clip_y_origin.is_some() {
-			x11_size += i32::X11_SIZE;
-			mask |= GraphicsOptionMask::CLIP_Y_ORIGIN;
-		}
-		if let Some(clip_mask) = &clip_mask {
-			x11_size += clip_mask.x11_size();
-			mask |= GraphicsOptionMask::CLIP_MASK;
-		}
+	graphics_exposures: Option<bool>,
 
-		if dash_offset.is_some() {
-			x11_size += u32::X11_SIZE;
-			mask |= GraphicsOptionMask::DASH_OFFSET;
-		}
-		if dashes.is_some() {
-			x11_size += u32::X11_SIZE;
-			mask |= GraphicsOptionMask::DASHES;
-		}
+	clip_x_origin: Option<i16>,
+	clip_y_origin: Option<i16>,
+	clip_mask: Option<ClipMask>,
 
-		if arc_mode.is_some() {
-			x11_size += __ArcMode::X11_SIZE;
-			mask |= GraphicsOptionMask::ARC_MODE;
-		}
+	dash_offset: Option<u16>,
+	dashes: Option<u8>,
 
+	arc_mode: Option<ArcMode>,
+}
+
+impl GraphicsOptionsBuilder {
+	#[must_use]
+	pub const fn new() -> Self {
 		Self {
-			x11_size,
+			x11_size: GraphicsOptionMask::X11_SIZE,
 
-			mask,
+			mask: GraphicsOptionMask::empty(),
 
-			function: function.map(__Function),
+			function: None,
 
-			plane_mask,
+			plane_mask: None,
 
-			foreground,
-			background,
+			foreground: None,
+			background: None,
 
-			line_width: line_width.map(std::convert::Into::into),
+			line_width: None,
 
-			line_style: line_style.map(__LineStyle),
-			cap_style: cap_style.map(__CapStyle),
-			join_style: join_style.map(__JoinStyle),
-			fill_style: fill_style.map(__FillStyle),
-			fill_rule: fill_rule.map(__FillRule),
+			line_style: None,
+			cap_style: None,
+			join_style: None,
+			fill_style: None,
+			fill_rule: None,
 
-			tile,
-			stipple,
+			tile: None,
+			stipple: None,
 
-			tile_stipple_x_origin: tile_stipple_x_origin.map(std::convert::Into::into),
-			tile_stipple_y_origin: tile_stipple_y_origin.map(std::convert::Into::into),
+			tile_stipple_x_origin: None,
+			tile_stipple_y_origin: None,
 
-			font,
+			font: None,
 
-			subwindow_mode: subwindow_mode.map(__SubwindowMode),
+			subwindow_mode: None,
 
-			graphics_exposures: graphics_exposure.map(__bool),
+			graphics_exposures: None,
 
-			clip_x_origin: clip_x_origin.map(std::convert::Into::into),
-			clip_y_origin: clip_y_origin.map(std::convert::Into::into),
-			clip_mask,
+			clip_x_origin: None,
+			clip_y_origin: None,
+			clip_mask: None,
 
-			dash_offset: dash_offset.map(std::convert::Into::into),
-			dashes: dashes.map(std::convert::Into::into),
+			dash_offset: None,
+			dashes: None,
 
-			arc_mode: arc_mode.map(__ArcMode),
+			arc_mode: None,
 		}
-	} // }}}
+	}
 
-	// option functions {{{
+	pub fn function(&mut self, function: Function) -> &mut Self {
+		if self.function.is_none() {
+			self.x11_size += 4;
+		}
 
+		self.function = Some(function);
+		self.mask |= GraphicsOptionMask::FUNCTION;
+
+		self
+	}
+
+	pub fn plane_mask(&mut self, plane_mask: u32) -> &mut Self {
+		if self.plane_mask.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.plane_mask = Some(plane_mask);
+		self.mask |= GraphicsOptionMask::PLANE_MASK;
+
+		self
+	}
+
+	pub fn foreground(&mut self, foreground: Pixel) -> &mut Self {
+		if self.foreground.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.foreground = Some(foreground);
+		self.mask |= GraphicsOptionMask::FOREGROUND;
+
+		self
+	}
+	pub fn background(&mut self, background: Pixel) -> &mut Self {
+		if self.background.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.background = Some(background);
+		self.mask |= GraphicsOptionMask::BACKGROUND;
+
+		self
+	}
+
+	pub fn line_width(&mut self, line_width: u16) -> &mut Self {
+		if self.line_width.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.line_width = Some(line_width);
+		self.mask |= GraphicsOptionMask::LINE_WIDTH;
+
+		self
+	}
+
+	pub fn line_style(&mut self, line_style: LineStyle) -> &mut Self {
+		if self.line_style.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.line_style = Some(line_style);
+		self.mask |= GraphicsOptionMask::LINE_STYLE;
+
+		self
+	}
+	pub fn cap_style(&mut self, cap_style: CapStyle) -> &mut Self {
+		if self.cap_style.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.cap_style = Some(cap_style);
+		self.mask |= GraphicsOptionMask::CAP_STYLE;
+
+		self
+	}
+	pub fn join_style(&mut self, join_style: JoinStyle) -> &mut Self {
+		if self.join_style.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.join_style = Some(join_style);
+		self.mask |= GraphicsOptionMask::JOIN_STYLE;
+
+		self
+	}
+	pub fn fill_style(&mut self, fill_style: FillStyle) -> &mut Self {
+		if self.fill_style.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.fill_style = Some(fill_style);
+		self.mask |= GraphicsOptionMask::FILL_STYLE;
+
+		self
+	}
+	pub fn fill_rule(&mut self, fill_rule: FillRule) -> &mut Self {
+		if self.fill_rule.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.fill_rule = Some(fill_rule);
+		self.mask |= GraphicsOptionMask::FILL_RULE;
+
+		self
+	}
+
+	pub fn tile(&mut self, tile: Pixmap) -> &mut Self {
+		if self.tile.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.tile = Some(tile);
+		self.mask |= GraphicsOptionMask::TILE;
+
+		self
+	}
+	pub fn stipple(&mut self, stipple: Pixmap) -> &mut Self {
+		if self.stipple.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.stipple = Some(stipple);
+		self.mask |= GraphicsOptionMask::STIPPLE;
+
+		self
+	}
+
+	pub fn tile_stipple_x_origin(&mut self, tile_stipple_x_origin: i16) -> &mut Self {
+		if self.tile_stipple_x_origin.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.tile_stipple_x_origin = Some(tile_stipple_x_origin);
+		self.mask |= GraphicsOptionMask::TILE_STIPPLE_X_ORIGIN;
+
+		self
+	}
+	pub fn tile_stipple_y_origin(&mut self, tile_stipple_y_origin: i16) -> &mut Self {
+		if self.tile_stipple_y_origin.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.tile_stipple_y_origin = Some(tile_stipple_y_origin);
+		self.mask |= GraphicsOptionMask::TILE_STIPPLE_Y_ORIGIN;
+
+		self
+	}
+
+	pub fn font(&mut self, font: Font) -> &mut Self {
+		if self.font.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.font = Some(font);
+		self.mask |= GraphicsOptionMask::FONT;
+
+		self
+	}
+
+	pub fn subwindow_mode(&mut self, subwindow_mode: SubwindowMode) -> &mut Self {
+		if self.subwindow_mode.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.subwindow_mode = Some(subwindow_mode);
+		self.mask |= GraphicsOptionMask::SUBWINDOW_MODE;
+
+		self
+	}
+
+	pub fn graphics_exposures(&mut self, graphics_exposures: bool) -> &mut Self {
+		if self.graphics_exposures.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.graphics_exposures = Some(graphics_exposures);
+		self.mask |= GraphicsOptionMask::GRAPHICS_EXPOSURES;
+
+		self
+	}
+
+	pub fn clip_x_origin(&mut self, clip_x_origin: i16) -> &mut Self {
+		if self.clip_x_origin.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.clip_x_origin = Some(clip_x_origin);
+		self.mask |= GraphicsOptionMask::CLIP_X_ORIGIN;
+
+		self
+	}
+	pub fn clip_y_origin(&mut self, clip_y_origin: i16) -> &mut Self {
+		if self.clip_y_origin.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.clip_y_origin = Some(clip_y_origin);
+		self.mask |= GraphicsOptionMask::CLIP_Y_ORIGIN;
+
+		self
+	}
+	pub fn clip_mask(&mut self, clip_mask: ClipMask) -> &mut Self {
+		if self.clip_mask.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.clip_mask = Some(clip_mask);
+		self.mask |= GraphicsOptionMask::CLIP_MASK;
+
+		self
+	}
+
+	pub fn dash_offset(&mut self, dash_offset: u16) -> &mut Self {
+		if self.dash_offset.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.dash_offset = Some(dash_offset);
+		self.mask |= GraphicsOptionMask::DASH_OFFSET;
+
+		self
+	}
+	pub fn dashes(&mut self, dashes: u8) -> &mut Self {
+		if self.dashes.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.dashes = Some(dashes);
+		self.mask |= GraphicsOptionMask::DASHES;
+
+		self
+	}
+
+	pub fn arc_mode(&mut self, arc_mode: ArcMode) -> &mut Self {
+		if self.arc_mode.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.arc_mode = Some(arc_mode);
+		self.mask |= GraphicsOptionMask::ARC_MODE;
+
+		self
+	}
+
+	#[must_use]
+	pub fn build(self) -> GraphicsOptions {
+		GraphicsOptions {
+			x11_size: self.x11_size,
+
+			mask: self.mask,
+
+			function: self.function.map(__Function),
+
+			plane_mask: self.plane_mask,
+
+			foreground: self.foreground,
+			background: self.background,
+
+			line_width: self.line_width.map(Into::into),
+
+			line_style: self.line_style.map(__LineStyle),
+			cap_style: self.cap_style.map(__CapStyle),
+			join_style: self.join_style.map(__JoinStyle),
+			fill_style: self.fill_style.map(__FillStyle),
+			fill_rule: self.fill_rule.map(__FillRule),
+
+			tile: self.tile,
+			stipple: self.stipple,
+
+			tile_stipple_x_origin: self.tile_stipple_x_origin.map(Into::into),
+			tile_stipple_y_origin: self.tile_stipple_y_origin.map(Into::into),
+
+			font: self.font,
+
+			subwindow_mode: self.subwindow_mode.map(__SubwindowMode),
+
+			graphics_exposures: self.graphics_exposures.map(__bool),
+
+			clip_x_origin: self.clip_x_origin.map(Into::into),
+			clip_y_origin: self.clip_y_origin.map(Into::into),
+			clip_mask: self.clip_mask,
+
+			dash_offset: self.dash_offset.map(Into::into),
+			dashes: self.dashes.map(Into::into),
+
+			arc_mode: self.arc_mode.map(__ArcMode),
+		}
+	}
+}
+
+impl GraphicsOptions {
 	#[must_use]
 	pub fn function(&self) -> Option<&Function> {
 		self.function.as_ref().map(|__Function(function)| function)
@@ -506,8 +703,6 @@ impl GraphicsOptions {
 	pub fn arc_mode(&self) -> Option<&ArcMode> {
 		self.arc_mode.as_ref().map(|__ArcMode(arc_mode)| arc_mode)
 	}
-
-	// }}}
 }
 
 // impl XRBK traits for GraphicsOptions {{{
