@@ -100,7 +100,7 @@ impl RgbColor {
 	///
 	/// # Examples
 	/// ```
-	/// use xrb::{RgbColor, RgbColorTooHigh};
+	/// use xrb::visual::{RgbColor, RgbColorTooHigh};
 	///
 	/// # fn main() -> Result<(), RgbColorTooHigh> {
 	/// #
@@ -152,7 +152,7 @@ impl RgbColor {
 	///
 	/// # Examples
 	/// ```
-	/// use xrb::RgbColor;
+	/// use xrb::visual::RgbColor;
 	///
 	/// let red: RgbColor = RgbColor(0xff80, 0x00ff, 0x0000);
 	/// assert_eq!(red.to_hex(), 0xff0000);
