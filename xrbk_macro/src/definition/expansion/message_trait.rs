@@ -49,7 +49,7 @@ impl Request {
 
 					#[allow(clippy::cast_possible_truncation)]
 					fn length(&self) -> u16 {
-						(<Self as ::xrbk::X11Size>::x11_size(&self) / 4) as u16
+						(<Self as ::xrbk::X11Size>::x11_size(self) / 4) as u16
 					}
 				}
 			)
