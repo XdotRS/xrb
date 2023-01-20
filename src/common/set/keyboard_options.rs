@@ -60,72 +60,158 @@ pub struct KeyboardOptions {
 	auto_repeat_mode: Option<__ToggleOrDefault>,
 }
 
-impl KeyboardOptions {
-	pub fn new(
-		key_click_percent: Option<i8>, bell_percent: Option<i8>, bell_pitch: Option<i16>,
-		bell_duration: Option<i16>, led: Option<u8>, led_mode: Option<Toggle>,
-		key: Option<Keycode>, auto_repeat_mode: Option<ToggleOrDefault>,
-	) -> Self {
-		let mut mask = KeyboardOptionMask::empty();
-		let mut x11_size = KeyboardOptionMask::X11_SIZE;
+#[derive(Clone, Default, Debug, Hash, PartialEq, Eq)]
+pub struct KeyboardOptionsBuilder {
+	x11_size: usize,
 
-		if key_click_percent.is_some() {
-			x11_size += i32::X11_SIZE;
-			mask |= KeyboardOptionMask::KEY_CLICK_PERCENT;
-		}
+	mask: KeyboardOptionMask,
 
-		if bell_percent.is_some() {
-			x11_size += i32::X11_SIZE;
-			mask |= KeyboardOptionMask::BELL_PERCENT;
-		}
-		if bell_pitch.is_some() {
-			x11_size += i32::X11_SIZE;
-			mask |= KeyboardOptionMask::BELL_PITCH;
-		}
-		if bell_duration.is_some() {
-			x11_size += i32::X11_SIZE;
-			mask |= KeyboardOptionMask::BELL_DURATION;
-		}
+	key_click_percent: Option<i8>,
 
-		if led.is_some() {
-			x11_size += u32::X11_SIZE;
-			mask |= KeyboardOptionMask::LED;
-		}
-		if led_mode.is_some() {
-			x11_size += __Toggle::X11_SIZE;
-			mask |= KeyboardOptionMask::LED_MODE;
-		}
+	bell_percent: Option<i8>,
+	bell_pitch: Option<i16>,
+	bell_duration: Option<i16>,
 
-		if key.is_some() {
-			x11_size += __Keycode::X11_SIZE;
-			mask |= KeyboardOptionMask::KEY;
-		}
+	led: Option<u8>,
+	led_mode: Option<Toggle>,
 
-		if auto_repeat_mode.is_some() {
-			x11_size += __ToggleOrDefault::X11_SIZE;
-			mask |= KeyboardOptionMask::AUTO_REPEAT_MODE;
-		}
+	key: Option<Keycode>,
 
+	auto_repeat_mode: Option<ToggleOrDefault>,
+}
+
+impl KeyboardOptionsBuilder {
+	#[must_use]
+	pub const fn new() -> Self {
 		Self {
-			x11_size,
+			x11_size: KeyboardOptionMask::X11_SIZE,
 
-			mask,
+			mask: KeyboardOptionMask::empty(),
 
-			key_click_percent: key_click_percent.map(std::convert::Into::into),
+			key_click_percent: None,
 
-			bell_percent: bell_percent.map(std::convert::Into::into),
-			bell_pitch: bell_pitch.map(std::convert::Into::into),
-			bell_duration: bell_duration.map(std::convert::Into::into),
+			bell_percent: None,
+			bell_pitch: None,
+			bell_duration: None,
 
-			led: led.map(std::convert::Into::into),
-			led_mode: led_mode.map(__Toggle),
+			led: None,
+			led_mode: None,
 
-			key: key.map(__Keycode),
+			key: None,
 
-			auto_repeat_mode: auto_repeat_mode.map(__ToggleOrDefault),
+			auto_repeat_mode: None,
 		}
 	}
 
+	pub fn key_click_percent(&mut self, key_click_percent: i8) -> &mut Self {
+		if self.key_click_percent.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.key_click_percent = Some(key_click_percent);
+		self.mask |= KeyboardOptionMask::KEY_CLICK_PERCENT;
+
+		self
+	}
+
+	pub fn bell_percent(&mut self, bell_percent: i8) -> &mut Self {
+		if self.bell_percent.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.bell_percent = Some(bell_percent);
+		self.mask |= KeyboardOptionMask::BELL_PERCENT;
+
+		self
+	}
+	pub fn bell_pitch(&mut self, bell_pitch: i16) -> &mut Self {
+		if self.bell_pitch.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.bell_pitch = Some(bell_pitch);
+		self.mask |= KeyboardOptionMask::BELL_PITCH;
+
+		self
+	}
+	pub fn bell_duration(&mut self, bell_duration: i16) -> &mut Self {
+		if self.bell_duration.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.bell_duration = Some(bell_duration);
+		self.mask |= KeyboardOptionMask::BELL_DURATION;
+
+		self
+	}
+
+	pub fn led(&mut self, led: u8) -> &mut Self {
+		if self.led.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.led = Some(led);
+		self.mask |= KeyboardOptionMask::LED;
+
+		self
+	}
+	pub fn led_mode(&mut self, led_mode: Toggle) -> &mut Self {
+		if self.led_mode.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.led_mode = Some(led_mode);
+		self.mask |= KeyboardOptionMask::LED_MODE;
+
+		self
+	}
+
+	pub fn key(&mut self, key: Keycode) -> &mut Self {
+		if self.key.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.key = Some(key);
+		self.mask |= KeyboardOptionMask::KEY;
+
+		self
+	}
+
+	pub fn auto_repeat_mode(&mut self, auto_repeat_mode: ToggleOrDefault) -> &mut Self {
+		if self.auto_repeat_mode.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.auto_repeat_mode = Some(auto_repeat_mode);
+		self.mask |= KeyboardOptionMask::AUTO_REPEAT_MODE;
+
+		self
+	}
+
+	#[must_use]
+	pub fn build(self) -> KeyboardOptions {
+		KeyboardOptions {
+			x11_size: self.x11_size,
+
+			mask: self.mask,
+
+			key_click_percent: self.key_click_percent.map(Into::into),
+
+			bell_percent: self.bell_percent.map(Into::into),
+			bell_pitch: self.bell_pitch.map(Into::into),
+			bell_duration: self.bell_duration.map(Into::into),
+
+			led: self.led.map(Into::into),
+			led_mode: self.led_mode.map(__Toggle),
+
+			key: self.key.map(__Keycode),
+
+			auto_repeat_mode: self.auto_repeat_mode.map(__ToggleOrDefault),
+		}
+	}
+}
+
+impl KeyboardOptions {
 	#[must_use]
 	pub fn key_click_percent(&self) -> Option<i8> {
 		self.key_click_percent.map(|key_click_percent| {
