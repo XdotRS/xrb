@@ -181,6 +181,7 @@ pub struct GraphicsOptions {
 	arc_mode: Option<__ArcMode>,
 }
 
+#[derive(Clone, Default, Debug, Hash, PartialEq, Eq)]
 pub struct GraphicsOptionsBuilder {
 	x11_size: usize,
 

@@ -237,7 +237,7 @@ impl Attributes {
 	}
 }
 
-#[derive(Default)]
+#[derive(Clone, Default, Debug, Hash, PartialEq, Eq)]
 pub struct AttributesBuilder {
 	x11_size: usize,
 

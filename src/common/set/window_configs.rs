@@ -61,67 +61,141 @@ pub struct WindowConfigs {
 	stack_mode: Option<__StackMode>,
 }
 
-impl WindowConfigs {
+#[derive(Clone, Default, Debug, Hash, PartialEq, Eq)]
+pub struct WindowConfigsBuilder {
+	x11_size: usize,
+
+	mask: WindowConfigMask,
+
+	x: Option<i16>,
+	y: Option<i16>,
+	width: Option<u16>,
+	height: Option<u16>,
+
+	border_width: Option<u16>,
+
+	sibling: Option<Window>,
+
+	stack_mode: Option<StackMode>,
+}
+
+impl WindowConfigsBuilder {
 	#[must_use]
-	// FIXME: ask in Rust community about alternatives to using so many arguments -
-	//        should this be a `WindowConfigsBuilder` of some sort?
-	pub fn new(
-		x: Option<i16>, y: Option<i16>, width: Option<u16>, height: Option<u16>,
-		border_width: Option<u16>, sibling: Option<Window>, stack_mode: Option<StackMode>,
-	) -> Self {
-		let mut mask = WindowConfigMask::empty();
-		let mut x11_size = WindowConfigMask::X11_SIZE + 2;
-
-		if x.is_some() {
-			x11_size += i32::X11_SIZE;
-			mask |= WindowConfigMask::X;
-		}
-		if y.is_some() {
-			x11_size += i32::X11_SIZE;
-			mask |= WindowConfigMask::Y;
-		}
-		if width.is_some() {
-			x11_size += u32::X11_SIZE;
-			mask |= WindowConfigMask::WIDTH;
-		}
-		if height.is_some() {
-			x11_size += u32::X11_SIZE;
-			mask |= WindowConfigMask::HEIGHT;
-		}
-
-		if border_width.is_some() {
-			x11_size += u32::X11_SIZE;
-			mask |= WindowConfigMask::BORDER_WIDTH;
-		}
-
-		if let Some(sibling) = &sibling {
-			x11_size += sibling.x11_size();
-			mask |= WindowConfigMask::SIBLING;
-		}
-
-		if stack_mode.is_some() {
-			x11_size += __StackMode::X11_SIZE;
-			mask |= WindowConfigMask::STACK_MODE;
-		}
-
+	pub const fn new() -> Self {
 		Self {
-			x11_size,
+			x11_size: WindowConfigMask::X11_SIZE,
 
-			mask,
+			mask: WindowConfigMask::empty(),
 
-			x: x.map(std::convert::Into::into),
-			y: y.map(std::convert::Into::into),
-			width: width.map(std::convert::Into::into),
-			height: height.map(std::convert::Into::into),
+			x: None,
+			y: None,
+			width: None,
+			height: None,
 
-			border_width: border_width.map(std::convert::Into::into),
+			border_width: None,
 
-			sibling,
+			sibling: None,
 
-			stack_mode: stack_mode.map(__StackMode),
+			stack_mode: None,
 		}
 	}
 
+	pub fn x(&mut self, x: i16) -> &mut Self {
+		if self.x.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.x = Some(x);
+		self.mask |= WindowConfigMask::X;
+
+		self
+	}
+	pub fn y(&mut self, y: i16) -> &mut Self {
+		if self.y.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.y = Some(y);
+		self.mask |= WindowConfigMask::Y;
+
+		self
+	}
+	pub fn width(&mut self, width: u16) -> &mut Self {
+		if self.width.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.width = Some(width);
+		self.mask |= WindowConfigMask::WIDTH;
+
+		self
+	}
+	pub fn height(&mut self, height: u16) -> &mut Self {
+		if self.height.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.height = Some(height);
+		self.mask |= WindowConfigMask::HEIGHT;
+
+		self
+	}
+
+	pub fn border_width(&mut self, border_width: u16) -> &mut Self {
+		if self.border_width.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.border_width = Some(border_width);
+		self.mask |= WindowConfigMask::BORDER_WIDTH;
+
+		self
+	}
+
+	pub fn sibling(&mut self, sibling: Window) -> &mut Self {
+		if self.sibling.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.sibling = Some(sibling);
+		self.mask |= WindowConfigMask::SIBLING;
+
+		self
+	}
+
+	pub fn stack_mode(&mut self, stack_mode: StackMode) -> &mut Self {
+		if self.stack_mode.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.stack_mode = Some(stack_mode);
+		self.mask |= WindowConfigMask::STACK_MODE;
+
+		self
+	}
+
+	#[must_use]
+	pub fn build(self) -> WindowConfigs {
+		WindowConfigs {
+			x11_size: self.x11_size,
+
+			mask: self.mask,
+
+			x: self.x.map(Into::into),
+			y: self.y.map(Into::into),
+			width: self.width.map(Into::into),
+			height: self.height.map(Into::into),
+
+			border_width: self.border_width.map(Into::into),
+
+			sibling: self.sibling,
+
+			stack_mode: self.stack_mode.map(__StackMode),
+		}
+	}
+}
+
+impl WindowConfigs {
 	#[must_use]
 	pub fn x(&self) -> Option<i16> {
 		self.x.map(|x| {
