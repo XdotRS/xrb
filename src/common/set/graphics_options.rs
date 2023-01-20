@@ -209,8 +209,8 @@ impl GraphicsOptions {
 		dashes: Option<u8>,
 		arc_mode: Option<ArcMode>,
 	) -> Self {
-		let mut x11_size = 0;
 		let mut mask = GraphicsOptionMask::empty();
+		let mut x11_size = GraphicsOptionMask::X11_SIZE;
 
 		if function.is_some() {
 			x11_size += __Function::X11_SIZE;
@@ -524,8 +524,8 @@ impl Readable for GraphicsOptions {
 	where
 		Self: Sized,
 	{
-		let mut x11_size = 0;
 		let mask = GraphicsOptionMask::read_from(buf)?;
+		let mut x11_size = mask.x11_size();
 
 		let function = super::read_set_value(
 			buf,

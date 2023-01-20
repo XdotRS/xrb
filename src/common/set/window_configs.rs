@@ -69,8 +69,8 @@ impl WindowConfigs {
 		x: Option<i16>, y: Option<i16>, width: Option<u16>, height: Option<u16>,
 		border_width: Option<u16>, sibling: Option<Window>, stack_mode: Option<StackMode>,
 	) -> Self {
-		let mut x11_size = 0;
 		let mut mask = WindowConfigMask::empty();
+		let mut x11_size = WindowConfigMask::X11_SIZE + 2;
 
 		if x.is_some() {
 			x11_size += i32::X11_SIZE;
@@ -186,10 +186,11 @@ impl Readable for WindowConfigs {
 	where
 		Self: Sized,
 	{
-		let mut x11_size = 0;
 		let mask = WindowConfigMask::read_from(buf)?;
 		// 2 unused bytes after the mask.
 		buf.advance(2);
+
+		let mut x11_size = mask.x11_size() + 2;
 
 		let x = super::read_set_value(buf, &mut x11_size, mask.contains(WindowConfigMask::X))?;
 		let y = super::read_set_value(buf, &mut x11_size, mask.contains(WindowConfigMask::Y))?;

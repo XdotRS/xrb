@@ -66,8 +66,8 @@ impl KeyboardOptions {
 		bell_duration: Option<i16>, led: Option<u8>, led_mode: Option<Toggle>,
 		key: Option<Keycode>, auto_repeat_mode: Option<ToggleOrDefault>,
 	) -> Self {
-		let mut x11_size = 0;
 		let mut mask = KeyboardOptionMask::empty();
+		let mut x11_size = KeyboardOptionMask::X11_SIZE;
 
 		if key_click_percent.is_some() {
 			x11_size += i32::X11_SIZE;
@@ -196,8 +196,8 @@ impl Readable for KeyboardOptions {
 	where
 		Self: Sized,
 	{
-		let mut x11_size = 0;
 		let mask = KeyboardOptionMask::read_from(buf)?;
+		let mut x11_size = mask.x11_size();
 
 		let key_click_percent = super::read_set_value(
 			buf,

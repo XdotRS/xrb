@@ -243,8 +243,8 @@ impl Attributes {
 		event_mask: Option<EventMask>, do_not_propagate_mask: Option<DeviceEventMask>,
 		colormap: Option<ColormapAttribute>, cursor_appearance: Option<CursorAppearanceAttribute>,
 	) -> Self {
-		let mut x11_size = 0;
 		let mut mask = AttributeMask::empty();
+		let mut x11_size = AttributeMask::X11_SIZE;
 
 		if let Some(background_pixmap) = &background_pixmap {
 			x11_size += background_pixmap.x11_size();
@@ -432,8 +432,8 @@ impl Readable for Attributes {
 	where
 		Self: Sized,
 	{
-		let mut x11_size = 0;
 		let mask = AttributeMask::read_from(buf)?;
+		let mut x11_size = mask.x11_size();
 
 		let background_pixmap = super::read_set_value(
 			buf,
