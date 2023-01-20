@@ -4,7 +4,7 @@
 
 use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
 
-use crate::{common::set::__bool, Font, Pixel, Pixmap};
+use crate::{common::set::__bool, visual::Pixel, Font, Pixmap};
 use bitflags::bitflags;
 use xrbk::{
 	Buf,

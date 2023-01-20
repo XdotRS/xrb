@@ -4,6 +4,7 @@
 
 use super::__bool;
 use crate::{
+	visual::Pixel,
 	BackingStore,
 	BitGravity,
 	Colormap,
@@ -12,7 +13,6 @@ use crate::{
 	DeviceEventMask,
 	EventMask,
 	ParentRelatable,
-	Pixel,
 	Pixmap,
 	WindowGravity,
 };
