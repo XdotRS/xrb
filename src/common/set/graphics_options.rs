@@ -229,14 +229,32 @@ pub enum JoinStyle {
 	Bevel = 2,
 }
 
+/// Defines the contents of the source for line, text, and fill [requests].
+///
+/// [requests]: crate::x11::request
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 pub enum FillStyle {
+	/// This is the foreground, except for the odd dashes of line requests with
+	/// [`LineStyle::DoubleDash`], where it is the background.
 	Solid = 0,
+
+	// FIXME (docs): X11 protocol just says 'Tile' as description...
+	/// A tiled `FillStyle`.
 	Tiled = 1,
+
+	/// The foreground, masked by a stipple pattern.
 	Stippled = 2,
+
+	/// Same as [`Stippled`], but foreground everywhere it has a one, and
+	/// background everywhere it has a zero.
 	OpaqueStippled = 3,
 }
 
+/// Defines what pixels are drawn for paths in [`FillPoly` requests].
+///
+/// [`FillPoly` requests]: crate::x11::request::FillPoly
+// Hell if I know what the X11 protocol is talking about for these variants.
+// Really technical language. I imagine it's simply not worth documenting.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 pub enum FillRule {
 	EvenOdd = 0,
@@ -255,8 +273,72 @@ pub enum ArcMode {
 	PieSlice = 1,
 }
 
+/// This is a type alias for <code>[Option]<[Pixmap]></code>.
+///
+/// This represents the type used in the [`clip_mask` graphics option].
+///
+/// [`clip_mask` graphics option]: GraphicsOptions::clip_mask
 pub type ClipMask = Option<Pixmap>;
 
+/// A set of options that apply to a [`GraphicsContext`].
+///
+/// The following table shows each attribute and its default value if it is not
+/// explicitly initialized in the [`CreateGraphicsContext` request].
+///
+/// [`GraphicsContext`]: crate::GraphicsContext
+/// [`CreateGraphicsContext` request]: crate::x11::request::CreateGraphicsContext
+///
+/// |Option                   |Default value                          |
+/// |-------------------------|---------------------------------------|
+/// |[`function`]             |[`Function::Copy`]                     |
+/// |[`plane_mask`]           |`0xffff_ffff`                          |
+/// |[`foreground`]           |`0`                                    |
+/// |[`background`]           |`1`                                    |
+/// |[`line_width`]           |[`LineWidth::Thin`]                    |
+/// |[`line_style`]           |[`LineStyle::Solid`]                   |
+/// |[`cap_style`]            |[`CapStyle::Butt`]                     |
+/// |[`join_style`]           |[`JoinStyle::Miter`]                   |
+/// |[`fill_style`]           |[`FillStyle::Solid`]                   |
+/// |[`fill_rule`]            |[`FillRule::EvenOdd`]                  |
+/// |[`arc_mode`]             |[`ArcMode::PieSlice`]                  |
+/// |[`tile`]                 |[Pixmap] filled with the [`foreground`]|
+/// |[`stipple`]              |[Pixmap] filled with ones              |
+/// |[`tile_stipple_x_origin`]|`0`                                    |
+/// |[`tile_stipple_y_origin`]|`0`                                    |
+/// |[`font`]                 |Depends on the server                  |
+/// |[`subwindow_mode`]       |[`SubwindowMode::ClipByChildren`]      |
+/// |[`graphics_exposure`]    |`true`                                 |
+/// |[`clip_x_origin`]        |`0`                                    |
+/// |[`clip_y_origin`]        |`0`                                    |
+/// |[`clip_mask`]            |[`None`]                               |
+/// |[`dash_offset`]          |`0`                                    |
+/// |[`dashes`]               |`4`                                    |
+///
+/// [Pixmap]: Pixmap
+///
+/// [`function`]: GraphicsOptions::function
+/// [`plane_mask`]: GraphicsOptions::plane_mask
+/// [`foreground`]: GraphicsOptions::foreground
+/// [`background`]: GraphicsOptions::background
+/// [`line_width`]: GraphicsOptions::line_width
+/// [`line_style`]: GraphicsOptions::line_style
+/// [`cap_style`]: GraphicsOptions::cap_style
+/// [`join_style`]: GraphicsOptions::join_style
+/// [`fill_style`]: GraphicsOptions::fill_style
+/// [`fill_rule`]: GraphicsOptions::fill_rule
+/// [`arc_mode`]: GraphicsOptions::arc_mode
+/// [`tile`]: GraphicsOptions::tile
+/// [`stipple`]: GraphicsOptions::stipple
+/// [`tile_stipple_x_origin`]: GraphicsOptions::tile_stipple_x_origin
+/// [`tile_stipple_y_origin`]: GraphicsOptions::tile_stipple_y_origin
+/// [`font`]: GraphicsOptions::font
+/// [`subwindow_mode`]: GraphicsOptions::subwindow_mode
+/// [`graphics_exposure`]: GraphicsOptions::graphics_exposure
+/// [`clip_x_origin`]: GraphicsOptions::clip_x_origin
+/// [`clip_y_origin`]: GraphicsOptions::clip_y_origin
+/// [`clip_mask`]: GraphicsOptions::clip_mask
+/// [`dash_offset`]: GraphicsOptions::dash_offset
+/// [`dashes`]: GraphicsOptions::dashes
 pub struct GraphicsOptions {
 	x11_size: usize,
 
@@ -305,6 +387,23 @@ pub struct GraphicsOptions {
 	arc_mode: Option<__ArcMode>,
 }
 
+impl GraphicsOptions {
+	/// Returns a new [`GraphicsOptionsBuilder`] with which a `GraphicsOptions`
+	/// set can be constructed.
+	#[must_use]
+	pub const fn builder() -> GraphicsOptionsBuilder {
+		GraphicsOptionsBuilder::new()
+	}
+}
+
+/// A builder used to construct a new [`GraphicsOptions` set].
+///
+/// All graphics options start as [`None`], and be configured with the methods
+/// on this builder. When the builder is configured, [`build()`] can be used to
+/// construct the resulting [`GraphicsOptions`].
+///
+/// [`build()`]: GraphicsOptionsBuilder::build
+/// [`GraphicsOptions` set]: GraphicsOptions
 #[derive(Clone, Default, Debug, Hash, PartialEq, Eq)]
 pub struct GraphicsOptionsBuilder {
 	x11_size: usize,
@@ -349,6 +448,13 @@ pub struct GraphicsOptionsBuilder {
 }
 
 impl GraphicsOptionsBuilder {
+	/// Creates a new `GraphicsOptionsBuilder`.
+	///
+	/// All graphics options start as [`None`], and be configured with the other
+	/// methods on this builder. When the builder is configured, [`build()`] can
+	/// be used to construct the resulting [`GraphicsOptions`].
+	///
+	/// [`build()`]: GraphicsOptionsBuilder::build
 	#[must_use]
 	pub const fn new() -> Self {
 		Self {
@@ -394,6 +500,57 @@ impl GraphicsOptionsBuilder {
 		}
 	}
 
+	/// Constructs the resulting [`GraphicsOptions` set] with the configured
+	/// options.
+	///
+	/// [`GraphicsOptions` set]: GraphicsOptions
+	#[must_use]
+	pub fn build(self) -> GraphicsOptions {
+		GraphicsOptions {
+			x11_size: self.x11_size,
+
+			mask: self.mask,
+
+			function: self.function.map(__Function),
+
+			plane_mask: self.plane_mask,
+
+			foreground: self.foreground,
+			background: self.background,
+
+			line_width: self.line_width.map(__LineWidth),
+
+			line_style: self.line_style.map(__LineStyle),
+			cap_style: self.cap_style.map(__CapStyle),
+			join_style: self.join_style.map(__JoinStyle),
+			fill_style: self.fill_style.map(__FillStyle),
+			fill_rule: self.fill_rule.map(__FillRule),
+
+			tile: self.tile,
+			stipple: self.stipple,
+
+			tile_stipple_x_origin: self.tile_stipple_x_origin.map(Into::into),
+			tile_stipple_y_origin: self.tile_stipple_y_origin.map(Into::into),
+
+			font: self.font,
+
+			subwindow_mode: self.subwindow_mode.map(__SubwindowMode),
+
+			graphics_exposures: self.graphics_exposures.map(__bool),
+
+			clip_x_origin: self.clip_x_origin.map(Into::into),
+			clip_y_origin: self.clip_y_origin.map(Into::into),
+			clip_mask: self.clip_mask,
+
+			dash_offset: self.dash_offset.map(Into::into),
+			dashes: self.dashes.map(Into::into),
+
+			arc_mode: self.arc_mode.map(__ArcMode),
+		}
+	}
+}
+
+impl GraphicsOptionsBuilder {
 	pub fn function(&mut self, function: Function) -> &mut Self {
 		if self.function.is_none() {
 			self.x11_size += 4;
@@ -636,51 +793,6 @@ impl GraphicsOptionsBuilder {
 
 		self
 	}
-
-	#[must_use]
-	pub fn build(self) -> GraphicsOptions {
-		GraphicsOptions {
-			x11_size: self.x11_size,
-
-			mask: self.mask,
-
-			function: self.function.map(__Function),
-
-			plane_mask: self.plane_mask,
-
-			foreground: self.foreground,
-			background: self.background,
-
-			line_width: self.line_width.map(__LineWidth),
-
-			line_style: self.line_style.map(__LineStyle),
-			cap_style: self.cap_style.map(__CapStyle),
-			join_style: self.join_style.map(__JoinStyle),
-			fill_style: self.fill_style.map(__FillStyle),
-			fill_rule: self.fill_rule.map(__FillRule),
-
-			tile: self.tile,
-			stipple: self.stipple,
-
-			tile_stipple_x_origin: self.tile_stipple_x_origin.map(Into::into),
-			tile_stipple_y_origin: self.tile_stipple_y_origin.map(Into::into),
-
-			font: self.font,
-
-			subwindow_mode: self.subwindow_mode.map(__SubwindowMode),
-
-			graphics_exposures: self.graphics_exposures.map(__bool),
-
-			clip_x_origin: self.clip_x_origin.map(Into::into),
-			clip_y_origin: self.clip_y_origin.map(Into::into),
-			clip_mask: self.clip_mask,
-
-			dash_offset: self.dash_offset.map(Into::into),
-			dashes: self.dashes.map(Into::into),
-
-			arc_mode: self.arc_mode.map(__ArcMode),
-		}
-	}
 }
 
 impl GraphicsOptions {
@@ -837,7 +949,7 @@ impl X11Size for GraphicsOptions {
 }
 
 impl Readable for GraphicsOptions {
-	#[allow(clippy::similar_names)]
+	#[allow(clippy::similar_names, clippy::too_many_lines)]
 	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
 	where
 		Self: Sized,

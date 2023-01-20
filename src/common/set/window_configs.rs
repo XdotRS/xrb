@@ -122,7 +122,7 @@ pub struct WindowConfig {
 
 impl WindowConfig {
 	/// Returns a new [`WindowConfigBuilder`] with which a `WindowConfigs` set
-	/// can be built.
+	/// can be constructed.
 	#[must_use]
 	pub const fn builder() -> WindowConfigBuilder {
 		WindowConfigBuilder::new()
@@ -132,11 +132,10 @@ impl WindowConfig {
 /// A builder used to construct a new [`WindowConfig` set].
 ///
 /// All configuration options start as [`None`], and can be configured with
-/// the other methods on this builder. When the builder is configured,
-/// [`build()`] can be used to build the resulting [`WindowConfig`].
+/// the methods on this builder. When the builder is configured, [`build()`] can
+/// be used to construct the resulting [`WindowConfig`].
 ///
 /// [`build()`]: WindowConfigBuilder::build
-///
 /// [`WindowConfig` set]: WindowConfig
 #[derive(Clone, Default, Debug, Hash, PartialEq, Eq)]
 pub struct WindowConfigBuilder {
@@ -184,7 +183,8 @@ impl WindowConfigBuilder {
 		}
 	}
 
-	/// Builds the resulting [`WindowConfig` set] with the configured options.
+	/// Constructs the resulting [`WindowConfig` set] with the configured
+	/// options.
 	///
 	/// [`WindowConfig` set]: WindowConfig
 	#[must_use]

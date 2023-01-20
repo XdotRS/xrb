@@ -4,7 +4,7 @@
 
 //! Sets used to specify optional options.
 //!
-//! In particular, this modules includes the following sets and their masks and
+//! In particular, this module includes the following sets and their masks and
 //! builders:
 //! - [`Attributes`]
 //!   - [`AttributesBuilder`]
@@ -31,7 +31,7 @@ pub use graphics_options::*;
 pub use keyboard_options::*;
 pub use window_configs::*;
 
-pub fn read_set_value<T: Readable>(
+pub(self) fn read_set_value<T: Readable>(
 	buf: &mut impl Buf, x11_size: &mut usize, condition: bool,
 ) -> ReadResult<Option<T>> {
 	Ok(if condition {
