@@ -193,7 +193,7 @@ pub type ColormapAttribute = CopyableFromParent<Colormap>;
 /// [`InputOnly`]: crate::WindowClass::InputOnly
 ///
 /// [window]: Window
-#[derive(Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Attributes {
 	/// Total [`X11Size`] of these `Attributes`.
 	///

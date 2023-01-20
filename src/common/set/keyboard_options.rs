@@ -36,6 +36,7 @@ bitflags! {
 	}
 }
 
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct KeyboardOptions {
 	x11_size: usize,
 

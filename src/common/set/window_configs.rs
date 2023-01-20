@@ -19,22 +19,81 @@ use xrbk::{
 use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
 
 bitflags! {
+	/// A mask of configured options for a [window].
+	///
+	/// This mask is used in the [`WindowConfigs` set], as well as in the
+	/// [`ConfigureWindowRequest` event].
+	///
+	/// [window]: Window
+	/// [`WindowConfigs` set]: WindowConfigs
+	/// [`ConfigureWindowRequest` event]: crate::x11::event::ConfigureWindowRequest
 	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
 	pub struct WindowConfigMask: u16 {
+		/// Whether the [x coordinate] of the [window] is configured.
+		///
+		/// See [`WindowConfigs::x`] for more information.
+		///
+		/// [window]: Window
+		/// [y coordinate]: WindowConfigs::y
 		const X = 0x0001;
+		/// Whether the [y coordinate] of the [window] is configured.
+		///
+		/// See [`WindowConfigs::y`] for more information.
+		///
+		/// [window]: Window
+		/// [y coordinate]: WindowConfigs::y
 		const Y = 0x0002;
+		/// Whether the [width] of the [window] is configured.
+		///
+		/// See [`WindowConfigs::width`] for more information.
+		///
+		/// [window]: Window
+		/// [width]: WindowConfigs::width
 		const WIDTH = 0x0004;
+		/// Whether the [height] of the [window] is configured.
+		///
+		/// See [`WindowConfigs::height`] for more information.
+		///
+		/// [window]: Window
+		/// [height]: WindowConfigs::height
 		const HEIGHT = 0x0008;
 
+		/// Whether the width of the [window]'s border is configured.
+		///
+		/// See [`WindowConfigs::border_width`] for more information.
+		///
+		/// [window]: Window
 		const BORDER_WIDTH = 0x0010;
 
+		/// Whether a sibling [window] is configured in respect to the
+		/// configured [`stack_mode`].
+		///
+		/// See [`WindowConfigs::sibling`] for more information.
+		///
+		/// [window]: Window
+		/// [`stack_mode`]: WindowConfigs::stack_mode
 		const SIBLING = 0x0020;
 
+		/// Whether the [`stack_mode`] of a [window] is configured.
+		///
+		/// See [`WindowConfigs::stack_mode`] for more information.
+		///
+		/// [window]: Window
+		/// [`stack_mode`]: WindowConfigs::stack_mode
 		const STACK_MODE = 0x0040;
 	}
 }
 
-#[derive(Debug, Hash, PartialEq, Eq)]
+/// A set of options with which a [window] is configured.
+///
+/// This set is used in the [`ConfigureWindow` request].
+///
+/// Unspecified configuration options are taken from the existing geometry of
+/// the [window].
+///
+/// [window]: Window
+/// [`ConfigureWindow` request]: crate::x11::request::ConfigureWindow
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct WindowConfigs {
 	/// Total [`X11Size`] of these `WindowConfigs`.
 	///
@@ -61,6 +120,24 @@ pub struct WindowConfigs {
 	stack_mode: Option<__StackMode>,
 }
 
+impl WindowConfigs {
+	/// Returns a new [`WindowConfigsBuilder`] with which a `WindowConfigs` set
+	/// can be built.
+	#[must_use]
+	pub const fn builder() -> WindowConfigsBuilder {
+		WindowConfigsBuilder::new()
+	}
+}
+
+/// A builder used to construct a new [`WindowConfigs` set].
+///
+/// All configuration options start as [`None`], and can be configured with
+/// the other methods on this builder. When the builder is configured,
+/// [`build()`] can be used to build the resulting [`WindowConfigs`].
+///
+/// [`build()`]: WindowConfigsBuilder::build
+///
+/// [`WindowConfigs` set]: WindowConfigs
 #[derive(Clone, Default, Debug, Hash, PartialEq, Eq)]
 pub struct WindowConfigsBuilder {
 	x11_size: usize,
@@ -80,6 +157,13 @@ pub struct WindowConfigsBuilder {
 }
 
 impl WindowConfigsBuilder {
+	/// Creates a new `WindowConfigsBuilder`.
+	///
+	/// All configuration options start as [`None`], and can be configured with
+	/// the other methods on this builder. When the builder is configured,
+	/// [`build()`] can be used to build the resulting [`WindowConfigs`].
+	///
+	/// [`build()`]: WindowConfigsBuilder::build
 	#[must_use]
 	pub const fn new() -> Self {
 		Self {
@@ -100,80 +184,9 @@ impl WindowConfigsBuilder {
 		}
 	}
 
-	pub fn x(&mut self, x: i16) -> &mut Self {
-		if self.x.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.x = Some(x);
-		self.mask |= WindowConfigMask::X;
-
-		self
-	}
-	pub fn y(&mut self, y: i16) -> &mut Self {
-		if self.y.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.y = Some(y);
-		self.mask |= WindowConfigMask::Y;
-
-		self
-	}
-	pub fn width(&mut self, width: u16) -> &mut Self {
-		if self.width.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.width = Some(width);
-		self.mask |= WindowConfigMask::WIDTH;
-
-		self
-	}
-	pub fn height(&mut self, height: u16) -> &mut Self {
-		if self.height.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.height = Some(height);
-		self.mask |= WindowConfigMask::HEIGHT;
-
-		self
-	}
-
-	pub fn border_width(&mut self, border_width: u16) -> &mut Self {
-		if self.border_width.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.border_width = Some(border_width);
-		self.mask |= WindowConfigMask::BORDER_WIDTH;
-
-		self
-	}
-
-	pub fn sibling(&mut self, sibling: Window) -> &mut Self {
-		if self.sibling.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.sibling = Some(sibling);
-		self.mask |= WindowConfigMask::SIBLING;
-
-		self
-	}
-
-	pub fn stack_mode(&mut self, stack_mode: StackMode) -> &mut Self {
-		if self.stack_mode.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.stack_mode = Some(stack_mode);
-		self.mask |= WindowConfigMask::STACK_MODE;
-
-		self
-	}
-
+	/// Builds the resulting [`WindowConfigs` set] with the configured options.
+	///
+	/// [`WindowConfigs` set]: WindowConfigs
 	#[must_use]
 	pub fn build(self) -> WindowConfigs {
 		WindowConfigs {
@@ -193,9 +206,131 @@ impl WindowConfigsBuilder {
 			stack_mode: self.stack_mode.map(__StackMode),
 		}
 	}
+
+	/// Configures the [x coordinate] of the [window].
+	///
+	/// See [`WindowConfigs::x`] for more information.
+	///
+	/// [x coordinate]: WindowConfigs::x
+	/// [window]: Window
+	pub fn x(&mut self, x: i16) -> &mut Self {
+		if self.x.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.x = Some(x);
+		self.mask |= WindowConfigMask::X;
+
+		self
+	}
+	/// Configures the [y coordinate] of the [window].
+	///
+	/// See [`WindowConfigs::y`] for more information.
+	///
+	/// [y coordinate]: WindowConfigs::y
+	/// [window]: Window
+	pub fn y(&mut self, y: i16) -> &mut Self {
+		if self.y.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.y = Some(y);
+		self.mask |= WindowConfigMask::Y;
+
+		self
+	}
+	/// Configures the [width] of the [window].
+	///
+	/// See [`WindowConfigs::width`] for more information.
+	///
+	/// [width]: WindowConfigs::width
+	/// [window]: Window
+	pub fn width(&mut self, width: u16) -> &mut Self {
+		if self.width.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.width = Some(width);
+		self.mask |= WindowConfigMask::WIDTH;
+
+		self
+	}
+	/// Configures the [height] of the [window].
+	///
+	/// See [`WindowConfigs::height`] for more information.
+	///
+	/// [height]: WindowConfigs::height
+	/// [window]: Window
+	pub fn height(&mut self, height: u16) -> &mut Self {
+		if self.height.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.height = Some(height);
+		self.mask |= WindowConfigMask::HEIGHT;
+
+		self
+	}
+
+	/// Configures the width of the [window]'s border.
+	///
+	/// See [`WindowConfigs::border_width`] for more information.
+	///
+	/// [window]: Window
+	pub fn border_width(&mut self, border_width: u16) -> &mut Self {
+		if self.border_width.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.border_width = Some(border_width);
+		self.mask |= WindowConfigMask::BORDER_WIDTH;
+
+		self
+	}
+
+	/// Configures the sibling [window] which the [`stack_mode`] applies to. If
+	/// the sibling is configured, the [`stack_mode`] must be configured too.
+	///
+	/// See [`WindowConfigs::sibling`] for more information.
+	///
+	/// # Errors
+	/// A [`Match` error] is generated if the sibling is configured without
+	/// configuring the [`stack_mode`].
+	///
+	/// [`Match` error]: crate::x11::error::Match
+	/// [window]: Window
+	/// [`stack_mode`]: WindowConfigs::stack_mode
+	pub fn sibling(&mut self, sibling: Window) -> &mut Self {
+		if self.sibling.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.sibling = Some(sibling);
+		self.mask |= WindowConfigMask::SIBLING;
+
+		self
+	}
+
+	/// Configures the [window]'s [`stack_mode`].
+	///
+	/// [window]: Window
+	/// [`stack_mode`]: WindowConfigs::stack_mode
+	pub fn stack_mode(&mut self, stack_mode: StackMode) -> &mut Self {
+		if self.stack_mode.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.stack_mode = Some(stack_mode);
+		self.mask |= WindowConfigMask::STACK_MODE;
+
+		self
+	}
 }
 
 impl WindowConfigs {
+	/// The x coordinate of the [window]'s top-left corner is configured.
+	///
+	/// [window]: Window
 	#[must_use]
 	pub fn x(&self) -> Option<i16> {
 		self.x.map(|x| {
@@ -203,6 +338,9 @@ impl WindowConfigs {
 				.expect("must fit into i16; represents i16 value")
 		})
 	}
+	/// The y coordinate of the [window]'s top-left corner is configured.
+	///
+	/// [window]: Window
 	#[must_use]
 	pub fn y(&self) -> Option<i16> {
 		self.y.map(|y| {
@@ -210,6 +348,9 @@ impl WindowConfigs {
 				.expect("must fit into i16; represents i16 value")
 		})
 	}
+	/// The width of the [window] is configured.
+	///
+	/// [window]: Window
 	#[must_use]
 	pub fn width(&self) -> Option<u16> {
 		self.width.map(|width| {
@@ -218,6 +359,9 @@ impl WindowConfigs {
 				.expect("must fit into u16; represents u16 value")
 		})
 	}
+	/// The height of the [window] is configured.
+	///
+	/// [window]: Window
 	#[must_use]
 	pub fn height(&self) -> Option<u16> {
 		self.height.map(|height| {
@@ -227,6 +371,9 @@ impl WindowConfigs {
 		})
 	}
 
+	/// The width of the [window]'s border is configured.
+	///
+	/// [window]: Window
 	#[must_use]
 	pub fn border_width(&self) -> Option<u16> {
 		self.border_width.map(|border_width| {
@@ -236,11 +383,27 @@ impl WindowConfigs {
 		})
 	}
 
+	/// The sibling which the [`stack_mode`] applies to is configured.
+	///
+	/// # Errors
+	/// A [`Match` error] is generated if the sibling is configured without
+	/// configuring the [`stack_mode`].
+	///
+	/// [`stack_mode`]: WindowConfigs::stack_mode
+	/// [`Match` error]: crate::x11::error::Match
 	#[must_use]
 	pub const fn sibling(&self) -> &Option<Window> {
 		&self.sibling
 	}
 
+	/// The way in which the [window] is stacked compared to its sibling(s) is
+	/// configured.
+	///
+	/// If [`sibling`] is specified, this is relative to that [`sibling`].
+	/// Otherwise, this is relative to all other siblings.
+	///
+	/// [window]: Window
+	/// [`sibling`]: WindowConfigs::sibling
 	#[must_use]
 	pub fn stack_mode(&self) -> Option<&StackMode> {
 		self.stack_mode
