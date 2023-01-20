@@ -2,6 +2,23 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+//! Sets used to specify optional options.
+//!
+//! In particular, this modules includes the following sets and their masks and
+//! builders:
+//! - [`Attributes`]
+//!   - [`AttributesBuilder`]
+//!   - [`AttributesMask`]
+//! - [`GraphicsOptions`]
+//!   - [`GraphicsOptionsBuilder`]
+//!   - [`GraphicsOptionsMask`]
+//! - [`KeyboardOptions`]
+//!   - [`KeyboardOptionsBuilder`]
+//!   - [`KeyboardOptionsMask`]
+//! - [`WindowConfig`]
+//!   - [`WindowConfigBuilder`]
+//!   - [`WindowConfigMask`]
+
 use xrbk::{Buf, BufMut, ConstantX11Size, ReadResult, Readable, Writable, WriteResult, X11Size};
 
 mod attribute;

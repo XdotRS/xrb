@@ -20,7 +20,7 @@ use xrbk::{
 
 bitflags! {
 	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
-	pub struct GraphicsOptionMask: u32 {
+	pub struct GraphicsOptionsMask: u32 {
 		const FUNCTION = 0x0000_0001;
 
 		const PLANE_MASK = 0x0000_0002;
@@ -135,7 +135,7 @@ pub type ClipMask = Option<Pixmap>;
 pub struct GraphicsOptions {
 	x11_size: usize,
 
-	mask: GraphicsOptionMask,
+	mask: GraphicsOptionsMask,
 
 	function: Option<__Function>,
 
@@ -185,7 +185,7 @@ pub struct GraphicsOptions {
 pub struct GraphicsOptionsBuilder {
 	x11_size: usize,
 
-	mask: GraphicsOptionMask,
+	mask: GraphicsOptionsMask,
 
 	function: Option<Function>,
 
@@ -228,9 +228,9 @@ impl GraphicsOptionsBuilder {
 	#[must_use]
 	pub const fn new() -> Self {
 		Self {
-			x11_size: GraphicsOptionMask::X11_SIZE,
+			x11_size: GraphicsOptionsMask::X11_SIZE,
 
-			mask: GraphicsOptionMask::empty(),
+			mask: GraphicsOptionsMask::empty(),
 
 			function: None,
 
@@ -276,7 +276,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.function = Some(function);
-		self.mask |= GraphicsOptionMask::FUNCTION;
+		self.mask |= GraphicsOptionsMask::FUNCTION;
 
 		self
 	}
@@ -287,7 +287,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.plane_mask = Some(plane_mask);
-		self.mask |= GraphicsOptionMask::PLANE_MASK;
+		self.mask |= GraphicsOptionsMask::PLANE_MASK;
 
 		self
 	}
@@ -298,7 +298,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.foreground = Some(foreground);
-		self.mask |= GraphicsOptionMask::FOREGROUND;
+		self.mask |= GraphicsOptionsMask::FOREGROUND;
 
 		self
 	}
@@ -308,7 +308,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.background = Some(background);
-		self.mask |= GraphicsOptionMask::BACKGROUND;
+		self.mask |= GraphicsOptionsMask::BACKGROUND;
 
 		self
 	}
@@ -319,7 +319,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.line_width = Some(line_width);
-		self.mask |= GraphicsOptionMask::LINE_WIDTH;
+		self.mask |= GraphicsOptionsMask::LINE_WIDTH;
 
 		self
 	}
@@ -330,7 +330,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.line_style = Some(line_style);
-		self.mask |= GraphicsOptionMask::LINE_STYLE;
+		self.mask |= GraphicsOptionsMask::LINE_STYLE;
 
 		self
 	}
@@ -340,7 +340,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.cap_style = Some(cap_style);
-		self.mask |= GraphicsOptionMask::CAP_STYLE;
+		self.mask |= GraphicsOptionsMask::CAP_STYLE;
 
 		self
 	}
@@ -350,7 +350,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.join_style = Some(join_style);
-		self.mask |= GraphicsOptionMask::JOIN_STYLE;
+		self.mask |= GraphicsOptionsMask::JOIN_STYLE;
 
 		self
 	}
@@ -360,7 +360,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.fill_style = Some(fill_style);
-		self.mask |= GraphicsOptionMask::FILL_STYLE;
+		self.mask |= GraphicsOptionsMask::FILL_STYLE;
 
 		self
 	}
@@ -370,7 +370,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.fill_rule = Some(fill_rule);
-		self.mask |= GraphicsOptionMask::FILL_RULE;
+		self.mask |= GraphicsOptionsMask::FILL_RULE;
 
 		self
 	}
@@ -381,7 +381,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.tile = Some(tile);
-		self.mask |= GraphicsOptionMask::TILE;
+		self.mask |= GraphicsOptionsMask::TILE;
 
 		self
 	}
@@ -391,7 +391,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.stipple = Some(stipple);
-		self.mask |= GraphicsOptionMask::STIPPLE;
+		self.mask |= GraphicsOptionsMask::STIPPLE;
 
 		self
 	}
@@ -402,7 +402,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.tile_stipple_x_origin = Some(tile_stipple_x_origin);
-		self.mask |= GraphicsOptionMask::TILE_STIPPLE_X_ORIGIN;
+		self.mask |= GraphicsOptionsMask::TILE_STIPPLE_X_ORIGIN;
 
 		self
 	}
@@ -412,7 +412,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.tile_stipple_y_origin = Some(tile_stipple_y_origin);
-		self.mask |= GraphicsOptionMask::TILE_STIPPLE_Y_ORIGIN;
+		self.mask |= GraphicsOptionsMask::TILE_STIPPLE_Y_ORIGIN;
 
 		self
 	}
@@ -423,7 +423,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.font = Some(font);
-		self.mask |= GraphicsOptionMask::FONT;
+		self.mask |= GraphicsOptionsMask::FONT;
 
 		self
 	}
@@ -434,7 +434,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.subwindow_mode = Some(subwindow_mode);
-		self.mask |= GraphicsOptionMask::SUBWINDOW_MODE;
+		self.mask |= GraphicsOptionsMask::SUBWINDOW_MODE;
 
 		self
 	}
@@ -445,7 +445,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.graphics_exposures = Some(graphics_exposures);
-		self.mask |= GraphicsOptionMask::GRAPHICS_EXPOSURES;
+		self.mask |= GraphicsOptionsMask::GRAPHICS_EXPOSURES;
 
 		self
 	}
@@ -456,7 +456,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.clip_x_origin = Some(clip_x_origin);
-		self.mask |= GraphicsOptionMask::CLIP_X_ORIGIN;
+		self.mask |= GraphicsOptionsMask::CLIP_X_ORIGIN;
 
 		self
 	}
@@ -466,7 +466,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.clip_y_origin = Some(clip_y_origin);
-		self.mask |= GraphicsOptionMask::CLIP_Y_ORIGIN;
+		self.mask |= GraphicsOptionsMask::CLIP_Y_ORIGIN;
 
 		self
 	}
@@ -476,7 +476,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.clip_mask = Some(clip_mask);
-		self.mask |= GraphicsOptionMask::CLIP_MASK;
+		self.mask |= GraphicsOptionsMask::CLIP_MASK;
 
 		self
 	}
@@ -487,7 +487,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.dash_offset = Some(dash_offset);
-		self.mask |= GraphicsOptionMask::DASH_OFFSET;
+		self.mask |= GraphicsOptionsMask::DASH_OFFSET;
 
 		self
 	}
@@ -497,7 +497,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.dashes = Some(dashes);
-		self.mask |= GraphicsOptionMask::DASHES;
+		self.mask |= GraphicsOptionsMask::DASHES;
 
 		self
 	}
@@ -508,7 +508,7 @@ impl GraphicsOptionsBuilder {
 		}
 
 		self.arc_mode = Some(arc_mode);
-		self.mask |= GraphicsOptionMask::ARC_MODE;
+		self.mask |= GraphicsOptionsMask::ARC_MODE;
 
 		self
 	}
@@ -720,129 +720,129 @@ impl Readable for GraphicsOptions {
 	where
 		Self: Sized,
 	{
-		let mask = GraphicsOptionMask::read_from(buf)?;
+		let mask = GraphicsOptionsMask::read_from(buf)?;
 		let mut x11_size = mask.x11_size();
 
 		let function = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::FUNCTION),
+			mask.contains(GraphicsOptionsMask::FUNCTION),
 		)?;
 
 		let plane_mask = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::PLANE_MASK),
+			mask.contains(GraphicsOptionsMask::PLANE_MASK),
 		)?;
 
 		let foreground = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::FOREGROUND),
+			mask.contains(GraphicsOptionsMask::FOREGROUND),
 		)?;
 		let background = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::BACKGROUND),
+			mask.contains(GraphicsOptionsMask::BACKGROUND),
 		)?;
 
 		let line_width = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::LINE_WIDTH),
+			mask.contains(GraphicsOptionsMask::LINE_WIDTH),
 		)?;
 
 		let line_style = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::LINE_STYLE),
+			mask.contains(GraphicsOptionsMask::LINE_STYLE),
 		)?;
 		let cap_style = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::CAP_STYLE),
+			mask.contains(GraphicsOptionsMask::CAP_STYLE),
 		)?;
 		let join_style = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::JOIN_STYLE),
+			mask.contains(GraphicsOptionsMask::JOIN_STYLE),
 		)?;
 		let fill_style = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::FILL_STYLE),
+			mask.contains(GraphicsOptionsMask::FILL_STYLE),
 		)?;
 		let fill_rule = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::FILL_RULE),
+			mask.contains(GraphicsOptionsMask::FILL_RULE),
 		)?;
 
 		let tile =
-			super::read_set_value(buf, &mut x11_size, mask.contains(GraphicsOptionMask::TILE))?;
+			super::read_set_value(buf, &mut x11_size, mask.contains(GraphicsOptionsMask::TILE))?;
 		let stipple = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::STIPPLE),
+			mask.contains(GraphicsOptionsMask::STIPPLE),
 		)?;
 
 		let tile_stipple_x_origin = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::TILE_STIPPLE_X_ORIGIN),
+			mask.contains(GraphicsOptionsMask::TILE_STIPPLE_X_ORIGIN),
 		)?;
 		let tile_stipple_y_origin = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::TILE_STIPPLE_Y_ORIGIN),
+			mask.contains(GraphicsOptionsMask::TILE_STIPPLE_Y_ORIGIN),
 		)?;
 
 		let font =
-			super::read_set_value(buf, &mut x11_size, mask.contains(GraphicsOptionMask::FONT))?;
+			super::read_set_value(buf, &mut x11_size, mask.contains(GraphicsOptionsMask::FONT))?;
 
 		let subwindow_mode = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::SUBWINDOW_MODE),
+			mask.contains(GraphicsOptionsMask::SUBWINDOW_MODE),
 		)?;
 
 		let graphics_exposures = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::GRAPHICS_EXPOSURES),
+			mask.contains(GraphicsOptionsMask::GRAPHICS_EXPOSURES),
 		)?;
 
 		let clip_x_origin = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::CLIP_X_ORIGIN),
+			mask.contains(GraphicsOptionsMask::CLIP_X_ORIGIN),
 		)?;
 		let clip_y_origin = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::CLIP_Y_ORIGIN),
+			mask.contains(GraphicsOptionsMask::CLIP_Y_ORIGIN),
 		)?;
 		let clip_mask = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::CLIP_MASK),
+			mask.contains(GraphicsOptionsMask::CLIP_MASK),
 		)?;
 
 		let dash_offset = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::DASH_OFFSET),
+			mask.contains(GraphicsOptionsMask::DASH_OFFSET),
 		)?;
 		let dashes = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::DASHES),
+			mask.contains(GraphicsOptionsMask::DASHES),
 		)?;
 
 		let arc_mode = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionMask::ARC_MODE),
+			mask.contains(GraphicsOptionsMask::ARC_MODE),
 		)?;
 
 		Ok(Self {

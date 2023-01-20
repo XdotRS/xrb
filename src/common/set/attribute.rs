@@ -39,7 +39,7 @@ bitflags! {
 	/// [attributes]: Attributes
 	/// [window]: crate::Window
 	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
-	pub struct AttributeMask: u32 {
+	pub struct AttributesMask: u32 {
 		/// See also: [`background_pixmap`], <code>[ParentRelatable]<[Option]<[Pixmap]>></code>.
 		///
 		/// [`background_pixmap`]: Attributes::background_pixmap
@@ -203,7 +203,7 @@ pub struct Attributes {
 	/// This field is not part of the X11 format for this struct.
 	x11_size: usize,
 
-	mask: AttributeMask,
+	mask: AttributesMask,
 
 	background_pixmap: Option<BackgroundPixmap>,
 	background_pixel: Option<Pixel>,
@@ -241,7 +241,7 @@ impl Attributes {
 pub struct AttributesBuilder {
 	x11_size: usize,
 
-	mask: AttributeMask,
+	mask: AttributesMask,
 
 	background_pixmap: Option<BackgroundPixmap>,
 	background_pixel: Option<Pixel>,
@@ -271,9 +271,9 @@ impl AttributesBuilder {
 	#[must_use]
 	pub const fn new() -> Self {
 		Self {
-			x11_size: AttributeMask::X11_SIZE,
+			x11_size: AttributesMask::X11_SIZE,
 
-			mask: AttributeMask::empty(),
+			mask: AttributesMask::empty(),
 
 			background_pixmap: None,
 			background_pixel: None,
@@ -298,164 +298,6 @@ impl AttributesBuilder {
 
 			cursor_appearance: None,
 		}
-	}
-
-	pub fn background_pixmap(&mut self, background_pixmap: BackgroundPixmap) -> &mut Self {
-		if self.background_pixmap.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.background_pixmap = Some(background_pixmap);
-		self.mask |= AttributeMask::BACKGROUND_PIXMAP;
-
-		self
-	}
-	pub fn background_pixel(&mut self, background_pixel: Pixel) -> &mut Self {
-		if self.background_pixel.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.background_pixel = Some(background_pixel);
-		self.mask |= AttributeMask::BACKGROUND_PIXEL;
-
-		self
-	}
-
-	pub fn border_pixmap(&mut self, border_pixmap: BorderPixmap) -> &mut Self {
-		if self.border_pixmap.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.border_pixmap = Some(border_pixmap);
-		self.mask |= AttributeMask::BORDER_PIXMAP;
-
-		self
-	}
-	pub fn border_pixel(&mut self, border_pixel: Pixel) -> &mut Self {
-		if self.border_pixel.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.border_pixel = Some(border_pixel);
-		self.mask |= AttributeMask::BORDER_PIXEL;
-
-		self
-	}
-
-	pub fn bit_gravity(&mut self, bit_gravity: BitGravity) -> &mut Self {
-		if self.bit_gravity.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.bit_gravity = Some(bit_gravity);
-		self.mask |= AttributeMask::BIT_GRAVITY;
-
-		self
-	}
-	pub fn window_gravity(&mut self, window_gravity: WindowGravity) -> &mut Self {
-		if self.window_gravity.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.window_gravity = Some(window_gravity);
-		self.mask |= AttributeMask::WINDOW_GRAVITY;
-
-		self
-	}
-
-	pub fn backing_store(&mut self, backing_store: BackingStore) -> &mut Self {
-		if self.backing_store.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.backing_store = Some(backing_store);
-		self.mask |= AttributeMask::BACKING_STORE;
-
-		self
-	}
-	pub fn backing_planes(&mut self, backing_planes: u32) -> &mut Self {
-		if self.backing_planes.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.backing_planes = Some(backing_planes);
-		self.mask |= AttributeMask::BACKING_PLANES;
-
-		self
-	}
-	pub fn backing_pixel(&mut self, backing_pixel: Pixel) -> &mut Self {
-		if self.backing_pixel.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.backing_pixel = Some(backing_pixel);
-		self.mask |= AttributeMask::BACKING_PIXEL;
-
-		self
-	}
-
-	pub fn override_redirect(&mut self, override_redirect: bool) -> &mut Self {
-		if self.override_redirect.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.override_redirect = Some(override_redirect);
-		self.mask |= AttributeMask::OVERRIDE_REDIRECT;
-
-		self
-	}
-	pub fn save_under(&mut self, save_under: bool) -> &mut Self {
-		if self.save_under.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.save_under = Some(save_under);
-		self.mask |= AttributeMask::SAVE_UNDER;
-
-		self
-	}
-
-	pub fn event_mask(&mut self, event_mask: EventMask) -> &mut Self {
-		if self.event_mask.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.event_mask = Some(event_mask);
-		self.mask |= AttributeMask::EVENT_MASK;
-
-		self
-	}
-	pub fn do_not_propagate_mask(&mut self, do_not_propagate_mask: DeviceEventMask) -> &mut Self {
-		if self.do_not_propagate_mask.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.do_not_propagate_mask = Some(do_not_propagate_mask);
-		self.mask |= AttributeMask::DO_NOT_PROPAGATE_MASK;
-
-		self
-	}
-
-	pub fn colormap(&mut self, colormap: ColormapAttribute) -> &mut Self {
-		if self.colormap.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.colormap = Some(colormap);
-		self.mask |= AttributeMask::COLORMAP;
-
-		self
-	}
-
-	pub fn cursor_appearance(&mut self, cursor_appearance: CursorAppearanceAttribute) -> &mut Self {
-		if self.cursor_appearance.is_none() {
-			self.x11_size += 4;
-		}
-
-		self.cursor_appearance = Some(cursor_appearance);
-		self.mask |= AttributeMask::CURSOR_APPEARANCE;
-
-		self
 	}
 
 	#[must_use]
@@ -488,6 +330,166 @@ impl AttributesBuilder {
 
 			cursor_appearance: self.cursor_appearance,
 		}
+	}
+}
+
+impl AttributesBuilder {
+	pub fn background_pixmap(&mut self, background_pixmap: BackgroundPixmap) -> &mut Self {
+		if self.background_pixmap.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.background_pixmap = Some(background_pixmap);
+		self.mask |= AttributesMask::BACKGROUND_PIXMAP;
+
+		self
+	}
+	pub fn background_pixel(&mut self, background_pixel: Pixel) -> &mut Self {
+		if self.background_pixel.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.background_pixel = Some(background_pixel);
+		self.mask |= AttributesMask::BACKGROUND_PIXEL;
+
+		self
+	}
+
+	pub fn border_pixmap(&mut self, border_pixmap: BorderPixmap) -> &mut Self {
+		if self.border_pixmap.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.border_pixmap = Some(border_pixmap);
+		self.mask |= AttributesMask::BORDER_PIXMAP;
+
+		self
+	}
+	pub fn border_pixel(&mut self, border_pixel: Pixel) -> &mut Self {
+		if self.border_pixel.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.border_pixel = Some(border_pixel);
+		self.mask |= AttributesMask::BORDER_PIXEL;
+
+		self
+	}
+
+	pub fn bit_gravity(&mut self, bit_gravity: BitGravity) -> &mut Self {
+		if self.bit_gravity.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.bit_gravity = Some(bit_gravity);
+		self.mask |= AttributesMask::BIT_GRAVITY;
+
+		self
+	}
+	pub fn window_gravity(&mut self, window_gravity: WindowGravity) -> &mut Self {
+		if self.window_gravity.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.window_gravity = Some(window_gravity);
+		self.mask |= AttributesMask::WINDOW_GRAVITY;
+
+		self
+	}
+
+	pub fn backing_store(&mut self, backing_store: BackingStore) -> &mut Self {
+		if self.backing_store.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.backing_store = Some(backing_store);
+		self.mask |= AttributesMask::BACKING_STORE;
+
+		self
+	}
+	pub fn backing_planes(&mut self, backing_planes: u32) -> &mut Self {
+		if self.backing_planes.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.backing_planes = Some(backing_planes);
+		self.mask |= AttributesMask::BACKING_PLANES;
+
+		self
+	}
+	pub fn backing_pixel(&mut self, backing_pixel: Pixel) -> &mut Self {
+		if self.backing_pixel.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.backing_pixel = Some(backing_pixel);
+		self.mask |= AttributesMask::BACKING_PIXEL;
+
+		self
+	}
+
+	pub fn override_redirect(&mut self, override_redirect: bool) -> &mut Self {
+		if self.override_redirect.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.override_redirect = Some(override_redirect);
+		self.mask |= AttributesMask::OVERRIDE_REDIRECT;
+
+		self
+	}
+	pub fn save_under(&mut self, save_under: bool) -> &mut Self {
+		if self.save_under.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.save_under = Some(save_under);
+		self.mask |= AttributesMask::SAVE_UNDER;
+
+		self
+	}
+
+	pub fn event_mask(&mut self, event_mask: EventMask) -> &mut Self {
+		if self.event_mask.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.event_mask = Some(event_mask);
+		self.mask |= AttributesMask::EVENT_MASK;
+
+		self
+	}
+	pub fn do_not_propagate_mask(&mut self, do_not_propagate_mask: DeviceEventMask) -> &mut Self {
+		if self.do_not_propagate_mask.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.do_not_propagate_mask = Some(do_not_propagate_mask);
+		self.mask |= AttributesMask::DO_NOT_PROPAGATE_MASK;
+
+		self
+	}
+
+	pub fn colormap(&mut self, colormap: ColormapAttribute) -> &mut Self {
+		if self.colormap.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.colormap = Some(colormap);
+		self.mask |= AttributesMask::COLORMAP;
+
+		self
+	}
+
+	pub fn cursor_appearance(&mut self, cursor_appearance: CursorAppearanceAttribute) -> &mut Self {
+		if self.cursor_appearance.is_none() {
+			self.x11_size += 4;
+		}
+
+		self.cursor_appearance = Some(cursor_appearance);
+		self.mask |= AttributesMask::CURSOR_APPEARANCE;
+
+		self
 	}
 }
 
@@ -576,81 +578,87 @@ impl Readable for Attributes {
 	where
 		Self: Sized,
 	{
-		let mask = AttributeMask::read_from(buf)?;
+		let mask = AttributesMask::read_from(buf)?;
 		let mut x11_size = mask.x11_size();
 
 		let background_pixmap = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(AttributeMask::BACKGROUND_PIXMAP),
+			mask.contains(AttributesMask::BACKGROUND_PIXMAP),
 		)?;
 		let background_pixel = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(AttributeMask::BACKGROUND_PIXEL),
+			mask.contains(AttributesMask::BACKGROUND_PIXEL),
 		)?;
 
 		let border_pixmap = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(AttributeMask::BORDER_PIXMAP),
+			mask.contains(AttributesMask::BORDER_PIXMAP),
 		)?;
 		let border_pixel = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(AttributeMask::BORDER_PIXEL),
+			mask.contains(AttributesMask::BORDER_PIXEL),
 		)?;
 
 		let bit_gravity = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(AttributeMask::BIT_GRAVITY),
+			mask.contains(AttributesMask::BIT_GRAVITY),
 		)?;
 		let window_gravity = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(AttributeMask::WINDOW_GRAVITY),
+			mask.contains(AttributesMask::WINDOW_GRAVITY),
 		)?;
 
 		let backing_store = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(AttributeMask::BACKING_STORE),
+			mask.contains(AttributesMask::BACKING_STORE),
 		)?;
 		let backing_planes = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(AttributeMask::BACKING_PLANES),
+			mask.contains(AttributesMask::BACKING_PLANES),
 		)?;
 		let backing_pixel = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(AttributeMask::BACKING_PIXEL),
+			mask.contains(AttributesMask::BACKING_PIXEL),
 		)?;
 
 		let override_redirect = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(AttributeMask::OVERRIDE_REDIRECT),
+			mask.contains(AttributesMask::OVERRIDE_REDIRECT),
 		)?;
-		let save_under =
-			super::read_set_value(buf, &mut x11_size, mask.contains(AttributeMask::SAVE_UNDER))?;
+		let save_under = super::read_set_value(
+			buf,
+			&mut x11_size,
+			mask.contains(AttributesMask::SAVE_UNDER),
+		)?;
 
-		let event_mask =
-			super::read_set_value(buf, &mut x11_size, mask.contains(AttributeMask::EVENT_MASK))?;
+		let event_mask = super::read_set_value(
+			buf,
+			&mut x11_size,
+			mask.contains(AttributesMask::EVENT_MASK),
+		)?;
 		let do_not_propagate_mask = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(AttributeMask::DO_NOT_PROPAGATE_MASK),
+			mask.contains(AttributesMask::DO_NOT_PROPAGATE_MASK),
 		)?;
 
 		let colormap =
-			super::read_set_value(buf, &mut x11_size, mask.contains(AttributeMask::COLORMAP))?;
+			super::read_set_value(buf, &mut x11_size, mask.contains(AttributesMask::COLORMAP))?;
 
 		let cursor_appearance = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(AttributeMask::CURSOR_APPEARANCE),
+			mask.contains(AttributesMask::CURSOR_APPEARANCE),
 		)?;
 
 		Ok(Self {

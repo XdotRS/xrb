@@ -25,42 +25,42 @@ bitflags! {
 	/// [`ConfigureWindowRequest` event].
 	///
 	/// [window]: Window
-	/// [`WindowConfigs` set]: WindowConfigs
+	/// [`WindowConfigs` set]: WindowConfig
 	/// [`ConfigureWindowRequest` event]: crate::x11::event::ConfigureWindowRequest
 	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
 	pub struct WindowConfigMask: u16 {
 		/// Whether the [x coordinate] of the [window] is configured.
 		///
-		/// See [`WindowConfigs::x`] for more information.
+		/// See [`WindowConfig::x`] for more information.
 		///
 		/// [window]: Window
-		/// [y coordinate]: WindowConfigs::y
+		/// [y coordinate]: WindowConfig::y
 		const X = 0x0001;
 		/// Whether the [y coordinate] of the [window] is configured.
 		///
-		/// See [`WindowConfigs::y`] for more information.
+		/// See [`WindowConfig::y`] for more information.
 		///
 		/// [window]: Window
-		/// [y coordinate]: WindowConfigs::y
+		/// [y coordinate]: WindowConfig::y
 		const Y = 0x0002;
 		/// Whether the [width] of the [window] is configured.
 		///
-		/// See [`WindowConfigs::width`] for more information.
+		/// See [`WindowConfig::width`] for more information.
 		///
 		/// [window]: Window
-		/// [width]: WindowConfigs::width
+		/// [width]: WindowConfig::width
 		const WIDTH = 0x0004;
 		/// Whether the [height] of the [window] is configured.
 		///
-		/// See [`WindowConfigs::height`] for more information.
+		/// See [`WindowConfig::height`] for more information.
 		///
 		/// [window]: Window
-		/// [height]: WindowConfigs::height
+		/// [height]: WindowConfig::height
 		const HEIGHT = 0x0008;
 
 		/// Whether the width of the [window]'s border is configured.
 		///
-		/// See [`WindowConfigs::border_width`] for more information.
+		/// See [`WindowConfig::border_width`] for more information.
 		///
 		/// [window]: Window
 		const BORDER_WIDTH = 0x0010;
@@ -68,18 +68,18 @@ bitflags! {
 		/// Whether a sibling [window] is configured in respect to the
 		/// configured [`stack_mode`].
 		///
-		/// See [`WindowConfigs::sibling`] for more information.
+		/// See [`WindowConfig::sibling`] for more information.
 		///
 		/// [window]: Window
-		/// [`stack_mode`]: WindowConfigs::stack_mode
+		/// [`stack_mode`]: WindowConfig::stack_mode
 		const SIBLING = 0x0020;
 
 		/// Whether the [`stack_mode`] of a [window] is configured.
 		///
-		/// See [`WindowConfigs::stack_mode`] for more information.
+		/// See [`WindowConfig::stack_mode`] for more information.
 		///
 		/// [window]: Window
-		/// [`stack_mode`]: WindowConfigs::stack_mode
+		/// [`stack_mode`]: WindowConfig::stack_mode
 		const STACK_MODE = 0x0040;
 	}
 }
@@ -94,11 +94,11 @@ bitflags! {
 /// [window]: Window
 /// [`ConfigureWindow` request]: crate::x11::request::ConfigureWindow
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct WindowConfigs {
-	/// Total [`X11Size`] of these `WindowConfigs`.
+pub struct WindowConfig {
+	/// Total [`X11Size`] of this `WindowConfig`.
 	///
 	/// This is cached so that it doesn't have to be recalculated each time -
-	/// `WindowConfigs` is immutable.
+	/// `WindowConfig` is immutable.
 	///
 	/// This field is not part of the X11 format for this struct.
 	x11_size: usize,
@@ -120,26 +120,26 @@ pub struct WindowConfigs {
 	stack_mode: Option<__StackMode>,
 }
 
-impl WindowConfigs {
-	/// Returns a new [`WindowConfigsBuilder`] with which a `WindowConfigs` set
+impl WindowConfig {
+	/// Returns a new [`WindowConfigBuilder`] with which a `WindowConfigs` set
 	/// can be built.
 	#[must_use]
-	pub const fn builder() -> WindowConfigsBuilder {
-		WindowConfigsBuilder::new()
+	pub const fn builder() -> WindowConfigBuilder {
+		WindowConfigBuilder::new()
 	}
 }
 
-/// A builder used to construct a new [`WindowConfigs` set].
+/// A builder used to construct a new [`WindowConfig` set].
 ///
 /// All configuration options start as [`None`], and can be configured with
 /// the other methods on this builder. When the builder is configured,
-/// [`build()`] can be used to build the resulting [`WindowConfigs`].
+/// [`build()`] can be used to build the resulting [`WindowConfig`].
 ///
-/// [`build()`]: WindowConfigsBuilder::build
+/// [`build()`]: WindowConfigBuilder::build
 ///
-/// [`WindowConfigs` set]: WindowConfigs
+/// [`WindowConfig` set]: WindowConfig
 #[derive(Clone, Default, Debug, Hash, PartialEq, Eq)]
-pub struct WindowConfigsBuilder {
+pub struct WindowConfigBuilder {
 	x11_size: usize,
 
 	mask: WindowConfigMask,
@@ -156,14 +156,14 @@ pub struct WindowConfigsBuilder {
 	stack_mode: Option<StackMode>,
 }
 
-impl WindowConfigsBuilder {
-	/// Creates a new `WindowConfigsBuilder`.
+impl WindowConfigBuilder {
+	/// Creates a new `WindowConfigBuilder`.
 	///
 	/// All configuration options start as [`None`], and can be configured with
 	/// the other methods on this builder. When the builder is configured,
-	/// [`build()`] can be used to build the resulting [`WindowConfigs`].
+	/// [`build()`] can be used to build the resulting [`WindowConfig`].
 	///
-	/// [`build()`]: WindowConfigsBuilder::build
+	/// [`build()`]: WindowConfigBuilder::build
 	#[must_use]
 	pub const fn new() -> Self {
 		Self {
@@ -184,12 +184,12 @@ impl WindowConfigsBuilder {
 		}
 	}
 
-	/// Builds the resulting [`WindowConfigs` set] with the configured options.
+	/// Builds the resulting [`WindowConfig` set] with the configured options.
 	///
-	/// [`WindowConfigs` set]: WindowConfigs
+	/// [`WindowConfig` set]: WindowConfig
 	#[must_use]
-	pub fn build(self) -> WindowConfigs {
-		WindowConfigs {
+	pub fn build(self) -> WindowConfig {
+		WindowConfig {
 			x11_size: self.x11_size,
 
 			mask: self.mask,
@@ -206,12 +206,14 @@ impl WindowConfigsBuilder {
 			stack_mode: self.stack_mode.map(__StackMode),
 		}
 	}
+}
 
+impl WindowConfigBuilder {
 	/// Configures the [x coordinate] of the [window].
 	///
-	/// See [`WindowConfigs::x`] for more information.
+	/// See [`WindowConfig::x`] for more information.
 	///
-	/// [x coordinate]: WindowConfigs::x
+	/// [x coordinate]: WindowConfig::x
 	/// [window]: Window
 	pub fn x(&mut self, x: i16) -> &mut Self {
 		if self.x.is_none() {
@@ -225,9 +227,9 @@ impl WindowConfigsBuilder {
 	}
 	/// Configures the [y coordinate] of the [window].
 	///
-	/// See [`WindowConfigs::y`] for more information.
+	/// See [`WindowConfig::y`] for more information.
 	///
-	/// [y coordinate]: WindowConfigs::y
+	/// [y coordinate]: WindowConfig::y
 	/// [window]: Window
 	pub fn y(&mut self, y: i16) -> &mut Self {
 		if self.y.is_none() {
@@ -241,9 +243,9 @@ impl WindowConfigsBuilder {
 	}
 	/// Configures the [width] of the [window].
 	///
-	/// See [`WindowConfigs::width`] for more information.
+	/// See [`WindowConfig::width`] for more information.
 	///
-	/// [width]: WindowConfigs::width
+	/// [width]: WindowConfig::width
 	/// [window]: Window
 	pub fn width(&mut self, width: u16) -> &mut Self {
 		if self.width.is_none() {
@@ -257,9 +259,9 @@ impl WindowConfigsBuilder {
 	}
 	/// Configures the [height] of the [window].
 	///
-	/// See [`WindowConfigs::height`] for more information.
+	/// See [`WindowConfig::height`] for more information.
 	///
-	/// [height]: WindowConfigs::height
+	/// [height]: WindowConfig::height
 	/// [window]: Window
 	pub fn height(&mut self, height: u16) -> &mut Self {
 		if self.height.is_none() {
@@ -274,7 +276,7 @@ impl WindowConfigsBuilder {
 
 	/// Configures the width of the [window]'s border.
 	///
-	/// See [`WindowConfigs::border_width`] for more information.
+	/// See [`WindowConfig::border_width`] for more information.
 	///
 	/// [window]: Window
 	pub fn border_width(&mut self, border_width: u16) -> &mut Self {
@@ -291,7 +293,7 @@ impl WindowConfigsBuilder {
 	/// Configures the sibling [window] which the [`stack_mode`] applies to. If
 	/// the sibling is configured, the [`stack_mode`] must be configured too.
 	///
-	/// See [`WindowConfigs::sibling`] for more information.
+	/// See [`WindowConfig::sibling`] for more information.
 	///
 	/// # Errors
 	/// A [`Match` error] is generated if the sibling is configured without
@@ -299,7 +301,7 @@ impl WindowConfigsBuilder {
 	///
 	/// [`Match` error]: crate::x11::error::Match
 	/// [window]: Window
-	/// [`stack_mode`]: WindowConfigs::stack_mode
+	/// [`stack_mode`]: WindowConfig::stack_mode
 	pub fn sibling(&mut self, sibling: Window) -> &mut Self {
 		if self.sibling.is_none() {
 			self.x11_size += 4;
@@ -314,7 +316,7 @@ impl WindowConfigsBuilder {
 	/// Configures the [window]'s [`stack_mode`].
 	///
 	/// [window]: Window
-	/// [`stack_mode`]: WindowConfigs::stack_mode
+	/// [`stack_mode`]: WindowConfig::stack_mode
 	pub fn stack_mode(&mut self, stack_mode: StackMode) -> &mut Self {
 		if self.stack_mode.is_none() {
 			self.x11_size += 4;
@@ -327,7 +329,7 @@ impl WindowConfigsBuilder {
 	}
 }
 
-impl WindowConfigs {
+impl WindowConfig {
 	/// The x coordinate of the [window]'s top-left corner is configured.
 	///
 	/// [window]: Window
@@ -389,7 +391,7 @@ impl WindowConfigs {
 	/// A [`Match` error] is generated if the sibling is configured without
 	/// configuring the [`stack_mode`].
 	///
-	/// [`stack_mode`]: WindowConfigs::stack_mode
+	/// [`stack_mode`]: WindowConfig::stack_mode
 	/// [`Match` error]: crate::x11::error::Match
 	#[must_use]
 	pub const fn sibling(&self) -> &Option<Window> {
@@ -403,7 +405,7 @@ impl WindowConfigs {
 	/// Otherwise, this is relative to all other siblings.
 	///
 	/// [window]: Window
-	/// [`sibling`]: WindowConfigs::sibling
+	/// [`sibling`]: WindowConfig::sibling
 	#[must_use]
 	pub fn stack_mode(&self) -> Option<&StackMode> {
 		self.stack_mode
@@ -412,13 +414,13 @@ impl WindowConfigs {
 	}
 }
 
-impl X11Size for WindowConfigs {
+impl X11Size for WindowConfig {
 	fn x11_size(&self) -> usize {
 		self.x11_size
 	}
 }
 
-impl Readable for WindowConfigs {
+impl Readable for WindowConfig {
 	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
 	where
 		Self: Sized,
@@ -470,7 +472,7 @@ impl Readable for WindowConfigs {
 	}
 }
 
-impl Writable for WindowConfigs {
+impl Writable for WindowConfig {
 	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
 		self.mask.write_to(buf)?;
 		// 2 unused bytes after the mask.

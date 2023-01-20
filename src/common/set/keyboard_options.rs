@@ -20,7 +20,7 @@ use bitflags::bitflags;
 
 bitflags! {
 	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
-	pub struct KeyboardOptionMask: u32 {
+	pub struct KeyboardOptionsMask: u32 {
 		const KEY_CLICK_PERCENT = 0x0000_0001;
 
 		const BELL_PERCENT = 0x0000_0002;
@@ -40,7 +40,7 @@ bitflags! {
 pub struct KeyboardOptions {
 	x11_size: usize,
 
-	mask: KeyboardOptionMask,
+	mask: KeyboardOptionsMask,
 
 	// Represents an `i8` value.
 	key_click_percent: Option<i32>,
@@ -65,7 +65,7 @@ pub struct KeyboardOptions {
 pub struct KeyboardOptionsBuilder {
 	x11_size: usize,
 
-	mask: KeyboardOptionMask,
+	mask: KeyboardOptionsMask,
 
 	key_click_percent: Option<i8>,
 
@@ -85,9 +85,9 @@ impl KeyboardOptionsBuilder {
 	#[must_use]
 	pub const fn new() -> Self {
 		Self {
-			x11_size: KeyboardOptionMask::X11_SIZE,
+			x11_size: KeyboardOptionsMask::X11_SIZE,
 
-			mask: KeyboardOptionMask::empty(),
+			mask: KeyboardOptionsMask::empty(),
 
 			key_click_percent: None,
 
@@ -110,7 +110,7 @@ impl KeyboardOptionsBuilder {
 		}
 
 		self.key_click_percent = Some(key_click_percent);
-		self.mask |= KeyboardOptionMask::KEY_CLICK_PERCENT;
+		self.mask |= KeyboardOptionsMask::KEY_CLICK_PERCENT;
 
 		self
 	}
@@ -121,7 +121,7 @@ impl KeyboardOptionsBuilder {
 		}
 
 		self.bell_percent = Some(bell_percent);
-		self.mask |= KeyboardOptionMask::BELL_PERCENT;
+		self.mask |= KeyboardOptionsMask::BELL_PERCENT;
 
 		self
 	}
@@ -131,7 +131,7 @@ impl KeyboardOptionsBuilder {
 		}
 
 		self.bell_pitch = Some(bell_pitch);
-		self.mask |= KeyboardOptionMask::BELL_PITCH;
+		self.mask |= KeyboardOptionsMask::BELL_PITCH;
 
 		self
 	}
@@ -141,7 +141,7 @@ impl KeyboardOptionsBuilder {
 		}
 
 		self.bell_duration = Some(bell_duration);
-		self.mask |= KeyboardOptionMask::BELL_DURATION;
+		self.mask |= KeyboardOptionsMask::BELL_DURATION;
 
 		self
 	}
@@ -152,7 +152,7 @@ impl KeyboardOptionsBuilder {
 		}
 
 		self.led = Some(led);
-		self.mask |= KeyboardOptionMask::LED;
+		self.mask |= KeyboardOptionsMask::LED;
 
 		self
 	}
@@ -162,7 +162,7 @@ impl KeyboardOptionsBuilder {
 		}
 
 		self.led_mode = Some(led_mode);
-		self.mask |= KeyboardOptionMask::LED_MODE;
+		self.mask |= KeyboardOptionsMask::LED_MODE;
 
 		self
 	}
@@ -173,7 +173,7 @@ impl KeyboardOptionsBuilder {
 		}
 
 		self.key = Some(key);
-		self.mask |= KeyboardOptionMask::KEY;
+		self.mask |= KeyboardOptionsMask::KEY;
 
 		self
 	}
@@ -184,7 +184,7 @@ impl KeyboardOptionsBuilder {
 		}
 
 		self.auto_repeat_mode = Some(auto_repeat_mode);
-		self.mask |= KeyboardOptionMask::AUTO_REPEAT_MODE;
+		self.mask |= KeyboardOptionsMask::AUTO_REPEAT_MODE;
 
 		self
 	}
@@ -283,46 +283,46 @@ impl Readable for KeyboardOptions {
 	where
 		Self: Sized,
 	{
-		let mask = KeyboardOptionMask::read_from(buf)?;
+		let mask = KeyboardOptionsMask::read_from(buf)?;
 		let mut x11_size = mask.x11_size();
 
 		let key_click_percent = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(KeyboardOptionMask::KEY_CLICK_PERCENT),
+			mask.contains(KeyboardOptionsMask::KEY_CLICK_PERCENT),
 		)?;
 
 		let bell_percent = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(KeyboardOptionMask::BELL_PERCENT),
+			mask.contains(KeyboardOptionsMask::BELL_PERCENT),
 		)?;
 		let bell_pitch = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(KeyboardOptionMask::BELL_PITCH),
+			mask.contains(KeyboardOptionsMask::BELL_PITCH),
 		)?;
 		let bell_duration = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(KeyboardOptionMask::BELL_DURATION),
+			mask.contains(KeyboardOptionsMask::BELL_DURATION),
 		)?;
 
 		let led =
-			super::read_set_value(buf, &mut x11_size, mask.contains(KeyboardOptionMask::LED))?;
+			super::read_set_value(buf, &mut x11_size, mask.contains(KeyboardOptionsMask::LED))?;
 		let led_mode = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(KeyboardOptionMask::LED_MODE),
+			mask.contains(KeyboardOptionsMask::LED_MODE),
 		)?;
 
 		let key =
-			super::read_set_value(buf, &mut x11_size, mask.contains(KeyboardOptionMask::KEY))?;
+			super::read_set_value(buf, &mut x11_size, mask.contains(KeyboardOptionsMask::KEY))?;
 
 		let auto_repeat_mode = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(KeyboardOptionMask::AUTO_REPEAT_MODE),
+			mask.contains(KeyboardOptionsMask::AUTO_REPEAT_MODE),
 		)?;
 
 		Ok(Self {
