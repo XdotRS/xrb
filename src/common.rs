@@ -150,7 +150,7 @@ derive_xrb! {
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
-pub enum BackingStore {
+pub enum MaintainContents {
 	Never,
 	WhenMapped,
 	Always,

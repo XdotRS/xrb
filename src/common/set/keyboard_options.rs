@@ -674,7 +674,7 @@ impl KeyboardOptions {
 bitflags! {
 	/// A mask of configured options for the keyboard.
 	///
-	/// This mask is used in the [`KeyboardOptions` set]
+	/// This mask is used in the [`KeyboardOptions` set].
 	///
 	/// [`KeyboardOptions` set]: KeyboardOptions
 	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]

@@ -7,7 +7,7 @@ use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
 use crate::{
 	common::set::__bool,
 	set::{__i16, __u16, __u8},
-	visual::Pixel,
+	visual::Color,
 	Font,
 	Pixmap,
 };
@@ -199,8 +199,12 @@ pub enum JoinStyle {
 /// [requests]: crate::x11::request
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 pub enum FillStyle {
-	/// This is the foreground, except for the odd dashes of line requests with
-	/// [`LineStyle::DoubleDash`], where it is the background.
+	/// This is the [foreground color], except for the odd dashes of line
+	/// requests with [`LineStyle::DoubleDash`], where it is the [background
+	/// color].
+	///
+	/// [foreground color]: GraphicsOptions::foreground_color
+	/// [background color]: GraphicsOptions::background_color
 	Solid = 0,
 
 	// FIXME (docs): X11 protocol just says 'Tile' as description...
@@ -210,8 +214,11 @@ pub enum FillStyle {
 	/// The foreground, masked by a stipple pattern.
 	Stippled = 2,
 
-	/// Same as [`Stippled`], but foreground everywhere it has a one, and
-	/// background everywhere it has a zero.
+	/// Same as [`Stippled`], but the [foreground color] everywhere it has a
+	/// one, and the [background color] everywhere it has a zero.
+	///
+	/// [foreground color]: GraphicsOptions::foreground_color
+	/// [background color]: GraphicsOptions::background_color
 	OpaqueStippled = 3,
 }
 
@@ -269,38 +276,38 @@ pub type ClipMask = Option<Pixmap>;
 /// [`GraphicsContext`]: crate::GraphicsContext
 /// [`CreateGraphicsContext` request]: crate::x11::request::CreateGraphicsContext
 ///
-/// |Option                   |Default value                          |
-/// |-------------------------|---------------------------------------|
-/// |[`function`]             |[`Function::Copy`]                     |
-/// |[`plane_mask`]           |`0xffff_ffff`                          |
-/// |[`foreground`]           |`Pixel(0)`                                    |
-/// |[`background`]           |`Pixel(1)`                                    |
-/// |[`line_width`]           |[`LineWidth::Thin`]                    |
-/// |[`line_style`]           |[`LineStyle::Solid`]                   |
-/// |[`cap_style`]            |[`CapStyle::Butt`]                     |
-/// |[`join_style`]           |[`JoinStyle::Miter`]                   |
-/// |[`fill_style`]           |[`FillStyle::Solid`]                   |
-/// |[`fill_rule`]            |[`FillRule::EvenOdd`]                  |
-/// |[`arc_mode`]             |[`ArcMode::PieSlice`]                  |
-/// |[`tile`]                 |[Pixmap] filled with the [`foreground`]|
-/// |[`stipple`]              |[Pixmap] filled with ones              |
-/// |[`tile_stipple_x_origin`]|`0`                                    |
-/// |[`tile_stipple_y_origin`]|`0`                                    |
-/// |[`font`]                 |Depends on the server                  |
-/// |[`subwindow_mode`]       |[`SubwindowMode::ClipByChildren`]      |
-/// |[`graphics_exposure`]    |`true`                                 |
-/// |[`clip_x_origin`]        |`0`                                    |
-/// |[`clip_y_origin`]        |`0`                                    |
-/// |[`clip_mask`]            |[`None`]                               |
-/// |[`dash_offset`]          |`0`                                    |
-/// |[`dashes`]               |`4`                                    |
+/// |Option                   |Default value                                |
+/// |-------------------------|---------------------------------------------|
+/// |[`function`]             |[`Function::Copy`]                           |
+/// |[`plane_mask`]           |`0xffff_ffff`                                |
+/// |[`foreground_color`]     |[`Color::ZERO`]                              |
+/// |[`background_color`]     |[`Color::ONE`]                               |
+/// |[`line_width`]           |[`LineWidth::Thin`]                          |
+/// |[`line_style`]           |[`LineStyle::Solid`]                         |
+/// |[`cap_style`]            |[`CapStyle::Butt`]                           |
+/// |[`join_style`]           |[`JoinStyle::Miter`]                         |
+/// |[`fill_style`]           |[`FillStyle::Solid`]                         |
+/// |[`fill_rule`]            |[`FillRule::EvenOdd`]                        |
+/// |[`arc_mode`]             |[`ArcMode::PieSlice`]                        |
+/// |[`tile`]                 |[Pixmap] filled with the [`foreground_color`]|
+/// |[`stipple`]              |[Pixmap] filled with ones                    |
+/// |[`tile_stipple_x`]       |`0`                                          |
+/// |[`tile_stipple_y`]       |`0`                                          |
+/// |[`font`]                 |Depends on the server                        |
+/// |[`subwindow_mode`]       |[`SubwindowMode::ClipByChildren`]            |
+/// |[`graphics_exposure`]    |`true`                                       |
+/// |[`clip_x`]               |`0`                                          |
+/// |[`clip_y`]               |`0`                                          |
+/// |[`clip_mask`]            |[`None`]                                     |
+/// |[`dash_offset`]          |`0`                                          |
+/// |[`dashes`]               |`4`                                          |
 ///
 /// [Pixmap]: Pixmap
 ///
 /// [`function`]: GraphicsOptions::function
 /// [`plane_mask`]: GraphicsOptions::plane_mask
-/// [`foreground`]: GraphicsOptions::foreground
-/// [`background`]: GraphicsOptions::background
+/// [`foreground_color`]: GraphicsOptions::foreground_color
+/// [`background_color`]: GraphicsOptions::background_color
 /// [`line_width`]: GraphicsOptions::line_width
 /// [`line_style`]: GraphicsOptions::line_style
 /// [`cap_style`]: GraphicsOptions::cap_style
@@ -310,13 +317,13 @@ pub type ClipMask = Option<Pixmap>;
 /// [`arc_mode`]: GraphicsOptions::arc_mode
 /// [`tile`]: GraphicsOptions::tile
 /// [`stipple`]: GraphicsOptions::stipple
-/// [`tile_stipple_x_origin`]: GraphicsOptions::tile_stipple_x_origin
-/// [`tile_stipple_y_origin`]: GraphicsOptions::tile_stipple_y_origin
+/// [`tile_stipple_x`]: GraphicsOptions::tile_stipple_x
+/// [`tile_stipple_y`]: GraphicsOptions::tile_stipple_y
 /// [`font`]: GraphicsOptions::font
 /// [`subwindow_mode`]: GraphicsOptions::subwindow_mode
 /// [`graphics_exposure`]: GraphicsOptions::graphics_exposure
-/// [`clip_x_origin`]: GraphicsOptions::clip_x_origin
-/// [`clip_y_origin`]: GraphicsOptions::clip_y_origin
+/// [`clip_x`]: GraphicsOptions::clip_x
+/// [`clip_y`]: GraphicsOptions::clip_y
 /// [`clip_mask`]: GraphicsOptions::clip_mask
 /// [`dash_offset`]: GraphicsOptions::dash_offset
 /// [`dashes`]: GraphicsOptions::dashes
@@ -329,8 +336,8 @@ pub struct GraphicsOptions {
 
 	plane_mask: Option<u32>,
 
-	foreground: Option<Pixel>,
-	background: Option<Pixel>,
+	foreground_color: Option<Color>,
+	background_color: Option<Color>,
 
 	line_width: Option<__LineWidth>,
 
@@ -343,8 +350,8 @@ pub struct GraphicsOptions {
 	tile: Option<Pixmap>,
 	stipple: Option<Pixmap>,
 
-	tile_stipple_x_origin: Option<__i16>,
-	tile_stipple_y_origin: Option<__i16>,
+	tile_stipple_x: Option<__i16>,
+	tile_stipple_y: Option<__i16>,
 
 	font: Option<Font>,
 
@@ -352,8 +359,8 @@ pub struct GraphicsOptions {
 
 	graphics_exposures: Option<__bool>,
 
-	clip_x_origin: Option<__i16>,
-	clip_y_origin: Option<__i16>,
+	clip_x: Option<__i16>,
+	clip_y: Option<__i16>,
 	clip_mask: Option<ClipMask>,
 
 	dash_offset: Option<__u16>,
@@ -389,8 +396,8 @@ pub struct GraphicsOptionsBuilder {
 
 	plane_mask: Option<u32>,
 
-	foreground: Option<Pixel>,
-	background: Option<Pixel>,
+	foreground_color: Option<Color>,
+	background_color: Option<Color>,
 
 	line_width: Option<LineWidth>,
 
@@ -403,8 +410,8 @@ pub struct GraphicsOptionsBuilder {
 	tile: Option<Pixmap>,
 	stipple: Option<Pixmap>,
 
-	tile_stipple_x_origin: Option<i16>,
-	tile_stipple_y_origin: Option<i16>,
+	tile_stipple_x: Option<i16>,
+	tile_stipple_y: Option<i16>,
 
 	font: Option<Font>,
 
@@ -412,8 +419,8 @@ pub struct GraphicsOptionsBuilder {
 
 	graphics_exposures: Option<bool>,
 
-	clip_x_origin: Option<i16>,
-	clip_y_origin: Option<i16>,
+	clip_x: Option<i16>,
+	clip_y: Option<i16>,
 	clip_mask: Option<ClipMask>,
 
 	dash_offset: Option<u16>,
@@ -441,8 +448,8 @@ impl GraphicsOptionsBuilder {
 
 			plane_mask: None,
 
-			foreground: None,
-			background: None,
+			foreground_color: None,
+			background_color: None,
 
 			line_width: None,
 
@@ -455,8 +462,8 @@ impl GraphicsOptionsBuilder {
 			tile: None,
 			stipple: None,
 
-			tile_stipple_x_origin: None,
-			tile_stipple_y_origin: None,
+			tile_stipple_x: None,
+			tile_stipple_y: None,
 
 			font: None,
 
@@ -464,8 +471,8 @@ impl GraphicsOptionsBuilder {
 
 			graphics_exposures: None,
 
-			clip_x_origin: None,
-			clip_y_origin: None,
+			clip_x: None,
+			clip_y: None,
 			clip_mask: None,
 
 			dash_offset: None,
@@ -490,8 +497,8 @@ impl GraphicsOptionsBuilder {
 
 			plane_mask: self.plane_mask,
 
-			foreground: self.foreground,
-			background: self.background,
+			foreground_color: self.foreground_color,
+			background_color: self.background_color,
 
 			line_width: self.line_width.map(__LineWidth),
 
@@ -504,8 +511,8 @@ impl GraphicsOptionsBuilder {
 			tile: self.tile,
 			stipple: self.stipple,
 
-			tile_stipple_x_origin: self.tile_stipple_x_origin.map(__i16),
-			tile_stipple_y_origin: self.tile_stipple_y_origin.map(__i16),
+			tile_stipple_x: self.tile_stipple_x.map(__i16),
+			tile_stipple_y: self.tile_stipple_y.map(__i16),
 
 			font: self.font,
 
@@ -513,8 +520,8 @@ impl GraphicsOptionsBuilder {
 
 			graphics_exposures: self.graphics_exposures.map(__bool),
 
-			clip_x_origin: self.clip_x_origin.map(__i16),
-			clip_y_origin: self.clip_y_origin.map(__i16),
+			clip_x: self.clip_x.map(__i16),
+			clip_y: self.clip_y.map(__i16),
 			clip_mask: self.clip_mask,
 
 			dash_offset: self.dash_offset.map(__u16),
@@ -555,33 +562,33 @@ impl GraphicsOptionsBuilder {
 		self
 	}
 
-	/// Configures the [foreground] which is used in graphics operations.
+	/// Configures the [foreground color] which is used in graphics operations.
 	///
-	/// See [`GraphicsOptions::foreground`] for more information.
+	/// See [`GraphicsOptions::foreground_color`] for more information.
 	///
-	/// [foreground]: GraphicsOptions::foreground
-	pub fn foreground(&mut self, foreground: Pixel) -> &mut Self {
-		if self.foreground.is_none() {
+	/// [foreground color]: GraphicsOptions::foreground_color
+	pub fn foreground_color(&mut self, foreground_color: Color) -> &mut Self {
+		if self.foreground_color.is_none() {
 			self.x11_size += 4;
 		}
 
-		self.foreground = Some(foreground);
-		self.mask |= GraphicsOptionsMask::FOREGROUND;
+		self.foreground_color = Some(foreground_color);
+		self.mask |= GraphicsOptionsMask::FOREGROUND_COLOR;
 
 		self
 	}
-	/// Configures the [background] which is used in graphics operations.
+	/// Configures the [background color] which is used in graphics operations.
 	///
-	/// See [`GraphicsOptions::background`] for more information.
+	/// See [`GraphicsOptions::background_color`] for more information.
 	///
-	/// [background]: GraphicsOptions::background
-	pub fn background(&mut self, background: Pixel) -> &mut Self {
-		if self.background.is_none() {
+	/// [background color]: GraphicsOptions::background_color
+	pub fn background_color(&mut self, background_color: Color) -> &mut Self {
+		if self.background_color.is_none() {
 			self.x11_size += 4;
 		}
 
-		self.background = Some(background);
-		self.mask |= GraphicsOptionsMask::BACKGROUND;
+		self.background_color = Some(background_color);
+		self.mask |= GraphicsOptionsMask::BACKGROUND_COLOR;
 
 		self
 	}
@@ -678,12 +685,11 @@ impl GraphicsOptionsBuilder {
 		self
 	}
 
-	/// Configures the [tile] [pixmap] used in graphics operations.
+	/// Configures the [tile] [`Pixmap`] used in graphics operations.
 	///
 	/// See [`GraphicsOptions::tile`] for more information.
 	///
 	/// [tile]: GraphicsOptions::tile
-	/// [pixmap]: Pixmap
 	pub fn tile(&mut self, tile: Pixmap) -> &mut Self {
 		if self.tile.is_none() {
 			self.x11_size += 4;
@@ -694,12 +700,11 @@ impl GraphicsOptionsBuilder {
 
 		self
 	}
-	/// Configures the [stipple] [pixmap] used in graphics operations.
+	/// Configures the [stipple] [`Pixmap`] used in graphics operations.
 	///
 	/// See [`GraphicsOptions::stipple`] for more information.
 	///
 	/// [stipple]: GraphicsOptions::stipple
-	/// [pixmap]: Pixmap
 	pub fn stipple(&mut self, stipple: Pixmap) -> &mut Self {
 		if self.stipple.is_none() {
 			self.x11_size += 4;
@@ -714,36 +719,36 @@ impl GraphicsOptionsBuilder {
 	/// Configures the [x coordinate of the top-left corner][x] of the [tile] or
 	/// [stipple] [`Pixmap`] used in graphics operations.
 	///
-	/// See [`GraphicsOptions::tile_stipple_x_origin`] for more information.
+	/// See [`GraphicsOptions::tile_stipple_x`] for more information.
 	///
-	/// [x]: GraphicsOptions::tile_stipple_x_origin
+	/// [x]: GraphicsOptions::tile_stipple_x
 	/// [tile]: GraphicsOptions::tile
 	/// [stipple]: GraphicsOptions::stipple
-	pub fn tile_stipple_x_origin(&mut self, tile_stipple_x_origin: i16) -> &mut Self {
-		if self.tile_stipple_x_origin.is_none() {
+	pub fn tile_stipple_x(&mut self, tile_stipple_x: i16) -> &mut Self {
+		if self.tile_stipple_x.is_none() {
 			self.x11_size += 4;
 		}
 
-		self.tile_stipple_x_origin = Some(tile_stipple_x_origin);
-		self.mask |= GraphicsOptionsMask::TILE_STIPPLE_X_ORIGIN;
+		self.tile_stipple_x = Some(tile_stipple_x);
+		self.mask |= GraphicsOptionsMask::TILE_STIPPLE_X;
 
 		self
 	}
 	/// Configures the [y coordinate of the top-left corner][y] of the [tile] or
 	/// [stipple] [`Pixmap`] used in graphics operations.
 	///
-	/// See [`GraphicsOptions::tile_stipple_y_origin`] for more information.
+	/// See [`GraphicsOptions::tile_stipple_y`] for more information.
 	///
-	/// [y]: GraphicsOptions::tile_stipple_y_origin
+	/// [y]: GraphicsOptions::tile_stipple_y
 	/// [tile]: GraphicsOptions::tile
 	/// [stipple]: GraphicsOptions::stipple
-	pub fn tile_stipple_y_origin(&mut self, tile_stipple_y_origin: i16) -> &mut Self {
-		if self.tile_stipple_y_origin.is_none() {
+	pub fn tile_stipple_y(&mut self, tile_stipple_y: i16) -> &mut Self {
+		if self.tile_stipple_y.is_none() {
 			self.x11_size += 4;
 		}
 
-		self.tile_stipple_y_origin = Some(tile_stipple_y_origin);
-		self.mask |= GraphicsOptionsMask::TILE_STIPPLE_Y_ORIGIN;
+		self.tile_stipple_y = Some(tile_stipple_y);
+		self.mask |= GraphicsOptionsMask::TILE_STIPPLE_Y;
 
 		self
 	}
@@ -801,32 +806,32 @@ impl GraphicsOptionsBuilder {
 	/// Configures the [x coordinate of the top-left corner][x] of the
 	/// [`clip_mask`].
 	///
-	/// See [`GraphicsOptions::clip_x_origin`] for more information.
+	/// See [`GraphicsOptions::clip_x`] for more information.
 	///
-	/// [x]: GraphicsOptions::clip_x_origin
-	pub fn clip_x_origin(&mut self, clip_x_origin: i16) -> &mut Self {
-		if self.clip_x_origin.is_none() {
+	/// [x]: GraphicsOptions::clip_x
+	pub fn clip_x(&mut self, clip_x: i16) -> &mut Self {
+		if self.clip_x.is_none() {
 			self.x11_size += 4;
 		}
 
-		self.clip_x_origin = Some(clip_x_origin);
-		self.mask |= GraphicsOptionsMask::CLIP_X_ORIGIN;
+		self.clip_x = Some(clip_x);
+		self.mask |= GraphicsOptionsMask::CLIP_X;
 
 		self
 	}
 	/// Configures the [y coordinate of the top-left corner][y] of the
 	/// [`clip_mask`].
 	///
-	/// See [`GraphicsOptions::clip_y_origin`] for more information.
+	/// See [`GraphicsOptions::clip_y`] for more information.
 	///
-	/// [y]: GraphicsOptions::clip_y_origin
-	pub fn clip_y_origin(&mut self, clip_y_origin: i16) -> &mut Self {
-		if self.clip_y_origin.is_none() {
+	/// [y]: GraphicsOptions::clip_y
+	pub fn clip_y(&mut self, clip_y: i16) -> &mut Self {
+		if self.clip_y.is_none() {
 			self.x11_size += 4;
 		}
 
-		self.clip_y_origin = Some(clip_y_origin);
-		self.mask |= GraphicsOptionsMask::CLIP_Y_ORIGIN;
+		self.clip_y = Some(clip_y);
+		self.mask |= GraphicsOptionsMask::CLIP_Y;
 
 		self
 	}
@@ -899,21 +904,23 @@ impl GraphicsOptions {
 		self.plane_mask.as_ref()
 	}
 
+	/// The foreground color used in graphics operations.
 	#[must_use]
 	#[allow(
 		clippy::missing_const_for_fn,
 		reason = "const omitted for API uniformity with the other methods"
 	)]
-	pub fn foreground(&self) -> Option<&Pixel> {
-		self.foreground.as_ref()
+	pub fn foreground_color(&self) -> Option<&Color> {
+		self.foreground_color.as_ref()
 	}
+	/// The background color used in graphics operations.
 	#[must_use]
 	#[allow(
 		clippy::missing_const_for_fn,
 		reason = "const omitted for API uniformity with the other methods"
 	)]
-	pub fn background(&self) -> Option<&Pixel> {
-		self.background.as_ref()
+	pub fn background_color(&self) -> Option<&Color> {
+		self.background_color.as_ref()
 	}
 
 	#[must_use]
@@ -972,12 +979,12 @@ impl GraphicsOptions {
 	}
 
 	#[must_use]
-	pub fn tile_stipple_x_origin(&self) -> Option<&i16> {
-		self.tile_stipple_x_origin.as_ref().map(|__i16(x)| x)
+	pub fn tile_stipple_x(&self) -> Option<&i16> {
+		self.tile_stipple_x.as_ref().map(|__i16(x)| x)
 	}
 	#[must_use]
-	pub fn tile_stipple_y_origin(&self) -> Option<&i16> {
-		self.tile_stipple_y_origin.as_ref().map(|__i16(y)| y)
+	pub fn tile_stipple_y(&self) -> Option<&i16> {
+		self.tile_stipple_y.as_ref().map(|__i16(y)| y)
 	}
 
 	#[must_use]
@@ -1002,12 +1009,12 @@ impl GraphicsOptions {
 	}
 
 	#[must_use]
-	pub fn clip_x_origin(&self) -> Option<&i16> {
-		self.clip_x_origin.as_ref().map(|__i16(x)| x)
+	pub fn clip_x(&self) -> Option<&i16> {
+		self.clip_x.as_ref().map(|__i16(x)| x)
 	}
 	#[must_use]
-	pub fn clip_y_origin(&self) -> Option<&i16> {
-		self.clip_y_origin.as_ref().map(|__i16(y)| y)
+	pub fn clip_y(&self) -> Option<&i16> {
+		self.clip_y.as_ref().map(|__i16(y)| y)
 	}
 	#[must_use]
 	#[allow(
@@ -1064,20 +1071,20 @@ bitflags! {
 		/// [`GraphicsContext`]: crate::GraphicsContext
 		const PLANE_MASK = 0x0000_0002;
 
-		/// Whether the [foreground] is configured in a [`GraphicsContext`].
+		/// Whether the [foreground color] is configured in a [`GraphicsContext`].
 		///
-		/// See [`GraphicsOptions::foreground`] for more information.
+		/// See [`GraphicsOptions::foreground_color`] for more information.
 		///
-		/// [foreground]: GraphicsOptions::foreground
+		/// [foreground color]: GraphicsOptions::foreground_color
 		/// [`GraphicsContext`]: crate::GraphicsContext
-		const FOREGROUND = 0x0000_0004;
-		/// Whether the [background] is configured in a [`GraphicsContext`].
+		const FOREGROUND_COLOR = 0x0000_0004;
+		/// Whether the [background color] is configured in a [`GraphicsContext`].
 		///
-		/// See [`GraphicsOptions::background`] for more information.
+		/// See [`GraphicsOptions::background_color`] for more information.
 		///
-		/// [background]: GraphicsOptions::background
+		/// [background color]: GraphicsOptions::background_color
 		/// [`GraphicsContext`]: crate::GraphicsContext
-		const BACKGROUND = 0x0000_0008;
+		const BACKGROUND_COLOR = 0x0000_0008;
 
 		/// Whether the [width of drawn lines][width] is configured in a [`GraphicsContext`].
 		///
@@ -1145,23 +1152,23 @@ bitflags! {
 		/// Whether the [x coordinate of the top-left corner][x] of the [tiled]
 		/// or [stippled] [`Pixmap`] is configured in a [`GraphicsContext`].
 		///
-		/// See [`GraphicsOptions::tile_stipple_x_origin`] for more information.
+		/// See [`GraphicsOptions::tile_stipple_x`] for more information.
 		///
-		/// [x]: GraphicsOptions::tile_stipple_x_origin
+		/// [x]: GraphicsOptions::tile_stipple_x
 		/// [tiled]: GraphicsOptions::tile
 		/// [stippled]: GraphicsOptions::stipple
 		/// [`GraphicsContext`]: crate::GraphicsContext
-		const TILE_STIPPLE_X_ORIGIN = 0x0000_1000;
+		const TILE_STIPPLE_X = 0x0000_1000;
 		/// Whether the [y coordinate of the top-left corner][y] of the [tiled]
 		/// or [stippled] [`Pixmap`] is configured in a [`GraphicsContext`].
 		///
-		/// See [`GraphicsOptions::tile_stipple_y_origin`] for more information.
+		/// See [`GraphicsOptions::tile_stipple_y`] for more information.
 		///
-		/// [y]: GraphicsOptions::tile_stipple_y_origin
+		/// [y]: GraphicsOptions::tile_stipple_y
 		/// [tiled]: GraphicsOptions::tile
 		/// [stippled]: GraphicsOptions::stipple
 		/// [`GraphicsContext`]: crate::GraphicsContext
-		const TILE_STIPPLE_Y_ORIGIN = 0x0000_2000;
+		const TILE_STIPPLE_Y = 0x0000_2000;
 
 		/// Whether the [font] is configured in a [`GraphicsContext`].
 		///
@@ -1191,21 +1198,21 @@ bitflags! {
 		/// Whether the [x coordinate of the top left corner][x] of the
 		/// [`clip_mask`] is configured in a [`GraphicsContext`].
 		///
-		/// See [`GraphicsOptions::clip_x_origin`] for more information.
+		/// See [`GraphicsOptions::clip_x`] for more information.
 		///
-		/// [x]: GraphicsOptions::clip_x_origin
+		/// [x]: GraphicsOptions::clip_x
 		/// [`clip_mask`]: GraphicsOptions::clip_mask
 		/// [`GraphicsContext`]: crate::GraphicsContext
-		const CLIP_X_ORIGIN = 0x0002_0000;
+		const CLIP_X = 0x0002_0000;
 		/// Whether the [y coordinate of the top left corner][y] of the
 		/// [`clip_mask`] is configured in a [`GraphicsContext`].
 		///
-		/// See [`GraphicsOptions::clip_y_origin`] for more information.
+		/// See [`GraphicsOptions::clip_y`] for more information.
 		///
-		/// [y]: GraphicsOptions::clip_y_origin
+		/// [y]: GraphicsOptions::clip_y
 		/// [`clip_mask`]: GraphicsOptions::clip_mask
 		/// [`GraphicsContext`]: crate::GraphicsContext
-		const CLIP_Y_ORIGIN = 0x0004_0000;
+		const CLIP_Y = 0x0004_0000;
 		/// Whether the [`clip_mask`] is configured in a [`GraphicsContext`].
 		///
 		/// See [`GraphicsOptions::clip_mask`] for more information.
@@ -1268,15 +1275,15 @@ impl Readable for GraphicsOptions {
 			mask.contains(GraphicsOptionsMask::PLANE_MASK),
 		)?;
 
-		let foreground = super::read_set_value(
+		let foreground_color = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionsMask::FOREGROUND),
+			mask.contains(GraphicsOptionsMask::FOREGROUND_COLOR),
 		)?;
-		let background = super::read_set_value(
+		let background_color = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionsMask::BACKGROUND),
+			mask.contains(GraphicsOptionsMask::BACKGROUND_COLOR),
 		)?;
 
 		let line_width = super::read_set_value(
@@ -1319,15 +1326,15 @@ impl Readable for GraphicsOptions {
 			mask.contains(GraphicsOptionsMask::STIPPLE),
 		)?;
 
-		let tile_stipple_x_origin = super::read_set_value(
+		let tile_stipple_x = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionsMask::TILE_STIPPLE_X_ORIGIN),
+			mask.contains(GraphicsOptionsMask::TILE_STIPPLE_X),
 		)?;
-		let tile_stipple_y_origin = super::read_set_value(
+		let tile_stipple_y = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionsMask::TILE_STIPPLE_Y_ORIGIN),
+			mask.contains(GraphicsOptionsMask::TILE_STIPPLE_Y),
 		)?;
 
 		let font =
@@ -1345,15 +1352,15 @@ impl Readable for GraphicsOptions {
 			mask.contains(GraphicsOptionsMask::GRAPHICS_EXPOSURE),
 		)?;
 
-		let clip_x_origin = super::read_set_value(
+		let clip_x = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionsMask::CLIP_X_ORIGIN),
+			mask.contains(GraphicsOptionsMask::CLIP_X),
 		)?;
-		let clip_y_origin = super::read_set_value(
+		let clip_y = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionsMask::CLIP_Y_ORIGIN),
+			mask.contains(GraphicsOptionsMask::CLIP_Y),
 		)?;
 		let clip_mask = super::read_set_value(
 			buf,
@@ -1387,8 +1394,8 @@ impl Readable for GraphicsOptions {
 
 			plane_mask,
 
-			foreground,
-			background,
+			foreground_color,
+			background_color,
 
 			line_width,
 
@@ -1401,8 +1408,8 @@ impl Readable for GraphicsOptions {
 			tile,
 			stipple,
 
-			tile_stipple_x_origin,
-			tile_stipple_y_origin,
+			tile_stipple_x,
+			tile_stipple_y,
 
 			font,
 
@@ -1410,8 +1417,8 @@ impl Readable for GraphicsOptions {
 
 			graphics_exposures,
 
-			clip_x_origin,
-			clip_y_origin,
+			clip_x,
+			clip_y,
 			clip_mask,
 
 			dash_offset,
@@ -1434,11 +1441,11 @@ impl Writable for GraphicsOptions {
 			plane_mask.write_to(buf)?;
 		}
 
-		if let Some(foreground) = &self.foreground {
-			foreground.write_to(buf)?;
+		if let Some(foreground_color) = &self.foreground_color {
+			foreground_color.write_to(buf)?;
 		}
-		if let Some(background) = &self.background {
-			background.write_to(buf)?;
+		if let Some(background_color) = &self.background_color {
+			background_color.write_to(buf)?;
 		}
 
 		if let Some(line_width) = &self.line_width {
@@ -1468,11 +1475,11 @@ impl Writable for GraphicsOptions {
 			stipple.write_to(buf)?;
 		}
 
-		if let Some(tile_stipple_x_origin) = &self.tile_stipple_x_origin {
-			tile_stipple_x_origin.write_to(buf)?;
+		if let Some(tile_stipple_x) = &self.tile_stipple_x {
+			tile_stipple_x.write_to(buf)?;
 		}
-		if let Some(tile_stipple_y_origin) = &self.tile_stipple_y_origin {
-			tile_stipple_y_origin.write_to(buf)?;
+		if let Some(tile_stipple_y) = &self.tile_stipple_y {
+			tile_stipple_y.write_to(buf)?;
 		}
 
 		if let Some(font) = &self.font {
@@ -1487,11 +1494,11 @@ impl Writable for GraphicsOptions {
 			graphics_exposures.write_to(buf)?;
 		}
 
-		if let Some(clip_x_origin) = &self.clip_x_origin {
-			clip_x_origin.write_to(buf)?;
+		if let Some(clip_x) = &self.clip_x {
+			clip_x.write_to(buf)?;
 		}
-		if let Some(clip_y_origin) = &self.clip_y_origin {
-			clip_y_origin.write_to(buf)?;
+		if let Some(clip_y) = &self.clip_y {
+			clip_y.write_to(buf)?;
 		}
 		if let Some(clip_mask) = &self.clip_mask {
 			clip_mask.write_to(buf)?;

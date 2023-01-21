@@ -7,11 +7,13 @@
 	reason = "It makes sense for `Screen` to have many arguments because it has many fields."
 )]
 
-use crate::{BackingStore, Colormap, EventMask, Window};
+use crate::{Colormap, EventMask, MaintainContents, Window};
 use derive_more::{From, Into};
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
-/// A pixel's color.
+/// A color in the X Window System.
+///
+/// ***Note: you may be looking for [`RgbColor`].***
 ///
 /// The way that this color is interpreted depends on the [`VisualClass`] of the
 /// [`VisualType`]:
@@ -50,7 +52,15 @@ use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writa
 	Readable,
 	Writable,
 )]
-pub struct Pixel(u32);
+pub struct Color(u32);
+
+impl Color {
+	/// A `Color` where all bits are zero: `0x0000_0000`.
+	pub const ZERO: Self = Self(0x0000_0000);
+
+	/// A `Color` with a value of `1`.
+	pub const ONE: Self = Self(1);
+}
 
 /// A color comprised of red, green, and blue color channels.
 ///
@@ -143,7 +153,7 @@ impl RgbColor {
 		Ok(Self(red << BYTE, green << BYTE, blue << BYTE))
 	}
 
-	/// Converts a `Color` to a hex color code.
+	/// Converts an `RgbColor` to a hex color code.
 	///
 	/// # Lossy
 	/// This function is lossy: a `Color` is made up of three `u16` values,
@@ -286,7 +296,7 @@ derive_xrb! {
 		pub max_installed_maps: u16,
 
 		pub root_visual: VisualId,
-		pub backing_stores: BackingStore,
+		pub backing_stores: MaintainContents,
 		pub save_unders: bool,
 		pub root_depth: u8,
 

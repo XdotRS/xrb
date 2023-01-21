@@ -1135,10 +1135,10 @@ derive_xrb! {
 	/// This event is generated when no valid contents are available for regions
 	/// of a window, and either:
 	/// - the regions are visible; or
-	/// - the regions are viewable and the server is maintaining a backing store
-	///   on the window; or
+	/// - the regions are viewable and the server is maintaining the contents of
+	///   the window; or
 	/// - the window is not viewable but the server is honoring the window's
-	///   [`backing_store` attribute] of [`Always`] or [`WhenMapped`].
+	///   [`maintain_contents` attribute] of [`Always`] or [`WhenMapped`].
 	///
 	/// The regions are decomposed into an arbitrary set of rectangles, and an
 	/// `Expose` event is generated for each one.
@@ -1152,9 +1152,9 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [window]: Window
 	///
-	/// [`backing_store` attribute]: crate::Attributes::backing_store
-	/// [`Always`]: crate::BackingStore::Always
-	/// [`WhenMapped`]: crate::BackingStore::WhenMapped
+	/// [`maintain_contents` attribute]: crate::set::Attributes::maintain_contents
+	/// [`Always`]: crate::MaintainContents::Always
+	/// [`WhenMapped`]: crate::MaintainContents::WhenMapped
 	/// [`WindowClass::InputOnly`]: crate::WindowClass::InputOnly
 	///
 	/// [`EXPOSURE`]: crate::mask::EventMask::EXPOSURE
