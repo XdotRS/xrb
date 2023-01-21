@@ -4,6 +4,7 @@
 
 use crate::{StackMode, Window};
 
+use crate::set::{__i16, __u16};
 use bitflags::bitflags;
 use xrbk::{
 	Buf,
@@ -39,15 +40,13 @@ pub struct WindowConfig {
 
 	mask: WindowConfigMask,
 
-	// These represent 16-bit values, but they need to take up four bytes, so the _internal
-	// representation only_ is 32 bits.
-	x: Option<i32>,
-	y: Option<i32>,
-	width: Option<u32>,
-	height: Option<u32>,
+	x: Option<__i16>,
+	y: Option<__i16>,
+	width: Option<__u16>,
+	height: Option<__u16>,
 
 	// As above, this always represents a `u16` value instead.
-	border_width: Option<u32>,
+	border_width: Option<__u16>,
 
 	sibling: Option<Window>,
 
@@ -56,7 +55,7 @@ pub struct WindowConfig {
 
 impl WindowConfig {
 	/// Returns a new [`WindowConfigBuilder`] with which a `WindowConfigs` set
-	/// can be constructed.
+	/// can be created.
 	#[must_use]
 	pub const fn builder() -> WindowConfigBuilder {
 		WindowConfigBuilder::new()
@@ -128,12 +127,12 @@ impl WindowConfigBuilder {
 
 			mask: self.mask,
 
-			x: self.x.map(Into::into),
-			y: self.y.map(Into::into),
-			width: self.width.map(Into::into),
-			height: self.height.map(Into::into),
+			x: self.x.map(__i16),
+			y: self.y.map(__i16),
+			width: self.width.map(__u16),
+			height: self.height.map(__u16),
 
-			border_width: self.border_width.map(Into::into),
+			border_width: self.border_width.map(__u16),
 
 			sibling: self.sibling,
 
@@ -268,68 +267,51 @@ impl WindowConfig {
 	///
 	/// [window]: Window
 	#[must_use]
-	pub fn x(&self) -> Option<i16> {
-		self.x.map(|x| {
-			x.try_into()
-				.expect("must fit into i16; represents i16 value")
-		})
+	pub fn x(&self) -> Option<&i16> {
+		self.x.as_ref().map(|__i16(x)| x)
 	}
 	/// The y coordinate of the [window]'s top-left corner is configured.
 	///
 	/// [window]: Window
 	#[must_use]
-	pub fn y(&self) -> Option<i16> {
-		self.y.map(|y| {
-			y.try_into()
-				.expect("must fit into i16; represents i16 value")
-		})
+	pub fn y(&self) -> Option<&i16> {
+		self.y.as_ref().map(|__i16(y)| y)
 	}
 	/// The width of the [window] is configured.
 	///
 	/// [window]: Window
 	#[must_use]
-	pub fn width(&self) -> Option<u16> {
-		self.width.map(|width| {
-			width
-				.try_into()
-				.expect("must fit into u16; represents u16 value")
-		})
+	pub fn width(&self) -> Option<&u16> {
+		self.width.as_ref().map(|__u16(width)| width)
 	}
 	/// The height of the [window] is configured.
 	///
 	/// [window]: Window
 	#[must_use]
-	pub fn height(&self) -> Option<u16> {
-		self.height.map(|height| {
-			height
-				.try_into()
-				.expect("must fit into u16; represents u16 value")
-		})
+	pub fn height(&self) -> Option<&u16> {
+		self.height.as_ref().map(|__u16(height)| height)
 	}
 
 	/// The width of the [window]'s border is configured.
 	///
 	/// [window]: Window
 	#[must_use]
-	pub fn border_width(&self) -> Option<u16> {
-		self.border_width.map(|border_width| {
-			border_width
-				.try_into()
-				.expect("must fit into u16; represents u16 value")
-		})
+	pub fn border_width(&self) -> Option<&u16> {
+		self.border_width
+			.as_ref()
+			.map(|__u16(border_width)| border_width)
 	}
 
 	/// The sibling which the [`stack_mode`] applies to is configured.
 	///
-	/// # Errors
-	/// A [`Match` error] is generated if the sibling is configured without
-	/// configuring the [`stack_mode`].
-	///
 	/// [`stack_mode`]: WindowConfig::stack_mode
-	/// [`Match` error]: crate::x11::error::Match
 	#[must_use]
-	pub const fn sibling(&self) -> &Option<Window> {
-		&self.sibling
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const is omitted for uniformity with other methods"
+	)]
+	pub fn sibling(&self) -> Option<&Window> {
+		self.sibling.as_ref()
 	}
 
 	/// The way in which the [window] is stacked compared to its sibling(s) is

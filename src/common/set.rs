@@ -19,7 +19,17 @@
 //!   - [`WindowConfigBuilder`]
 //!   - [`WindowConfigMask`]
 
-use xrbk::{Buf, BufMut, ConstantX11Size, ReadResult, Readable, Writable, WriteResult, X11Size};
+use xrbk::{
+	Buf,
+	BufMut,
+	ConstantX11Size,
+	ReadError,
+	ReadResult,
+	Readable,
+	Writable,
+	WriteResult,
+	X11Size,
+};
 
 mod attribute;
 mod graphics_options;
@@ -31,6 +41,9 @@ pub use graphics_options::*;
 pub use keyboard_options::*;
 pub use window_configs::*;
 
+/// Reads an optional value for a set if the given `condition` is true.
+///
+/// This is not part of the public API.
 pub(self) fn read_set_value<T: Readable>(
 	buf: &mut impl Buf, x11_size: &mut usize, condition: bool,
 ) -> ReadResult<Option<T>> {
@@ -44,7 +57,133 @@ pub(self) fn read_set_value<T: Readable>(
 	})
 }
 
-/// Wraps a `bool` but writes it as four bytes in the X11 format.
+/// Wraps a `u8` value, but writes it as four bytes in the X11 format.
+///
+/// This is not part of the public API.
+#[allow(
+	non_camel_case_types,
+	reason = "The type name is chosen to indicate an internal representation of a u8 value."
+)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub(self) struct __u8(u8);
+
+impl ConstantX11Size for __u8 {
+	const X11_SIZE: usize = 4;
+}
+
+impl X11Size for __u8 {
+	fn x11_size(&self) -> usize {
+		Self::X11_SIZE
+	}
+}
+
+impl Readable for __u8 {
+	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		Ok(Self(match u8::try_from(buf.get_u32()) {
+			Ok(u8) => u8,
+			Err(error) => return Err(ReadError::FailedConversion(Box::new(error))),
+		}))
+	}
+}
+
+impl Writable for __u8 {
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		let Self(u8) = self;
+
+		u32::from(*u8).write_to(buf)?;
+
+		Ok(())
+	}
+}
+
+/// Wraps a `u16` value, but writes it as four bytes in the X11 format.
+///
+/// This is not part of the public API.
+#[allow(
+	non_camel_case_types,
+	reason = "The type name is chosen to indicate an internal representation of a u16 value."
+)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub(self) struct __u16(u16);
+
+impl ConstantX11Size for __u16 {
+	const X11_SIZE: usize = 4;
+}
+
+impl X11Size for __u16 {
+	fn x11_size(&self) -> usize {
+		Self::X11_SIZE
+	}
+}
+
+impl Readable for __u16 {
+	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		Ok(Self(match u16::try_from(buf.get_u32()) {
+			Ok(u16) => u16,
+			Err(error) => return Err(ReadError::FailedConversion(Box::new(error))),
+		}))
+	}
+}
+
+impl Writable for __u16 {
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		let Self(u16) = self;
+
+		u32::from(*u16).write_to(buf)?;
+
+		Ok(())
+	}
+}
+
+/// Wraps an `i16` value, but writes it as four bytes in the X11 format.
+///
+/// This is not part of the public API.
+#[allow(
+	non_camel_case_types,
+	reason = "The type name is chosen to indicate an internal representation of an i16 value."
+)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub(self) struct __i16(i16);
+
+impl ConstantX11Size for __i16 {
+	const X11_SIZE: usize = 4;
+}
+
+impl X11Size for __i16 {
+	fn x11_size(&self) -> usize {
+		Self::X11_SIZE
+	}
+}
+
+impl Readable for __i16 {
+	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		Ok(Self(match i16::try_from(buf.get_i32()) {
+			Ok(i16) => i16,
+			Err(error) => return Err(ReadError::FailedConversion(Box::new(error))),
+		}))
+	}
+}
+
+impl Writable for __i16 {
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		let Self(i16) = self;
+
+		i32::from(*i16).write_to(buf)?;
+
+		Ok(())
+	}
+}
+
+/// Wraps a `bool`, but writes it as four bytes in the X11 format.
 ///
 /// This is not part of the public API.
 #[allow(
@@ -53,7 +192,7 @@ pub(self) fn read_set_value<T: Readable>(
 	          indicate that it is internal, and `bool` to indicate its wrapped type."
 )]
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-struct __bool(bool);
+pub(self) struct __bool(bool);
 
 impl ConstantX11Size for __bool {
 	const X11_SIZE: usize = 4;

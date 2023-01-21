@@ -4,7 +4,13 @@
 
 use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
 
-use crate::{common::set::__bool, visual::Pixel, Font, Pixmap};
+use crate::{
+	common::set::__bool,
+	set::{__i16, __u16, __u8},
+	visual::Pixel,
+	Font,
+	Pixmap,
+};
 use bitflags::bitflags;
 use xrbk::{
 	Buf,
@@ -337,10 +343,8 @@ pub struct GraphicsOptions {
 	tile: Option<Pixmap>,
 	stipple: Option<Pixmap>,
 
-	// This represents an `i16` value.
-	tile_stipple_x_origin: Option<i32>,
-	// This represents an `i16` value.
-	tile_stipple_y_origin: Option<i32>,
+	tile_stipple_x_origin: Option<__i16>,
+	tile_stipple_y_origin: Option<__i16>,
 
 	font: Option<Font>,
 
@@ -348,23 +352,19 @@ pub struct GraphicsOptions {
 
 	graphics_exposures: Option<__bool>,
 
-	// This represents an `i16` value.
-	clip_x_origin: Option<i32>,
-	// This represents an `i16` value.
-	clip_y_origin: Option<i32>,
+	clip_x_origin: Option<__i16>,
+	clip_y_origin: Option<__i16>,
 	clip_mask: Option<ClipMask>,
 
-	// This represents a `u16` value.
-	dash_offset: Option<u32>,
-	// This represents a `u8` value.
-	dashes: Option<u32>,
+	dash_offset: Option<__u16>,
+	dashes: Option<__u8>,
 
 	arc_mode: Option<__ArcMode>,
 }
 
 impl GraphicsOptions {
 	/// Returns a new [`GraphicsOptionsBuilder`] with which a `GraphicsOptions`
-	/// set can be constructed.
+	/// set can be created.
 	#[must_use]
 	pub const fn builder() -> GraphicsOptionsBuilder {
 		GraphicsOptionsBuilder::new()
@@ -504,8 +504,8 @@ impl GraphicsOptionsBuilder {
 			tile: self.tile,
 			stipple: self.stipple,
 
-			tile_stipple_x_origin: self.tile_stipple_x_origin.map(Into::into),
-			tile_stipple_y_origin: self.tile_stipple_y_origin.map(Into::into),
+			tile_stipple_x_origin: self.tile_stipple_x_origin.map(__i16),
+			tile_stipple_y_origin: self.tile_stipple_y_origin.map(__i16),
 
 			font: self.font,
 
@@ -513,12 +513,12 @@ impl GraphicsOptionsBuilder {
 
 			graphics_exposures: self.graphics_exposures.map(__bool),
 
-			clip_x_origin: self.clip_x_origin.map(Into::into),
-			clip_y_origin: self.clip_y_origin.map(Into::into),
+			clip_x_origin: self.clip_x_origin.map(__i16),
+			clip_y_origin: self.clip_y_origin.map(__i16),
 			clip_mask: self.clip_mask,
 
-			dash_offset: self.dash_offset.map(Into::into),
-			dashes: self.dashes.map(Into::into),
+			dash_offset: self.dash_offset.map(__u16),
+			dashes: self.dashes.map(__u8),
 
 			arc_mode: self.arc_mode.map(__ArcMode),
 		}
@@ -891,17 +891,29 @@ impl GraphicsOptions {
 	}
 
 	#[must_use]
-	pub const fn plane_mask(&self) -> &Option<u32> {
-		&self.plane_mask
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const omitted for API uniformity with the other methods"
+	)]
+	pub fn plane_mask(&self) -> Option<&u32> {
+		self.plane_mask.as_ref()
 	}
 
 	#[must_use]
-	pub const fn foreground(&self) -> &Option<Pixel> {
-		&self.foreground
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const omitted for API uniformity with the other methods"
+	)]
+	pub fn foreground(&self) -> Option<&Pixel> {
+		self.foreground.as_ref()
 	}
 	#[must_use]
-	pub const fn background(&self) -> &Option<Pixel> {
-		&self.background
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const omitted for API uniformity with the other methods"
+	)]
+	pub fn background(&self) -> Option<&Pixel> {
+		self.background.as_ref()
 	}
 
 	#[must_use]
@@ -943,34 +955,38 @@ impl GraphicsOptions {
 	}
 
 	#[must_use]
-	pub const fn tile(&self) -> &Option<Pixmap> {
-		&self.tile
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const omitted for API uniformity with the other methods"
+	)]
+	pub fn tile(&self) -> Option<&Pixmap> {
+		self.tile.as_ref()
 	}
 	#[must_use]
-	pub const fn stipple(&self) -> &Option<Pixmap> {
-		&self.stipple
-	}
-
-	#[must_use]
-	pub fn tile_stipple_x_origin(&self) -> Option<i16> {
-		self.tile_stipple_x_origin.map(|tile_stipple_x_origin| {
-			tile_stipple_x_origin
-				.try_into()
-				.expect("must fit into i16; represents i16 value")
-		})
-	}
-	#[must_use]
-	pub fn tile_stipple_y_origin(&self) -> Option<i16> {
-		self.tile_stipple_y_origin.map(|tile_stipple_y_origin| {
-			tile_stipple_y_origin
-				.try_into()
-				.expect("must fit into i16; represents i16 value")
-		})
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const omitted for API uniformity with the other methods"
+	)]
+	pub fn stipple(&self) -> Option<&Pixmap> {
+		self.stipple.as_ref()
 	}
 
 	#[must_use]
-	pub const fn font(&self) -> &Option<Font> {
-		&self.font
+	pub fn tile_stipple_x_origin(&self) -> Option<&i16> {
+		self.tile_stipple_x_origin.as_ref().map(|__i16(x)| x)
+	}
+	#[must_use]
+	pub fn tile_stipple_y_origin(&self) -> Option<&i16> {
+		self.tile_stipple_y_origin.as_ref().map(|__i16(y)| y)
+	}
+
+	#[must_use]
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const omitted for API uniformity with the other methods"
+	)]
+	pub fn font(&self) -> Option<&Font> {
+		self.font.as_ref()
 	}
 
 	#[must_use]
@@ -986,41 +1002,31 @@ impl GraphicsOptions {
 	}
 
 	#[must_use]
-	pub fn clip_x_origin(&self) -> Option<i16> {
-		self.clip_x_origin.map(|clip_x_origin| {
-			clip_x_origin
-				.try_into()
-				.expect("must fit into i16; represents i16 value")
-		})
+	pub fn clip_x_origin(&self) -> Option<&i16> {
+		self.clip_x_origin.as_ref().map(|__i16(x)| x)
 	}
 	#[must_use]
-	pub fn clip_y_origin(&self) -> Option<i16> {
-		self.clip_y_origin.map(|clip_y_origin| {
-			clip_y_origin
-				.try_into()
-				.expect("must fit into i16; represents i16 value")
-		})
+	pub fn clip_y_origin(&self) -> Option<&i16> {
+		self.clip_y_origin.as_ref().map(|__i16(y)| y)
 	}
 	#[must_use]
-	pub const fn clip_mask(&self) -> &Option<ClipMask> {
-		&self.clip_mask
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const omitted for API uniformity with the other methods"
+	)]
+	pub fn clip_mask(&self) -> Option<&ClipMask> {
+		self.clip_mask.as_ref()
 	}
 
 	#[must_use]
-	pub fn dash_offset(&self) -> Option<u16> {
-		self.dash_offset.map(|dash_offset| {
-			dash_offset
-				.try_into()
-				.expect("must fit into u16; represents u16 value")
-		})
+	pub fn dash_offset(&self) -> Option<&u16> {
+		self.dash_offset
+			.as_ref()
+			.map(|__u16(dash_offset)| dash_offset)
 	}
 	#[must_use]
-	pub fn dashes(&self) -> Option<u8> {
-		self.dashes.map(|dashes| {
-			dashes
-				.try_into()
-				.expect("must fit into u8; represents u8 value")
-		})
+	pub fn dashes(&self) -> Option<&u8> {
+		self.dashes.as_ref().map(|__u8(dashes)| dashes)
 	}
 
 	#[must_use]
