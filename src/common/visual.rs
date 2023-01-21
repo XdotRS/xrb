@@ -94,6 +94,70 @@ pub struct RgbColor(
 	pub u16,
 );
 
+impl RgbColor {
+	/// Black (#000000).
+	pub const BLACK: Self = Self(0x0000, 0x0000, 0x0000);
+
+	/// Dark gray (#404040).
+	pub const DARK_GRAY: Self = Self(0x4000, 0x4000, 0x4000);
+	/// Dark grey (#404040).
+	pub const DARK_GREY: Self = Self(0x4000, 0x4000, 0x4000);
+
+	/// Gray (#808080).
+	pub const GRAY: Self = Self(0x8000, 0x8000, 0x8000);
+	/// Grey (#808080).
+	pub const GREY: Self = Self(0x8000, 0x8000, 0x8000);
+
+	/// Light gray (#c0c0c0).
+	pub const LIGHT_GRAY: Self = Self(0xc000, 0xc000, 0xc000);
+	/// Light grey (#c0c0c0).
+	pub const LIGHT_GREY: Self = Self(0xc000, 0xc000, 0xc000);
+
+	/// White (#ffffff).
+	pub const WHITE: Self = Self(0xffff, 0xffff, 0xffff);
+
+	/// Red (#ff0000).
+	pub const RED: Self = Self(0xffff, 0x0000, 0x0000);
+	/// Green (#00ff00).
+	pub const GREEN: Self = Self(0x0000, 0xffff, 0x0000);
+	/// Blue (#0000ff).
+	pub const BLUE: Self = Self(0x0000, 0x0000, 0xffff);
+
+	/// Yellow (#ffff00).
+	pub const YELLOW: Self = Self(0xffff, 0xffff, 0x0000);
+	/// Cyan (#00ffff).
+	pub const CYAN: Self = Self(0x0000, 0xffff, 0xffff);
+	/// Magenta (#ff00ff).
+	pub const MAGENTA: Self = Self(0xffff, 0x0000, 0xffff);
+
+	/// Orange (#ff8000).
+	pub const ORANGE: Self = Self(0xffff, 0x8000, 0x0000);
+	/// Pink (#ff0080).
+	pub const PINK: Self = Self(0xffff, 0x0000, 0x8000);
+	/// Lime  (#80ff00).
+	pub const LIME: Self = Self(0x8000, 0xffff, 0x0000);
+	/// Mint (#00ff80).
+	pub const MINT: Self = Self(0x0000, 0xffff, 0x8000);
+	/// Purple (#8000ff).
+	pub const PURPLE: Self = Self(0x8000, 0x0000, 0xffff);
+	/// Sky blue (#0080ff).
+	pub const SKY_BLUE: Self = Self(0x0000, 0x8000, 0xffff);
+
+	/// Dark red (#800000).
+	pub const DARK_RED: Self = Self(0x8000, 0x0000, 0x0000);
+	/// Dark green (#008000).
+	pub const DARK_GREEN: Self = Self(0x0000, 0x8000, 0x0000);
+	/// Dark blue (#000080).
+	pub const DARK_BLUE: Self = Self(0x0000, 0x0000, 0x8000);
+
+	/// Dark yellow (#808000).
+	pub const DARK_YELLOW: Self = Self(0x8000, 0x8000, 0x0000);
+	/// Dark cyan (#008080).
+	pub const DARK_CYAN: Self = Self(0x0000, 0x8000, 0x8000);
+	/// Dark magenta (#800080).
+	pub const DARK_MAGENTA: Self = Self(0x8000, 0x0000, 0x8000);
+}
+
 /// An error returned when a value meant to be interpreted as a hex color code
 /// is greater than `0xffffff`.
 ///
