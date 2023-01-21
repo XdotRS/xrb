@@ -34,7 +34,7 @@ bitflags! {
 		/// See [`WindowConfig::x`] for more information.
 		///
 		/// [window]: Window
-		/// [y coordinate]: WindowConfig::y
+		/// [x coordinate]: WindowConfig::x
 		const X = 0x0001;
 		/// Whether the [y coordinate] of the [window] is configured.
 		///
