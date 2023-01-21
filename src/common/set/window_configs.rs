@@ -45,7 +45,6 @@ pub struct WindowConfig {
 	width: Option<__u16>,
 	height: Option<__u16>,
 
-	// As above, this always represents a `u16` value instead.
 	border_width: Option<__u16>,
 
 	sibling: Option<Window>,
