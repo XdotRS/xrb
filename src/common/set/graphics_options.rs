@@ -18,210 +18,6 @@ use xrbk::{
 	X11Size,
 };
 
-bitflags! {
-	/// A mask of configured options for a [`GraphicsContext`].
-	///
-	/// This mask is used in the [`GraphicsOptions` set], as well as in the
-	/// [`CopyGraphicsContext` request] to specify which options are copied.
-	///
-	/// [`GraphicsContext`]: crate::GraphicsContext
-	/// [`CopyGraphicsContext` request]: crate::x11::request::CopyGraphicsContext
-	/// [`GraphicsOptions` set]: GraphicsOptions
-	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
-	pub struct GraphicsOptionsMask: u32 {
-		/// Whether the [function] applied to determine the resultant pixel in a
-		/// graphics [request] is configured in the [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::function`] for more information.
-		///
-		/// [function]: GraphicsOptions::function
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		/// [request]: crate::message::Request
-		const FUNCTION = 0x0000_0001;
-
-		/// Whether the [plane mask] is configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::plane_mask`] for more information.
-		///
-		/// [plane mask]: GraphicsOptions::plane_mask
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const PLANE_MASK = 0x0000_0002;
-
-		/// Whether the [foreground] is configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::foreground`] for more information.
-		///
-		/// [foreground]: GraphicsOptions::foreground
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const FOREGROUND = 0x0000_0004;
-		/// Whether the [background] is configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::background`] for more information.
-		///
-		/// [background]: GraphicsOptions::background
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const BACKGROUND = 0x0000_0008;
-
-		/// Whether the [width of drawn lines][width] is configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::line_width`] for more information.
-		///
-		/// [width]: GraphicsOptions::line_width
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const LINE_WIDTH = 0x0000_0010;
-
-		/// Whether the [line style] is configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::line_style`] for more information.
-		///
-		/// [line style]: GraphicsOptions::line_style
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const LINE_STYLE = 0x0000_0020;
-		/// Whether the [cap style] is configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::cap_style`] for more information.
-		///
-		/// [cap style]: GraphicsOptions::cap_style
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const CAP_STYLE = 0x0000_0040;
-		/// Whether the [join style] is configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::join_style`] for more information.
-		///
-		/// [join style]: GraphicsOptions::join_style
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const JOIN_STYLE = 0x0000_0080;
-		/// Whether the [fill style] is configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::fill_style`] for more information.
-		///
-		/// [fill style]: GraphicsOptions::fill_style
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const FILL_STYLE = 0x0000_0100;
-		/// Whether the [fill rule] is configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::fill_rule`] for more information.
-		///
-		/// [fill rule]: GraphicsOptions::fill_rule
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const FILL_RULE = 0x0000_0200;
-
-		/// Whether the [pixmap] which is [tiled] in a graphics operation is
-		/// configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::tile`] for more information.
-		///
-		/// [pixmap]: Pixmap
-		/// [tiled]: GraphicsOptions::tile
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const TILE = 0x0000_0400;
-		/// Whether the [pixmap] which is [stippled] in a graphics operation is
-		/// configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::stipple`] for more information.
-		///
-		/// [pixmap]: Pixmap
-		/// [stippled]: GraphicsOptions::stipple
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const STIPPLE = 0x0000_0800;
-
-		/// Whether the [x coordinate of the top-left corner][x] of the [tiled]
-		/// or [stippled] [`Pixmap`] is configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::tile_stipple_x_origin`] for more information.
-		///
-		/// [x]: GraphicsOptions::tile_stipple_x_origin
-		/// [tiled]: GraphicsOptions::tile
-		/// [stippled]: GraphicsOptions::stipple
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const TILE_STIPPLE_X_ORIGIN = 0x0000_1000;
-		/// Whether the [y coordinate of the top-left corner][y] of the [tiled]
-		/// or [stippled] [`Pixmap`] is configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::tile_stipple_y_origin`] for more information.
-		///
-		/// [y]: GraphicsOptions::tile_stipple_y_origin
-		/// [tiled]: GraphicsOptions::tile
-		/// [stippled]: GraphicsOptions::stipple
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const TILE_STIPPLE_Y_ORIGIN = 0x0000_2000;
-
-		/// Whether the [font] is configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::font`] for more information.
-		///
-		/// [font]: GraphicsOptions::font
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const FONT = 0x0000_4000;
-
-		/// Whether the [descendent windows being clipped when applying graphics options][subwindow]
-		/// is configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::subwindow_mode`] for more information.
-		///
-		/// [subwindow]: GraphicsOptions::subwindow_mode
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const SUBWINDOW_MODE = 0x0000_8000;
-
-		/// Whether [`GraphicsExposure` events] are configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::graphics_exposure`] for more information.
-		///
-		/// [`GraphicsExposure` events]: crate::x11::event::GraphicsExposure
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const GRAPHICS_EXPOSURES = 0x0001_0000;
-
-		/// Whether the [x coordinate of the top left corner][x] of the
-		/// [`clip_mask`] is configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::clip_x_origin`] for more information.
-		///
-		/// [x]: GraphicsOptions::clip_x_origin
-		/// [`clip_mask`]: GraphicsOptions::clip_mask
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const CLIP_X_ORIGIN = 0x0002_0000;
-		/// Whether the [y coordinate of the top left corner][y] of the
-		/// [`clip_mask`] is configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::clip_y_origin`] for more information.
-		///
-		/// [y]: GraphicsOptions::clip_y_origin
-		/// [`clip_mask`]: GraphicsOptions::clip_mask
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const CLIP_Y_ORIGIN = 0x0004_0000;
-		/// Whether the [`clip_mask`] is configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::clip_mask`] for more information.
-		///
-		/// [`clip_mask`]: GraphicsOptions::clip_mask
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const CLIP_MASK = 0x0008_0000;
-
-		/// Whether the [dash offset] is configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::dash_offset`] for more information.
-		///
-		/// [dash offset]: GraphicsOptions::dash_offset
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const DASH_OFFSET = 0x0010_0000;
-		/// Whether the [dashes] are configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::dashes`] for more information.
-		///
-		/// [dashes]: GraphicsOptions::dashes
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const DASHES = 0x0020_0000;
-
-		/// Whether the [arc mode] is configured in a [`GraphicsContext`].
-		///
-		/// See [`GraphicsOptions::arc_mode`] for more information.
-		///
-		/// [arc mode]: GraphicsOptions::arc_mode
-		/// [`GraphicsContext`]: crate::GraphicsContext
-		const ARC_MODE = 0x0040_0000;
-	}
-}
-
 /// Given a source and destination pixel, represents a bitwise operation applied
 /// to the source and destination to determine the resultant pixel.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
@@ -1116,6 +912,210 @@ impl GraphicsOptions {
 	#[must_use]
 	pub fn arc_mode(&self) -> Option<&ArcMode> {
 		self.arc_mode.as_ref().map(|__ArcMode(arc_mode)| arc_mode)
+	}
+}
+
+bitflags! {
+	/// A mask of configured options for a [`GraphicsContext`].
+	///
+	/// This mask is used in the [`GraphicsOptions` set], as well as in the
+	/// [`CopyGraphicsContext` request] to specify which options are copied.
+	///
+	/// [`GraphicsContext`]: crate::GraphicsContext
+	/// [`CopyGraphicsContext` request]: crate::x11::request::CopyGraphicsContext
+	/// [`GraphicsOptions` set]: GraphicsOptions
+	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
+	pub struct GraphicsOptionsMask: u32 {
+		/// Whether the [function] applied to determine the resultant pixel in a
+		/// graphics [request] is configured in the [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::function`] for more information.
+		///
+		/// [function]: GraphicsOptions::function
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		/// [request]: crate::message::Request
+		const FUNCTION = 0x0000_0001;
+
+		/// Whether the [plane mask] is configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::plane_mask`] for more information.
+		///
+		/// [plane mask]: GraphicsOptions::plane_mask
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const PLANE_MASK = 0x0000_0002;
+
+		/// Whether the [foreground] is configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::foreground`] for more information.
+		///
+		/// [foreground]: GraphicsOptions::foreground
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const FOREGROUND = 0x0000_0004;
+		/// Whether the [background] is configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::background`] for more information.
+		///
+		/// [background]: GraphicsOptions::background
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const BACKGROUND = 0x0000_0008;
+
+		/// Whether the [width of drawn lines][width] is configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::line_width`] for more information.
+		///
+		/// [width]: GraphicsOptions::line_width
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const LINE_WIDTH = 0x0000_0010;
+
+		/// Whether the [line style] is configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::line_style`] for more information.
+		///
+		/// [line style]: GraphicsOptions::line_style
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const LINE_STYLE = 0x0000_0020;
+		/// Whether the [cap style] is configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::cap_style`] for more information.
+		///
+		/// [cap style]: GraphicsOptions::cap_style
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const CAP_STYLE = 0x0000_0040;
+		/// Whether the [join style] is configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::join_style`] for more information.
+		///
+		/// [join style]: GraphicsOptions::join_style
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const JOIN_STYLE = 0x0000_0080;
+		/// Whether the [fill style] is configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::fill_style`] for more information.
+		///
+		/// [fill style]: GraphicsOptions::fill_style
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const FILL_STYLE = 0x0000_0100;
+		/// Whether the [fill rule] is configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::fill_rule`] for more information.
+		///
+		/// [fill rule]: GraphicsOptions::fill_rule
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const FILL_RULE = 0x0000_0200;
+
+		/// Whether the [pixmap] which is [tiled] in a graphics operation is
+		/// configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::tile`] for more information.
+		///
+		/// [pixmap]: Pixmap
+		/// [tiled]: GraphicsOptions::tile
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const TILE = 0x0000_0400;
+		/// Whether the [pixmap] which is [stippled] in a graphics operation is
+		/// configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::stipple`] for more information.
+		///
+		/// [pixmap]: Pixmap
+		/// [stippled]: GraphicsOptions::stipple
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const STIPPLE = 0x0000_0800;
+
+		/// Whether the [x coordinate of the top-left corner][x] of the [tiled]
+		/// or [stippled] [`Pixmap`] is configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::tile_stipple_x_origin`] for more information.
+		///
+		/// [x]: GraphicsOptions::tile_stipple_x_origin
+		/// [tiled]: GraphicsOptions::tile
+		/// [stippled]: GraphicsOptions::stipple
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const TILE_STIPPLE_X_ORIGIN = 0x0000_1000;
+		/// Whether the [y coordinate of the top-left corner][y] of the [tiled]
+		/// or [stippled] [`Pixmap`] is configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::tile_stipple_y_origin`] for more information.
+		///
+		/// [y]: GraphicsOptions::tile_stipple_y_origin
+		/// [tiled]: GraphicsOptions::tile
+		/// [stippled]: GraphicsOptions::stipple
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const TILE_STIPPLE_Y_ORIGIN = 0x0000_2000;
+
+		/// Whether the [font] is configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::font`] for more information.
+		///
+		/// [font]: GraphicsOptions::font
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const FONT = 0x0000_4000;
+
+		/// Whether the [descendent windows being clipped when applying graphics options][subwindow]
+		/// is configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::subwindow_mode`] for more information.
+		///
+		/// [subwindow]: GraphicsOptions::subwindow_mode
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const SUBWINDOW_MODE = 0x0000_8000;
+
+		/// Whether [`GraphicsExposure` events] are configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::graphics_exposure`] for more information.
+		///
+		/// [`GraphicsExposure` events]: crate::x11::event::GraphicsExposure
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const GRAPHICS_EXPOSURES = 0x0001_0000;
+
+		/// Whether the [x coordinate of the top left corner][x] of the
+		/// [`clip_mask`] is configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::clip_x_origin`] for more information.
+		///
+		/// [x]: GraphicsOptions::clip_x_origin
+		/// [`clip_mask`]: GraphicsOptions::clip_mask
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const CLIP_X_ORIGIN = 0x0002_0000;
+		/// Whether the [y coordinate of the top left corner][y] of the
+		/// [`clip_mask`] is configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::clip_y_origin`] for more information.
+		///
+		/// [y]: GraphicsOptions::clip_y_origin
+		/// [`clip_mask`]: GraphicsOptions::clip_mask
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const CLIP_Y_ORIGIN = 0x0004_0000;
+		/// Whether the [`clip_mask`] is configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::clip_mask`] for more information.
+		///
+		/// [`clip_mask`]: GraphicsOptions::clip_mask
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const CLIP_MASK = 0x0008_0000;
+
+		/// Whether the [dash offset] is configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::dash_offset`] for more information.
+		///
+		/// [dash offset]: GraphicsOptions::dash_offset
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const DASH_OFFSET = 0x0010_0000;
+		/// Whether the [dashes] are configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::dashes`] for more information.
+		///
+		/// [dashes]: GraphicsOptions::dashes
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const DASHES = 0x0020_0000;
+
+		/// Whether the [arc mode] is configured in a [`GraphicsContext`].
+		///
+		/// See [`GraphicsOptions::arc_mode`] for more information.
+		///
+		/// [arc mode]: GraphicsOptions::arc_mode
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		const ARC_MODE = 0x0040_0000;
 	}
 }
 

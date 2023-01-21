@@ -31,85 +31,6 @@ use xrbk::{
 use bitflags::bitflags;
 use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
 
-bitflags! {
-	/// A mask of [attributes] given for a [window].
-	///
-	/// For more information, and for the attributes themselves, please see [`Attributes`].
-	///
-	/// [attributes]: Attributes
-	/// [window]: crate::Window
-	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
-	pub struct AttributesMask: u32 {
-		/// See also: [`background_pixmap`], <code>[ParentRelatable]<[Option]<[Pixmap]>></code>.
-		///
-		/// [`background_pixmap`]: Attributes::background_pixmap
-		const BACKGROUND_PIXMAP = 0x0000_0001;
-		/// See also: [`background_pixel`], [`Pixel`].
-		///
-		/// [`background_pixel`]: Attributes::background_pixel
-		const BACKGROUND_PIXEL = 0x0000_0002;
-
-		/// See also: [`border_pixmap`], <code>[CopyableFromParent]<[Pixmap]></code>.
-		///
-		/// [`border_pixmap`]: Attributes::border_pixmap
-		const BORDER_PIXMAP = 0x0000_0004;
-		/// See also: [`border_pixel`], [`Pixel`].
-		///
-		/// [`border_pixel`]: Attributes::border_pixel
-		const BORDER_PIXEL = 0x0000_0008;
-
-		/// See also: [`bit_gravity`], [`BitGravity`].
-		///
-		/// [`bit_gravity`]: Attributes::bit_gravity
-		const BIT_GRAVITY = 0x0000_0010;
-		/// See also: [`window_gravity`], [`WindowGravity`].
-		///
-		/// [`window_gravity`]: Attributes::window_gravity
-		const WINDOW_GRAVITY = 0x0000_0020;
-
-		/// See also: [`backing_store`], [`BackingStore`].
-		///
-		/// [`backing_store`]: Attributes::backing_store
-		const BACKING_STORE = 0x0000_0040;
-		/// See also: [`backing_planes`], [`u32`].
-		///
-		/// [`backing_planes`]: Attributes::backing_planes
-		const BACKING_PLANES = 0x0000_0080;
-		/// See also: [`backing_pixel`], [`Pixel`].
-		///
-		/// [`backing_pixel`]: Attributes::backing_pixel
-		const BACKING_PIXEL = 0x0000_0100;
-
-		/// See also: [`override_redirect`], [`bool`].
-		///
-		/// [`override_redirect`]: Attributes::OverrideRedirect
-		const OVERRIDE_REDIRECT = 0x0000_0200;
-		/// See also: [`save_under`], [`bool`].
-		///
-		/// [`save_under`]: Attributes::save_under
-		const SAVE_UNDER = 0x0000_0400;
-
-		/// See also: [`event_mask`], [`EventMask`].
-		///
-		/// [`event_mask`]: Attributes::event_mask
-		const EVENT_MASK = 0x0000_0800;
-		/// See also: [`do_not_propagate_mask`], [`DeviceEventMask`].
-		///
-		/// [`do_not_propagate_mask`]: Attributes::do_not_propagate_mask
-		const DO_NOT_PROPAGATE_MASK = 0x0000_1000;
-
-		/// See also: [`colormap`], <code>[CopyableFromParent]<[Colormap]></code>.
-		///
-		/// [`colormap`]: Attributes::colormap
-		const COLORMAP = 0x0000_2000;
-
-		/// See also: [`cursor_appearance`], [`CursorAppearance`].
-		///
-		/// [`cursor_appearance`]: Attributes::cursor_appearance
-		const CURSOR_APPEARANCE = 0x0000_4000;
-	}
-}
-
 /// This is a type alias for <code>[ParentRelatable]<[Option]<[Pixmap]>></code>.
 ///
 /// This represents the type used in [`background_pixmap` attributes].
@@ -564,6 +485,85 @@ impl Attributes {
 	#[must_use]
 	pub const fn cursor_appearance(&self) -> &Option<CursorAppearanceAttribute> {
 		&self.cursor_appearance
+	}
+}
+
+bitflags! {
+	/// A mask of [attributes] given for a [window].
+	///
+	/// For more information, and for the attributes themselves, please see [`Attributes`].
+	///
+	/// [attributes]: Attributes
+	/// [window]: crate::Window
+	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
+	pub struct AttributesMask: u32 {
+		/// See also: [`background_pixmap`], <code>[ParentRelatable]<[Option]<[Pixmap]>></code>.
+		///
+		/// [`background_pixmap`]: Attributes::background_pixmap
+		const BACKGROUND_PIXMAP = 0x0000_0001;
+		/// See also: [`background_pixel`], [`Pixel`].
+		///
+		/// [`background_pixel`]: Attributes::background_pixel
+		const BACKGROUND_PIXEL = 0x0000_0002;
+
+		/// See also: [`border_pixmap`], <code>[CopyableFromParent]<[Pixmap]></code>.
+		///
+		/// [`border_pixmap`]: Attributes::border_pixmap
+		const BORDER_PIXMAP = 0x0000_0004;
+		/// See also: [`border_pixel`], [`Pixel`].
+		///
+		/// [`border_pixel`]: Attributes::border_pixel
+		const BORDER_PIXEL = 0x0000_0008;
+
+		/// See also: [`bit_gravity`], [`BitGravity`].
+		///
+		/// [`bit_gravity`]: Attributes::bit_gravity
+		const BIT_GRAVITY = 0x0000_0010;
+		/// See also: [`window_gravity`], [`WindowGravity`].
+		///
+		/// [`window_gravity`]: Attributes::window_gravity
+		const WINDOW_GRAVITY = 0x0000_0020;
+
+		/// See also: [`backing_store`], [`BackingStore`].
+		///
+		/// [`backing_store`]: Attributes::backing_store
+		const BACKING_STORE = 0x0000_0040;
+		/// See also: [`backing_planes`], [`u32`].
+		///
+		/// [`backing_planes`]: Attributes::backing_planes
+		const BACKING_PLANES = 0x0000_0080;
+		/// See also: [`backing_pixel`], [`Pixel`].
+		///
+		/// [`backing_pixel`]: Attributes::backing_pixel
+		const BACKING_PIXEL = 0x0000_0100;
+
+		/// See also: [`override_redirect`], [`bool`].
+		///
+		/// [`override_redirect`]: Attributes::OverrideRedirect
+		const OVERRIDE_REDIRECT = 0x0000_0200;
+		/// See also: [`save_under`], [`bool`].
+		///
+		/// [`save_under`]: Attributes::save_under
+		const SAVE_UNDER = 0x0000_0400;
+
+		/// See also: [`event_mask`], [`EventMask`].
+		///
+		/// [`event_mask`]: Attributes::event_mask
+		const EVENT_MASK = 0x0000_0800;
+		/// See also: [`do_not_propagate_mask`], [`DeviceEventMask`].
+		///
+		/// [`do_not_propagate_mask`]: Attributes::do_not_propagate_mask
+		const DO_NOT_PROPAGATE_MASK = 0x0000_1000;
+
+		/// See also: [`colormap`], <code>[CopyableFromParent]<[Colormap]></code>.
+		///
+		/// [`colormap`]: Attributes::colormap
+		const COLORMAP = 0x0000_2000;
+
+		/// See also: [`cursor_appearance`], [`CursorAppearance`].
+		///
+		/// [`cursor_appearance`]: Attributes::cursor_appearance
+		const CURSOR_APPEARANCE = 0x0000_4000;
 	}
 }
 

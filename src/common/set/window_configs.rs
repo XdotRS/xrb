@@ -18,72 +18,6 @@ use xrbk::{
 };
 use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
 
-bitflags! {
-	/// A mask of configured options for a [window].
-	///
-	/// This mask is used in the [`WindowConfigs` set], as well as in the
-	/// [`ConfigureWindowRequest` event].
-	///
-	/// [window]: Window
-	/// [`WindowConfigs` set]: WindowConfig
-	/// [`ConfigureWindowRequest` event]: crate::x11::event::ConfigureWindowRequest
-	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
-	pub struct WindowConfigMask: u16 {
-		/// Whether the [x coordinate] of the [window] is configured.
-		///
-		/// See [`WindowConfig::x`] for more information.
-		///
-		/// [window]: Window
-		/// [x coordinate]: WindowConfig::x
-		const X = 0x0001;
-		/// Whether the [y coordinate] of the [window] is configured.
-		///
-		/// See [`WindowConfig::y`] for more information.
-		///
-		/// [window]: Window
-		/// [y coordinate]: WindowConfig::y
-		const Y = 0x0002;
-		/// Whether the [width] of the [window] is configured.
-		///
-		/// See [`WindowConfig::width`] for more information.
-		///
-		/// [window]: Window
-		/// [width]: WindowConfig::width
-		const WIDTH = 0x0004;
-		/// Whether the [height] of the [window] is configured.
-		///
-		/// See [`WindowConfig::height`] for more information.
-		///
-		/// [window]: Window
-		/// [height]: WindowConfig::height
-		const HEIGHT = 0x0008;
-
-		/// Whether the width of the [window]'s border is configured.
-		///
-		/// See [`WindowConfig::border_width`] for more information.
-		///
-		/// [window]: Window
-		const BORDER_WIDTH = 0x0010;
-
-		/// Whether a sibling [window] is configured in respect to the
-		/// configured [`stack_mode`].
-		///
-		/// See [`WindowConfig::sibling`] for more information.
-		///
-		/// [window]: Window
-		/// [`stack_mode`]: WindowConfig::stack_mode
-		const SIBLING = 0x0020;
-
-		/// Whether the [`stack_mode`] of a [window] is configured.
-		///
-		/// See [`WindowConfig::stack_mode`] for more information.
-		///
-		/// [window]: Window
-		/// [`stack_mode`]: WindowConfig::stack_mode
-		const STACK_MODE = 0x0040;
-	}
-}
-
 /// A set of options with which a [window] is configured.
 ///
 /// This set is used in the [`ConfigureWindow` request].
@@ -552,5 +486,71 @@ impl Writable for __StackMode {
 		}
 
 		Ok(())
+	}
+}
+
+bitflags! {
+	/// A mask of configured options for a [window].
+	///
+	/// This mask is used in the [`WindowConfigs` set], as well as in the
+	/// [`ConfigureWindowRequest` event].
+	///
+	/// [window]: Window
+	/// [`WindowConfigs` set]: WindowConfig
+	/// [`ConfigureWindowRequest` event]: crate::x11::event::ConfigureWindowRequest
+	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
+	pub struct WindowConfigMask: u16 {
+		/// Whether the [x coordinate] of the [window] is configured.
+		///
+		/// See [`WindowConfig::x`] for more information.
+		///
+		/// [window]: Window
+		/// [x coordinate]: WindowConfig::x
+		const X = 0x0001;
+		/// Whether the [y coordinate] of the [window] is configured.
+		///
+		/// See [`WindowConfig::y`] for more information.
+		///
+		/// [window]: Window
+		/// [y coordinate]: WindowConfig::y
+		const Y = 0x0002;
+		/// Whether the [width] of the [window] is configured.
+		///
+		/// See [`WindowConfig::width`] for more information.
+		///
+		/// [window]: Window
+		/// [width]: WindowConfig::width
+		const WIDTH = 0x0004;
+		/// Whether the [height] of the [window] is configured.
+		///
+		/// See [`WindowConfig::height`] for more information.
+		///
+		/// [window]: Window
+		/// [height]: WindowConfig::height
+		const HEIGHT = 0x0008;
+
+		/// Whether the width of the [window]'s border is configured.
+		///
+		/// See [`WindowConfig::border_width`] for more information.
+		///
+		/// [window]: Window
+		const BORDER_WIDTH = 0x0010;
+
+		/// Whether a sibling [window] is configured in respect to the
+		/// configured [`stack_mode`].
+		///
+		/// See [`WindowConfig::sibling`] for more information.
+		///
+		/// [window]: Window
+		/// [`stack_mode`]: WindowConfig::stack_mode
+		const SIBLING = 0x0020;
+
+		/// Whether the [`stack_mode`] of a [window] is configured.
+		///
+		/// See [`WindowConfig::stack_mode`] for more information.
+		///
+		/// [window]: Window
+		/// [`stack_mode`]: WindowConfig::stack_mode
+		const STACK_MODE = 0x0040;
 	}
 }

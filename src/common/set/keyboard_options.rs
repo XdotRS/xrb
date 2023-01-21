@@ -18,24 +18,6 @@ use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
 
 use bitflags::bitflags;
 
-bitflags! {
-	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
-	pub struct KeyboardOptionsMask: u32 {
-		const KEY_CLICK_PERCENT = 0x0000_0001;
-
-		const BELL_PERCENT = 0x0000_0002;
-		const BELL_PITCH = 0x0000_0004;
-		const BELL_DURATION = 0x0000_0008;
-
-		const LED = 0x0000_0010;
-		const LED_MODE = 0x0000_0020;
-
-		const KEY = 0x0000_0040;
-
-		const AUTO_REPEAT_MODE = 0x0000_0080;
-	}
-}
-
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct KeyboardOptions {
 	x11_size: usize,
@@ -269,6 +251,24 @@ impl KeyboardOptions {
 		self.auto_repeat_mode
 			.as_ref()
 			.map(|__ToggleOrDefault(toggle_or_default)| toggle_or_default)
+	}
+}
+
+bitflags! {
+	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
+	pub struct KeyboardOptionsMask: u32 {
+		const KEY_CLICK_PERCENT = 0x0000_0001;
+
+		const BELL_PERCENT = 0x0000_0002;
+		const BELL_PITCH = 0x0000_0004;
+		const BELL_DURATION = 0x0000_0008;
+
+		const LED = 0x0000_0010;
+		const LED_MODE = 0x0000_0020;
+
+		const KEY = 0x0000_0040;
+
+		const AUTO_REPEAT_MODE = 0x0000_0080;
 	}
 }
 
