@@ -4,14 +4,14 @@
 
 use super::__bool;
 use crate::{
-	visual::Pixel,
-	BackingStore,
+	visual::Color,
 	BitGravity,
 	Colormap,
 	CopyableFromParent,
 	CursorAppearance,
 	DeviceEventMask,
 	EventMask,
+	MaintainContents,
 	ParentRelatable,
 	Pixmap,
 	WindowGravity,
@@ -73,30 +73,34 @@ pub type ColormapAttribute = CopyableFromParent<Colormap>;
 /// [`CreateWindow` request]: crate::x11::request::CreateWindow
 /// [window classes]: crate::WindowClass
 ///
-/// |Attribute                |Default value     |Classes                      |
-/// |-------------------------|------------------|-----------------------------|
-/// |[`background_pixmap`]    |[`None`]          |[`InputOutput`] only         |
-/// |[`border_pixmap`]        |[`CopyFromParent`]|[`InputOutput`] only         |
-/// |[`bit_gravity`]          |[`Forget`]        |[`InputOutput`] only         |
-/// |[`window_gravity`]       |[`NorthWest`] |[`InputOutput`] and [`InputOnly`]|
-/// |[`backing_store`]        |[`NotUseful`]     |[`InputOutput`] only         |
-/// |[`backing_planes`]       |`0x_ffff_ffff`    |[`InputOutput`] only         |
-/// |[`backing_pixel`]        |`0x_0000_0000`    |[`InputOutput`] only         |
-/// |[`save_under`]           |`false`           |[`InputOutput`] only         |
+/// |Attribute                 |Default value      |Classes                    |
+/// |--------------------------|-------------------|---------------------------|
+/// |[`background_pixmap`]     |[`None`]           |[`InputOutput`] only       |
+/// |[`background_color`]      |_N/A_              |[`InputOutput`] only       |
+/// |[`border_pixmap`]         |[`CopyFromParent`] |[`InputOutput`] only       |
+/// |[`border_color`]          |_N/A_              |[`InputOutput`] only       |
+/// |[`bit_gravity`]           |[`Forget`]         |[`InputOutput`] only       |
+/// |[`window_gravity`]        |[`NorthWest`]|[`InputOutput`] and [`InputOnly`]|
+/// |[`maintain_contents`]     |[`NotUseful`]      |[`InputOutput`] only       |
+/// |[`maintained_planes`]     |`0x_ffff_ffff`     |[`InputOutput`] only       |
+/// |[`maintenance_fallback_color`]|[`Color::ZERO`]|[`InputOutput`] only       |
+/// |[`override_redirect`]     |`false`      |[`InputOutput`] and [`InputOnly`]|
+/// |[`maintain_windows_under`]|`false`            |[`InputOutput`] only       |
 /// |[`event_mask`]           |[`empty()`][e]|[`InputOutput`] and [`InputOnly`]|
 /// |[`do_not_propagate_mask`]|[`empty()`][d]|[`InputOutput`] and [`InputOnly`]|
-/// |[`override_redirect`]    |`false`       |[`InputOutput`] and [`InputOnly`]|
-/// |[`colormap`]             |[`CopyFromParent`]|[`InputOutput`] only         |
-/// |[`cursor_appearance`]    |[`None`]      |[`InputOutput`] and [`InputOnly`]|
+/// |[`colormap`]              |[`CopyFromParent`] |[`InputOutput`] only       |
+/// |[`cursor_appearance`]     |[`None`]     |[`InputOutput`] and [`InputOnly`]|
 ///
 /// [`background_pixmap`]: Attributes::background_pixmap
+/// [`background_color`]: Attributes::background_color
 /// [`border_pixmap`]: Attributes::border_pixmap
+/// [`border_color`]: Attributes::border_color
 /// [`bit_gravity`]: Attributes::bit_gravity
 /// [`window_gravity`]: Attributes::window_gravity
-/// [`backing_store`]: Attributes::backing_store
-/// [`backing_planes`]: Attributes::backing_planes
-/// [`backing_pixel`]: Attributes::backing_pixel
-/// [`save_under`]: Attributes::save_under
+/// [`maintain_contents`]: Attributes::maintain_contents
+/// [`maintained_planes`]: Attributes::maintained_planes
+/// [`maintenance_fallback_color`]: Attributes::maintenance_fallback_color
+/// [`maintain_windows_under`]: Attributes::maintain_windows_under
 /// [`event_mask`]: Attributes::event_mask
 /// [`do_not_propagate_mask`]: Attributes::do_not_propagate_mask
 /// [`override_redirect`]: Attributes::override_redirect
@@ -106,7 +110,7 @@ pub type ColormapAttribute = CopyableFromParent<Colormap>;
 /// [`CopyFromParent`]: CopyableFromParent::CopyFromParent
 /// [`Forget`]: BitGravity::Forget
 /// [`NorthWest`]: WindowGravity::NorthWest
-/// [`NotUseful`]: BackingStore::NotUseful
+/// [`NotUseful`]: MaintainContents::NotUseful
 /// [e]: EventMask::empty
 /// [d]: DeviceEventMask::empty
 ///
@@ -127,20 +131,20 @@ pub struct Attributes {
 	mask: AttributesMask,
 
 	background_pixmap: Option<BackgroundPixmap>,
-	background_pixel: Option<Pixel>,
+	background_color: Option<Color>,
 
 	border_pixmap: Option<BorderPixmap>,
-	border_pixel: Option<Pixel>,
+	border_color: Option<Color>,
 
 	bit_gravity: Option<__BitGravity>,
 	window_gravity: Option<__WindowGravity>,
 
-	backing_store: Option<BackingStore>,
-	backing_planes: Option<u32>,
-	backing_pixel: Option<Pixel>,
+	maintain_contents: Option<MaintainContents>,
+	maintained_planes: Option<u32>,
+	maintenance_fallback_color: Option<Color>,
 
 	override_redirect: Option<__bool>,
-	save_under: Option<__bool>,
+	maintain_windows_under: Option<__bool>,
 
 	event_mask: Option<EventMask>,
 	do_not_propagate_mask: Option<DeviceEventMask>,
@@ -152,12 +156,22 @@ pub struct Attributes {
 }
 
 impl Attributes {
+	/// Returns a new [`AttributesBuilder`] with which an `Attributes` set can
+	/// be created.
 	#[must_use]
 	pub const fn builder() -> AttributesBuilder {
 		AttributesBuilder::new()
 	}
 }
 
+/// A builder used to construct a new [`Attributes` set].
+///
+/// All attributes start as [`None`], and can be configured with methods on this
+/// builder. When the builder is configured, [`build()`] can be
+/// used to construct the resulting [`Attributes`].
+///
+/// [`build()`]: AttributesBuilder::build
+/// [`Attributes` set]: Attributes
 #[derive(Clone, Default, Debug, Hash, PartialEq, Eq)]
 pub struct AttributesBuilder {
 	x11_size: usize,
@@ -165,20 +179,20 @@ pub struct AttributesBuilder {
 	mask: AttributesMask,
 
 	background_pixmap: Option<BackgroundPixmap>,
-	background_pixel: Option<Pixel>,
+	background_color: Option<Color>,
 
 	border_pixmap: Option<BorderPixmap>,
-	border_pixel: Option<Pixel>,
+	border_color: Option<Color>,
 
 	bit_gravity: Option<BitGravity>,
 	window_gravity: Option<WindowGravity>,
 
-	backing_store: Option<BackingStore>,
-	backing_planes: Option<u32>,
-	backing_pixel: Option<Pixel>,
+	maintain_contents: Option<MaintainContents>,
+	maintained_planes: Option<u32>,
+	maintenance_fallback_color: Option<Color>,
 
 	override_redirect: Option<bool>,
-	save_under: Option<bool>,
+	maintain_windows_under: Option<bool>,
 
 	event_mask: Option<EventMask>,
 	do_not_propagate_mask: Option<DeviceEventMask>,
@@ -189,6 +203,13 @@ pub struct AttributesBuilder {
 }
 
 impl AttributesBuilder {
+	/// Creates a new `AttributesBuilder`.
+	///
+	/// All attributes start as [`None`], and can be configured with the other
+	/// methods on this builder. When the builder is configured, [`build()`] can
+	/// be used to build the resulting [`Attributes`].
+	///
+	/// [`build()`]: build
 	#[must_use]
 	pub const fn new() -> Self {
 		Self {
@@ -197,20 +218,20 @@ impl AttributesBuilder {
 			mask: AttributesMask::empty(),
 
 			background_pixmap: None,
-			background_pixel: None,
+			background_color: None,
 
 			border_pixmap: None,
-			border_pixel: None,
+			border_color: None,
 
 			bit_gravity: None,
 			window_gravity: None,
 
-			backing_store: None,
-			backing_planes: None,
-			backing_pixel: None,
+			maintain_contents: None,
+			maintained_planes: None,
+			maintenance_fallback_color: None,
 
 			override_redirect: None,
-			save_under: None,
+			maintain_windows_under: None,
 
 			event_mask: None,
 			do_not_propagate_mask: None,
@@ -221,6 +242,10 @@ impl AttributesBuilder {
 		}
 	}
 
+	/// Constructs the resulting [`Attributes` set] with the configured
+	/// attributes.
+	///
+	/// [`Attributes` set]: Attributes
 	#[must_use]
 	pub fn build(self) -> Attributes {
 		Attributes {
@@ -229,20 +254,20 @@ impl AttributesBuilder {
 			mask: self.mask,
 
 			background_pixmap: self.background_pixmap,
-			background_pixel: self.background_pixel,
+			background_color: self.background_color,
 
 			border_pixmap: self.border_pixmap,
-			border_pixel: self.border_pixel,
+			border_color: self.border_color,
 
 			bit_gravity: self.bit_gravity.map(__BitGravity),
 			window_gravity: self.window_gravity.map(__WindowGravity),
 
-			backing_store: self.backing_store,
-			backing_planes: self.backing_planes,
-			backing_pixel: self.backing_pixel,
+			maintain_contents: self.maintain_contents,
+			maintained_planes: self.maintained_planes,
+			maintenance_fallback_color: self.maintenance_fallback_color,
 
 			override_redirect: self.override_redirect.map(__bool),
-			save_under: self.save_under.map(__bool),
+			maintain_windows_under: self.maintain_windows_under.map(__bool),
 
 			event_mask: self.event_mask,
 			do_not_propagate_mask: self.do_not_propagate_mask,
@@ -255,6 +280,20 @@ impl AttributesBuilder {
 }
 
 impl AttributesBuilder {
+	/// Configures the [pixmap] used as the [window]'s background.
+	///
+	/// See [`Attributes::background_pixmap`] for more information.
+	///
+	/// # Errors
+	/// If [`ParentRelative`] is specified, the [window] must have the same
+	/// depth as the parent, else a [`Match` error] is generated.
+	///
+	/// [`ParentRelative`]: ParentRelatable::ParentRelative
+	///
+	/// [pixmap]: Pixmap
+	/// [window]: crate::Window
+	///
+	/// [`Match` error]: crate::x11::error::Match
 	pub fn background_pixmap(&mut self, background_pixmap: BackgroundPixmap) -> &mut Self {
 		if self.background_pixmap.is_none() {
 			self.x11_size += 4;
@@ -265,17 +304,41 @@ impl AttributesBuilder {
 
 		self
 	}
-	pub fn background_pixel(&mut self, background_pixel: Pixel) -> &mut Self {
-		if self.background_pixel.is_none() {
+	/// Configures the solid color used as the [window]'s background.
+	///
+	/// If this is configured, it takes precedence over [`background_pixmap`].
+	///
+	/// See [`Attributes::background_color`] for more information.
+	///
+	/// [window]: crate::Window
+	/// [`background_pixmap`]: AttributesBuilder::background_pixmap
+	pub fn background_color(&mut self, background_color: Color) -> &mut Self {
+		if self.background_color.is_none() {
 			self.x11_size += 4;
 		}
 
-		self.background_pixel = Some(background_pixel);
-		self.mask |= AttributesMask::BACKGROUND_PIXEL;
+		self.background_color = Some(background_color);
+		self.mask |= AttributesMask::BACKGROUND_COLOR;
 
 		self
 	}
 
+	/// Configures the [pixmap] used for the [window]'s border.
+	///
+	/// See [`Attributes::border_pixmap`] for more information.
+	///
+	/// # Errors
+	/// The [pixmap] and the [window] must have the same root window and the
+	/// same depth, else a [`Match` error] is generated.
+	///
+	/// If [`CopyFromParent`] is specified, the [window] must have the same
+	/// depth as its parent, else a [`Match` error] is generated.
+	///
+	/// [pixmap]: Pixmap
+	/// [window]: crate::Window
+	///
+	/// [`CopyFromParent`]: CopyableFromParent::CopyFromParent
+	/// [`Match` error]: crate::x11::error::Match
 	pub fn border_pixmap(&mut self, border_pixmap: BorderPixmap) -> &mut Self {
 		if self.border_pixmap.is_none() {
 			self.x11_size += 4;
@@ -286,17 +349,33 @@ impl AttributesBuilder {
 
 		self
 	}
-	pub fn border_pixel(&mut self, border_pixel: Pixel) -> &mut Self {
-		if self.border_pixel.is_none() {
+	/// Configures the solid color used for the [window]'s border.
+	///
+	/// If this is configured, it takes precedence over the [`border_pixmap`].
+	///
+	/// See [`Attributes::border_color`] for more information.
+	///
+	/// [window]: crate::Window
+	///
+	/// [`border_pixmap`]: AttributesBuilder::border_pixmap
+	pub fn border_color(&mut self, border_color: Color) -> &mut Self {
+		if self.border_color.is_none() {
 			self.x11_size += 4;
 		}
 
-		self.border_pixel = Some(border_pixel);
-		self.mask |= AttributesMask::BORDER_PIXEL;
+		self.border_color = Some(border_color);
+		self.mask |= AttributesMask::BORDER_COLOR;
 
 		self
 	}
 
+	/// Configures the [region] of the [window] which should be retained if the
+	/// [window] is resized.
+	///
+	/// See [`Attributes::bit_gravity`] for more information.
+	///
+	/// [region]: crate::Region
+	/// [window]: crate::Window
 	pub fn bit_gravity(&mut self, bit_gravity: BitGravity) -> &mut Self {
 		if self.bit_gravity.is_none() {
 			self.x11_size += 4;
@@ -307,6 +386,12 @@ impl AttributesBuilder {
 
 		self
 	}
+	/// Configures how the [window] should be repositioned if its parent is
+	/// resized.
+	///
+	/// See [`Attributes::window_gravity`] for more information.
+	///
+	/// [window]: crate::Window
 	pub fn window_gravity(&mut self, window_gravity: WindowGravity) -> &mut Self {
 		if self.window_gravity.is_none() {
 			self.x11_size += 4;
@@ -318,37 +403,72 @@ impl AttributesBuilder {
 		self
 	}
 
-	pub fn backing_store(&mut self, backing_store: BackingStore) -> &mut Self {
-		if self.backing_store.is_none() {
+	/// Configures the conditions under which the X server should maintain the
+	/// contents of obscured [regions] of the [window].
+	///
+	/// See [`Attributes::maintain_contents`] for more information.
+	///
+	/// [regions]: crate::Region
+	/// [window]: crate::Window
+	pub fn maintain_contents(&mut self, maintain_contents: MaintainContents) -> &mut Self {
+		if self.maintain_contents.is_none() {
 			self.x11_size += 4;
 		}
 
-		self.backing_store = Some(backing_store);
-		self.mask |= AttributesMask::BACKING_STORE;
+		self.maintain_contents = Some(maintain_contents);
+		self.mask |= AttributesMask::MAINTAIN_CONTENTS;
 
 		self
 	}
-	pub fn backing_planes(&mut self, backing_planes: u32) -> &mut Self {
-		if self.backing_planes.is_none() {
+	/// Configures which bit planes of the [window] are maintained for
+	/// [`maintain_contents`] and [`maintain_windows_under`].
+	///
+	/// See [`Attributes::maintain_contents`] for more information.
+	///
+	/// [window]: crate::Window
+	///
+	/// [`maintain_contents`]: Attributes::maintain_contents
+	/// [`maintain_windows_under`]: Attributes::maintain_windows_under
+	pub fn maintained_planes(&mut self, maintained_planes: u32) -> &mut Self {
+		if self.maintained_planes.is_none() {
 			self.x11_size += 4;
 		}
 
-		self.backing_planes = Some(backing_planes);
-		self.mask |= AttributesMask::BACKING_PLANES;
+		self.maintained_planes = Some(maintained_planes);
+		self.mask |= AttributesMask::MAINTAINED_PLANES;
 
 		self
 	}
-	pub fn backing_pixel(&mut self, backing_pixel: Pixel) -> &mut Self {
-		if self.backing_pixel.is_none() {
+	/// Configures the color used for  bit planes which are not preserved for
+	/// [`maintain_contents`] and [`maintain_windows_under`].
+	///
+	/// See [`Attributes::maintenance_fallback_color`] for more information.
+	///
+	/// [`maintain_contents`]: Attributes::maintain_contents
+	/// [`maintain_windows_under`]: Attributes::maintain_windows_under
+	pub fn maintenance_fallback_color(&mut self, maintenance_fallback_color: Color) -> &mut Self {
+		if self.maintenance_fallback_color.is_none() {
 			self.x11_size += 4;
 		}
 
-		self.backing_pixel = Some(backing_pixel);
-		self.mask |= AttributesMask::BACKING_PIXEL;
+		self.maintenance_fallback_color = Some(maintenance_fallback_color);
+		self.mask |= AttributesMask::MAINTENANCE_FALLBACK_COLOR;
 
 		self
 	}
 
+	/// Configures whether [`MapWindow`] and [`ConfigureWindow`] requests on the
+	/// [window] should override a [`SUBSTRUCTURE_REDIRECT`] selection on its
+	/// parent.
+	///
+	/// See [`Attributes::override_redirect`] for more information.
+	///
+	/// [window]: crate::Window
+	///
+	/// [`MapWindow`]: crate::x11::request::MapWindow
+	/// [`ConfigureWindow`]: crate::x11::request::ConfigureWindow
+	///
+	/// [`SUBSTRUCTURE_REDIRECT`]: EventMask::SUBSTRUCTURE_REDIRECT
 	pub fn override_redirect(&mut self, override_redirect: bool) -> &mut Self {
 		if self.override_redirect.is_none() {
 			self.x11_size += 4;
@@ -359,17 +479,30 @@ impl AttributesBuilder {
 
 		self
 	}
-	pub fn save_under(&mut self, save_under: bool) -> &mut Self {
-		if self.save_under.is_none() {
+	/// Configures whether the X server should maintain the contents of
+	/// [windows][window] under this [window].
+	///
+	/// See [`Attributes::maintain_windows_under`] for more information.
+	///
+	/// [window]: crate::Window
+	pub fn maintain_windows_under(&mut self, maintain_windows_under: bool) -> &mut Self {
+		if self.maintain_windows_under.is_none() {
 			self.x11_size += 4;
 		}
 
-		self.save_under = Some(save_under);
-		self.mask |= AttributesMask::SAVE_UNDER;
+		self.maintain_windows_under = Some(maintain_windows_under);
+		self.mask |= AttributesMask::MAINTAIN_WINDOWS_UNDER;
 
 		self
 	}
 
+	/// Configures which [events] the client wishes to select interest in for
+	/// the [window] (or, for some [events], descendents of the [window]).
+	///
+	/// See [`Attributes::event_mask`] for more information.
+	///
+	/// [events]: crate::message::Event
+	/// [window]: crate::Window
 	pub fn event_mask(&mut self, event_mask: EventMask) -> &mut Self {
 		if self.event_mask.is_none() {
 			self.x11_size += 4;
@@ -380,6 +513,13 @@ impl AttributesBuilder {
 
 		self
 	}
+	/// Configures which [events][event] should not be propagated to ancestors
+	/// of the [window] when no client has selected the [event] on the [window].
+	///
+	/// See [`Attributes::do_not_propagate_mask`] for more information.
+	///
+	/// [event]: crate::message::Event
+	/// [window]: crate::Window
 	pub fn do_not_propagate_mask(&mut self, do_not_propagate_mask: DeviceEventMask) -> &mut Self {
 		if self.do_not_propagate_mask.is_none() {
 			self.x11_size += 4;
@@ -391,6 +531,26 @@ impl AttributesBuilder {
 		self
 	}
 
+	/// Configures which [colormap] is specified as best reflecting the true
+	/// colors of the [window].
+	///
+	/// See [`Attributes::colormap`] for more information.
+	///
+	/// # Errors
+	/// The [colormap] must have the same [visual type] and root window as the
+	/// [window], else a [`Match` error] is generated.
+	///
+	/// If [`CopyFromParent`] is specified, the [window] must have the same
+	/// [visual type] as its parent, else a [`Match` error] is generated. The
+	/// parent must not have a [`colormap` attribute] of [`None`], else a
+	/// [`Match` error] is generated.
+	///
+	/// [colormap]: Colormap
+	/// [visual type]: crate::visual::VisualType
+	/// [window]: crate::Window
+	///
+	/// [`colormap` attribute]: Attributes::colormap
+	/// [`Match` error]: crate::x11::error::Match
 	pub fn colormap(&mut self, colormap: ColormapAttribute) -> &mut Self {
 		if self.colormap.is_none() {
 			self.x11_size += 4;
@@ -402,6 +562,11 @@ impl AttributesBuilder {
 		self
 	}
 
+	/// Configures the [appearance of the cursor] used when the cursor is within
+	/// the [window].
+	///
+	/// [appearance of the cursor]: CursorAppearance
+	/// [window]: crate::Window
 	pub fn cursor_appearance(&mut self, cursor_appearance: CursorAppearanceAttribute) -> &mut Self {
 		if self.cursor_appearance.is_none() {
 			self.x11_size += 4;
@@ -415,76 +580,269 @@ impl AttributesBuilder {
 }
 
 impl Attributes {
+	/// The [pixmap] used as the [window]'s background.
+	///
+	/// If a background of [`ParentRelative`] is specified, then the
+	/// `background_pixmap` of the [window]'s parent is used. Changes to the
+	/// parent's `background_pixmap` will be reflected for this [window]'s
+	/// background.
+	///
+	/// A `background_pixmap` of [`None`] means the [window] has a transparent
+	/// background.
+	///
+	/// If [`background_color`] is configured, it overrides the value of the
+	/// `background_pixmap`.
+	///
+	/// [pixmap]: Pixmap
+	/// [window]: crate::Window
+	///
+	/// [`ParentRelative`]: ParentRelatable::ParentRelative
+	/// [`background_color`]: Attributes::background_color
 	#[must_use]
-	pub const fn background_pixmap(&self) -> &Option<BackgroundPixmap> {
-		&self.background_pixmap
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const is omitted for API uniformity with the other methods and sets"
+	)]
+	pub fn background_pixmap(&self) -> Option<&BackgroundPixmap> {
+		self.background_pixmap.as_ref()
 	}
+	/// The solid color used as the [window]'s background.
+	///
+	/// A [pixmap] of undefined size filled with this color is used.
+	///
+	/// If this is configured, it takes precedence over the
+	/// [`background_pixmap`].
+	///
+	/// [window]: crate::Window
+	/// [pixmap]: Pixmap
+	///
+	/// [`background_pixmap`]: Attributes::background_pixmap
 	#[must_use]
-	pub const fn background_pixel(&self) -> &Option<Pixel> {
-		&self.background_pixel
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const is omitted for API uniformity with the other methods and sets"
+	)]
+	pub fn background_color(&self) -> Option<&Color> {
+		self.background_color.as_ref()
 	}
 
+	/// The [pixmap] used as the [window]'s border.
+	///
+	/// If a `border_pixmap` of [`CopyFromParent`] is specified, then the
+	/// `border_pixmap` of the [window]'s parent is copied, but subsequent
+	/// changes to the parent's border will not affect this [window]'s border.
+	///
+	/// [pixmap]: Pixmap
+	/// [window]: crate::Window
 	#[must_use]
-	pub const fn border_pixmap(&self) -> &Option<BorderPixmap> {
-		&self.border_pixmap
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const is omitted for API uniformity with the other methods and sets"
+	)]
+	pub fn border_pixmap(&self) -> Option<&BorderPixmap> {
+		self.border_pixmap.as_ref()
 	}
+	/// The solid color used as the [window]'s border.
+	///
+	/// A [pixmap] of undefined size filled with this color is used.
+	///
+	/// If this is configured, it takes precedence over the
+	/// [`border_pixmap`].
+	///
+	/// [window]: crate::Window
+	/// [pixmap]: Pixmap
+	///
+	/// [`border_pixmap`]: Attributes::border_pixmap
 	#[must_use]
-	pub const fn border_pixel(&self) -> &Option<Pixel> {
-		&self.border_pixel
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const is omitted for API uniformity with the other methods and sets"
+	)]
+	pub fn border_color(&self) -> Option<&Color> {
+		self.border_color.as_ref()
 	}
 
+	/// Defines the [region] of the [window] which should be retained if the
+	/// [window] is resized.
+	///
+	/// See [`BitGravity`] for more information.
+	///
+	/// [region]: crate::Region
+	/// [window]: crate::Window
 	#[must_use]
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const is omitted for API uniformity with the other methods and sets"
+	)]
 	pub fn bit_gravity(&self) -> Option<&BitGravity> {
 		self.bit_gravity
 			.as_ref()
 			.map(|__BitGravity(gravity)| gravity)
 	}
+	/// Defines how the [window] should be repositioned if its parent is
+	/// resized.
+	///
+	/// See [`WindowGravity`] for more information.
+	///
+	/// [window]: crate::Window
 	#[must_use]
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const is omitted for API uniformity with the other methods and sets"
+	)]
 	pub fn window_gravity(&self) -> Option<&WindowGravity> {
 		self.window_gravity
 			.as_ref()
 			.map(|__WindowGravity(gravity)| gravity)
 	}
 
+	/// The conditions under which the X server should maintain the contents of
+	/// obscured [regions] of the [window].
+	///
+	/// See [`MaintainContents`] for more information.
+	///
+	/// [regions]: crate::Region
+	/// [window]: crate::Window
 	#[must_use]
-	pub const fn backing_store(&self) -> &Option<BackingStore> {
-		&self.backing_store
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const is omitted for API uniformity with the other methods and sets"
+	)]
+	pub fn maintain_contents(&self) -> Option<&MaintainContents> {
+		self.maintain_contents.as_ref()
 	}
+	/// Which bit planes of the [window] hold dynamic data which must be
+	/// maintained for [`maintain_contents`] and [`maintain_windows_under`].
+	///
+	/// See [`MaintainContents`] for more information.
+	///
+	/// [window]: crate::Window
+	/// [`maintain_contents`]: Attributes::maintain_contents
+	/// [`maintain_windows_under`]: Attributes::maintain_windows_under
 	#[must_use]
-	pub const fn backing_planes(&self) -> &Option<u32> {
-		&self.backing_planes
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const is omitted for API uniformity with the other methods and sets"
+	)]
+	pub fn maintained_planes(&self) -> Option<&u32> {
+		self.maintained_planes.as_ref()
 	}
+	/// The color to use for bit planes which are not preserved for
+	/// [`maintain_contents`] and [`maintain_windows_under`] (see
+	/// [`maintained_planes`]).
+	///
+	/// See [`MaintainContents`] for more information.
+	///
+	/// [`maintain_contents`]: Attributes::maintain_contents
+	/// [`maintained_planes`]: Attributes::maintained_planes
+	/// [`maintain_windows_under`]: Attributes::maintain_windows_under
 	#[must_use]
-	pub const fn backing_pixel(&self) -> &Option<Pixel> {
-		&self.backing_pixel
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const is omitted for API uniformity with the other methods and sets"
+	)]
+	pub fn maintenance_fallback_color(&self) -> Option<&Color> {
+		self.maintenance_fallback_color.as_ref()
 	}
 
+	/// Whether [`MapWindow`] and [`ConfigureWindow`] requests on this [window]
+	/// should override a [`SUBSTRUCTURE_REDIRECT`] selection on its parent.
+	///
+	/// This is typically used to inform a window manager not to tamper with the
+	/// [window].
+	///
+	/// [window]: crate::Window
+	///
+	/// [`MapWindow`]: crate::x11::request::MapWindow
+	/// [`ConfigureWindow`]: crate::x11::request::ConfigureWindow
+	///
+	/// [`SUBSTRUCTURE_REDIRECT`]: EventMask::SUBSTRUCTURE_REDIRECT
 	#[must_use]
 	pub fn override_redirect(&self) -> Option<&bool> {
 		self.override_redirect.as_ref().map(|__bool(bool)| bool)
 	}
+	/// Whether the X server should maintain the contents of [windows][window]
+	/// under this [window].
+	///
+	/// See [`MaintainContents`] for more information.
+	///
+	/// [window]: crate::Window
 	#[must_use]
-	pub fn save_under(&self) -> Option<&bool> {
-		self.save_under.as_ref().map(|__bool(bool)| bool)
+	pub fn maintain_windows_under(&self) -> Option<&bool> {
+		self.maintain_windows_under
+			.as_ref()
+			.map(|__bool(bool)| bool)
 	}
 
+	/// Defines which [events] the client wishes to select interest in for this
+	/// [window] (or, for some [events], descendents of this [window]).
+	///
+	/// See [`EventMask`] for more information.
+	///
+	/// [events]: crate::message::Event
+	/// [window]: crate::Window
 	#[must_use]
-	pub const fn event_mask(&self) -> &Option<EventMask> {
-		&self.event_mask
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const is omitted for API uniformity with the other methods and sets"
+	)]
+	pub fn event_mask(&self) -> Option<&EventMask> {
+		self.event_mask.as_ref()
 	}
+	/// Defines which [events][event] should not be propagated to ancestors of
+	/// this [window] when no client has selected the [event] on this [window].
+	///
+	/// [event]: crate::message::Event
+	/// [window]: crate::Window
 	#[must_use]
-	pub const fn do_not_propagate_mask(&self) -> &Option<DeviceEventMask> {
-		&self.do_not_propagate_mask
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const is omitted for API uniformity with the other methods and sets"
+	)]
+	pub fn do_not_propagate_mask(&self) -> Option<&DeviceEventMask> {
+		self.do_not_propagate_mask.as_ref()
 	}
 
+	/// Specifies the [colormap] which best reflects the true colors of this
+	/// [window].
+	///
+	/// If [`CopyFromParent`] is specified, the [window]'s parent's [colormap]
+	/// is copied. Subsequent changes to the parent's `colormap` attribute to
+	/// not affect this [window].
+	///
+	/// [colormap]: Colormap
+	/// [window]: crate::Window
+	///
+	/// [`CopyFromParent`]: CopyableFromParent::CopyFromParent
+	/// [visual type]: crate::visual::VisualType
+	///
+	/// [`Match` error]: crate::x11::error::Match
 	#[must_use]
-	pub const fn colormap(&self) -> &Option<ColormapAttribute> {
-		&self.colormap
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const is omitted for API uniformity with the other methods and sets"
+	)]
+	pub fn colormap(&self) -> Option<&ColormapAttribute> {
+		self.colormap.as_ref()
 	}
 
+	/// The [appearance of the cursor] used when the cursor is within this
+	/// [window].
+	///
+	/// If [`None`] is specified, the `cursor_appearance` of the [window]'s
+	/// parent is used. Any change in the parent's `cursor_appearance` will
+	/// affect the appearance of the cursor within this [window] too.
+	///
+	/// [window]: crate::Window
+	///
+	/// [appearance of the cursor]: CursorAppearance
 	#[must_use]
-	pub const fn cursor_appearance(&self) -> &Option<CursorAppearanceAttribute> {
-		&self.cursor_appearance
+	#[allow(
+		clippy::missing_const_for_fn,
+		reason = "const is omitted for API uniformity with the other methods and sets"
+	)]
+	pub fn cursor_appearance(&self) -> Option<&CursorAppearanceAttribute> {
+		self.cursor_appearance.as_ref()
 	}
 }
 
@@ -497,72 +855,102 @@ bitflags! {
 	/// [window]: crate::Window
 	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
 	pub struct AttributesMask: u32 {
-		/// See also: [`background_pixmap`], <code>[ParentRelatable]<[Option]<[Pixmap]>></code>.
+		/// Whether the [`background_pixmap` attribute] is configured.
 		///
-		/// [`background_pixmap`]: Attributes::background_pixmap
+		/// See [`Attributes::background_pixmap`] for more information.
+		///
+		/// [`background_pixmap` attribute]: Attributes::background_pixmap
 		const BACKGROUND_PIXMAP = 0x0000_0001;
-		/// See also: [`background_pixel`], [`Pixel`].
+		/// Whether the [`background_color` attribute] is configured.
 		///
-		/// [`background_pixel`]: Attributes::background_pixel
-		const BACKGROUND_PIXEL = 0x0000_0002;
+		/// See [`Attributes::background_color`] for more information.
+		///
+		/// [`background_color` attribute]: Attributes::background_color
+		const BACKGROUND_COLOR = 0x0000_0002;
 
-		/// See also: [`border_pixmap`], <code>[CopyableFromParent]<[Pixmap]></code>.
+		/// Whether the [`border_pixmap` attribute] is configured.
 		///
-		/// [`border_pixmap`]: Attributes::border_pixmap
+		/// See [`Attributes::border_pixmap`] for more information.
+		///
+		/// [`border_pixmap` attribute]: Attributes::border_pixmap
 		const BORDER_PIXMAP = 0x0000_0004;
-		/// See also: [`border_pixel`], [`Pixel`].
+		/// Whether the [`border_color` attribute] is configured.
 		///
-		/// [`border_pixel`]: Attributes::border_pixel
-		const BORDER_PIXEL = 0x0000_0008;
+		/// See [`Attributes::border_color`] for more information.
+		///
+		/// [`border_color` attribute]: Attributes::border_color
+		const BORDER_COLOR = 0x0000_0008;
 
-		/// See also: [`bit_gravity`], [`BitGravity`].
+		/// Whether the [`bit_gravity` attribute] is configured.
 		///
-		/// [`bit_gravity`]: Attributes::bit_gravity
+		/// See [`Attributes::bit_gravity`] for more information.
+		///
+		/// [`bit_gravity` attribute]: Attributes::bit_gravity
 		const BIT_GRAVITY = 0x0000_0010;
-		/// See also: [`window_gravity`], [`WindowGravity`].
+		/// Whether the [`window_gravity` attribute] is configured.
 		///
-		/// [`window_gravity`]: Attributes::window_gravity
+		/// See [`Attributes::window_gravity`] for more information.
+		///
+		/// [`window_gravity` attribute]: Attributes::window_gravity
 		const WINDOW_GRAVITY = 0x0000_0020;
 
-		/// See also: [`backing_store`], [`BackingStore`].
+		/// Whether the [`maintain_contents` attribute] is configured.
 		///
-		/// [`backing_store`]: Attributes::backing_store
-		const BACKING_STORE = 0x0000_0040;
-		/// See also: [`backing_planes`], [`u32`].
+		/// See [`Attributes::maintain_contents`] for more information.
 		///
-		/// [`backing_planes`]: Attributes::backing_planes
-		const BACKING_PLANES = 0x0000_0080;
-		/// See also: [`backing_pixel`], [`Pixel`].
+		/// [`maintain_contents` attribute]: Attributes::maintain_contents
+		const MAINTAIN_CONTENTS = 0x0000_0040;
+		/// Whether the [`maintained_planes` attribute] is configured.
 		///
-		/// [`backing_pixel`]: Attributes::backing_pixel
-		const BACKING_PIXEL = 0x0000_0100;
+		/// See [`Attributes::maintained_planes`] for more information.
+		///
+		/// [`maintained_planes` attribute]: Attributes::maintained_planes
+		const MAINTAINED_PLANES = 0x0000_0080;
+		/// Whether the [`maintenance_fallback_color` attribute] is configured.
+		///
+		/// See [`Attributes::maintenance_fallback_color`] for more information.
+		///
+		/// [`maintenance_fallback_color` attribute]: Attributes::maintenance_fallback_color
+		const MAINTENANCE_FALLBACK_COLOR = 0x0000_0100;
 
-		/// See also: [`override_redirect`], [`bool`].
+		/// Whether the [`override_redirect` attribute] is configured.
 		///
-		/// [`override_redirect`]: Attributes::OverrideRedirect
+		/// See [`Attributes::override_redirect`] for more information.
+		///
+		/// [`override_redirect` attribute]: Attributes::override_redirect
 		const OVERRIDE_REDIRECT = 0x0000_0200;
-		/// See also: [`save_under`], [`bool`].
+		/// Whether the [`maintain_windows_under` attribute] is configured.
 		///
-		/// [`save_under`]: Attributes::save_under
-		const SAVE_UNDER = 0x0000_0400;
+		/// See [`Attributes::maintain_windows_under`] for more information.
+		///
+		/// [`maintain_windows_under` attribute]: Attributes::maintain_windows_under
+		const MAINTAIN_WINDOWS_UNDER = 0x0000_0400;
 
-		/// See also: [`event_mask`], [`EventMask`].
+		/// Whether the [`event_mask` attribute] is configured.
 		///
-		/// [`event_mask`]: Attributes::event_mask
+		/// See [`Attributes::event_mask`] for more information.
+		///
+		/// [`event_mask` attribute]: Attributes::event_mask
 		const EVENT_MASK = 0x0000_0800;
-		/// See also: [`do_not_propagate_mask`], [`DeviceEventMask`].
+		/// Whether the [`do_not_propagate_mask` attribute] is configured.
 		///
-		/// [`do_not_propagate_mask`]: Attributes::do_not_propagate_mask
+		/// See [`Attributes::do_not_propagate_mask`] for more information.
+		///
+		/// [`do_not_propagate_mask` attribute]: Attributes::do_not_propagate_mask
 		const DO_NOT_PROPAGATE_MASK = 0x0000_1000;
 
-		/// See also: [`colormap`], <code>[CopyableFromParent]<[Colormap]></code>.
+		/// Whether the [`colormap` attribute] is configured.
 		///
-		/// [`colormap`]: Attributes::colormap
+		/// See [`Attributes::colormap`] for more information.
+		///
+		/// [`colormap` attribute]: Attributes::colormap
 		const COLORMAP = 0x0000_2000;
 
-		/// See also: [`cursor_appearance`], [`CursorAppearance`].
+		/// Whether the [`cursor_appearance` attribute] is configured.
 		///
-		/// [`cursor_appearance`]: Attributes::cursor_appearance
+		/// See [`Attributes::cursor_appearance`] for more information.
+		///
+		/// [`cursor_appearance` attribute]: Attributes::cursor_appearance
 		const CURSOR_APPEARANCE = 0x0000_4000;
 	}
 }
@@ -586,10 +974,10 @@ impl Readable for Attributes {
 			&mut x11_size,
 			mask.contains(AttributesMask::BACKGROUND_PIXMAP),
 		)?;
-		let background_pixel = super::read_set_value(
+		let background_color = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(AttributesMask::BACKGROUND_PIXEL),
+			mask.contains(AttributesMask::BACKGROUND_COLOR),
 		)?;
 
 		let border_pixmap = super::read_set_value(
@@ -597,10 +985,10 @@ impl Readable for Attributes {
 			&mut x11_size,
 			mask.contains(AttributesMask::BORDER_PIXMAP),
 		)?;
-		let border_pixel = super::read_set_value(
+		let border_color = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(AttributesMask::BORDER_PIXEL),
+			mask.contains(AttributesMask::BORDER_COLOR),
 		)?;
 
 		let bit_gravity = super::read_set_value(
@@ -614,20 +1002,20 @@ impl Readable for Attributes {
 			mask.contains(AttributesMask::WINDOW_GRAVITY),
 		)?;
 
-		let backing_store = super::read_set_value(
+		let maintain_contents = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(AttributesMask::BACKING_STORE),
+			mask.contains(AttributesMask::MAINTAIN_CONTENTS),
 		)?;
-		let backing_planes = super::read_set_value(
+		let maintained_planes = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(AttributesMask::BACKING_PLANES),
+			mask.contains(AttributesMask::MAINTAINED_PLANES),
 		)?;
-		let backing_pixel = super::read_set_value(
+		let maintenance_fallback_color = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(AttributesMask::BACKING_PIXEL),
+			mask.contains(AttributesMask::MAINTENANCE_FALLBACK_COLOR),
 		)?;
 
 		let override_redirect = super::read_set_value(
@@ -635,10 +1023,10 @@ impl Readable for Attributes {
 			&mut x11_size,
 			mask.contains(AttributesMask::OVERRIDE_REDIRECT),
 		)?;
-		let save_under = super::read_set_value(
+		let maintain_windows_under = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(AttributesMask::SAVE_UNDER),
+			mask.contains(AttributesMask::MAINTAIN_WINDOWS_UNDER),
 		)?;
 
 		let event_mask = super::read_set_value(
@@ -666,20 +1054,20 @@ impl Readable for Attributes {
 			mask,
 
 			background_pixmap,
-			background_pixel,
+			background_color,
 
 			border_pixmap,
-			border_pixel,
+			border_color,
 
 			bit_gravity,
 			window_gravity,
 
-			backing_store,
-			backing_planes,
-			backing_pixel,
+			maintain_contents,
+			maintained_planes,
+			maintenance_fallback_color,
 
 			override_redirect,
-			save_under,
+			maintain_windows_under,
 
 			event_mask,
 			do_not_propagate_mask,
@@ -698,15 +1086,15 @@ impl Writable for Attributes {
 		if let Some(background_pixmap) = &self.background_pixmap {
 			background_pixmap.write_to(buf)?;
 		}
-		if let Some(background_pixel) = &self.background_pixel {
-			background_pixel.write_to(buf)?;
+		if let Some(background_color) = &self.background_color {
+			background_color.write_to(buf)?;
 		}
 
 		if let Some(border_pixmap) = &self.border_pixmap {
 			border_pixmap.write_to(buf)?;
 		}
-		if let Some(border_pixel) = &self.border_pixel {
-			border_pixel.write_to(buf)?;
+		if let Some(border_color) = &self.border_color {
+			border_color.write_to(buf)?;
 		}
 
 		if let Some(bit_gravity) = &self.bit_gravity {
@@ -716,21 +1104,21 @@ impl Writable for Attributes {
 			window_gravity.write_to(buf)?;
 		}
 
-		if let Some(backing_store) = &self.backing_store {
-			backing_store.write_to(buf)?;
+		if let Some(maintain_contents) = &self.maintain_contents {
+			maintain_contents.write_to(buf)?;
 		}
-		if let Some(backing_planes) = &self.backing_planes {
-			backing_planes.write_to(buf)?;
+		if let Some(maintained_planes) = &self.maintained_planes {
+			maintained_planes.write_to(buf)?;
 		}
-		if let Some(backing_pixel) = &self.backing_pixel {
-			backing_pixel.write_to(buf)?;
+		if let Some(maintenance_fallback_color) = &self.maintenance_fallback_color {
+			maintenance_fallback_color.write_to(buf)?;
 		}
 
 		if let Some(override_redirect) = &self.override_redirect {
 			override_redirect.write_to(buf)?;
 		}
-		if let Some(save_under) = &self.save_under {
-			save_under.write_to(buf)?;
+		if let Some(maintain_windows_under) = &self.maintain_windows_under {
+			maintain_windows_under.write_to(buf)?;
 		}
 
 		if let Some(event_mask) = &self.event_mask {
