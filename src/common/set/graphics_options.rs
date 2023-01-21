@@ -526,6 +526,10 @@ impl GraphicsOptionsBuilder {
 }
 
 impl GraphicsOptionsBuilder {
+	/// Configures the bitwise operation used to determine the resultant pixels
+	/// in a graphics operation.
+	///
+	/// See [`GraphicsOptions::function`] for more information.
 	pub fn function(&mut self, function: Function) -> &mut Self {
 		if self.function.is_none() {
 			self.x11_size += 4;
@@ -537,6 +541,9 @@ impl GraphicsOptionsBuilder {
 		self
 	}
 
+	/// Configures the mask through which a graphics operation is applied.
+	///
+	/// See [`GraphicsOptions::plane_mask`] for more information.
 	pub fn plane_mask(&mut self, plane_mask: u32) -> &mut Self {
 		if self.plane_mask.is_none() {
 			self.x11_size += 4;
@@ -548,6 +555,11 @@ impl GraphicsOptionsBuilder {
 		self
 	}
 
+	/// Configures the [foreground] which is used in graphics operations.
+	///
+	/// See [`GraphicsOptions::foreground`] for more information.
+	///
+	/// [foreground]: GraphicsOptions::foreground
 	pub fn foreground(&mut self, foreground: Pixel) -> &mut Self {
 		if self.foreground.is_none() {
 			self.x11_size += 4;
@@ -558,6 +570,11 @@ impl GraphicsOptionsBuilder {
 
 		self
 	}
+	/// Configures the [background] which is used in graphics operations.
+	///
+	/// See [`GraphicsOptions::background`] for more information.
+	///
+	/// [background]: GraphicsOptions::background
 	pub fn background(&mut self, background: Pixel) -> &mut Self {
 		if self.background.is_none() {
 			self.x11_size += 4;
@@ -569,6 +586,11 @@ impl GraphicsOptionsBuilder {
 		self
 	}
 
+	/// Configures the [width of lines] drawn with graphics operations.
+	///
+	/// See [`GraphicsOptions::line_width`] for more information.
+	///
+	/// [width of lines]: GraphicsOptions::line_width
 	pub fn line_width(&mut self, line_width: LineWidth) -> &mut Self {
 		if self.line_width.is_none() {
 			self.x11_size += 4;
@@ -580,6 +602,11 @@ impl GraphicsOptionsBuilder {
 		self
 	}
 
+	/// Configures the [line style] used in graphics operations.
+	///
+	/// See [`GraphicsOptions::line_style`] for more information.
+	///
+	/// [line style]: GraphicsOptions::line_style
 	pub fn line_style(&mut self, line_style: LineStyle) -> &mut Self {
 		if self.line_style.is_none() {
 			self.x11_size += 4;
@@ -590,6 +617,11 @@ impl GraphicsOptionsBuilder {
 
 		self
 	}
+	/// Configures the [cap style] used in graphics operations.
+	///
+	/// See [`GraphicsOptions::cap_style`] for more information.
+	///
+	/// [cap style]: GraphicsOptions::cap_style
 	pub fn cap_style(&mut self, cap_style: CapStyle) -> &mut Self {
 		if self.cap_style.is_none() {
 			self.x11_size += 4;
@@ -600,6 +632,11 @@ impl GraphicsOptionsBuilder {
 
 		self
 	}
+	/// Configures the [join style] used in graphics operations.
+	///
+	/// See [`GraphicsOptions::join_style`] for more information.
+	///
+	/// [join style]: GraphicsOptions::join_style
 	pub fn join_style(&mut self, join_style: JoinStyle) -> &mut Self {
 		if self.join_style.is_none() {
 			self.x11_size += 4;
@@ -610,6 +647,11 @@ impl GraphicsOptionsBuilder {
 
 		self
 	}
+	/// Configures the [fill style] used in graphics operations.
+	///
+	/// See [`GraphicsOptions::fill_style`] for more information.
+	///
+	/// [fill style]: GraphicsOptions::fill_style
 	pub fn fill_style(&mut self, fill_style: FillStyle) -> &mut Self {
 		if self.fill_style.is_none() {
 			self.x11_size += 4;
@@ -620,6 +662,11 @@ impl GraphicsOptionsBuilder {
 
 		self
 	}
+	/// Configures the [fill rule] used in graphics operations.
+	///
+	/// See [`GraphicsOptions::fill_rule`] for more information.
+	///
+	/// [fill rule]: GraphicsOptions::fill_rule
 	pub fn fill_rule(&mut self, fill_rule: FillRule) -> &mut Self {
 		if self.fill_rule.is_none() {
 			self.x11_size += 4;
@@ -631,6 +678,12 @@ impl GraphicsOptionsBuilder {
 		self
 	}
 
+	/// Configures the [tile] [pixmap] used in graphics operations.
+	///
+	/// See [`GraphicsOptions::tile`] for more information.
+	///
+	/// [tile]: GraphicsOptions::tile
+	/// [pixmap]: Pixmap
 	pub fn tile(&mut self, tile: Pixmap) -> &mut Self {
 		if self.tile.is_none() {
 			self.x11_size += 4;
@@ -641,6 +694,12 @@ impl GraphicsOptionsBuilder {
 
 		self
 	}
+	/// Configures the [stipple] [pixmap] used in graphics operations.
+	///
+	/// See [`GraphicsOptions::stipple`] for more information.
+	///
+	/// [stipple]: GraphicsOptions::stipple
+	/// [pixmap]: Pixmap
 	pub fn stipple(&mut self, stipple: Pixmap) -> &mut Self {
 		if self.stipple.is_none() {
 			self.x11_size += 4;
@@ -652,6 +711,14 @@ impl GraphicsOptionsBuilder {
 		self
 	}
 
+	/// Configures the [x coordinate of the top-left corner][x] of the [tile] or
+	/// [stipple] [`Pixmap`] used in graphics operations.
+	///
+	/// See [`GraphicsOptions::tile_stipple_x_origin`] for more information.
+	///
+	/// [x]: GraphicsOptions::tile_stipple_x_origin
+	/// [tile]: GraphicsOptions::tile
+	/// [stipple]: GraphicsOptions::stipple
 	pub fn tile_stipple_x_origin(&mut self, tile_stipple_x_origin: i16) -> &mut Self {
 		if self.tile_stipple_x_origin.is_none() {
 			self.x11_size += 4;
@@ -662,6 +729,14 @@ impl GraphicsOptionsBuilder {
 
 		self
 	}
+	/// Configures the [y coordinate of the top-left corner][y] of the [tile] or
+	/// [stipple] [`Pixmap`] used in graphics operations.
+	///
+	/// See [`GraphicsOptions::tile_stipple_y_origin`] for more information.
+	///
+	/// [y]: GraphicsOptions::tile_stipple_y_origin
+	/// [tile]: GraphicsOptions::tile
+	/// [stipple]: GraphicsOptions::stipple
 	pub fn tile_stipple_y_origin(&mut self, tile_stipple_y_origin: i16) -> &mut Self {
 		if self.tile_stipple_y_origin.is_none() {
 			self.x11_size += 4;
@@ -673,6 +748,11 @@ impl GraphicsOptionsBuilder {
 		self
 	}
 
+	/// Configures the [font] used for graphics operations involving text.
+	///
+	/// See [`GraphicsOptions::font`] for more information.
+	///
+	/// [font]: GraphicsOptions::font
 	pub fn font(&mut self, font: Font) -> &mut Self {
 		if self.font.is_none() {
 			self.x11_size += 4;
@@ -684,6 +764,12 @@ impl GraphicsOptionsBuilder {
 		self
 	}
 
+	/// Configures whether descendent [windows] are included or masked out when
+	/// considering graphics operations.
+	///
+	/// See [`GraphicsOptions::subwindow_mode`] for more information.
+	///
+	/// [windows]: crate::Window
 	pub fn subwindow_mode(&mut self, subwindow_mode: SubwindowMode) -> &mut Self {
 		if self.subwindow_mode.is_none() {
 			self.x11_size += 4;
@@ -695,17 +781,29 @@ impl GraphicsOptionsBuilder {
 		self
 	}
 
-	pub fn graphics_exposures(&mut self, graphics_exposures: bool) -> &mut Self {
+	/// Configures whether [`GraphicsExposure` events] are generated when using
+	/// graphics operations.
+	///
+	/// See [`GraphicsOptions::graphics_exposure`] for more information.
+	///
+	/// [`GraphicsExposure` events]: crate::x11::event::GraphicsExposure
+	pub fn graphics_exposure(&mut self, graphics_exposure: bool) -> &mut Self {
 		if self.graphics_exposures.is_none() {
 			self.x11_size += 4;
 		}
 
-		self.graphics_exposures = Some(graphics_exposures);
-		self.mask |= GraphicsOptionsMask::GRAPHICS_EXPOSURES;
+		self.graphics_exposures = Some(graphics_exposure);
+		self.mask |= GraphicsOptionsMask::GRAPHICS_EXPOSURE;
 
 		self
 	}
 
+	/// Configures the [x coordinate of the top-left corner][x] of the
+	/// [`clip_mask`].
+	///
+	/// See [`GraphicsOptions::clip_x_origin`] for more information.
+	///
+	/// [x]: GraphicsOptions::clip_x_origin
 	pub fn clip_x_origin(&mut self, clip_x_origin: i16) -> &mut Self {
 		if self.clip_x_origin.is_none() {
 			self.x11_size += 4;
@@ -716,6 +814,12 @@ impl GraphicsOptionsBuilder {
 
 		self
 	}
+	/// Configures the [y coordinate of the top-left corner][y] of the
+	/// [`clip_mask`].
+	///
+	/// See [`GraphicsOptions::clip_y_origin`] for more information.
+	///
+	/// [y]: GraphicsOptions::clip_y_origin
 	pub fn clip_y_origin(&mut self, clip_y_origin: i16) -> &mut Self {
 		if self.clip_y_origin.is_none() {
 			self.x11_size += 4;
@@ -726,6 +830,11 @@ impl GraphicsOptionsBuilder {
 
 		self
 	}
+	/// Configures the [`clip_mask`] used in graphics operations.
+	///
+	/// See [`GraphicsOptions::clip_mask`] for more information.
+	///
+	/// [`clip_mask`]: GraphicsOptions::clip_mask
 	pub fn clip_mask(&mut self, clip_mask: ClipMask) -> &mut Self {
 		if self.clip_mask.is_none() {
 			self.x11_size += 4;
@@ -737,6 +846,11 @@ impl GraphicsOptionsBuilder {
 		self
 	}
 
+	/// Configures the [`dash_offset`] used in graphics operations.
+	///
+	/// See [`GraphicsOptions::dash_offset`] for more information.
+	///
+	/// [`dash_offset`]: GraphicsOptions::dash_offset
 	pub fn dash_offset(&mut self, dash_offset: u16) -> &mut Self {
 		if self.dash_offset.is_none() {
 			self.x11_size += 4;
@@ -1066,7 +1180,7 @@ bitflags! {
 		///
 		/// [`GraphicsExposure` events]: crate::x11::event::GraphicsExposure
 		/// [`GraphicsContext`]: crate::GraphicsContext
-		const GRAPHICS_EXPOSURES = 0x0001_0000;
+		const GRAPHICS_EXPOSURE = 0x0001_0000;
 
 		/// Whether the [x coordinate of the top left corner][x] of the
 		/// [`clip_mask`] is configured in a [`GraphicsContext`].
@@ -1222,7 +1336,7 @@ impl Readable for GraphicsOptions {
 		let graphics_exposures = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionsMask::GRAPHICS_EXPOSURES),
+			mask.contains(GraphicsOptionsMask::GRAPHICS_EXPOSURE),
 		)?;
 
 		let clip_x_origin = super::read_set_value(
