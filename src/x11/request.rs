@@ -157,3 +157,67 @@ derive_xrb! {
 		pub attributes: Attributes,
 	}
 }
+
+/// An error generated because of a failed [`ChangeWindowAttributes` request].
+///
+/// [`ChangeWindowAttributes` request]: ChangeWindowAttributes
+pub enum ChangeWindowAttributesError {
+	/// An [`Access` error].
+	///
+	/// [`Access` error]: error::Access
+	Access(error::Access),
+	/// A [`Colormap` error].
+	///
+	/// [`Colormap` error]: error::Colormap
+	Colormap(error::Colormap),
+	/// A [`CursorAppearance` error].
+	///
+	/// [`CursorAppearance` error]: error::CursorAppearance
+	CursorAppearance(error::CursorAppearance),
+	/// A [`Match` error].
+	///
+	/// [`Match` error]: error::Match
+	Match(error::Match),
+	/// A [`Pixmap` error].
+	///
+	/// [`Pixmap` error]: error::Pixmap
+	Pixmap(error::Pixmap),
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+	/// A [`Window` error].
+	///
+	/// [`Window` error]: error::Window
+	Window(error::Window),
+}
+
+derive_xrb! {
+	/// A [request] that configures the [attributes] of a [window].
+	///
+	/// The [`event_mask`] attribute on the [window] is not shared between
+	/// clients: one client modifying the [`event_mask`] only selects interest
+	/// in the relevant events for that client. There are three exceptions to
+	/// this: only one client at a time may select [`SUBSTRUCTURE_REDIRECT`],
+	/// [`RESIZE_REDIRECT`], or [`BUTTON_PRESS`] on the [window].
+	///
+	/// [request]: crate::message::Request
+	/// [window]: Window
+	/// [attributes]: Attributes
+	///
+	/// [`event_mask`]: Attributes::event_mask
+	/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
+	/// [`RESIZE_REDIRECT`]: crate::EventMask::RESIZE_REDIRECT
+	/// [`BUTTON_PRESS`]: crate::EventMask::BUTTON_PRESS
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ChangeWindowAttributes: Request(2) {
+		/// The [window] which the `attributes` are changed on.
+		///
+		/// [window]: Window
+		pub window: Window,
+		/// The [attributes] which are changed.
+		///
+		/// [attributes]: Attributes
+		pub attributes: Attributes,
+	}
+}
