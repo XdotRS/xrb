@@ -393,42 +393,4 @@ bitflags! {
 		/// Whether _any_ modifier key is held.
 		const ANY_MODIFIER = 0x8000;
 	}
-
-	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
-	pub struct GraphicsContextMask: u32 {
-		const FUNCTION = 0x0000_0001;
-		const PLANE_MASK = 0x0000_0002;
-		const FOREGROUND = 0x0000_0004;
-		const BACKGROUND = 0x0000_0008;
-		const LINE_WIDTH = 0x0000_0010;
-		const LINE_STYLE = 0x0000_0020;
-		const CAP_STYLE = 0x0000_0040;
-		const JOIN_STYLE = 0x0000_0080;
-		const FILL_STYLE = 0x0000_0100;
-		const FILL_RULE = 0x0000_0200;
-		const TILE = 0x0000_0400;
-		const STIPPLE = 0x0000_0800;
-		const TILE_STIPPLE_X_ORIGIN = 0x0000_1000;
-		const TILE_STIPPLE_Y_ORIGIN = 0x0000_2000;
-		const FONT = 0x0000_4000;
-		const SUBWINDOW_MODE = 0x0000_8000;
-		const GRAPHICS_EXPOSURE = 0x0001_0000;
-		const CLIP_X_ORIGIN = 0x0002_0000;
-		const CLIP_Y_ORIGIN = 0x0004_0000;
-		const CLIP_MASK = 0x0008_0000;
-		const DASH_OFFSET = 0x0010_0000;
-		const DASHES = 0x0020_0000;
-		const ARC_MODE = 0x0040_0000;
-	}
-
-	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
-	pub struct ConfigureWindowMask: u16 {
-		const X = 0x0001;
-		const Y = 0x0002;
-		const WIDTH = 0x0004;
-		const HEIGHT = 0x0008;
-		const BORDER_WIDTH = 0x0010;
-		const SIBLING = 0x0020;
-		const STACK_MODE = 0x0040;
-	}
 }
