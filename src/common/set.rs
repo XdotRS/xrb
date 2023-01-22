@@ -19,6 +19,7 @@
 //!   - [`WindowConfigBuilder`]
 //!   - [`WindowConfigMask`]
 
+use crate::unit::Px;
 use xrbk::{
 	Buf,
 	BufMut,
@@ -34,12 +35,12 @@ use xrbk::{
 mod attribute;
 mod graphics_options;
 mod keyboard_options;
-mod window_configs;
+mod window_config;
 
 pub use attribute::*;
 pub use graphics_options::*;
 pub use keyboard_options::*;
-pub use window_configs::*;
+pub use window_config::*;
 
 /// Reads an optional value for a set if the given `condition` is true.
 ///
@@ -56,6 +57,63 @@ pub(self) fn read_set_value<T: Readable>(
 		None
 	})
 }
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub(self) struct __Px<Num>(Px<Num>);
+
+impl<Num> ConstantX11Size for __Px<Num> {
+	const X11_SIZE: usize = 4;
+}
+
+impl<Num> X11Size for __Px<Num> {
+	fn x11_size(&self) -> usize {
+		Self::X11_SIZE
+	}
+}
+
+/// Implements the internal `__Px` representation for the given numerical
+/// primitives.
+macro_rules! impl_px {
+	(
+		$get:ident, $put:ty => {
+			$(
+				$type:tt
+			),*$(,)?
+		}
+	) => {
+		$(
+			impl Readable for __Px<$type> {
+				fn read_from(buf: &mut impl Buf) -> ReadResult<Self> {
+					Ok(Self(Px(match <$type>::try_from(buf.$get()) {
+						Ok($type) => $type,
+
+						Err(err) => return Err(ReadError::FailedConversion(Box::new(err))),
+					})))
+				}
+			}
+
+			impl Writable for __Px<$type> {
+				fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+					let Self(Px($type)) = self;
+
+					<$put>::from(*$type).write_to(buf)?;
+
+					Ok(())
+				}
+			}
+		)*
+	};
+}
+
+impl_px!(get_u32, u32 => {
+	u8,
+	u16,
+});
+
+impl_px!(get_i32, i32 => {
+	i8,
+	i16,
+});
 
 /// Wraps a `u8` value, but writes it as four bytes in the X11 format.
 ///

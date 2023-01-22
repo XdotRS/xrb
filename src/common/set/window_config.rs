@@ -4,7 +4,7 @@
 
 use crate::{StackMode, Window};
 
-use crate::set::{__i16, __u16};
+use crate::{set::__Px, unit::Px};
 use bitflags::bitflags;
 use xrbk::{
 	Buf,
@@ -26,8 +26,25 @@ use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
 /// Unspecified configuration options are taken from the existing geometry of
 /// the [window].
 ///
+/// This set has the following options:
+/// - [`x`]
+/// - [`y`]
+/// - [`width`]
+/// - [`height`]
+/// - [`border_width`]
+/// - [`sibling`]
+/// - [`stack_mode`]
+///
 /// [window]: Window
 /// [`ConfigureWindow` request]: crate::x11::request::ConfigureWindow
+///
+/// [`x`]: WindowConfig::x
+/// [`y`]: WindowConfig::y
+/// [`width`]: WindowConfig::width
+/// [`height`]: WindowConfig::height
+/// [`border_width`]: WindowConfig::border_width
+/// [`sibling`]: WindowConfig::sibling
+/// [`stack_mode`]: WindowConfig::stack_mode
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct WindowConfig {
 	/// Total [`X11Size`] of this `WindowConfig`.
@@ -40,12 +57,12 @@ pub struct WindowConfig {
 
 	mask: WindowConfigMask,
 
-	x: Option<__i16>,
-	y: Option<__i16>,
-	width: Option<__u16>,
-	height: Option<__u16>,
+	x: Option<__Px<i16>>,
+	y: Option<__Px<i16>>,
+	width: Option<__Px<u16>>,
+	height: Option<__Px<u16>>,
 
-	border_width: Option<__u16>,
+	border_width: Option<__Px<u16>>,
 
 	sibling: Option<Window>,
 
@@ -75,12 +92,12 @@ pub struct WindowConfigBuilder {
 
 	mask: WindowConfigMask,
 
-	x: Option<i16>,
-	y: Option<i16>,
-	width: Option<u16>,
-	height: Option<u16>,
+	x: Option<Px<i16>>,
+	y: Option<Px<i16>>,
+	width: Option<Px<u16>>,
+	height: Option<Px<u16>>,
 
-	border_width: Option<u16>,
+	border_width: Option<Px<u16>>,
 
 	sibling: Option<Window>,
 
@@ -126,12 +143,12 @@ impl WindowConfigBuilder {
 
 			mask: self.mask,
 
-			x: self.x.map(__i16),
-			y: self.y.map(__i16),
-			width: self.width.map(__u16),
-			height: self.height.map(__u16),
+			x: self.x.map(__Px),
+			y: self.y.map(__Px),
+			width: self.width.map(__Px),
+			height: self.height.map(__Px),
 
-			border_width: self.border_width.map(__u16),
+			border_width: self.border_width.map(__Px),
 
 			sibling: self.sibling,
 
@@ -147,7 +164,7 @@ impl WindowConfigBuilder {
 	///
 	/// [x coordinate]: WindowConfig::x
 	/// [window]: Window
-	pub fn x(&mut self, x: i16) -> &mut Self {
+	pub fn x(&mut self, x: Px<i16>) -> &mut Self {
 		if self.x.is_none() {
 			self.x11_size += 4;
 		}
@@ -163,7 +180,7 @@ impl WindowConfigBuilder {
 	///
 	/// [y coordinate]: WindowConfig::y
 	/// [window]: Window
-	pub fn y(&mut self, y: i16) -> &mut Self {
+	pub fn y(&mut self, y: Px<i16>) -> &mut Self {
 		if self.y.is_none() {
 			self.x11_size += 4;
 		}
@@ -179,7 +196,7 @@ impl WindowConfigBuilder {
 	///
 	/// [width]: WindowConfig::width
 	/// [window]: Window
-	pub fn width(&mut self, width: u16) -> &mut Self {
+	pub fn width(&mut self, width: Px<u16>) -> &mut Self {
 		if self.width.is_none() {
 			self.x11_size += 4;
 		}
@@ -195,7 +212,7 @@ impl WindowConfigBuilder {
 	///
 	/// [height]: WindowConfig::height
 	/// [window]: Window
-	pub fn height(&mut self, height: u16) -> &mut Self {
+	pub fn height(&mut self, height: Px<u16>) -> &mut Self {
 		if self.height.is_none() {
 			self.x11_size += 4;
 		}
@@ -211,7 +228,7 @@ impl WindowConfigBuilder {
 	/// See [`WindowConfig::border_width`] for more information.
 	///
 	/// [window]: Window
-	pub fn border_width(&mut self, border_width: u16) -> &mut Self {
+	pub fn border_width(&mut self, border_width: Px<u16>) -> &mut Self {
 		if self.border_width.is_none() {
 			self.x11_size += 4;
 		}
@@ -266,39 +283,39 @@ impl WindowConfig {
 	///
 	/// [window]: Window
 	#[must_use]
-	pub fn x(&self) -> Option<&i16> {
-		self.x.as_ref().map(|__i16(x)| x)
+	pub fn x(&self) -> Option<&Px<i16>> {
+		self.x.as_ref().map(|__Px(x)| x)
 	}
 	/// The y coordinate of the [window]'s top-left corner is configured.
 	///
 	/// [window]: Window
 	#[must_use]
-	pub fn y(&self) -> Option<&i16> {
-		self.y.as_ref().map(|__i16(y)| y)
+	pub fn y(&self) -> Option<&Px<i16>> {
+		self.y.as_ref().map(|__Px(y)| y)
 	}
 	/// The width of the [window] is configured.
 	///
 	/// [window]: Window
 	#[must_use]
-	pub fn width(&self) -> Option<&u16> {
-		self.width.as_ref().map(|__u16(width)| width)
+	pub fn width(&self) -> Option<&Px<u16>> {
+		self.width.as_ref().map(|__Px(width)| width)
 	}
 	/// The height of the [window] is configured.
 	///
 	/// [window]: Window
 	#[must_use]
-	pub fn height(&self) -> Option<&u16> {
-		self.height.as_ref().map(|__u16(height)| height)
+	pub fn height(&self) -> Option<&Px<u16>> {
+		self.height.as_ref().map(|__Px(height)| height)
 	}
 
 	/// The width of the [window]'s border is configured.
 	///
 	/// [window]: Window
 	#[must_use]
-	pub fn border_width(&self) -> Option<&u16> {
+	pub fn border_width(&self) -> Option<&Px<u16>> {
 		self.border_width
 			.as_ref()
-			.map(|__u16(border_width)| border_width)
+			.map(|__Px(border_width)| border_width)
 	}
 
 	/// The sibling which the [`stack_mode`] applies to is configured.

@@ -12,6 +12,7 @@
 use crate::{
 	atom::Atom,
 	set::WindowConfigMask,
+	unit::Px,
 	Button,
 	CurrentableTime,
 	Drawable,
@@ -31,7 +32,6 @@ use derivative::Derivative;
 use xrbk::{Buf, ConstantX11Size, ReadResult, Readable, ReadableWithContext, X11Size};
 
 use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
-
 extern crate self as xrb;
 
 derive_xrb! {
@@ -1432,7 +1432,7 @@ derive_xrb! {
 		/// This is zero for [`WindowClass::InputOnly`] windows.
 		///
 		/// [`WindowClass::InputOnly`]: crate::WindowClass::InputOnly
-		pub border_width: u16,
+		pub border_width: Px<u16>,
 
 		/// Whether [`MapWindow`] and [`ConfigureWindow`] requests on the newly
 		/// created `window` should override a [`SUBSTRUCTURE_REDIRECT`] on the
@@ -1741,7 +1741,7 @@ derive_xrb! {
 		/// This is zero for [`WindowClass::InputOnly`] windows.
 		///
 		/// [`WindowClass::InputOnly`]: crate::WindowClass::InputOnly
-		pub border_width: u16,
+		pub border_width: Px<u16>,
 
 		/// Whether [`MapWindow`] and [`ConfigureWindow`] requests on the
 		/// configured `window` should override a [`SUBSTRUCTURE_REDIRECT`] on
@@ -1910,12 +1910,12 @@ derive_xrb! {
 		/// resize the `window` to.
 		///
 		/// [`ConfigureWindow` request]: super::request::ConfigureWindow
-		pub width: u16,
+		pub width: Px<u16>,
 		/// The height which the [`ConfigureWindow` request] is attempting to
 		/// resize the `window` to.
 		///
 		/// [`ConfigureWindow` request]: super::request::ConfigureWindow
-		pub height: u16,
+		pub height: Px<u16>,
 		[_; ..],
 	}
 }

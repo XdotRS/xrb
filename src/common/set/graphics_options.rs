@@ -5,8 +5,8 @@
 use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
 
 use crate::{
-	common::set::__bool,
-	set::{__i16, __u16, __u8},
+	set::{__Px, __bool, __u8},
+	unit::Px,
 	visual::Color,
 	Font,
 	Pixmap,
@@ -353,8 +353,8 @@ pub struct GraphicsOptions {
 	tile: Option<Pixmap>,
 	stipple: Option<Pixmap>,
 
-	tile_stipple_x: Option<__i16>,
-	tile_stipple_y: Option<__i16>,
+	tile_stipple_x: Option<__Px<i16>>,
+	tile_stipple_y: Option<__Px<i16>>,
 
 	font: Option<Font>,
 
@@ -362,11 +362,11 @@ pub struct GraphicsOptions {
 
 	graphics_exposures: Option<__bool>,
 
-	clip_x: Option<__i16>,
-	clip_y: Option<__i16>,
+	clip_x: Option<__Px<i16>>,
+	clip_y: Option<__Px<i16>>,
 	clip_mask: Option<ClipMask>,
 
-	dash_offset: Option<__u16>,
+	dash_offset: Option<__Px<u16>>,
 	dashes: Option<__u8>,
 
 	arc_mode: Option<__ArcMode>,
@@ -413,8 +413,8 @@ pub struct GraphicsOptionsBuilder {
 	tile: Option<Pixmap>,
 	stipple: Option<Pixmap>,
 
-	tile_stipple_x: Option<i16>,
-	tile_stipple_y: Option<i16>,
+	tile_stipple_x: Option<Px<i16>>,
+	tile_stipple_y: Option<Px<i16>>,
 
 	font: Option<Font>,
 
@@ -422,11 +422,11 @@ pub struct GraphicsOptionsBuilder {
 
 	graphics_exposures: Option<bool>,
 
-	clip_x: Option<i16>,
-	clip_y: Option<i16>,
+	clip_x: Option<Px<i16>>,
+	clip_y: Option<Px<i16>>,
 	clip_mask: Option<ClipMask>,
 
-	dash_offset: Option<u16>,
+	dash_offset: Option<Px<u16>>,
 	dashes: Option<u8>,
 
 	arc_mode: Option<ArcMode>,
@@ -514,8 +514,8 @@ impl GraphicsOptionsBuilder {
 			tile: self.tile,
 			stipple: self.stipple,
 
-			tile_stipple_x: self.tile_stipple_x.map(__i16),
-			tile_stipple_y: self.tile_stipple_y.map(__i16),
+			tile_stipple_x: self.tile_stipple_x.map(__Px),
+			tile_stipple_y: self.tile_stipple_y.map(__Px),
 
 			font: self.font,
 
@@ -523,11 +523,11 @@ impl GraphicsOptionsBuilder {
 
 			graphics_exposures: self.graphics_exposures.map(__bool),
 
-			clip_x: self.clip_x.map(__i16),
-			clip_y: self.clip_y.map(__i16),
+			clip_x: self.clip_x.map(__Px),
+			clip_y: self.clip_y.map(__Px),
 			clip_mask: self.clip_mask,
 
-			dash_offset: self.dash_offset.map(__u16),
+			dash_offset: self.dash_offset.map(__Px),
 			dashes: self.dashes.map(__u8),
 
 			arc_mode: self.arc_mode.map(__ArcMode),
@@ -728,7 +728,7 @@ impl GraphicsOptionsBuilder {
 	/// [x]: GraphicsOptions::tile_stipple_x
 	/// [tile]: GraphicsOptions::tile
 	/// [stipple]: GraphicsOptions::stipple
-	pub fn tile_stipple_x(&mut self, tile_stipple_x: i16) -> &mut Self {
+	pub fn tile_stipple_x(&mut self, tile_stipple_x: Px<i16>) -> &mut Self {
 		if self.tile_stipple_x.is_none() {
 			self.x11_size += 4;
 		}
@@ -746,7 +746,7 @@ impl GraphicsOptionsBuilder {
 	/// [y]: GraphicsOptions::tile_stipple_y
 	/// [tile]: GraphicsOptions::tile
 	/// [stipple]: GraphicsOptions::stipple
-	pub fn tile_stipple_y(&mut self, tile_stipple_y: i16) -> &mut Self {
+	pub fn tile_stipple_y(&mut self, tile_stipple_y: Px<i16>) -> &mut Self {
 		if self.tile_stipple_y.is_none() {
 			self.x11_size += 4;
 		}
@@ -813,7 +813,7 @@ impl GraphicsOptionsBuilder {
 	/// See [`GraphicsOptions::clip_x`] for more information.
 	///
 	/// [x]: GraphicsOptions::clip_x
-	pub fn clip_x(&mut self, clip_x: i16) -> &mut Self {
+	pub fn clip_x(&mut self, clip_x: Px<i16>) -> &mut Self {
 		if self.clip_x.is_none() {
 			self.x11_size += 4;
 		}
@@ -829,7 +829,7 @@ impl GraphicsOptionsBuilder {
 	/// See [`GraphicsOptions::clip_y`] for more information.
 	///
 	/// [y]: GraphicsOptions::clip_y
-	pub fn clip_y(&mut self, clip_y: i16) -> &mut Self {
+	pub fn clip_y(&mut self, clip_y: Px<i16>) -> &mut Self {
 		if self.clip_y.is_none() {
 			self.x11_size += 4;
 		}
@@ -860,7 +860,7 @@ impl GraphicsOptionsBuilder {
 	/// See [`GraphicsOptions::dash_offset`] for more information.
 	///
 	/// [`dash_offset`]: GraphicsOptions::dash_offset
-	pub fn dash_offset(&mut self, dash_offset: u16) -> &mut Self {
+	pub fn dash_offset(&mut self, dash_offset: Px<u16>) -> &mut Self {
 		if self.dash_offset.is_none() {
 			self.x11_size += 4;
 		}
@@ -922,30 +922,18 @@ impl GraphicsOptions {
 	///
 	/// [`function`]: GraphicsOptions::function
 	#[must_use]
-	#[allow(
-		clippy::missing_const_for_fn,
-		reason = "const omitted for API uniformity with the other methods"
-	)]
-	pub fn plane_mask(&self) -> Option<&u32> {
+	pub const fn plane_mask(&self) -> Option<&u32> {
 		self.plane_mask.as_ref()
 	}
 
 	/// The foreground color used in graphics operations.
 	#[must_use]
-	#[allow(
-		clippy::missing_const_for_fn,
-		reason = "const omitted for API uniformity with the other methods"
-	)]
-	pub fn foreground_color(&self) -> Option<&Color> {
+	pub const fn foreground_color(&self) -> Option<&Color> {
 		self.foreground_color.as_ref()
 	}
 	/// The background color used in graphics operations.
 	#[must_use]
-	#[allow(
-		clippy::missing_const_for_fn,
-		reason = "const omitted for API uniformity with the other methods"
-	)]
-	pub fn background_color(&self) -> Option<&Color> {
+	pub const fn background_color(&self) -> Option<&Color> {
 		self.background_color.as_ref()
 	}
 
@@ -1012,22 +1000,14 @@ impl GraphicsOptions {
 	///
 	/// [pixmap]: Pixmap
 	#[must_use]
-	#[allow(
-		clippy::missing_const_for_fn,
-		reason = "const omitted for API uniformity with the other methods"
-	)]
-	pub fn tile(&self) -> Option<&Pixmap> {
+	pub const fn tile(&self) -> Option<&Pixmap> {
 		self.tile.as_ref()
 	}
 	/// The [pixmap] which is stippled in graphics operations.
 	///
 	/// [pixmap]: Pixmap
 	#[must_use]
-	#[allow(
-		clippy::missing_const_for_fn,
-		reason = "const omitted for API uniformity with the other methods"
-	)]
-	pub fn stipple(&self) -> Option<&Pixmap> {
+	pub const fn stipple(&self) -> Option<&Pixmap> {
 		self.stipple.as_ref()
 	}
 
@@ -1039,8 +1019,8 @@ impl GraphicsOptions {
 	///
 	/// [drawable]: crate::Drawable
 	#[must_use]
-	pub fn tile_stipple_x(&self) -> Option<&i16> {
-		self.tile_stipple_x.as_ref().map(|__i16(x)| x)
+	pub fn tile_stipple_x(&self) -> Option<&Px<i16>> {
+		self.tile_stipple_x.as_ref().map(|__Px(x)| x)
 	}
 	/// The y coordinate of the top-left corner of the [tile] or [stipple]
 	/// [`Pixmap`], relative to the [drawable]'s top-left corner.
@@ -1050,19 +1030,15 @@ impl GraphicsOptions {
 	///
 	/// [drawable]: crate::Drawable
 	#[must_use]
-	pub fn tile_stipple_y(&self) -> Option<&i16> {
-		self.tile_stipple_y.as_ref().map(|__i16(y)| y)
+	pub fn tile_stipple_y(&self) -> Option<&Px<i16>> {
+		self.tile_stipple_y.as_ref().map(|__Px(y)| y)
 	}
 
 	/// The [font] used for text.
 	///
 	/// [font]: Font
 	#[must_use]
-	#[allow(
-		clippy::missing_const_for_fn,
-		reason = "const omitted for API uniformity with the other methods"
-	)]
-	pub fn font(&self) -> Option<&Font> {
+	pub const fn font(&self) -> Option<&Font> {
 		self.font.as_ref()
 	}
 
@@ -1093,8 +1069,8 @@ impl GraphicsOptions {
 	/// [`clip_mask`]: GraphicsOptions::clip_mask
 	/// [drawable]: crate::Drawable
 	#[must_use]
-	pub fn clip_x(&self) -> Option<&i16> {
-		self.clip_x.as_ref().map(|__i16(x)| x)
+	pub fn clip_x(&self) -> Option<&Px<i16>> {
+		self.clip_x.as_ref().map(|__Px(x)| x)
 	}
 	/// The y coordinate of the top-left corner of the [`clip_mask`], relative
 	/// to the [drawable]'s top-left corner.
@@ -1102,8 +1078,8 @@ impl GraphicsOptions {
 	/// [`clip_mask`]: GraphicsOptions::clip_mask
 	/// [drawable]: crate::Drawable
 	#[must_use]
-	pub fn clip_y(&self) -> Option<&i16> {
-		self.clip_y.as_ref().map(|__i16(y)| y)
+	pub fn clip_y(&self) -> Option<&Px<i16>> {
+		self.clip_y.as_ref().map(|__Px(y)| y)
 	}
 	/// A mask applied to the [drawable] when using graphics operations.
 	///
@@ -1111,21 +1087,17 @@ impl GraphicsOptions {
 	///
 	/// [drawable]: crate::Drawable
 	#[must_use]
-	#[allow(
-		clippy::missing_const_for_fn,
-		reason = "const omitted for API uniformity with the other methods"
-	)]
-	pub fn clip_mask(&self) -> Option<&ClipMask> {
+	pub const fn clip_mask(&self) -> Option<&ClipMask> {
 		self.clip_mask.as_ref()
 	}
 
 	/// The offset from the endpoints or joinpoints of a line from which dashes
 	/// are drawn.
 	#[must_use]
-	pub fn dash_offset(&self) -> Option<&u16> {
+	pub fn dash_offset(&self) -> Option<&Px<u16>> {
 		self.dash_offset
 			.as_ref()
-			.map(|__u16(dash_offset)| dash_offset)
+			.map(|__Px(dash_offset)| dash_offset)
 	}
 	/// Specifies the length of dashes used in [`LineStyle::DoubleDash`] and
 	/// [`LineStyle::OnOffDash`] lines.
@@ -1360,7 +1332,7 @@ impl X11Size for GraphicsOptions {
 }
 
 impl Readable for GraphicsOptions {
-	#[allow(clippy::similar_names, clippy::too_many_lines)]
+	#[allow(clippy::too_many_lines)]
 	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
 	where
 		Self: Sized,
@@ -1716,10 +1688,6 @@ impl X11Size for __LineWidth {
 }
 
 impl Readable for __LineWidth {
-	#[allow(
-		clippy::cast_possible_truncation,
-		reason = "truncation is intended behavior if the width is too large for a u16 value"
-	)]
 	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
 	where
 		Self: Sized,
