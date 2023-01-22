@@ -26,7 +26,7 @@ use xrbk_macro::{ConstantX11Size, Readable, Wrap, Writable, X11Size};
 	Writable,
 	Wrap,
 )]
-pub struct Atom(pub(crate) u32);
+pub struct Atom(u32);
 
 impl Atom {
 	/// Creates a new `Atom`, wrapping the given `id`.

@@ -2,11 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-extern crate self as xrb;
+use crate::unit::Px;
+use xrbk::{Buf, ConstantX11Size, ReadError, ReadResult, ReadableWithContext, Wrap};
 
 use derive_more::{From, Into};
-use xrbk::{Buf, ConstantX11Size, ReadError, ReadResult, ReadableWithContext, Wrap};
+
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
+extern crate self as xrb;
 
 pub mod atom;
 pub mod set;
@@ -349,44 +351,44 @@ impl ReadableWithContext for String16 {
 )]
 pub struct Point {
 	#[allow(missing_docs)]
-	pub x: i16,
+	pub x: Px<i16>,
 	#[allow(missing_docs)]
-	pub y: i16,
+	pub y: Px<i16>,
 }
 
 /// A rectangle with coordinates and dimensions.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable)]
 pub struct Rectangle {
 	/// The x-coordinate of the upper left corner of the `Rectangle`.
-	pub x: i16,
+	pub x: Px<i16>,
 	/// The y-coordinate of the upper left corner of the `Rectangle`.
-	pub y: i16,
+	pub y: Px<i16>,
 	/// The width of the `Rectangle`.
-	pub width: u16,
+	pub width: Px<u16>,
 	/// The height of the `Rectangle`.
-	pub height: u16,
+	pub height: Px<u16>,
 }
 
 /// Same as a [`Rectangle`], but with unsigned coordinates.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable)]
 pub struct Region {
 	/// The x-coordinate of the upper left corner of the `Region`.
-	pub x: u16,
+	pub x: Px<u16>,
 	/// The y-coordinate of the upper left corner of the `Region`.
-	pub y: u16,
+	pub y: Px<u16>,
 
 	/// The width of the `Region`.
-	pub width: u16,
+	pub width: Px<u16>,
 	/// The height of the `Region`.
-	pub height: u16,
+	pub height: Px<u16>,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable)]
 pub struct Arc {
-	pub x: i16,
-	pub y: i16,
-	pub width: u16,
-	pub height: u16,
+	pub x: Px<i16>,
+	pub y: Px<i16>,
+	pub width: Px<u16>,
+	pub height: Px<u16>,
 
 	/// Specifies the start of the `Arc`.
 	///

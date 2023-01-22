@@ -35,7 +35,7 @@ use xrbk_macro::{new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size
 	Writable,
 	Wrap,
 )]
-pub struct Drawable(pub(crate) u32);
+pub struct Drawable(u32);
 
 impl From<Window> for Drawable {
 	fn from(window: Window) -> Self {
@@ -84,7 +84,7 @@ impl From<Pixmap> for Drawable {
 	Writable,
 	Wrap,
 )]
-pub struct Window(pub(crate) u32);
+pub struct Window(u32);
 
 impl From<Drawable> for Window {
 	fn from(drawable: Drawable) -> Self {
@@ -122,7 +122,7 @@ impl From<Drawable> for Window {
 	Writable,
 	Wrap,
 )]
-pub struct Pixmap(pub(crate) u32);
+pub struct Pixmap(u32);
 
 impl From<Drawable> for Pixmap {
 	fn from(drawable: Drawable) -> Self {
@@ -160,7 +160,7 @@ impl From<Drawable> for Pixmap {
 	Writable,
 	Wrap,
 )]
-pub struct CursorAppearance(pub(crate) u32);
+pub struct CursorAppearance(u32);
 
 /// A resource ID referring to either a [`Font`] or a [`GraphicsContext`].
 #[derive(
@@ -182,7 +182,7 @@ pub struct CursorAppearance(pub(crate) u32);
 	Writable,
 	Wrap,
 )]
-pub struct Fontable(pub(crate) u32);
+pub struct Fontable(u32);
 
 impl From<Font> for Fontable {
 	fn from(font: Font) -> Self {
@@ -227,7 +227,7 @@ impl From<GraphicsContext> for Fontable {
 	Writable,
 	Wrap,
 )]
-pub struct Font(pub(crate) u32);
+pub struct Font(u32);
 
 impl From<Fontable> for Font {
 	fn from(fontable: Fontable) -> Self {
@@ -271,7 +271,7 @@ impl From<Fontable> for Font {
 	Writable,
 	Wrap,
 )]
-pub struct GraphicsContext(pub(crate) u32);
+pub struct GraphicsContext(u32);
 
 impl From<Fontable> for GraphicsContext {
 	fn from(fontable: Fontable) -> Self {
@@ -309,4 +309,4 @@ impl From<Fontable> for GraphicsContext {
 	Writable,
 	Wrap,
 )]
-pub struct Colormap(pub(crate) u32);
+pub struct Colormap(u32);
