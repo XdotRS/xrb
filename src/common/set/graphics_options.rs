@@ -29,51 +29,51 @@ use xrbk::{
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 pub enum Function {
 	/// The resultant pixel is bitwise zero; that is, it has a `0` for each bit.
-	Clear = 0,
+	Clear,
 	/// The resultant pixel is the bitwise AND of the source and the
 	/// destination: `source & destination`.
-	And = 1,
+	And,
 	/// The resultant pixel is the bitwise AND of the source and the NOT of
 	/// the destination: `source & (!destination)`.
-	AndReverse = 2,
+	AndReverse,
 	/// The resultant pixel is simply the source pixel: `source`.
-	Copy = 3,
+	Copy,
 
 	/// The resultant pixel is the bitwise AND of the NOT of the source and
 	/// the destination: `(!source) & destination`.
-	AndInverted = 4,
+	AndInverted,
 	/// The resultant pixel is simply the destination pixel: `destination`.
-	NoOp = 5,
+	NoOp,
 	/// The resultant pixel is the bitwise XOR of the source and the
 	/// destination: `source ^ destination`.
-	Xor = 6,
+	Xor,
 	/// The resultant pixel is the bitwise OR of the source and the destination
 	/// `source | destination`.
 	Or = 7,
 
 	/// The resultant pixel is the bitwise AND of the NOT of the source and the
 	/// NOT of the destination: `(!source) & (!destination)`.
-	Nor = 8,
+	Nor,
 	/// The resultant pixel is the bitwise XOR of the NOT of the source and the
 	/// destination: `(!source) ^ destination`.
-	Equiv = 9,
+	Equiv,
 	/// The resultant pixel is the bitwise NOT of the destination:
 	/// `!destination`.
-	Invert = 10,
+	Invert,
 	/// The resultant pixel is the bitwise OR of the source and the NOT of the
 	/// destination: `source | (!destination)`.
-	OrReverse = 11,
+	OrReverse,
 
 	/// The resultant pixel is the bitwise NOT of the source: `!source`.
-	CopyInverted = 12,
+	CopyInverted,
 	/// The resultant pixel is the bitwise OR of the NOT of the source and the
 	/// destination: `(!source) | destination`.
-	OrInverted = 13,
+	OrInverted,
 	/// The resultant pixel is the bitwise OR of the NOT of the source and the
 	/// NOT of the destination: `(!source) | (!destination)`.
-	Nand = 14,
+	Nand,
 	/// The resultant pixel is bitwise one; that is, it has a `1` for each bit.
-	Set = 15,
+	Set,
 }
 
 /// The width of a line.
@@ -125,14 +125,14 @@ impl LineWidth {
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 pub enum LineStyle {
 	/// The full path of the line is drawn.
-	Solid = 0,
+	Solid,
 
 	/// Only the even dashes are drawn.
 	///
 	/// The [`CapStyle`] applies to all internal ends of the individual dashes,
 	/// with the exception of [`CapStyle::NotLast`], which is treated as
 	/// [`CapStyle::Butt`].
-	OnOffDash = 1,
+	OnOffDash,
 
 	/// The full path of the line is drawn, but the even dashes are [filled
 	/// differently] than the odd dashes.
@@ -140,7 +140,7 @@ pub enum LineStyle {
 	/// [`CapStyle::Butt`] is used where even and odd dashes meet.
 	///
 	/// [filled differently]: FillStyle
-	DoubleDash = 2,
+	DoubleDash,
 }
 
 /// Defines how the endpoints of a path are drawn.
@@ -150,11 +150,11 @@ pub enum CapStyle {
 	/// the final endpoint is not drawn.
 	///
 	/// [`Butt`]: CapStyle::Butt
-	NotLast = 0,
+	NotLast,
 
 	/// The end of the path is square, perpendicular to the slope of the line,
 	/// with no projection beyond the endpoint.
-	Butt = 1,
+	Butt,
 
 	/// The end of the path is a circular arc with a diameter equal to the
 	/// [`LineWidth`], centered on the endpoint.
@@ -162,7 +162,7 @@ pub enum CapStyle {
 	/// For [`LineWidth::Thin`], this is equivalent to [`Butt`].
 	///
 	/// [`Butt`]: CapStyle::Butt
-	Round = 2,
+	Round,
 
 	/// The end of the path is square, but the path projects beyond the endpoint
 	/// for a distance equal to half of the [`LineWidth`].
@@ -170,7 +170,7 @@ pub enum CapStyle {
 	/// For [`LineWidth::Thin`], this is equivalent to [`Butt`].
 	///
 	/// [`Butt`]: CapStyle::Butt
-	Projecting = 3,
+	Projecting,
 }
 
 /// Defines how the corners of [`Thick`] lines are drawn.
@@ -183,15 +183,15 @@ pub enum JoinStyle {
 	///
 	/// If the angle is less than 11 degrees, this is treated as
 	/// [`JoinStyle::Bevel`].
-	Miter = 0,
+	Miter,
 
 	/// A circular arc with a diameter equal to the [`LineWidth`] is centered on
 	/// the joinpoint.
-	Round = 1,
+	Round,
 
 	/// [`CapStyle::Butt`] endpoint styles are used, then the triangular notch
 	/// is filled.
-	Bevel = 2,
+	Bevel,
 }
 
 /// Defines the contents of the source for line, text, and fill [requests].
@@ -205,21 +205,21 @@ pub enum FillStyle {
 	///
 	/// [foreground color]: GraphicsOptions::foreground_color
 	/// [background color]: GraphicsOptions::background_color
-	Solid = 0,
+	Solid,
 
 	// FIXME (docs): X11 protocol just says 'Tile' as description...
 	/// A tiled `FillStyle`.
-	Tiled = 1,
+	Tiled,
 
 	/// The foreground, masked by a stipple pattern.
-	Stippled = 2,
+	Stippled,
 
 	/// Same as [`Stippled`], but the [foreground color] everywhere it has a
 	/// one, and the [background color] everywhere it has a zero.
 	///
 	/// [foreground color]: GraphicsOptions::foreground_color
 	/// [background color]: GraphicsOptions::background_color
-	OpaqueStippled = 3,
+	OpaqueStippled,
 }
 
 /// Defines what pixels are drawn for paths in [`FillPoly` requests].
@@ -229,8 +229,8 @@ pub enum FillStyle {
 // Really technical language. I imagine it's simply not worth documenting.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 pub enum FillRule {
-	EvenOdd = 0,
-	Winding = 1,
+	EvenOdd,
+	Winding,
 }
 
 /// Whether a source or destination [window] is clipped by its descendents.
@@ -243,11 +243,11 @@ pub enum SubwindowMode {
 	///
 	/// [windows]: crate::Window
 	/// [`InputOutput`]: crate::WindowClass::InputOutput
-	ClipByChildren = 0,
+	ClipByChildren,
 
 	/// Neither the source nor the destination [window] is clipped by their
 	/// descendents.
-	IncludeDescendents = 1,
+	IncludeDescendents,
 }
 
 /// Controls filling in the [`PolyFillArc` request].
@@ -255,10 +255,13 @@ pub enum SubwindowMode {
 /// [`PolyFillArc` request]: crate::x11::request::PolyFillArc
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 pub enum ArcMode {
-	// Undocumented in X11 protocol.
-	Chord = 0,
-	// Undocumented in X11 protocol.
-	PieSlice = 1,
+	/// Fills the shape created by tracing the arc and joining its endpoints in
+	/// a straight line.
+	Chord,
+
+	/// Fills the shape created by tracing the arc and joining each of its
+	/// endpoints to its center point.
+	PieSlice,
 }
 
 /// This is a type alias for <code>[Option]<[Pixmap]></code>.
@@ -548,7 +551,8 @@ impl GraphicsOptionsBuilder {
 		self
 	}
 
-	/// Configures the mask through which a graphics operation is applied.
+	/// Configures the mask of bit planes through which a graphics operation is
+	/// applied.
 	///
 	/// See [`GraphicsOptions::plane_mask`] for more information.
 	pub fn plane_mask(&mut self, plane_mask: u32) -> &mut Self {
@@ -866,6 +870,11 @@ impl GraphicsOptionsBuilder {
 
 		self
 	}
+	/// Configures the length of [`dashes`] used in graphics operations.
+	///
+	/// See [`GraphicsOptions::dashes`] for more information.
+	///
+	/// [`dashes`]: GraphicsOptions::dashes
 	pub fn dashes(&mut self, dashes: u8) -> &mut Self {
 		if self.dashes.is_none() {
 			self.x11_size += 4;
@@ -877,6 +886,12 @@ impl GraphicsOptionsBuilder {
 		self
 	}
 
+	/// Configures the [mode used to draw arcs] in a [`PolyFillArc` request].
+	///
+	/// See [`GraphicsOptions::arc_mode`] for more information.
+	///
+	/// [mode used to draw arcs]: ArcMode
+	/// [`PolyFillArc` request]: crate::x11::request::PolyFillArc
 	pub fn arc_mode(&mut self, arc_mode: ArcMode) -> &mut Self {
 		if self.arc_mode.is_none() {
 			self.x11_size += 4;
@@ -890,11 +905,22 @@ impl GraphicsOptionsBuilder {
 }
 
 impl GraphicsOptions {
+	/// The bitwise operation applied to the source pixel and the destination
+	/// pixel [colors][color] to determine the resultant pixel [color].
+	///
+	/// See [`Function`] for information on each function and its meaning.
+	///
+	/// [color]: Color
 	#[must_use]
 	pub fn function(&self) -> Option<&Function> {
 		self.function.as_ref().map(|__Function(function)| function)
 	}
 
+	/// The mask applied to the graphics operation's effects on bit planes.
+	///
+	/// The [`function`] is only applied to colors masked by this mask.
+	///
+	/// [`function`]: GraphicsOptions::function
 	#[must_use]
 	#[allow(
 		clippy::missing_const_for_fn,
@@ -923,6 +949,10 @@ impl GraphicsOptions {
 		self.background_color.as_ref()
 	}
 
+	/// The [`LineWidth`] used when drawing lines.
+	///
+	/// [`LineWidth::Thin`] means the thinnest possible [`LineWidth`] which can
+	/// be displayed (think lines used in wireframes).
 	#[must_use]
 	pub fn line_width(&self) -> Option<&LineWidth> {
 		self.line_width
@@ -930,30 +960,47 @@ impl GraphicsOptions {
 			.map(|__LineWidth(line_width)| line_width)
 	}
 
+	/// The sections of a line which are drawn.
+	///
+	/// See [`LineStyle`] for more information.
 	#[must_use]
 	pub fn line_style(&self) -> Option<&LineStyle> {
 		self.line_style
 			.as_ref()
 			.map(|__LineStyle(line_style)| line_style)
 	}
+	/// Defines how the endpoints of a line are drawn.
+	///
+	/// See [`CapStyle`] for more information.
 	#[must_use]
 	pub fn cap_style(&self) -> Option<&CapStyle> {
 		self.cap_style
 			.as_ref()
 			.map(|__CapStyle(cap_style)| cap_style)
 	}
+	/// Defines how the corners of [`LineWidth::Thick`] lines are drawn.
+	///
+	/// See [`JoinStyle`] for more information.
 	#[must_use]
 	pub fn join_style(&self) -> Option<&JoinStyle> {
 		self.join_style
 			.as_ref()
 			.map(|__JoinStyle(join_style)| join_style)
 	}
+	/// Defines the contents of the source for line, text, and fill requests.
+	///
+	/// See [`FillStyle`] for more information.
 	#[must_use]
 	pub fn fill_style(&self) -> Option<&FillStyle> {
 		self.fill_style
 			.as_ref()
 			.map(|__FillStyle(fill_style)| fill_style)
 	}
+	/// Defines which pixels are drawn for paths in [`FillPoly` requests].
+	///
+	/// See [`FillRule`] for more information.
+	///
+	/// [`FillPoly` requests]: crate::x11::request::FillPoly
 	#[must_use]
 	pub fn fill_rule(&self) -> Option<&FillRule> {
 		self.fill_rule
@@ -961,6 +1008,9 @@ impl GraphicsOptions {
 			.map(|__FillRule(fill_rule)| fill_rule)
 	}
 
+	/// The [pixmap] which is tiled in graphics operations.
+	///
+	/// [pixmap]: Pixmap
 	#[must_use]
 	#[allow(
 		clippy::missing_const_for_fn,
@@ -969,6 +1019,9 @@ impl GraphicsOptions {
 	pub fn tile(&self) -> Option<&Pixmap> {
 		self.tile.as_ref()
 	}
+	/// The [pixmap] which is stippled in graphics operations.
+	///
+	/// [pixmap]: Pixmap
 	#[must_use]
 	#[allow(
 		clippy::missing_const_for_fn,
@@ -978,15 +1031,32 @@ impl GraphicsOptions {
 		self.stipple.as_ref()
 	}
 
+	/// The x coordinate of the top-left corner of the [tile] or [stipple]
+	/// [`Pixmap`], relative to the [drawable]'s top-left corner.
+	///
+	/// [tile]: GraphicsOptions::tile
+	/// [stipple]: GraphicsOptions::stipple
+	///
+	/// [drawable]: crate::Drawable
 	#[must_use]
 	pub fn tile_stipple_x(&self) -> Option<&i16> {
 		self.tile_stipple_x.as_ref().map(|__i16(x)| x)
 	}
+	/// The y coordinate of the top-left corner of the [tile] or [stipple]
+	/// [`Pixmap`], relative to the [drawable]'s top-left corner.
+	///
+	/// [tile]: GraphicsOptions::tile
+	/// [stipple]: GraphicsOptions::stipple
+	///
+	/// [drawable]: crate::Drawable
 	#[must_use]
 	pub fn tile_stipple_y(&self) -> Option<&i16> {
 		self.tile_stipple_y.as_ref().map(|__i16(y)| y)
 	}
 
+	/// The [font] used for text.
+	///
+	/// [font]: Font
 	#[must_use]
 	#[allow(
 		clippy::missing_const_for_fn,
@@ -996,6 +1066,12 @@ impl GraphicsOptions {
 		self.font.as_ref()
 	}
 
+	/// Whether descendent [windows] are included or masked out when applying
+	/// graphics operations.
+	///
+	/// See [`SubwindowMode`] for more information.
+	///
+	/// [windows]: crate::Window
 	#[must_use]
 	pub fn subwindow_mode(&self) -> Option<&SubwindowMode> {
 		self.subwindow_mode
@@ -1003,19 +1079,37 @@ impl GraphicsOptions {
 			.map(|__SubwindowMode(subwindow_mode)| subwindow_mode)
 	}
 
+	/// Whether [`GraphicsExposure` events] are generated.
+	///
+	/// [`GraphicsExposure` events]: crate::x11::event::GraphicsExposure
 	#[must_use]
 	pub fn graphics_exposure(&self) -> Option<&bool> {
 		self.graphics_exposures.as_ref().map(|__bool(bool)| bool)
 	}
 
+	/// The x coordinate of the top-left corner of the [`clip_mask`], relative
+	/// to the [drawable]'s top-left corner.
+	///
+	/// [`clip_mask`]: GraphicsOptions::clip_mask
+	/// [drawable]: crate::Drawable
 	#[must_use]
 	pub fn clip_x(&self) -> Option<&i16> {
 		self.clip_x.as_ref().map(|__i16(x)| x)
 	}
+	/// The y coordinate of the top-left corner of the [`clip_mask`], relative
+	/// to the [drawable]'s top-left corner.
+	///
+	/// [`clip_mask`]: GraphicsOptions::clip_mask
+	/// [drawable]: crate::Drawable
 	#[must_use]
 	pub fn clip_y(&self) -> Option<&i16> {
 		self.clip_y.as_ref().map(|__i16(y)| y)
 	}
+	/// A mask applied to the [drawable] when using graphics operations.
+	///
+	/// Graphics operations will only have an effect where this mask is set.
+	///
+	/// [drawable]: crate::Drawable
 	#[must_use]
 	#[allow(
 		clippy::missing_const_for_fn,
@@ -1025,17 +1119,28 @@ impl GraphicsOptions {
 		self.clip_mask.as_ref()
 	}
 
+	/// The offset from the endpoints or joinpoints of a line from which dashes
+	/// are drawn.
 	#[must_use]
 	pub fn dash_offset(&self) -> Option<&u16> {
 		self.dash_offset
 			.as_ref()
 			.map(|__u16(dash_offset)| dash_offset)
 	}
+	/// Specifies the length of dashes used in [`LineStyle::DoubleDash`] and
+	/// [`LineStyle::OnOffDash`] lines.
 	#[must_use]
 	pub fn dashes(&self) -> Option<&u8> {
 		self.dashes.as_ref().map(|__u8(dashes)| dashes)
 	}
 
+	/// Specified the mode with which [arcs] are drawn in
+	/// [`PolyFillArc` requests].
+	///
+	/// See [`ArcMode`] for more information.
+	///
+	/// [arcs]: crate::Arc
+	/// [`PolyFillArc` requests]: crate::x11::request::PolyFillArc
 	#[must_use]
 	pub fn arc_mode(&self) -> Option<&ArcMode> {
 		self.arc_mode.as_ref().map(|__ArcMode(arc_mode)| arc_mode)

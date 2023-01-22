@@ -25,6 +25,7 @@
 #![warn(clippy::pedantic)]
 #![warn(clippy::complexity)]
 #![warn(clippy::cargo)]
+#![warn(clippy::missing_const_for_fn)]
 #![warn(missing_docs)]
 // Allow these lints.
 #![allow(clippy::doc_markdown)]
