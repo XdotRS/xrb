@@ -268,4 +268,44 @@ derive_xrb! {
 		pub border_width: Px<u16>,
 		[_; ..],
 	}
+
+	/// The [reply] to a [`QueryWindowTree` request].
+	///
+	/// [reply]: crate::message::Reply
+	///
+	/// [`QueryWindowTree` request]: request::QueryWindowTree
+	#[derive(Debug, X11Size, Readable, Writable)]
+	pub struct QueryWindowTree: Reply for request::QueryWindowTree {
+		#[sequence]
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: crate::message::Reply
+		///
+		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		pub sequence: u16,
+
+		/// The `target` [window]'s root [window].
+		///
+		/// [window]: Window
+		pub root: Window,
+		/// The `target` [window]'s parent.
+		///
+		/// [window]: Window
+		pub parent: Option<Window>,
+
+		// The length of `children`.
+		#[allow(clippy::cast_possible_truncation)]
+		let children_len: u16 = children => children.len() as u16,
+		[_; 14],
+
+		/// The `target` [window]'s children.
+		///
+		/// [window]: Window
+		#[context(children_len => usize::from(*children_len))]
+		pub children: Vec<Window>,
+	}
 }

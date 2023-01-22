@@ -826,6 +826,9 @@ derive_xrb! {
 	/// It is legal to pass an [`InputOnly`] [window] as a [drawable] to this
 	/// [request].
 	///
+	/// # Reply
+	/// This [request] generates a [`GetGeometry` reply].
+	///
 	/// # Errors
 	/// A [`Drawable` error] is generated if the `target` does not refer to a
 	/// defined [window] nor [pixmap].
@@ -836,6 +839,8 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	///
 	/// [`InputOnly`]: WindowClass::InputOnly
+	///
+	/// [`GetGeometry` reply]: reply::GetGeometry
 	///
 	/// [`Drawable` error]: error::Drawable
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
@@ -853,5 +858,37 @@ derive_xrb! {
 		///
 		/// [`Drawable` error]: Error::Drawable
 		pub target: Drawable,
+	}
+
+	/// A [request] that returns the root [window], the parent, and the children
+	/// of the given [window].
+	///
+	/// # Reply
+	/// This [request] generates a [`QueryWindowTree` reply].
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if `target` does not refer to a defined
+	/// [window].
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [`QueryWindowTree` reply]: reply::QueryWindowTree
+	///
+	/// [`Window` error]: error::Window
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct QueryWindowTree: Request(15, error::Window) -> reply::QueryWindowTree {
+		/// The [window] for which this [request] gets its root [window],
+		/// parent, and children.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		/// [request]: crate::message::Request
+		///
+		/// [`Window` error]: error::Window
+		pub target: Window,
 	}
 }
