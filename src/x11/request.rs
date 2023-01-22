@@ -15,6 +15,7 @@ use crate::{
 	visual::VisualId,
 	x11::error,
 	CopyableFromParent,
+	Drawable,
 	Point,
 	Rectangle,
 	Window,
@@ -817,5 +818,40 @@ derive_xrb! {
 		///
 		/// [`Window error]: error::Window
 		pub target: Window,
+	}
+
+	/// A [request] that returns the root [window] and current geometry of the
+	/// given [drawable].
+	///
+	/// It is legal to pass an [`InputOnly`] [window] as a [drawable] to this
+	/// [request].
+	///
+	/// # Errors
+	/// A [`Drawable` error] is generated if the `target` does not refer to a
+	/// defined [window] nor [pixmap].
+	///
+	/// [window]: Window
+	/// [pixmap]: crate::Pixmap
+	/// [drawable]: Drawable
+	/// [request]: crate::message::Request
+	///
+	/// [`InputOnly`]: WindowClass::InputOnly
+	///
+	/// [`Drawable` error]: error::Drawable
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GetGeometry: Request(14, error::Drawable) -> reply::GetGeometry {
+		/// The [drawable] for which this [request] gets its geometry.
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [pixmap].
+		///
+		/// [window]: Window
+		/// [pixmap]: crate::Pixmap
+		/// [drawable]: Drawable
+		/// [request]: crate::message::Request
+		///
+		/// [`Drawable` error]: Error::Drawable
+		pub target: Drawable,
 	}
 }

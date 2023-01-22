@@ -19,31 +19,35 @@ use crate::{
 	DeviceEventMask,
 	EventMask,
 	MaintainContents,
+	Rectangle,
+	Window,
 	WindowClass,
 	WindowGravity,
 };
 
+use crate::unit::Px;
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
+
 extern crate self as xrb;
 
 /// The state of the [window] regarding how it is mapped.
 ///
-/// [window]: crate::Window
+/// [window]: Window
 #[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 pub enum MapState {
 	/// The [window] is not mapped.
 	///
-	/// [window]: crate::Window
+	/// [window]: Window
 	Unmapped,
 
 	/// The [window] is mapped but one of its ancestors is unmapped.
 	///
-	/// [window]: crate::Window
+	/// [window]: Window
 	Unviewable,
 
 	/// The [window] is mapped and all of its ancestors are mapped.
 	///
-	/// [window]: crate::Window
+	/// [window]: Window
 	Viewable,
 }
 
@@ -74,7 +78,7 @@ derive_xrb! {
 		/// See [`Attributes::maintain_contents`] for more information.
 		///
 		/// [regions]: crate::Region
-		/// [window]: crate::Window
+		/// [window]: Window
 		///
 		/// [`Attributes::maintain_contents`]: crate::set::Attributes::maintain_contents
 		pub maintain_contents: MaintainContents,
@@ -83,13 +87,13 @@ derive_xrb! {
 		///
 		/// See [`VisualType`] for more information.
 		///
-		/// [window]: crate::Window
+		/// [window]: Window
 		///
 		/// [`VisualType`]: crate::visual::VisualType
 		pub visual: VisualId,
 		/// The [window]'s [class].
 		///
-		/// [window]: crate::Window
+		/// [window]: Window
 		/// [class]: WindowClass
 		pub class: WindowClass,
 
@@ -99,7 +103,7 @@ derive_xrb! {
 		/// See [`Attributes::bit_gravity`] for more information.
 		///
 		/// [region]: crate::Region
-		/// [window]: crate::Window
+		/// [window]: Window
 		///
 		/// [`Attributes::bit_gravity`]: crate::set::Attributes::bit_gravity
 		pub bit_gravity: BitGravity,
@@ -107,7 +111,7 @@ derive_xrb! {
 		///
 		/// See [`Attributes::window_gravity`] for more information.
 		///
-		/// [window]: crate::Window
+		/// [window]: Window
 		///
 		/// [`Attributes::window_gravity`]: crate::set::Attributes::window_gravity
 		pub window_graivty: WindowGravity,
@@ -117,7 +121,7 @@ derive_xrb! {
 		///
 		/// See [`Attributes::maintained_planes`] for more information.
 		///
-		/// [window]: crate::Window
+		/// [window]: Window
 		///
 		/// [`Attributes::maintained_planes`]: crate::set::Attributes::maintained_planes
 		pub maintained_planes: u32,
@@ -136,7 +140,7 @@ derive_xrb! {
 		///
 		/// See [`Attributes::maintain_windows_under`] for more information.
 		///
-		/// [window]: crate::Window
+		/// [window]: Window
 		///
 		/// [`Attributes::maintain_windows_under`]: crate::set::Attributes::maintain_windows_under
 		pub maintain_windows_under: bool,
@@ -147,7 +151,7 @@ derive_xrb! {
 		///
 		/// See [`MapState`] for more information.
 		///
-		/// [window]: crate::Window
+		/// [window]: Window
 		/// [map state]: MapState
 		pub map_state: MapState,
 
@@ -160,7 +164,7 @@ derive_xrb! {
 		///
 		/// See [`Attributes::override_redirect`] for more information.
 		///
-		/// [window]: crate::Window
+		/// [window]: Window
 		///
 		/// [`MapWindow`]: request::MapWindow
 		/// [`ConfigureWindow`]: request::ConfigureWindow
@@ -174,7 +178,7 @@ derive_xrb! {
 		///
 		/// See [`Attributes::colormap`] for more information.
 		///
-		/// [window]: crate::Window
+		/// [window]: Window
 		/// [colormap]: Colormap
 		///
 		/// [`Attributes::colormap`]: crate::set::Attributes::colormap
@@ -185,7 +189,7 @@ derive_xrb! {
 		/// This is the bitwise OR of every client's [`event_mask`] on the
 		/// [window].
 		///
-		/// [window]: crate::Window
+		/// [window]: Window
 		/// [events]: crate::message::Event
 		///
 		/// [`event_mask`]: crate::set::Attributes::event_mask
@@ -194,7 +198,7 @@ derive_xrb! {
 		///
 		/// This is your [`event_mask`] on the [window].
 		///
-		/// [window]: crate::Window
+		/// [window]: Window
 		/// [events]: crate::message::Event
 		///
 		/// [`event_mask`]: crate::set::Attributes::event_mask
@@ -206,10 +210,62 @@ derive_xrb! {
 		/// See [`Attributes::do_not_propagate_mask`] for more information.
 		///
 		/// [event]: crate::message::Event
-		/// [window]: crate::Window
+		/// [window]: Window
 		///
 		/// [`Attributes::do_not_propagate_mask`]: crate::set::Attributes::do_not_propagate_mask
 		pub do_not_propagate_mask: DeviceEventMask,
+		[_; ..],
+	}
+
+	/// The [reply] to a [`GetGeometry` request].
+	///
+	/// [reply]: crate::message::Reply
+	///
+	/// [`GetGeometry` request]: request::GetGeometry
+	#[derive(Debug, X11Size, Readable, Writable)]
+	pub struct GetGeometry: Reply for request::GetGeometry {
+		#[sequence]
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: crate::message::Reply
+		///
+		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		pub sequence: u16,
+
+		#[metabyte]
+		/// The number of bits per pixel for the [drawable].
+		///
+		/// [drawable]: crate::Drawable
+		pub depth: u8,
+
+		/// The [drawable]'s root [window].
+		///
+		/// [window]: Window
+		/// [drawable]: crate::Drawable
+		pub root: Window,
+
+		/// The [drawable]'s geometry.
+		///
+		/// For a [pixmap], the `x` and `y` coordinates will always be zero.
+		///
+		/// For a [window], the coordinates are relative to the top-left corner
+		/// of the [window]'s parent.
+		///
+		/// [window]: Window
+		/// [pixmap]: create::Pixmap
+		/// [drawable]: crate::Drawable
+		pub geometry: Rectangle,
+		/// The width of the [drawable]'s border.
+		///
+		/// For a [pixmap], this will always be zero.
+		///
+		/// [pixmap]: crate::Pixmap
+		/// [drawable]: crate::Drawable
+		pub border_width: Px<u16>,
 		[_; ..],
 	}
 }
