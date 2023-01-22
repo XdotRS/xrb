@@ -102,7 +102,7 @@ pub struct ErrorDataAttribute {
 }
 
 /// An attribute which indicates that a [`Field`] should not be taken into
-/// consideration when implementing traits.
+/// consideration when implementing XRBK traits.
 ///
 /// > **<sup>Syntax</sup>**\
 /// > _HideAttribute_ :\

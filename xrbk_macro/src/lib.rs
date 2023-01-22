@@ -386,7 +386,7 @@ pub fn derive_constant_x11_size(item: TokenStream) -> TokenStream {
 /// >
 /// > [^hidden-traits]: *HideAttribute*s may only specify traits listed in
 /// > *HiddenTraits*, any
-/// > other traits will have no effects.
+/// > other traits will have no effect.
 /// >
 /// > _Source_ :\
 /// > &nbsp;&nbsp; ( _SourceArgs_ `=>` )<sup>?</sup> [_Expression_]

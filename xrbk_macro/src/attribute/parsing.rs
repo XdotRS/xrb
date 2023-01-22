@@ -189,15 +189,12 @@ impl ParseWithContext for ParsedAttributes {
 				}
 
 				let inner_content;
-				let paren_token = parenthesized!(inner_content in content);
-				let hidden_traits = inner_content.parse_terminated(Path::parse)?;
-
 				hide_attribute = Some(HideAttribute {
 					hash_token,
 					bracket_token,
 					path,
-					paren_token,
-					hidden_traits,
+					paren_token: parenthesized!(inner_content in content),
+					hidden_traits: inner_content.parse_terminated(Path::parse)?,
 				});
 			// Otherwise, if the name was not `context`, `metabyte`, nor
 			// `sequence`, parse the attribute as a normal attribute.
