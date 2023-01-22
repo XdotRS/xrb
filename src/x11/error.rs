@@ -13,11 +13,13 @@
 
 use crate::message::Error;
 
+use derivative::Derivative;
 use xrbk_macro::derive_xrb;
 extern crate self as xrb;
 
 derive_xrb! {
-	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [major opcode] and [minor opcode]
 	/// combination provided in a [request] does not specify a valid [request].
 	///
@@ -27,6 +29,7 @@ derive_xrb! {
 	/// [minor opcode]: crate::message::Request::MINOR_OPCODE
 	pub struct Request: Error(1) {
 		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
@@ -61,7 +64,8 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when a numerical value contained in the [request]
 	/// falls outside of the range of accepted values.
 	///
@@ -72,6 +76,7 @@ derive_xrb! {
 	/// [error]: Error
 	pub struct Value: Error(2) {
 		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
@@ -108,7 +113,8 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [`Window`] ID used in the [request] does
 	/// not refer to a defined [window].
 	///
@@ -118,6 +124,7 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct Window: Error(3) {
 		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
@@ -154,7 +161,8 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [`Pixmap`] ID used in the [request] does
 	/// not refer to a defined [pixmap].
 	///
@@ -164,6 +172,7 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct Pixmap: Error(4) {
 		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
@@ -200,7 +209,8 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [`Atom`] ID used in the [request] does
 	/// not refer to a defined [atom].
 	///
@@ -210,6 +220,7 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct Atom: Error(5) {
 		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
@@ -246,7 +257,8 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [`CursorAppearance`] ID used in the
 	/// [request] does not refer to a defined [cursor appearance].
 	///
@@ -256,6 +268,7 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct CursorAppearance: Error(6) {
 		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
@@ -293,7 +306,8 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [`Font`] ID used in the [request] does
 	/// not refer to a defined [font].
 	///
@@ -303,6 +317,7 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct Font: Error(7) {
 		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
@@ -339,7 +354,8 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when there is a mismatch of some kind.
 	///
 	/// This [error] is generated for a number of reasons:
@@ -358,6 +374,7 @@ derive_xrb! {
 	/// [graphics context]: crate::GraphicsContext
 	pub struct Match: Error(8) {
 		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
@@ -384,7 +401,8 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [`Drawable`] ID used in the [request]
 	/// does not refer to a defined [window] or [pixmap].
 	///
@@ -395,6 +413,7 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct Drawable: Error(9) {
 		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
@@ -432,7 +451,8 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when access is not allowed for what the [request] is
 	/// trying to do.
 	///
@@ -459,6 +479,7 @@ derive_xrb! {
 	/// [colormap]: crate::Colormap
 	pub struct Access: Error(10) {
 		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
@@ -485,13 +506,15 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the X server failed to allocate the requested
 	/// resource.
 	///
 	/// [error]: Error
 	pub struct Alloc: Error(11) {
 		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
@@ -518,7 +541,8 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [`Colormap`] ID used in the [request]
 	/// does not refer to a defined [colormap].
 	///
@@ -528,6 +552,7 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct Colormap: Error(12) {
 		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
@@ -564,7 +589,8 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [`GraphicsContext`] ID used in the [request]
 	/// does not refer to a defined [graphics context].
 	///
@@ -574,6 +600,7 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct GraphicsContext: Error(13) {
 		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
@@ -610,13 +637,15 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when a chosen resource ID is not in the range of
 	/// resource IDs assigned to the client, or the ID is already in use.
 	///
 	/// [error]: Error
 	pub struct ResourceIdChoice: Error(14) {
 		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
@@ -648,7 +677,8 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [request] specifies the name of a [font]
 	/// or color which does not exist.
 	///
@@ -657,6 +687,7 @@ derive_xrb! {
 	/// [font]: crate::Font
 	pub struct Name: Error(15) {
 		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
@@ -683,7 +714,8 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when a [request] is not of the correct length.
 	///
 	/// The length may be too short or too long to hold the fields defined for
@@ -694,6 +726,7 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct Length: Error(16) {
 		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
@@ -720,7 +753,8 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Hash, Writable, Readable, X11Size)]
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the X server does not implement some aspect
 	/// of the [request].
 	///
@@ -728,6 +762,7 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	pub struct Implementation: Error(17) {
 		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
