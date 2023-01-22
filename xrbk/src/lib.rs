@@ -111,7 +111,7 @@ pub trait Readable: X11Size {
 	/// - [`ReadError::Other`]: Any other error when parsing.
 	///
 	/// [`Buf`]: Buf
-	fn read_from(reader: &mut impl Buf) -> ReadResult<Self>
+	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
 	where
 		Self: Sized;
 }
@@ -135,7 +135,7 @@ pub trait ReadableWithContext: X11Size {
 	/// - [`ReadError::Other`]: Any other error when parsing.
 	///
 	/// [`Buf`]: Buf
-	fn read_with(reader: &mut impl Buf, context: &Self::Context) -> ReadResult<Self>
+	fn read_with(buf: &mut impl Buf, context: &Self::Context) -> ReadResult<Self>
 	where
 		Self: Sized;
 }
@@ -147,10 +147,10 @@ pub trait Writable: X11Size {
 	/// # Errors
 	///
 	/// Returns a [`WriteError`] if it was not able to properly write to the
-	/// given `reader`.
+	/// given `buf`.
 	///
 	/// [`BufMut`]: BufMut
-	fn write_to(&self, writer: &mut impl BufMut) -> WriteResult;
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult;
 }
 
 /// A trait implemented for types which 'wrap' some primitive integer type.

@@ -14,7 +14,17 @@ use xrbk::{
 	X11Size,
 };
 
-use crate::{atom::Atom, Button, Colormap, Keycode, Pixmap, Timestamp, Window, WindowClass};
+use crate::{
+	atom::Atom,
+	visual::VisualId,
+	Button,
+	Colormap,
+	Keycode,
+	Pixmap,
+	Timestamp,
+	Window,
+	WindowClass,
+};
 
 macro_rules! impl_constant_x11_size { // {{{
 	($type:ty {
@@ -115,6 +125,26 @@ impl_writable!(CopyableFromParent<Pixmap>: &self, buf {
 	match self {
 		Self::CopyFromParent => buf.put_u32(0),
 		Self::Other(val) => val.write_to(buf)?,
+	}
+
+	Ok(())
+});
+
+impl_constant_x11_size!(CopyableFromParent<VisualId> {
+	VisualId::X11_SIZE
+});
+
+impl_readable!(CopyableFromParent<VisualId>: buf {
+	Ok(match buf.get_u32() {
+		discrim if discrim == 0 => Self::CopyFromParent,
+		val => Self::Other(VisualId::new(val)),
+	})
+});
+
+impl_writable!(CopyableFromParent<VisualId>: &self, buf {
+	match self {
+		Self::CopyFromParent => buf.put_u32(0),
+		Self::Other(id) => id.write_to(buf)?,
 	}
 
 	Ok(())

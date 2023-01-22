@@ -11,8 +11,8 @@
 
 use crate::{
 	atom::Atom,
+	set::WindowConfigMask,
 	Button,
-	ConfigureWindowMask,
 	CurrentableTime,
 	Drawable,
 	GrabMode,
@@ -30,6 +30,7 @@ use bitflags::bitflags;
 use xrbk::{Buf, ConstantX11Size, ReadResult, Readable, ReadableWithContext, X11Size};
 
 use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
+
 extern crate self as xrb;
 
 derive_xrb! {
@@ -44,7 +45,7 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [`KEY_PRESS`]: crate::mask::EventMask::KEY_PRESS
+	/// [`KEY_PRESS`]: crate::EventMask::KEY_PRESS
 	pub struct KeyPress: Event(2) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -76,13 +77,13 @@ derive_xrb! {
 		/// with that window, then going to its parent, etc.) to find the first
 		/// window which any client has selected interest in this event
 		/// (provided no window between the two prohibits this event from
-		/// generating in its [`DO_NOT_PROPAGATE_MASK`]).
+		/// generating in its [`do_not_propagate_mask`]).
 		///
 		/// Active grabs or the currently focused window may modify how the
 		/// `event_window` is chosen.
 		///
 		/// [event]: crate::message::Event
-		/// [`DO_NOT_PROPAGATE_MASK`]: crate::mask::AttributeMask::DO_NOT_PROPAGATE_MASK
+		/// [`do_not_propagate_mask`]: crate::Attributes::do_not_propagate_mask
 		pub event_window: Window,
 		/// If a child of the `event_window` contains the cursor, this is that
 		/// child.
@@ -123,7 +124,7 @@ derive_xrb! {
 	/// `event_window`.
 	///
 	/// [event]: crate::message::Event
-	/// [`KEY_RELEASE`]: crate::mask::EventMask::KEY_RELEASE
+	/// [`KEY_RELEASE`]: crate::EventMask::KEY_RELEASE
 	pub struct KeyRelease: Event(3) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -156,13 +157,13 @@ derive_xrb! {
 		/// with that window, then going to its parent, etc.) to find the first
 		/// window which any client has selected interest in this event
 		/// (provided no window between the two prohibits this event from
-		/// generating in its [`DO_NOT_PROPAGATE_MASK`]).
+		/// generating in its [`do_not_propagate_mask`]).
 		///
 		/// Active grabs or the currently focused window may modify how the
 		/// `event_window` is chosen.
 		///
 		/// [event]: crate::message::Event
-		/// [`DO_NOT_PROPAGATE_MASK`]: crate::mask::AttributeMask::DO_NOT_PROPAGATE_MASK
+		/// [`do_not_propagate_mask`]: crate::Attributes::do_not_propagate_mask
 		pub event_window: Window,
 		/// If a child of the `event_window` contains the cursor, this is that
 		/// child.
@@ -205,7 +206,7 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [mouse button]: Button
-	/// [`BUTTON_PRESS`]: crate::mask::EventMask::BUTTON_PRESS
+	/// [`BUTTON_PRESS`]: crate::EventMask::BUTTON_PRESS
 	pub struct ButtonPress: Event(4) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -237,12 +238,12 @@ derive_xrb! {
 		/// with that window, then going to its parent, etc.) to find the first
 		/// window which any client has selected interest in this event
 		/// (provided no window between the two prohibits this event from
-		/// generating in its [`DO_NOT_PROPAGATE_MASK`]).
+		/// generating in its [`do_not_propagate_mask`]).
 		///
 		/// Active grabs may modify how the `event_window` is chosen.
 		///
 		/// [event]: crate::message::Event
-		/// [`DO_NOT_PROPAGATE_MASK`]: crate::mask::AttributeMask::DO_NOT_PROPAGATE_MASK
+		/// [`do_not_propagate_mask`]: crate::Attributes::do_not_propagate_mask
 		pub event_window: Window,
 		/// If a child of the `event_window` contains the cursor, this is that
 		/// child.
@@ -285,7 +286,7 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [mouse button]: Button
-	/// [`BUTTON_RELEASE`]: crate::mask::EventMask::BUTTON_RELEASE
+	/// [`BUTTON_RELEASE`]: crate::EventMask::BUTTON_RELEASE
 	pub struct ButtonRelease: Event(5) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -317,12 +318,12 @@ derive_xrb! {
 		/// with that window, then going to its parent, etc.) to find the first
 		/// window which any client has selected interest in this event
 		/// (provided no window between the two prohibits this event from
-		/// generating in its [`DO_NOT_PROPAGATE_MASK`]).
+		/// generating in its [`do_not_propagate_mask`]).
 		///
 		/// Active grabs may modify how the `event_window` is chosen.
 		///
 		/// [event]: crate::message::Event
-		/// [`DO_NOT_PROPAGATE_MASK`]: crate::mask::AttributeMask::DO_NOT_PROPAGATE_MASK
+		/// [`do_not_propagate_mask`]: crate::Attributes::do_not_propagate_mask
 		pub event_window: Window,
 		/// If a child of the `event_window` contains the cursor, this is that
 		/// child.
@@ -367,7 +368,7 @@ pub enum MotionNotificationType {
 	/// [`MOTION_HINT`].
 	///
 	/// [`Motion` event]: Motion
-	/// [`MOTION_HINT`]: crate::mask::EventMask::MOTION_HINT
+	/// [`MOTION_HINT`]: crate::EventMask::MOTION_HINT
 	Normal,
 
 	/// The [`Motion` event] was generated for a client selecting
@@ -380,7 +381,7 @@ pub enum MotionNotificationType {
 	/// - the client sends a [`QueryCursor`] or [`GetMotionEvents`] request.
 	///
 	/// [`Motion` event]: Motion
-	/// [`MOTION_HINT`]: crate::mask::EventMask::MOTION_HINT
+	/// [`MOTION_HINT`]: crate::EventMask::MOTION_HINT
 	/// [mouse button]: Button
 	///
 	/// [`QueryCursor`]: super::request::QueryCursor
@@ -417,11 +418,11 @@ derive_xrb! {
 	/// [`EnterWindow` event]: EnterWindow
 	/// [`LeaveWindow` event]: LeaveWindow
 	///
-	/// [`ANY_MOTION`]: crate::mask::EventMask::ANY_MOTION
-	/// [`BUTTON_1_MOTION`]: crate::mask::EventMask::BUTTON_1_MOTION
-	/// [`BUTTON_5_MOTION`]: crate::mask::EventMask::BUTTON_5_MOTION
-	/// [`ANY_BUTTON_MOTION`]: crate::mask::EventMask::ANY_BUTTON_MOTION
-	/// [`MOTION_HINT`]: crate::mask::EventMask::MOTION_HINT
+	/// [`ANY_MOTION`]: crate::EventMask::ANY_MOTION
+	/// [`BUTTON_1_MOTION`]: crate::EventMask::BUTTON_1_MOTION
+	/// [`BUTTON_5_MOTION`]: crate::EventMask::BUTTON_5_MOTION
+	/// [`ANY_BUTTON_MOTION`]: crate::EventMask::ANY_BUTTON_MOTION
+	/// [`MOTION_HINT`]: crate::EventMask::MOTION_HINT
 	///
 	/// [`Hint`]: MotionNotificationType::Hint
 	/// [`QueryCursor`]: super::request::QueryCursor
@@ -458,12 +459,12 @@ derive_xrb! {
 		/// with that window, then going to its parent, etc.) to find the first
 		/// window which any client has selected interest in this event
 		/// (provided no window between the two prohibits this event from
-		/// generating in its [`DO_NOT_PROPAGATE_MASK`]).
+		/// generating in its [`do_not_propagate_mask`]).
 		///
 		/// Active grabs may modify how the `event_window` is chosen.
 		///
 		/// [event]: crate::message::Event
-		/// [`DO_NOT_PROPAGATE_MASK`]: crate::mask::AttributeMask::DO_NOT_PROPAGATE_MASK
+		/// [`do_not_propagate_mask`]: crate::Attributes::do_not_propagate_mask
 		pub event_window: Window,
 		/// If a child of the `event_window` contains the cursor, this is that
 		/// child.
@@ -631,7 +632,7 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [`ENTER_WINDOW`]: crate::mask::EventMask::ENTER_WINDOW
+	/// [`ENTER_WINDOW`]: crate::EventMask::ENTER_WINDOW
 	pub struct EnterWindow: Event(7) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -720,7 +721,7 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [`LEAVE_WINDOW`]: crate::mask::EventMask::LEAVE_WINDOW
+	/// [`LEAVE_WINDOW`]: crate::EventMask::LEAVE_WINDOW
 	pub struct LeaveWindow: Event(8) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -1007,7 +1008,7 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [`FOCUS_CHANGE`]: crate::mask::EventMask::FOCUS_CHANGE
+	/// [`FOCUS_CHANGE`]: crate::EventMask::FOCUS_CHANGE
 	pub struct Focus: Event(9) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -1064,7 +1065,7 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [`FOCUS_CHANGE`]: crate::mask::EventMask::FOCUS_CHANGE
+	/// [`FOCUS_CHANGE`]: crate::EventMask::FOCUS_CHANGE
 	pub struct Unfocus: Event(10) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -1114,7 +1115,7 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [`KEYS_STATE`]: crate::mask::EventMask::KEYS_STATE
+	/// [`KEYS_STATE`]: crate::EventMask::KEYS_STATE
 	pub struct KeysState: Event(11) {
 		/// A bit vector representing the current keyboard state.
 		///
@@ -1134,10 +1135,10 @@ derive_xrb! {
 	/// This event is generated when no valid contents are available for regions
 	/// of a window, and either:
 	/// - the regions are visible; or
-	/// - the regions are viewable and the server is maintaining a backing store
-	///   on the window; or
+	/// - the regions are viewable and the server is maintaining the contents of
+	///   the window; or
 	/// - the window is not viewable but the server is honoring the window's
-	///   [`BackingStore` attribute] of [`Always`] or [`WhenMapped`].
+	///   [`maintain_contents` attribute] of [`Always`] or [`WhenMapped`].
 	///
 	/// The regions are decomposed into an arbitrary set of rectangles, and an
 	/// `Expose` event is generated for each one.
@@ -1151,12 +1152,12 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [window]: Window
 	///
-	/// [`BackingStore` attribute]: crate::Attribute::BackingStore
-	/// [`Always`]: crate::BackingStores::Always
-	/// [`WhenMapped`]: crate::BackingStores::WhenMapped
+	/// [`maintain_contents` attribute]: crate::set::Attributes::maintain_contents
+	/// [`Always`]: crate::MaintainContents::Always
+	/// [`WhenMapped`]: crate::MaintainContents::WhenMapped
 	/// [`WindowClass::InputOnly`]: crate::WindowClass::InputOnly
 	///
-	/// [`EXPOSURE`]: crate::mask::EventMask::EXPOSURE
+	/// [`EXPOSURE`]: crate::EventMask::EXPOSURE
 	pub struct Expose: Event(12) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -1189,11 +1190,11 @@ derive_xrb! {
 	///
 	/// # Recipients
 	/// This [event] is reported to a client using a [`GraphicsContext`] with
-	/// [`GRAPHICS_EXPOSURE`] selected.
+	/// [`graphics_exposure`] enabled.
 	///
 	/// [event]: crate::message::Event
 	/// [`GraphicsContext`]: crate::GraphicsContext
-	/// [`GRAPHICS_EXPOSURE`]: crate::mask::GraphicsContextMask::GRAPHICS_EXPOSURE
+	/// [`graphics_exposure`]: crate::set::GraphicsOptions::graphics_exposure
 	pub struct GraphicsExposure: Event(13) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -1241,12 +1242,12 @@ derive_xrb! {
 	///
 	/// # Recipients
 	/// This [event] is reported to a client using a [`GraphicsContext`] with
-	/// [`GRAPHICS_EXPOSURE`] selected.
+	/// [`graphics_exposure`] enabled.
 	///
 	/// [event]: crate::message::Event
 	/// [`GraphicsExposure` events]: GraphicsExposure
 	/// [`GraphicsContext`]: crate::GraphicsContext
-	/// [`GRAPHICS_EXPOSURE`]: crate::mask::GraphicsContextMask::GRAPHICS_EXPOSURE
+	/// [`graphics_exposure`]: crate::set::GraphicsOptions::graphics_exposure
 	pub struct NoExposure: Event(14) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -1348,7 +1349,7 @@ derive_xrb! {
 	/// [`PartiallyObscured`]: VisibilityState::PartiallyObscured
 	/// [`FullyObscured`]: VisibilityState::FullyObscured
 	///
-	/// [`VISIBILITY_CHANGE`]: crate::mask::EventMask::VISIBILITY_CHANGE
+	/// [`VISIBILITY_CHANGE`]: crate::EventMask::VISIBILITY_CHANGE
 	pub struct Visibility: Event(15) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -1375,7 +1376,7 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
+	/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
 	pub struct Create: Event(16) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -1414,7 +1415,7 @@ derive_xrb! {
 		/// [`MapWindow`]: super::request::MapWindow
 		/// [`ConfigureWindow`]: super::request::ConfigureWindow
 		///
-		/// [`SUBSTRUCTURE_REDIRECT`]: crate::mask::EventMask::SUBSTRUCTURE_REDIRECT
+		/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
 		pub override_redirect: bool,
 		[_; ..],
 	}
@@ -1429,8 +1430,8 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
-	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
+	/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
+	/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
 	pub struct Destroy: Event(17) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -1447,8 +1448,8 @@ derive_xrb! {
 		/// destroyed, this is that window. For clients selecting
 		/// [`SUBSTRUCTURE_NOTIFY`] on the window's parent, this is that parent.
 		///
-		/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
-		/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
+		/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
+		/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
 		pub event_window: Window,
 		/// The window which was destroyed.
 		pub window: Window,
@@ -1467,8 +1468,8 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
-	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
+	/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
+	/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
 	pub struct Unmap: Event(18) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -1485,18 +1486,18 @@ derive_xrb! {
 		/// unmapped, this is that `window`. For clients selecting
 		/// [`SUBSTRUCTURE_NOTIFY`] on the `window`'s parent, this is that parent.
 		///
-		/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
-		/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
+		/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
+		/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
 		pub event_window: Window,
 		/// The window that was unmapped.
 		pub window: Window,
 
 		/// Whether this [event] was generated as a result of its parent being
-		/// resized when the unmapped [window] had [`WinGravity::Unmap`].
+		/// resized when the unmapped [window] had [`WindowGravity::Unmap`].
 		///
 		/// [event]: crate::message::Event
 		/// [window]: Window
-		/// [`WinGravity::Unmap`]: crate::WinGravity::Unmap
+		/// [`WindowGravity::Unmap`]: crate::WindowGravity::Unmap
 		pub from_configure: bool,
 		[_; ..],
 	}
@@ -1513,8 +1514,8 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
-	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
+	/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
+	/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
 	pub struct Map: Event(19) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -1531,8 +1532,8 @@ derive_xrb! {
 		/// mapped, this is that `window`. For clients selecting
 		/// [`SUBSTRUCTURE_NOTIFY`] on the `window`'s parent, this is that parent.
 		///
-		/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
-		/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
+		/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
+		/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
 		pub event_window: Window,
 		/// The window that was mapped.
 		pub window: Window,
@@ -1547,14 +1548,14 @@ derive_xrb! {
 		/// [`MapWindow`]: super::request::MapWindow
 		/// [`ConfigureWindow`]: super::request::ConfigureWindow
 		///
-		/// [`SUBSTRUCTURE_REDIRECT`]: crate::mask::EventMask::SUBSTRUCTURE_REDIRECT
+		/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
 		pub override_redirect: bool,
 		[_; ..],
 	}
 
 	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when an unmapped [window] with an
-	/// [`OverrideRedirect` attribute] of `false` sends a [`MapWindow` request].
+	/// [`override_redirect` attribute] of `false` sends a [`MapWindow` request].
 	///
 	/// # Recipients
 	/// This [event] is reported to clients selecting [`SUBSTRUCTURE_REDIRECT`]
@@ -1564,10 +1565,10 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [`OverrideRedirect` attribute]: crate::WinAttribute::OverrideRedirect
+	/// [`override_redirect` attribute]: crate::Attributes::override_redirect
 	/// [`MapWindow` request]: super::request::MapWindow
 	///
-	/// [`SUBSTRUCTURE_REDIRECT`]: crate::mask::EventMask::SUBSTRUCTURE_REDIRECT
+	/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
 	pub struct MapRequest: Event(20) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -1600,8 +1601,8 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
-	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
+	/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
+	/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
 	pub struct Reparent: Event(21) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -1619,8 +1620,8 @@ derive_xrb! {
 		/// [`SUBSTRUCTURE_NOTIFY`] on the `window`'s old parent or
 		/// `new_parent`, this is that parent.
 		///
-		/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
-		/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
+		/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
+		/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
 		pub event_window: Window,
 		/// The window which was reparented.
 		pub window: Window,
@@ -1640,7 +1641,7 @@ derive_xrb! {
 		/// [`MapWindow`]: super::request::MapWindow
 		/// [`ConfigureWindow`]: super::request::ConfigureWindow
 		///
-		/// [`SUBSTRUCTURE_REDIRECT`]: crate::mask::EventMask::SUBSTRUCTURE_REDIRECT
+		/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
 		pub override_redirect: bool,
 		[_; ..],
 	}
@@ -1656,8 +1657,8 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [`ConfigureWindow` request]: super::request::ConfigureWindow
 	/// [window]: Window
-	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
-	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
+	/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
+	/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
 	pub struct Configure: Event(22) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -1674,8 +1675,8 @@ derive_xrb! {
 		/// configured, this is that `window`. For clients selecting
 		/// [`SUBSTRUCTURE_NOTIFY`] on the `window`'s parent, this is that parent.
 		///
-		/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
-		/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
+		/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
+		/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
 		pub event_window: Window,
 		/// The window which was configured in the [`ConfigureWindow` request].
 		///
@@ -1711,7 +1712,7 @@ derive_xrb! {
 		/// [`MapWindow`]: super::request::MapWindow
 		/// [`ConfigureWindow`]: super::request::ConfigureWindow
 		///
-		/// [`SUBSTRUCTURE_REDIRECT`]: crate::mask::EventMask::SUBSTRUCTURE_REDIRECT
+		/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
 		pub override_redirect: bool,
 		[_; ..],
 	}
@@ -1737,7 +1738,7 @@ derive_xrb! {
 	/// [window]: Window
 	/// [`ConfigureWindow` request]: super::request::ConfigureWindow
 	///
-	/// [`SUBSTRUCTURE_REDIRECT`]: crate::mask::EventMask::SUBSTRUCTURE_REDIRECT
+	/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
 	pub struct ConfigureWindowRequest: Event(23) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -1759,7 +1760,7 @@ derive_xrb! {
 		/// The `window`'s parent, on which [`SUBSTRUCTURE_REDIRECT`] is
 		/// selected.
 		///
-		/// [`SUBSTRUCTURE_REDIRECT`]: crate::mask::EventMask::SUBSTRUCTURE_REDIRECT
+		/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
 		pub parent: Window,
 		/// The window for which the [`ConfigureWindow` request] was sent.
 		///
@@ -1785,7 +1786,7 @@ derive_xrb! {
 		/// [`ConfigureWindow` request].
 		///
 		/// [`ConfigureWindow` request]: super::request::ConfigureWindow
-		pub mask: ConfigureWindowMask,
+		pub mask: WindowConfigMask,
 		[_; ..],
 	}
 
@@ -1799,8 +1800,8 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
-	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
+	/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
+	/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
 	pub struct Gravity: Event(24) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -1817,8 +1818,8 @@ derive_xrb! {
 		/// moved, this is that `window`. For clients selecting
 		/// [`SUBSTRUCTURE_NOTIFY`] on the `window`'s parent, this is that parent.
 		///
-		/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
-		/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
+		/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
+		/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
 		pub event_window: Window,
 		/// The window which was moved.
 		pub window: Window,
@@ -1840,7 +1841,7 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [`RESIZE_REDIRECT`]: crate::mask::EventMask::RESIZE_REDIRECT
+	/// [`RESIZE_REDIRECT`]: crate::EventMask::RESIZE_REDIRECT
 	/// [`ConfigureWindow` request]: super::request::ConfigureWindow
 	pub struct ResizeRequest: Event(25) {
 		#[sequence]
@@ -1900,8 +1901,8 @@ derive_xrb! {
 	/// [window]: Window
 	/// [`CirculateWindow` request]: super::request::CirculateWindow
 	///
-	/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
-	/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
+	/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
+	/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
 	pub struct Circulate: Event(26) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -1918,8 +1919,8 @@ derive_xrb! {
 		/// restacked, this is that `window`. For clients selecting
 		/// [`SUBSTRUCTURE_NOTIFY`] on the `window`'s parent, this is that parent.
 		///
-		/// [`STRUCTURE_NOTIFY`]: crate::mask::EventMask::STRUCTURE_NOTIFY
-		/// [`SUBSTRUCTURE_NOTIFY`]: crate::mask::EventMask::SUBSTRUCTURE_NOTIFY
+		/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
+		/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
 		pub event_window: Window,
 		/// The window which was restacked.
 		pub window: Window,
@@ -1941,7 +1942,7 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [`SUBSTRUCTURE_REDIRECT`]: crate::mask::EventMask::SUBSTRUCTURE_REDIRECT
+	/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
 	/// [`CirculateWindow` request]: super::request::CirculateWindow
 	pub struct CirculateRequest: Event(27) {
 		#[sequence]
@@ -2000,7 +2001,7 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [`PROPERTY_CHANGE`]: crate::mask::EventMask::PROPERTY_CHANGE
+	/// [`PROPERTY_CHANGE`]: crate::EventMask::PROPERTY_CHANGE
 	pub struct Property: Event(28) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -2155,9 +2156,9 @@ derive_xrb! {
 	///
 	/// [`Colormap` event]: Colormap
 	pub enum ColormapDetail {
-		/// The `window`'s [`COLORMAP` attribute] was changed.
+		/// The `window`'s [`colormap` attribute] was changed.
 		///
-		/// [`COLORMAP` attribute]: crate::mask::AttributeMask::COLORMAP
+		/// [`colormap` attribute]: crate::Attributes::colormap
 		AttributeChanged,
 		/// The `window`'s [colormap] was installed or uninstalled.
 		///
@@ -2185,7 +2186,7 @@ derive_xrb! {
 
 	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] generated when a [window]'s [colormap] is installed,
-	/// uninstalled, or its [`COLORMAP` attribute] is changed.
+	/// uninstalled, or its [`colormap` attribute] is changed.
 	///
 	/// # Recipients
 	/// This [event] is reported to clients selecting [`COLORMAP_CHANGE`] on the
@@ -2194,9 +2195,9 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [colormap]: crate::Colormap
-	/// [`COLORMAP` attribute]: crate::mask::AttributeMask::COLORMAP
+	/// [`colormap` attribute]: crate::Attributes::colormap
 	///
-	/// [`COLORMAP_CHANGE`]: crate::mask::EventMask::COLORMAP_CHANGE
+	/// [`COLORMAP_CHANGE`]: crate::EventMask::COLORMAP_CHANGE
 	pub struct Colormap: Event(32) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
@@ -2217,11 +2218,11 @@ derive_xrb! {
 		pub colormap: Option<crate::Colormap>,
 
 		/// Whether this [event] was generated because the `window`'s
-		/// [`COLORMAP` attribute] was changed or because the `window`'s
+		/// [`colormap` attribute] was changed or because the `window`'s
 		/// `colormap` was installed or uninstalled.
 		///
 		/// [event]: crate::message::Event
-		/// [`COLORMAP` attribute]: crate::mask::AttributeMask::COLORMAP
+		/// [`colormap` attribute]: crate::Attributes::colormap
 		pub detail: ColormapDetail,
 		/// Whether the `window`'s `colormap` is currently installed.
 		pub state: ColormapState,

@@ -4,23 +4,46 @@
 
 extern crate self as xrb;
 
-use bytes::Buf;
 use derive_more::{From, Into};
-use xrbk::{ConstantX11Size, ReadError, ReadResult, ReadableWithContext, Wrap};
+use xrbk::{Buf, ConstantX11Size, ReadError, ReadResult, ReadableWithContext, Wrap};
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
 pub mod atom;
-
-pub mod mask;
-pub mod res_id;
+pub mod set;
 pub mod visual;
-pub mod wrapper;
+
+mod mask;
+mod res_id;
+mod wrapper;
 
 pub use atom::Atom;
 pub use mask::*;
 pub use res_id::*;
-pub use visual::*;
 pub use wrapper::*;
+
+/// Whether something is enabled or disabled.
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+pub enum Toggle {
+	/// The thing is disabled.
+	Disabled,
+	/// The thing is enabled.
+	Enabled,
+}
+
+/// Whether something is enabled, disabled, or the default is chosen.
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+pub enum ToggleOrDefault {
+	/// The thing is disabled.
+	Disabled,
+	/// The thing is enabled.
+	Enabled,
+
+	/// The default choice (out of [`Disabled`] or [`Enabled`]) is chosen.
+	///
+	/// Which is the default depends on what this `ToggleOrDefault` is applied
+	/// to.
+	Default,
+}
 
 /// Represents a particular time, expressed in milliseconds.
 ///
@@ -63,7 +86,7 @@ pub enum BitGravity {
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
-pub enum WinGravity {
+pub enum WindowGravity {
 	Unmap,
 	Static,
 	NorthWest,
@@ -127,7 +150,7 @@ derive_xrb! {
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
-pub enum BackingStores {
+pub enum MaintainContents {
 	Never,
 	WhenMapped,
 	Always,
