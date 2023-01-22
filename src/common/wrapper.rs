@@ -168,6 +168,26 @@ impl_writable!(CopyableFromParent<Colormap>: &self, buf {
 	}
 
 	Ok(())
+});
+
+impl_constant_x11_size!(CopyableFromParent<u8> {
+	u8::X11_SIZE
+});
+
+impl_readable!(CopyableFromParent<u8>: buf {
+	Ok(match buf.get_u8() {
+		discrim if discrim == 0 => Self::CopyFromParent,
+		val => Self::Other(val),
+	})
+});
+
+impl_writable!(CopyableFromParent<u8>: &self, buf {
+	match self {
+		Self::CopyFromParent => buf.put_u32(0),
+		Self::Other(val) => val.write_to(buf)?,
+	}
+	
+	Ok(())
 }); // }}}
 
 /// Values which may be the same as the 'parent' as long as the parent has the
