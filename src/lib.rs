@@ -13,6 +13,9 @@
 // This is so we can provide a reason when we ignore a particular lint with
 // `allow`.
 #![feature(lint_reasons)]
+// // Used for convenience. Will remove if XRB is reaching stability and this is
+// // still unstable.
+// #![feature(if_let_guard)]
 #![cfg_attr(feature = "try", feature(try_trait_v2))]
 // Deny these lints.
 #![deny(clippy::correctness)]
@@ -20,6 +23,10 @@
 #![deny(clippy::perf)]
 #![deny(clippy::style)]
 #![deny(clippy::suspicious)]
+// For functions which are declared unsafe because they require a particular contract to be checked
+// by the programmer, but not because they contain unsafe code, shouldn't be allowed to have unsafe
+// code. If unsafe code is desired, an unsafe block can be used.
+#![deny(unsafe_op_in_unsafe_fn)]
 // Warn for these lints.
 #![warn(clippy::use_self)]
 #![warn(clippy::pedantic)]
@@ -74,6 +81,7 @@ pub const PROTOCOL_MINOR_VERSION: u16 = 0;
 pub(crate) mod common;
 pub mod connection;
 pub mod message;
+pub mod unit;
 pub mod x11;
 
 pub use common::*;

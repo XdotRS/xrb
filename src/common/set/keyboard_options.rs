@@ -18,46 +18,30 @@ use xrbk::{
 };
 use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
 
+use crate::unit::{Hz, Ms, Percentage, ValueOutOfBounds};
 use bitflags::bitflags;
 use thiserror::Error;
 
-/// An error generated when a value is outside of the required bounds.
-///
-/// For example, [percentages] are required to be in the range `0..=100`.
-///
-/// [percentages]: Percentage
-#[derive(Clone, Debug, Hash, PartialEq, Eq, Error)]
-#[error("expected a value satisfying {} <= value <= {}, found {}", self.min, self.max, self.found)]
-pub struct ValueOutOfBounds<Num: Display> {
-	/// The minimum allowed value.
-	pub min: Num,
-	/// The maximum allowed value.
-	pub max: Num,
-
-	/// The value which did not satisfy the bounds.
-	pub found: Num,
-}
-
 /// A value representing a non-negative percentage.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub enum Percentage {
+pub enum PercentOrDefault {
 	/// Resets the percentage to the default percentage.
-	Reset,
+	Default,
 
 	/// Represents a percentage.
 	///
 	/// The wrapped percentage value can be accessed with [`unwrap()`].
 	///
-	/// [`unwrap()`]: Percentage::unwrap
-	Percent(u8),
+	/// [`unwrap()`]: PercentOrDefault::unwrap
+	Percent(Percentage),
 }
 
-impl Percentage {
-	/// Creates a new `Percentage` from the given `value`.
+impl PercentOrDefault {
+	/// Creates a new `PercentageOrDefault` from the given `value`.
 	///
-	/// If `value == -1`, this creates [`Percentage::Reset`]. If
-	/// `value >= 0` and `value <= 100`, this creates a [`Percentage::Percent`]
-	/// with the given value.
+	/// If `value == -1`, this creates [`PercentOrDefault::Default`]. If
+	/// `value >= 0` and `value <= 100`, this creates a
+	/// [`PercentOrDefault::Percent`] with the given value.
 	///
 	/// # Errors
 	/// If `value < -1` or `value > 100`, this generates a
@@ -66,59 +50,57 @@ impl Percentage {
 	/// [`ValueOutOfBounds` error]: ValueOutOfBounds
 	pub fn new(value: i8) -> Result<Self, ValueOutOfBounds<i8>> {
 		match value {
-			reset if reset == -1 => Ok(Self::Reset),
+			reset if reset == -1 => Ok(Self::Default),
 
-			other => match u8::try_from(other) {
-				Ok(percent) if (0..=100).contains(&percent) => Ok(Self::Percent(percent)),
+			value => match u8::try_from(value) {
+				Ok(value) if (0..=100).contains(&value) => Ok(Self::Percent(unsafe {
+					// It's fine to call this function, because we have checked
+					// the bounds ourselves.
+					Percentage::new_unchecked(value)
+				})),
 
 				_ => Err(ValueOutOfBounds {
 					min: 0,
 					max: 100,
-					found: other,
+					found: value,
 				}),
 			},
 		}
 	}
 
-	/// Creates a new [`Percentage::Reset`].
+	/// Creates a new [`PercentOrDefault::Default`].
 	#[must_use]
-	pub const fn new_reset() -> Self {
-		Self::Reset
+	pub const fn new_default() -> Self {
+		Self::Default
 	}
 
-	/// Creates a new [`Percentage::Percent`] with the given `percentage`.
+	/// Creates a new [`PercentOrDefault::Percent`] with the given `percentage`.
 	///
 	/// # Errors
 	/// Generates a [`ValueOutOfBounds` error] if `percentage > 100`.
 	///
 	/// [`ValueOutOfBounds` error]: ValueOutOfBounds
-	pub const fn new_percent(percentage: u8) -> Result<Self, ValueOutOfBounds<u8>> {
-		match percentage {
-			percent if percent <= 100 => Ok(Self::Percent(percent)),
-
-			out_of_bounds => Err(ValueOutOfBounds {
-				min: 0,
-				max: 100,
-				found: out_of_bounds,
-			}),
-		}
+	pub fn new_percent(percentage: u8) -> Result<Self, ValueOutOfBounds<u8>> {
+		Ok(Self::Percent(Percentage::new(percentage)?))
 	}
 
-	/// Returns the percentage value wrapped by [`Percentage::Percent`], or
-	/// [`None`] in the case of [`Percentage::Reset`].
+	/// Returns the [percent] value wrapped by [`PercentOrDefault::Percent`],
+	/// or [`None`] in the case of [`PercentOrDefault::Default`].
+	///
+	/// [percent]: Percentage
 	#[must_use]
-	pub const fn unwrap(self) -> Option<u8> {
+	pub const fn unwrap(self) -> Option<Percentage> {
 		match self {
-			Self::Reset => None,
+			Self::Default => None,
 			Self::Percent(percent) => Some(percent),
 		}
 	}
 }
 
-impl Display for Percentage {
+impl Display for PercentOrDefault {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		match self {
-			Self::Reset => write!(f, "default percentage"),
+			Self::Default => write!(f, "default percentage"),
 			Self::Percent(percent) => write!(f, "{percent}%"),
 		}
 	}
@@ -126,7 +108,7 @@ impl Display for Percentage {
 
 /// A value representing a non-negative pitch measured in hertz.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub enum Pitch {
+pub enum PitchOrDefault {
 	/// Resets the pitch to the default pitch.
 	Reset,
 
@@ -134,15 +116,16 @@ pub enum Pitch {
 	///
 	/// The wrapped pitch value can be accessed with [`unwrap()`].
 	///
-	/// [`unwrap()`]: Pitch::unwrap
-	Pitch(u8),
+	/// [`unwrap()`]: PitchOrDefault::unwrap
+	Pitch(Hz<u8>),
 }
 
-impl Pitch {
+impl PitchOrDefault {
 	/// Creates a new `Pitch` from the given `value`.
 	///
-	/// If `value == -1`, this creates [`Pitch::Reset`]. If `value >= 0`, this
-	/// creates a [`Pitch::Pitch`] with the given value, measured in hertz.
+	/// If `value == -1`, this creates [`PitchOrDefault::Reset`]. If `value >=
+	/// 0`, this creates a [`PitchOrDefault::Pitch`] with the given value,
+	/// measured in hertz.
 	///
 	/// # Errors
 	/// If `value < -1`, this generates a [`ValueOutOfBounds` error].
@@ -158,28 +141,28 @@ impl Pitch {
 					max: i16::from(u8::MAX),
 					found: other,
 				}),
-				|pitch| Ok(Self::Pitch(pitch)),
+				|pitch| Ok(Self::Pitch(Hz(pitch))),
 			),
 		}
 	}
 
-	/// Creates a new [`Pitch::Reset`].
+	/// Creates a new [`PitchOrDefault::Reset`].
 	#[must_use]
 	pub const fn new_reset() -> Self {
 		Self::Reset
 	}
 
-	/// Creates a new [`Pitch::Pitch`] with the specified pitch, measured in
-	/// hertz.
+	/// Creates a new [`PitchOrDefault::Pitch`] with the specified pitch,
+	/// measured in hertz.
 	#[must_use]
-	pub const fn new_pitch(pitch: u8) -> Self {
+	pub const fn new_pitch(pitch: Hz<u8>) -> Self {
 		Self::Pitch(pitch)
 	}
 
-	/// Returns the pitch wrapped by [`Pitch::Pitch`], or [`None`] in the case
-	/// of [`Pitch::Reset`].
+	/// Returns the pitch wrapped by [`PitchOrDefault::Pitch`], or [`None`] in
+	/// the case of [`PitchOrDefault::Reset`].
 	#[must_use]
-	pub const fn unwrap(self) -> Option<u8> {
+	pub const fn unwrap(self) -> Option<Hz<u8>> {
 		match self {
 			Self::Reset => None,
 			Self::Pitch(pitch) => Some(pitch),
@@ -187,18 +170,18 @@ impl Pitch {
 	}
 }
 
-impl Display for Pitch {
+impl Display for PitchOrDefault {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		match self {
 			Self::Reset => write!(f, "default pitch"),
-			Self::Pitch(pitch) => write!(f, "{pitch} Hz"),
+			Self::Pitch(pitch) => pitch.fmt(f),
 		}
 	}
 }
 
 /// A value representing a non-negative duration measured in milliseconds.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub enum Duration {
+pub enum DurationOrDefault {
 	/// Resets the duration to the default duration.
 	Reset,
 
@@ -206,16 +189,16 @@ pub enum Duration {
 	///
 	/// The wrapped duration can be accessed with [`unwrap()`].
 	///
-	/// [`unwrap()`]: Duration::unwrap
-	Duration(u8),
+	/// [`unwrap()`]: DurationOrDefault::unwrap
+	Duration(Ms<u8>),
 }
 
-impl Duration {
+impl DurationOrDefault {
 	/// Creates a new `Duration` from the given `value`.
 	///
-	/// If `value == -1`, this creates [`Duration::Reset`]. If `value >= 0`,
-	/// this creates a [`Duration::Duration`] with the given value, measured in
-	/// milliseconds.
+	/// If `value == -1`, this creates [`DurationOrDefault::Reset`]. If `value
+	/// >= 0`, this creates a [`DurationOrDefault::Duration`] with the given
+	/// value, measured in milliseconds.
 	///
 	/// # Errors
 	/// If `value < -1`, this generates a [`ValueOutOfBounds` error].
@@ -231,28 +214,28 @@ impl Duration {
 					max: i16::from(u8::MAX),
 					found: other,
 				}),
-				|duration| Ok(Self::Duration(duration)),
+				|duration| Ok(Self::Duration(Ms(duration))),
 			),
 		}
 	}
 
-	/// Creates a new [`Duration::Reset`].
+	/// Creates a new [`DurationOrDefault::Reset`].
 	#[must_use]
 	pub const fn new_reset() -> Self {
 		Self::Reset
 	}
 
-	/// Creates a new [`Duration::Duration`] with the specified duration,
-	/// measured in milliseconds.
+	/// Creates a new [`DurationOrDefault::Duration`] with the specified
+	/// duration, measured in milliseconds.
 	#[must_use]
-	pub const fn new_duration(duration: u8) -> Self {
+	pub const fn new_duration(duration: Ms<u8>) -> Self {
 		Self::Duration(duration)
 	}
 
-	/// Returns the duration wrapped by [`Duration::Duration`], or [`None`] in
-	/// the case of [`Duration::Reset`].
+	/// Returns the duration wrapped by [`DurationOrDefault::Duration`], or
+	/// [`None`] in the case of [`DurationOrDefault::Reset`].
 	#[must_use]
-	pub const fn unwrap(self) -> Option<u8> {
+	pub const fn unwrap(self) -> Option<Ms<u8>> {
 		match self {
 			Self::Reset => None,
 			Self::Duration(duration) => Some(duration),
@@ -260,7 +243,7 @@ impl Duration {
 	}
 }
 
-impl Display for Duration {
+impl Display for DurationOrDefault {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		match self {
 			Self::Reset => write!(f, "default duration"),
@@ -333,11 +316,11 @@ pub struct KeyboardOptions {
 
 	mask: KeyboardOptionsMask,
 
-	key_click_volume: Option<__Percentage>,
+	key_click_volume: Option<__PercentOrDefault>,
 
-	bell_volume: Option<__Percentage>,
-	bell_pitch: Option<__Pitch>,
-	bell_duration: Option<__Duration>,
+	bell_volume: Option<__PercentOrDefault>,
+	bell_pitch: Option<__PitchOrDefault>,
+	bell_duration: Option<__DurationOrDefault>,
 
 	led: Option<__Led>,
 	led_mode: Option<__LedMode>,
@@ -370,11 +353,11 @@ pub struct KeyboardOptionsBuilder {
 
 	mask: KeyboardOptionsMask,
 
-	key_click_volume: Option<Percentage>,
+	key_click_volume: Option<PercentOrDefault>,
 
-	bell_volume: Option<Percentage>,
-	bell_pitch: Option<Pitch>,
-	bell_duration: Option<Duration>,
+	bell_volume: Option<PercentOrDefault>,
+	bell_pitch: Option<PitchOrDefault>,
+	bell_duration: Option<DurationOrDefault>,
 
 	led: Option<Led>,
 	led_mode: Option<LedMode>,
@@ -425,11 +408,11 @@ impl KeyboardOptionsBuilder {
 
 			mask: self.mask,
 
-			key_click_volume: self.key_click_volume.map(__Percentage),
+			key_click_volume: self.key_click_volume.map(__PercentOrDefault),
 
-			bell_volume: self.bell_volume.map(__Percentage),
-			bell_pitch: self.bell_pitch.map(__Pitch),
-			bell_duration: self.bell_duration.map(__Duration),
+			bell_volume: self.bell_volume.map(__PercentOrDefault),
+			bell_pitch: self.bell_pitch.map(__PitchOrDefault),
+			bell_duration: self.bell_duration.map(__DurationOrDefault),
 
 			led: self.led.map(__Led),
 			led_mode: self.led_mode.map(__LedMode),
@@ -446,8 +429,8 @@ impl KeyboardOptionsBuilder {
 	///
 	/// See [`KeyboardOptions::key_click_volume`] for more information.
 	///
-	/// [percentage]: Percentage
-	pub fn key_click_volume(&mut self, key_click_volume: Percentage) -> &mut Self {
+	/// [percentage]: PercentOrDefault
+	pub fn key_click_volume(&mut self, key_click_volume: PercentOrDefault) -> &mut Self {
 		if self.key_click_volume.is_none() {
 			self.x11_size += 4;
 		}
@@ -462,8 +445,8 @@ impl KeyboardOptionsBuilder {
 	///
 	/// See [`KeyboardOptions::bell_volume`] for more information.
 	///
-	/// [percentage]: Percentage
-	pub fn bell_volume(&mut self, bell_volume: Percentage) -> &mut Self {
+	/// [percentage]: PercentOrDefault
+	pub fn bell_volume(&mut self, bell_volume: PercentOrDefault) -> &mut Self {
 		if self.bell_volume.is_none() {
 			self.x11_size += 4;
 		}
@@ -477,8 +460,8 @@ impl KeyboardOptionsBuilder {
 	///
 	/// See [`KeyboardOptions::bell_pitch`] for more information.
 	///
-	/// [pitch]: Pitch
-	pub fn bell_pitch(&mut self, bell_pitch: Pitch) -> &mut Self {
+	/// [pitch]: PitchOrDefault
+	pub fn bell_pitch(&mut self, bell_pitch: PitchOrDefault) -> &mut Self {
 		if self.bell_pitch.is_none() {
 			self.x11_size += 4;
 		}
@@ -492,8 +475,8 @@ impl KeyboardOptionsBuilder {
 	///
 	/// See [`KeyboardOptions::bell_duration`] for more information.
 	///
-	/// [duration]: Duration
-	pub fn bell_duration(&mut self, bell_duration: Duration) -> &mut Self {
+	/// [duration]: DurationOrDefault
+	pub fn bell_duration(&mut self, bell_duration: DurationOrDefault) -> &mut Self {
 		if self.bell_duration.is_none() {
 			self.x11_size += 4;
 		}
@@ -590,12 +573,12 @@ impl KeyboardOptions {
 	///
 	/// The volume is represented as a [percentage] from 0% to 100%.
 	///
-	/// [percentage]: Percentage
+	/// [percentage]: PercentOrDefault
 	#[must_use]
-	pub fn key_click_volume(&self) -> Option<&Percentage> {
+	pub fn key_click_volume(&self) -> Option<&PercentOrDefault> {
 		self.key_click_volume
 			.as_ref()
-			.map(|__Percentage(percentage)| percentage)
+			.map(|__PercentOrDefault(percentage)| percentage)
 	}
 
 	/// The volume of the bell which is configured.
@@ -605,32 +588,34 @@ impl KeyboardOptions {
 	///
 	/// The volume is represented as a [percentage] from 0% to 100%.
 	///
-	/// [percentage]: Percentage
+	/// [percentage]: PercentOrDefault
 	#[must_use]
-	pub fn bell_volume(&self) -> Option<&Percentage> {
+	pub fn bell_volume(&self) -> Option<&PercentOrDefault> {
 		self.bell_volume
 			.as_ref()
-			.map(|__Percentage(percentage)| percentage)
+			.map(|__PercentOrDefault(percentage)| percentage)
 	}
 	/// The [pitch] of the bell which is configured.
 	///
 	/// The [pitch] is measured in hertz.
 	///
-	/// [pitch]: Pitch
+	/// [pitch]: PitchOrDefault
 	#[must_use]
-	pub fn bell_pitch(&self) -> Option<&Pitch> {
-		self.bell_pitch.as_ref().map(|__Pitch(pitch)| pitch)
+	pub fn bell_pitch(&self) -> Option<&PitchOrDefault> {
+		self.bell_pitch
+			.as_ref()
+			.map(|__PitchOrDefault(pitch)| pitch)
 	}
 	/// The [duration] of the bell which is configured.
 	///
 	/// The [duration] is measured in milliseconds.
 	///
-	/// [duration]: Duration
+	/// [duration]: DurationOrDefault
 	#[must_use]
-	pub fn bell_duration(&self) -> Option<&Duration> {
+	pub fn bell_duration(&self) -> Option<&DurationOrDefault> {
 		self.bell_duration
 			.as_ref()
-			.map(|__Duration(duration)| duration)
+			.map(|__DurationOrDefault(duration)| duration)
 	}
 
 	/// The [LED] that the [`led_mode`] applies to that is configured.
@@ -859,19 +844,19 @@ impl Writable for KeyboardOptions {
 }
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-struct __Percentage(Percentage);
+struct __PercentOrDefault(PercentOrDefault);
 
-impl ConstantX11Size for __Percentage {
+impl ConstantX11Size for __PercentOrDefault {
 	const X11_SIZE: usize = 4;
 }
 
-impl X11Size for __Percentage {
+impl X11Size for __PercentOrDefault {
 	fn x11_size(&self) -> usize {
 		Self::X11_SIZE
 	}
 }
 
-impl Readable for __Percentage {
+impl Readable for __PercentOrDefault {
 	#[allow(
 		clippy::cast_possible_truncation,
 		reason = "truncation is intended behavior"
@@ -881,16 +866,18 @@ impl Readable for __Percentage {
 		Self: Sized,
 	{
 		Ok(Self(match buf.get_i32() {
-			reset if reset == -1 => Percentage::Reset,
+			reset if reset == -1 => PercentOrDefault::Default,
 
-			other => match u8::try_from(other) {
-				Ok(percent) if (0..=100).contains(&percent) => Percentage::Percent(percent),
+			value => match u8::try_from(value) {
+				Ok(value) if let Ok(percent) = Percentage::new(value) => {
+					PercentOrDefault::Percent(percent)
+				},
 
 				_ => {
 					return Err(ReadError::Other(Box::new(ValueOutOfBounds {
 						min: -1,
 						max: 100,
-						found: other,
+						found: value,
 					})))
 				},
 			},
@@ -898,13 +885,13 @@ impl Readable for __Percentage {
 	}
 }
 
-impl Writable for __Percentage {
+impl Writable for __PercentOrDefault {
 	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
-		let Self(percentage) = self;
+		let Self(percent_or_default) = self;
 
-		match percentage {
-			Percentage::Reset => buf.put_i32(-1),
-			Percentage::Percent(percent) => buf.put_i32(i32::from(*percent)),
+		match percent_or_default {
+			PercentOrDefault::Default => buf.put_i32(-1),
+			PercentOrDefault::Percent(percent) => buf.put_i32(i32::from(percent.unwrap())),
 		}
 
 		Ok(())
@@ -912,19 +899,19 @@ impl Writable for __Percentage {
 }
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-struct __Pitch(Pitch);
+struct __PitchOrDefault(PitchOrDefault);
 
-impl ConstantX11Size for __Pitch {
+impl ConstantX11Size for __PitchOrDefault {
 	const X11_SIZE: usize = 4;
 }
 
-impl X11Size for __Pitch {
+impl X11Size for __PitchOrDefault {
 	fn x11_size(&self) -> usize {
 		Self::X11_SIZE
 	}
 }
 
-impl Readable for __Pitch {
+impl Readable for __PitchOrDefault {
 	#[allow(
 		clippy::cast_possible_truncation,
 		reason = "truncation is intended behavior"
@@ -934,10 +921,10 @@ impl Readable for __Pitch {
 		Self: Sized,
 	{
 		Ok(Self(match buf.get_i32() {
-			reset if reset == -1 => Pitch::Reset,
+			reset if reset == -1 => PitchOrDefault::Reset,
 
 			other => match u8::try_from(other) {
-				Ok(pitch) => Pitch::Pitch(pitch),
+				Ok(pitch) => PitchOrDefault::Pitch(Hz(pitch)),
 
 				_ => {
 					return Err(ReadError::Other(Box::new(ValueOutOfBounds {
@@ -951,13 +938,13 @@ impl Readable for __Pitch {
 	}
 }
 
-impl Writable for __Pitch {
+impl Writable for __PitchOrDefault {
 	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
 		let Self(pitch) = self;
 
 		match pitch {
-			Pitch::Reset => buf.put_i32(-1),
-			Pitch::Pitch(pitch) => buf.put_i32(i32::from(*pitch)),
+			PitchOrDefault::Reset => buf.put_i32(-1),
+			PitchOrDefault::Pitch(Hz(pitch)) => buf.put_i32(i32::from(*pitch)),
 		}
 
 		Ok(())
@@ -965,19 +952,19 @@ impl Writable for __Pitch {
 }
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-struct __Duration(Duration);
+struct __DurationOrDefault(DurationOrDefault);
 
-impl ConstantX11Size for __Duration {
+impl ConstantX11Size for __DurationOrDefault {
 	const X11_SIZE: usize = 4;
 }
 
-impl X11Size for __Duration {
+impl X11Size for __DurationOrDefault {
 	fn x11_size(&self) -> usize {
 		Self::X11_SIZE
 	}
 }
 
-impl Readable for __Duration {
+impl Readable for __DurationOrDefault {
 	#[allow(
 		clippy::cast_possible_truncation,
 		reason = "truncation is intended behavior"
@@ -987,10 +974,10 @@ impl Readable for __Duration {
 		Self: Sized,
 	{
 		Ok(Self(match buf.get_i32() {
-			reset if reset == -1 => Duration::Reset,
+			reset if reset == -1 => DurationOrDefault::Reset,
 
 			other => match u8::try_from(other) {
-				Ok(duration) => Duration::Duration(duration),
+				Ok(duration) => DurationOrDefault::Duration(Ms(duration)),
 
 				_ => {
 					return Err(ReadError::Other(Box::new(ValueOutOfBounds {
@@ -1004,13 +991,13 @@ impl Readable for __Duration {
 	}
 }
 
-impl Writable for __Duration {
+impl Writable for __DurationOrDefault {
 	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
 		let Self(duration) = self;
 
 		match duration {
-			Duration::Reset => buf.put_i32(-1),
-			Duration::Duration(duration) => buf.put_i32(i32::from(*duration)),
+			DurationOrDefault::Reset => buf.put_i32(-1),
+			DurationOrDefault::Duration(Ms(duration)) => buf.put_i32(i32::from(*duration)),
 		}
 
 		Ok(())
