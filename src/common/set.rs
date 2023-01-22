@@ -35,12 +35,12 @@ use xrbk::{
 mod attribute;
 mod graphics_options;
 mod keyboard_options;
-mod window_configs;
+mod window_config;
 
 pub use attribute::*;
 pub use graphics_options::*;
 pub use keyboard_options::*;
-pub use window_configs::*;
+pub use window_config::*;
 
 /// Reads an optional value for a set if the given `condition` is true.
 ///
