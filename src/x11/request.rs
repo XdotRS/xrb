@@ -21,12 +21,14 @@ use crate::{
 	WindowClass,
 };
 
-use crate::x11::reply;
+use crate::{set::WindowConfig, x11::reply};
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 extern crate self as xrb;
 
-/// An error generated because of a failed [`CreateWindow` request].
+/// An [error] generated because of a failed [`CreateWindow` request].
+///
+/// [error]: crate::message::Error
 ///
 /// [`CreateWindow` request]: CreateWindow
 pub enum CreateWindowError {
@@ -168,7 +170,9 @@ derive_xrb! {
 	}
 }
 
-/// An error generated because of a failed [`ChangeWindowAttributes` request].
+/// An [error] generated because of a failed [`ChangeWindowAttributes` request].
+///
+/// [error]: crate::message::Error
 ///
 /// [`ChangeWindowAttributes` request]: ChangeWindowAttributes
 pub enum ChangeWindowAttributesError {
@@ -316,7 +320,9 @@ derive_xrb! {
 	}
 }
 
-/// An error generated because of a failed [`ChangeSavedWindows` request].
+/// An [error] generated because of a failed [`ChangeSavedWindows` request].
+///
+/// [error]: crate::message::Error
 ///
 /// [`ChangeSavedWindows` request]: ChangeSavedWindows
 pub enum ChangeSavedWindowsError {
@@ -395,7 +401,9 @@ derive_xrb! {
 	}
 }
 
-/// An error generated because of a failed [`ReparentWindow` request].
+/// An [error] generated because of a failed [`ReparentWindow` request].
+///
+/// [error]: crate::message::Error
 ///
 /// [`ReparentWindow` request]: ReparentWindow
 pub enum ReparentWindowError {
@@ -624,5 +632,109 @@ derive_xrb! {
 		///
 		/// [`Window` error]: error::Window
 		pub target: Window,
+	}
+}
+
+/// An [error] generated because of a failed [`ConfigureWindow` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`ConfigureWindow` request]: ConfigureWindow
+pub enum ConfigureWindowError {
+	/// A [`Match` error].
+	///
+	/// [`Match` error]: error::Match
+	Match(error::Match),
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+	/// A [`Window` error].
+	///
+	/// [`Window` error]: error::Window
+	Window(error::Window),
+}
+
+derive_xrb! {
+	/// A [request] that [configures] a [window].
+	///
+	/// See [`WindowConfig`] for more information.
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if `target` does not refer to a defined
+	/// [window].
+	///
+	/// A [`Match` error] is generated if either the [`width`] or [`height`] is
+	/// configured to be zero.
+	///
+	/// A [`Match` error] is generated if the [`border_width`] is configured to
+	/// be anything other than zero if the `target` [window] is [`InputOnly`].
+	///
+	/// A [`Match` error] is generated if [`sibling`] is configured without a
+	/// specified [`stack_mode`].
+	///
+	/// A [`Match` error] is generated if [`sibling`] is specified but that
+	/// specified [window] is not actually a sibling of the `target` [window].
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [configures]: WindowConfig
+	///
+	/// [`width`]: WindowConfig::width
+	/// [`height`]: WindowConfig::height
+	/// [`border_width`]: WindowConfig::border_width
+	/// [`sibling`]: WindowConfig::sibling
+	/// [`stack_mode`]: WindowConfig::stack_mode
+	///
+	/// [`Window` error]: error::Window
+	/// [`Match` error]: error::Match
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ConfigureWindow: Request(12, ConfigureWindowError) {
+		/// The [window] which is the target of the `ConfigureWindow` [request].
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		/// [request]: crate::message::Request
+		///
+		/// [`Window` error]: error::Window
+		pub target: Window,
+
+		/// The changes to the `target` [window]'s [configuration].
+		///
+		/// See [`WindowConfig`] for more information.
+		///
+		/// If the `target` [window] is a root [window], this [request] has no
+		/// effect.
+		///
+		/// # Errors
+		/// A [`Match` error] is generated if either the [`width`] or the
+		/// [`height`] is zero.
+		///
+		/// A [`Match` error] is generated if the [`border_width`] is set to
+		/// zero if the `target` [window] is [`InputOnly`].
+		///
+		/// A [`Match` error] is generated if [`sibling`] is configured without
+		/// a specified [`stack_mode`].
+		///
+		/// A [`Match` error] is generated if [`sibling`] is specified but that
+		/// specified [window] is not actually a sibling of the `target`
+		/// [window].
+		///
+		/// [configuration]: WindowConfig
+		///
+		/// [`width`]: WindowConfig::width
+		/// [`height`]: WindowConfig::height
+		/// [`border_width`]: WindowConfig::border_width
+		/// [`sibling`]: WindowConfig::sibling
+		/// [`stack_mode`]: WindowConfig::stack_mode
+		///
+		/// [`InputOnly`]: WindowClass::InputOnly
+		///
+		/// [`Match` error]: error::Match
+		pub config: WindowConfig,
 	}
 }

@@ -53,7 +53,7 @@ derive_xrb! {
 	/// [reply]: crate::message::Reply
 	///
 	/// [`GetWindowAttributes` request]: request::GetWindowAttributes
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, X11Size, Readable, Writable)]
 	pub struct GetWindowAttributes: Reply for request::GetWindowAttributes {
 		#[sequence]
 		/// The sequence number identifying the [request] that generated this
