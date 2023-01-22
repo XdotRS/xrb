@@ -21,20 +21,22 @@ use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
 use bitflags::bitflags;
 use thiserror::Error;
 
-/// An error generated when a negative value is given for a [`Pitch`] or
-/// [`Duration`].
+/// An error generated when a value is outside of the required bounds.
 ///
-/// This error is not generated for [`Pitch::new`] and [`Duration::new`] if the
-/// value is `-1` - for those functions, `-1` has a special meaning of `Reset`.
+/// For example, [percentages] are required to be in the range `0..=100`.
+///
+/// [percentages]: Percentage
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Error)]
-#[error("negative values are not allowed, found {0}")]
-pub struct NegativeValue(i16);
+#[error("expected a value satisfying {} <= value <= {}, found {}", self.min, self.max, self.found)]
+pub struct ValueOutOfBounds<Num: Display> {
+	/// The minimum allowed value.
+	pub min: Num,
+	/// The maximum allowed value.
+	pub max: Num,
 
-/// An error generated when a [`Pitch::Reset`] or [`Duration::Reset`] value is
-/// attempted to be unwrapped.
-#[derive(Clone, Debug, Hash, PartialEq, Eq, Error)]
-#[error("tried to unwrap the value of a Reset value")]
-pub struct ResetValue;
+	/// The value which did not satisfy the bounds.
+	pub found: Num,
+}
 
 /// A value representing a non-negative percentage.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
@@ -50,12 +52,6 @@ pub enum Percentage {
 	Percent(u8),
 }
 
-/// An error generated when a [`Percentage`] is attempted to be created with a
-/// `value < 0` or `value > 100`.
-#[derive(Clone, Debug, Hash, PartialEq, Eq, Error)]
-#[error("percentages must satisfy 0 <= percent <= 100")]
-pub struct PercentOutOfBounds;
-
 impl Percentage {
 	/// Creates a new `Percentage` from the given `value`.
 	///
@@ -65,16 +61,21 @@ impl Percentage {
 	///
 	/// # Errors
 	/// If `value < -1` or `value > 100`, this generates a
-	/// [`PercentOutOfBounds` error].
+	/// [`ValueOutOfBounds` error].
 	///
-	/// [`PercentOutOfBounds` error]: PercentOutOfBounds
-	pub fn new(value: i8) -> Result<Self, PercentOutOfBounds> {
+	/// [`ValueOutOfBounds` error]: ValueOutOfBounds
+	pub fn new(value: i8) -> Result<Self, ValueOutOfBounds<i8>> {
 		match value {
 			reset if reset == -1 => Ok(Self::Reset),
 
 			other => match u8::try_from(other) {
 				Ok(percent) if (0..=100).contains(&percent) => Ok(Self::Percent(percent)),
-				_ => Err(PercentOutOfBounds),
+
+				_ => Err(ValueOutOfBounds {
+					min: 0,
+					max: 100,
+					found: other,
+				}),
 			},
 		}
 	}
@@ -88,26 +89,28 @@ impl Percentage {
 	/// Creates a new [`Percentage::Percent`] with the given `percentage`.
 	///
 	/// # Errors
-	/// Generates a [`PercentOutOfBoundsU8` error] if `percentage > 100`.
+	/// Generates a [`ValueOutOfBounds` error] if `percentage > 100`.
 	///
-	/// [`PercentOutOfBoundsU8` error]: PercentOutOfBoundsU8
-	pub const fn new_percent(percentage: u8) -> Result<Self, PercentOutOfBounds> {
+	/// [`ValueOutOfBounds` error]: ValueOutOfBounds
+	pub const fn new_percent(percentage: u8) -> Result<Self, ValueOutOfBounds<u8>> {
 		match percentage {
 			percent if percent <= 100 => Ok(Self::Percent(percent)),
-			_ => Err(PercentOutOfBounds),
+
+			out_of_bounds => Err(ValueOutOfBounds {
+				min: 0,
+				max: 100,
+				found: out_of_bounds,
+			}),
 		}
 	}
 
-	/// Returns the percentage value wrapped by [`Percentage::Percent`].
-	///
-	/// # Errors
-	/// Generates a [`ResetValue` error] if called on a [`Percentage::Reset`].
-	///
-	/// [`ResetValue` error]: ResetValue
-	pub const fn unwrap(self) -> Result<u8, ResetValue> {
+	/// Returns the percentage value wrapped by [`Percentage::Percent`], or
+	/// [`None`] in the case of [`Percentage::Reset`].
+	#[must_use]
+	pub const fn unwrap(self) -> Option<u8> {
 		match self {
-			Self::Reset => Err(ResetValue),
-			Self::Percent(percent) => Ok(percent),
+			Self::Reset => None,
+			Self::Percent(percent) => Some(percent),
 		}
 	}
 }
@@ -121,37 +124,42 @@ impl Display for Percentage {
 	}
 }
 
-/// A value representing a non-negative pitch measured in `Hz`.
+/// A value representing a non-negative pitch measured in hertz.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum Pitch {
 	/// Resets the pitch to the default pitch.
 	Reset,
 
-	/// Represents a pitch value, measured in `Hz`.
+	/// Represents a pitch value, measured in hertz.
 	///
 	/// The wrapped pitch value can be accessed with [`unwrap()`].
 	///
 	/// [`unwrap()`]: Pitch::unwrap
-	Hz(u8),
+	Pitch(u8),
 }
 
 impl Pitch {
 	/// Creates a new `Pitch` from the given `value`.
 	///
 	/// If `value == -1`, this creates [`Pitch::Reset`]. If `value >= 0`, this
-	/// creates a [`Pitch::Hz`] with the given value, measured in hertz.
+	/// creates a [`Pitch::Pitch`] with the given value, measured in hertz.
 	///
 	/// # Errors
-	/// If `value < -1`, this generates a [`NegativeValue` error].
+	/// If `value < -1`, this generates a [`ValueOutOfBounds` error].
 	///
-	/// [`NegativeValue` error]: NegativeValue
-	pub fn new(value: i16) -> Result<Self, NegativeValue> {
+	/// [`ValueOutOfBounds` error]: ValueOutOfBounds
+	pub fn new(value: i16) -> Result<Self, ValueOutOfBounds<i16>> {
 		match value {
 			reset if reset == -1 => Ok(Self::Reset),
 
-			other => {
-				u8::try_from(other).map_or(Err(NegativeValue(other)), |pitch| Ok(Self::Hz(pitch)))
-			},
+			other => u8::try_from(other).map_or(
+				Err(ValueOutOfBounds {
+					min: -1,
+					max: i16::from(u8::MAX),
+					found: other,
+				}),
+				|pitch| Ok(Self::Pitch(pitch)),
+			),
 		}
 	}
 
@@ -161,22 +169,20 @@ impl Pitch {
 		Self::Reset
 	}
 
-	/// Creates a new [`Pitch::Hz`] with the specified pitch, measured in hertz.
+	/// Creates a new [`Pitch::Pitch`] with the specified pitch, measured in
+	/// hertz.
 	#[must_use]
 	pub const fn new_pitch(pitch: u8) -> Self {
-		Self::Hz(pitch)
+		Self::Pitch(pitch)
 	}
 
-	/// Returns the pitch wrapped by [`Pitch::Hz`].
-	///
-	/// # Errors
-	/// Generates a [`ResetValue` error] if called on a [`Pitch::Reset`].
-	///
-	/// [`ResetValue` error]: ResetValue
-	pub const fn unwrap(self) -> Result<u8, ResetValue> {
+	/// Returns the pitch wrapped by [`Pitch::Pitch`], or [`None`] in the case
+	/// of [`Pitch::Reset`].
+	#[must_use]
+	pub const fn unwrap(self) -> Option<u8> {
 		match self {
-			Self::Reset => Err(ResetValue),
-			Self::Hz(pitch) => Ok(pitch),
+			Self::Reset => None,
+			Self::Pitch(pitch) => Some(pitch),
 		}
 	}
 }
@@ -185,7 +191,7 @@ impl Display for Pitch {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		match self {
 			Self::Reset => write!(f, "default pitch"),
-			Self::Hz(pitch) => write!(f, "{pitch} Hz"),
+			Self::Pitch(pitch) => write!(f, "{pitch} Hz"),
 		}
 	}
 }
@@ -201,26 +207,32 @@ pub enum Duration {
 	/// The wrapped duration can be accessed with [`unwrap()`].
 	///
 	/// [`unwrap()`]: Duration::unwrap
-	Ms(u8),
+	Duration(u8),
 }
 
 impl Duration {
 	/// Creates a new `Duration` from the given `value`.
 	///
 	/// If `value == -1`, this creates [`Duration::Reset`]. If `value >= 0`,
-	/// this creates a [`Duration::Ms`] with the given value, measured in
+	/// this creates a [`Duration::Duration`] with the given value, measured in
 	/// milliseconds.
 	///
 	/// # Errors
-	/// If `value < -1`, this generates a [`NegativeValue` error].
+	/// If `value < -1`, this generates a [`ValueOutOfBounds` error].
 	///
-	/// [`NegativeValue` error]: NegativeValue
-	pub fn new(value: i16) -> Result<Self, NegativeValue> {
+	/// [`ValueOutOfBounds` error]: NegativeValue
+	pub fn new(value: i16) -> Result<Self, ValueOutOfBounds<i16>> {
 		match value {
 			reset if reset == -1 => Ok(Self::Reset),
 
-			other => u8::try_from(other)
-				.map_or(Err(NegativeValue(other)), |duration| Ok(Self::Ms(duration))),
+			other => u8::try_from(other).map_or(
+				Err(ValueOutOfBounds {
+					min: -1,
+					max: i16::from(u8::MAX),
+					found: other,
+				}),
+				|duration| Ok(Self::Duration(duration)),
+			),
 		}
 	}
 
@@ -230,23 +242,20 @@ impl Duration {
 		Self::Reset
 	}
 
-	/// Creates a new [`Duration::Ms`] with the specified duration, measured in
-	/// milliseconds.
+	/// Creates a new [`Duration::Duration`] with the specified duration,
+	/// measured in milliseconds.
 	#[must_use]
 	pub const fn new_duration(duration: u8) -> Self {
-		Self::Ms(duration)
+		Self::Duration(duration)
 	}
 
-	/// Returns the duration wrapped by [`Duration::Ms`].
-	///
-	/// # Errors
-	/// Generates a [`ResetValue` error] if called on a [`Duration::Reset`].
-	///
-	/// [`ResetValue` error]: ResetValue
-	pub const fn unwrap(self) -> Result<u8, ResetValue> {
+	/// Returns the duration wrapped by [`Duration::Duration`], or [`None`] in
+	/// the case of [`Duration::Reset`].
+	#[must_use]
+	pub const fn unwrap(self) -> Option<u8> {
 		match self {
-			Self::Reset => Err(ResetValue),
-			Self::Ms(duration) => Ok(duration),
+			Self::Reset => None,
+			Self::Duration(duration) => Some(duration),
 		}
 	}
 }
@@ -255,7 +264,7 @@ impl Display for Duration {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		match self {
 			Self::Reset => write!(f, "default duration"),
-			Self::Ms(duration) => write!(f, "{duration} ms"),
+			Self::Duration(duration) => write!(f, "{duration} ms"),
 		}
 	}
 }
@@ -876,7 +885,14 @@ impl Readable for __Percentage {
 
 			other => match u8::try_from(other) {
 				Ok(percent) if (0..=100).contains(&percent) => Percentage::Percent(percent),
-				_ => return Err(ReadError::Other(Box::new(PercentOutOfBounds))),
+
+				_ => {
+					return Err(ReadError::Other(Box::new(ValueOutOfBounds {
+						min: -1,
+						max: 100,
+						found: other,
+					})))
+				},
 			},
 		}))
 	}
@@ -921,8 +937,15 @@ impl Readable for __Pitch {
 			reset if reset == -1 => Pitch::Reset,
 
 			other => match u8::try_from(other) {
-				Ok(pitch) => Pitch::Hz(pitch),
-				_ => return Err(ReadError::Other(Box::new(NegativeValue(other as i16)))),
+				Ok(pitch) => Pitch::Pitch(pitch),
+
+				_ => {
+					return Err(ReadError::Other(Box::new(ValueOutOfBounds {
+						min: -1,
+						max: i32::from(u8::MAX),
+						found: other,
+					})))
+				},
 			},
 		}))
 	}
@@ -934,7 +957,7 @@ impl Writable for __Pitch {
 
 		match pitch {
 			Pitch::Reset => buf.put_i32(-1),
-			Pitch::Hz(pitch) => buf.put_i32(i32::from(*pitch)),
+			Pitch::Pitch(pitch) => buf.put_i32(i32::from(*pitch)),
 		}
 
 		Ok(())
@@ -967,8 +990,15 @@ impl Readable for __Duration {
 			reset if reset == -1 => Duration::Reset,
 
 			other => match u8::try_from(other) {
-				Ok(duration) => Duration::Ms(duration),
-				_ => return Err(ReadError::Other(Box::new(NegativeValue(other as i16)))),
+				Ok(duration) => Duration::Duration(duration),
+
+				_ => {
+					return Err(ReadError::Other(Box::new(ValueOutOfBounds {
+						min: -1,
+						max: i32::from(u8::MAX),
+						found: other,
+					})))
+				},
 			},
 		}))
 	}
@@ -980,7 +1010,7 @@ impl Writable for __Duration {
 
 		match duration {
 			Duration::Reset => buf.put_i32(-1),
-			Duration::Ms(duration) => buf.put_i32(i32::from(*duration)),
+			Duration::Duration(duration) => buf.put_i32(i32::from(*duration)),
 		}
 
 		Ok(())
