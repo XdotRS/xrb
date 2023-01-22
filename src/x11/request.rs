@@ -516,7 +516,7 @@ derive_xrb! {
 	/// [`Window` error]: error::Window
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct MapWindow: Request(8, error::Window) {
-		/// The [window] which the target of the `MapWindow` [request].
+		/// The [window] which is the target of the `MapWindow` [request].
 		///
 		/// # Errors
 		/// A [`Window` error] is generated if this does not refer to a defined
@@ -553,6 +553,38 @@ derive_xrb! {
 		/// [window]: Window
 		///
 		/// [mapped]: MapWindow
+		///
+		/// [`Window` error]: error::Window
+		pub target: Window,
+	}
+
+	/// A [request] that unmaps the given [window].
+	///
+	/// If the [window] is currently mapped, the [window] is unmapped and an
+	/// [`Unmap` event] is generated.
+	///
+	/// If the [window] is already unmapped, this [request] has no effect.
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if the `target` does not refer to a
+	/// defined [window].
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [`Unmap` event]: super::event::Unmap
+	///
+	/// [`Window` error]: error::Window
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct UnmapWindow: Request(10, error::Window) {
+		/// The [window] which is the target of the `UnmapWindow` [request].
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		/// [request]: crate::message::Request
 		///
 		/// [`Window` error]: error::Window
 		pub target: Window,
