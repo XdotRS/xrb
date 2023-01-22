@@ -413,6 +413,9 @@ derive_xrb! {
 	/// performed to map it again.
 	///
 	/// # Errors
+	/// A [`Window` error] is generated if either the `target` or the
+	/// `new_parent` do not refer to defined [windows][window].
+	///
 	/// A [`Match` error] is generated if the `new_parent` is not on the same
 	/// [screen] as the old parent.
 	///
@@ -439,16 +442,26 @@ derive_xrb! {
 	/// [`background_pixmap`]: Attributes::background_pixmap
 	///
 	/// [`Match` error]: error::Match
+	/// [`Window` error]: error::Window
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct ReparentWindow: Request(7, ReparentWindowError) {
 		/// The [window] which will be transferred to be a child of the
 		/// `new_parent`.
 		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
 		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
 		pub target: Window,
 		/// The `target`'s new parent [window].
 		///
 		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
 		/// A [`Match` error] is generated if this [window] is not on the same
 		/// [screen] as the `target` [window].
 		///
@@ -464,10 +477,51 @@ derive_xrb! {
 		/// [`InputOnly`]: WindowClass::InputOnly
 		///
 		/// [`Match` error]: error::Match
+		/// [`Window` error]: error::Window
 		pub new_parent: Window,
 
 		/// The `target`'s new coordinates relative to its `new_parent`'s
 		/// top-left corner.
 		pub coords: Point,
+	}
+
+	/// A [request] that maps the given [window].
+	///
+	/// If the [window]'s [`override_redirect` attribute] is `false` and some
+	/// other client has selected [`SUBSTRUCTURE_REDIRECT`] on its parent, then
+	/// a [`MapWindowRequest` event] is generated, but the [window] remains
+	/// unmapped. Otherwise, the [window] is mapped and a [`Map` event] is
+	/// generated.
+	///
+	/// If the [window] is already mapped, this [request] has no effect.
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if the `target` does not refer to a
+	/// defined [window].
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [`Map` event]: super::event::Map
+	/// [`MapWindowRequest` event]: super::event::MapWindowRequest
+	///
+	/// [`override_redirect` attribute]: Attributes::override_redirect
+	///
+	/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
+	///
+	/// [`Window` error]: error::Window
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct MapWindow: Request(8, error::Window) {
+		/// The [window] which the target of the `MapWindow` [request].
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		/// [request]: crate::message::Request
+		///
+		/// [`Window` error]: error::Window
+		pub target: Window,
 	}
 }

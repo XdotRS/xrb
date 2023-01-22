@@ -1569,7 +1569,7 @@ derive_xrb! {
 	/// [`MapWindow` request]: super::request::MapWindow
 	///
 	/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
-	pub struct MapRequest: Event(20) {
+	pub struct MapWindowRequest: Event(20) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
