@@ -186,7 +186,7 @@ impl_writable!(CopyableFromParent<u8>: &self, buf {
 		Self::CopyFromParent => buf.put_u32(0),
 		Self::Other(val) => val.write_to(buf)?,
 	}
-	
+
 	Ok(())
 }); // }}}
 
