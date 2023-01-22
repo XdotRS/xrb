@@ -7,7 +7,13 @@
 	reason = "It makes sense for `Screen` to have many arguments because it has many fields."
 )]
 
-use crate::{Colormap, EventMask, MaintainContents, Window};
+use crate::{
+	unit::{Mm, Px},
+	Colormap,
+	EventMask,
+	MaintainContents,
+	Window,
+};
 use derive_more::{From, Into};
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
@@ -297,7 +303,7 @@ impl From<RgbColor> for (u32, u32, u32) {
 	Writable,
 	Wrap,
 )]
-pub struct VisualId(pub(crate) u32);
+pub struct VisualId(u32);
 
 derive_xrb! {
 	#[derive(
@@ -321,47 +327,28 @@ derive_xrb! {
 	}
 }
 
-#[derive(
-	Copy,
-	Clone,
-	Eq,
-	PartialEq,
-	Hash,
-	Debug,
-	From,
-	Into,
-	// `new` and `unwrap` const fns
-	new,
-	unwrap,
-	// XRBK traits
-	X11Size,
-	Readable,
-	Writable,
-)]
-pub struct Millimeters(u16);
-
 derive_xrb! {
 	#[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, Readable, Writable)]
 	pub struct Screen {
 		pub root: Window,
 		pub default_colormap: Colormap,
 
-		pub white_pixel: u32,
-		pub black_pixel: u32,
+		pub white: Color,
+		pub black: Color,
 
 		pub current_input_masks: EventMask,
 
-		pub width_px: u16,
-		pub height_px: u16,
-		pub width_mm: Millimeters,
-		pub height_mm: Millimeters,
+		pub width_px: Px<u16>,
+		pub height_px: Px<u16>,
+		pub width_mm: Mm<u16>,
+		pub height_mm: Mm<u16>,
 
 		pub min_installed_maps: u16,
 		pub max_installed_maps: u16,
 
 		pub root_visual: VisualId,
-		pub backing_stores: MaintainContents,
-		pub save_unders: bool,
+		pub maintain_contents_mode: MaintainContents,
+		pub maintain_windows_under: bool,
 		pub root_depth: u8,
 
 		#[allow(clippy::cast_possible_truncation)]

@@ -102,7 +102,7 @@ pub trait Request: X11Size + Writable {
 	///
 	/// ```
 	/// use xrbk_macro::derive_xrb;
-	/// use xrb::{ColorChannelMask, Colormap, String8};
+	/// use xrb::{ColorChannelMask, Colormap, visual::Color, String8};
 	///
 	/// derive_xrb! {
 	///     #[derive(Debug, Hash, PartialEq, Eq, Readable, Writable, X11Size)]
@@ -111,7 +111,7 @@ pub trait Request: X11Size + Writable {
 	///         pub color_channel_mask: ColorChannelMask,
 	///
 	///         pub colormap: Colormap,
-	///         pub pixel: u32,
+	///         pub color: Color,
 	///
 	///         #[allow(clippy::cast_possible_truncation)]
 	///         let name_len: u16 = name => name.len() as u16,
@@ -262,7 +262,7 @@ pub trait Reply: X11Size + Readable {
 	///
 	/// ```
 	/// use xrbk_macro::derive_xrb;
-	/// use xrb::{atom::Atom, message::Reply, Rectangle, Window};
+	/// use xrb::{Atom, message::Reply, Rectangle, unit::Px, Window};
 	/// # use xrb::message::Request;
 	///
 	/// derive_xrb! {
@@ -282,7 +282,7 @@ pub trait Reply: X11Size + Readable {
 	///
 	///         pub root: Window, // 4 bytes
 	///         pub geometry: Rectangle, // 8 bytes
-	///         pub border_width: u16, // 2 bytes
+	///         pub border_width: Px<u16>, // 2 bytes
 	///         // Total number of bytes by now is 22; since this is less than
 	///         // the minimum length of a Reply (32 bytes), it adds 10 unused
 	///         // bytes.
