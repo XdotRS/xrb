@@ -738,3 +738,84 @@ derive_xrb! {
 		pub config: WindowConfig,
 	}
 }
+
+/// An [error] generated because of a failed [`CirculateWindow` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`CirculateWindow` request]: CirculateWindow
+pub enum CirculateWindowError {
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+	/// A [`Window` error].
+	///
+	/// [`Window` error]: error::Window
+	Window(error::Window),
+}
+
+/// The direction with which a [window]'s mapped children are circulated in
+/// their stacking order.
+///
+/// This is used in the [`CirculateWindow` request].
+///
+/// [window]: Window
+///
+/// [`CirculateWindow` request]: CirculateWindow
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub enum CirculateDirection {
+	/// Raises the lowest mapped child that is occluded by another child, if
+	/// any, to the top of the stack.
+	RaiseLowest,
+
+	/// Lowers the highest mapped child that occludes another child, if any, to
+	/// the bottom of the stack.
+	LowerHighest,
+}
+
+derive_xrb! {
+	/// A [request] that [circulates] the mapped children of the given [window].
+	///
+	/// If some other client has selected [`SUBSTRUCTURE_REDIRECT`] on the
+	/// `target` [window], then a [`CirculateWindowRequest` event] is generated
+	/// and no further processing occurs. Otherwise, a [`Circulate` event] is
+	/// generated if one of the [window]'s children is actually restacked.
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if the `target` does not refer to a
+	/// defined [window].
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [circulates]: CirculateDirection
+	///
+	/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
+	///
+	/// [`CirculateWindowRequest` event]: super::event::CirculateWindowRequest
+	/// [`Circulate` event]: super::event::Circulate
+	///
+	/// [`Window` error]: error::Window
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct CirculateWindow: Request(13, CirculateWindowError) {
+		#[metabyte]
+		/// Which of the [window]'s children might be circulated and in which
+		/// direction.
+		///
+		/// [window]: Window
+		pub direction: CirculateDirection,
+
+		/// The [window] which is the target of the `CirculateWindow` [request].
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		/// [request]: crate::message::Request
+		///
+		/// [`Window error]: error::Window
+		pub target: Window,
+	}
+}

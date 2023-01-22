@@ -1944,7 +1944,7 @@ derive_xrb! {
 	/// [window]: Window
 	/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
 	/// [`CirculateWindow` request]: super::request::CirculateWindow
-	pub struct CirculateRequest: Event(27) {
+	pub struct CirculateWindowRequest: Event(27) {
 		#[sequence]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
@@ -1957,8 +1957,8 @@ derive_xrb! {
 		/// The parent of the `window` the [`CirculateWindow` request] applies
 		/// to.
 		///
-		/// This is the window that this `CirculateRequest` event was generated
-		/// on.
+		/// This is the window that this `CirculateWindowRequest` event was
+		/// generated on.
 		///
 		/// [`CirculateWindow` request]: super::request::CirculateWindow
 		pub parent: Window,
