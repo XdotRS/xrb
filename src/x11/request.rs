@@ -287,6 +287,8 @@ derive_xrb! {
 	/// A [request] that [destroys] every child of the given [window] in
 	/// bottom-to-top stacking order.
 	///
+	/// A [`DestroyWindow` request][destroys] is performed on each child.
+	///
 	/// # Errors
 	/// A [`Window` error] is generated if the `target` does not refer to a
 	/// defined [window].
@@ -532,6 +534,8 @@ derive_xrb! {
 	/// A [request] that [maps] every unmapped child of the given [window] in
 	/// top-to-bottom stacking order.
 	///
+	/// A [`MapWindow` request][maps] is performed on each unmapped child.
+	///
 	/// # Errors
 	/// A [`Window` error] is generated if the `target` does not refer to a
 	/// defined [window].
@@ -540,6 +544,7 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	///
 	/// [maps]: MapWindow
+	///
 	///
 	/// [`Window` error]: error::Window
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
@@ -585,6 +590,37 @@ derive_xrb! {
 		///
 		/// [window]: Window
 		/// [request]: crate::message::Request
+		///
+		/// [`Window` error]: error::Window
+		pub target: Window,
+	}
+
+	/// A [request] that [unmaps] every mapped child of the
+	/// given [window] in bottom-to-top stacking order.
+	///
+	/// An [`UnmapWindow` request][unmaps] is performed on each mapped child.
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if the `target` does not refer to a
+	/// defined [window].
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [unmaps]: UnmapWindow
+	///
+	/// [`Window` error]: error::Window
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct UnmapChildren: Request(11, error::Window) {
+		/// The [window] which will have its mapped children [unmapped].
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		///
+		/// [unmapped]: UnmapWindow
 		///
 		/// [`Window` error]: error::Window
 		pub target: Window,
