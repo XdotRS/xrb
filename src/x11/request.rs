@@ -15,6 +15,7 @@ use crate::{
 	visual::VisualId,
 	x11::error,
 	CopyableFromParent,
+	Point,
 	Rectangle,
 	Window,
 	WindowClass,
@@ -385,5 +386,88 @@ derive_xrb! {
 		/// [`Match` error]: error::Match
 		/// [`Window` error]: error::Window
 		pub window: Window,
+	}
+}
+
+/// An error generated because of a failed [`ReparentWindow` request].
+///
+/// [`ReparentWindow` request]: ReparentWindow
+pub enum ReparentWindowError {
+	/// A [`Match` error].
+	///
+	/// [`Match` error]: error::Match
+	Match(error::Match),
+	/// A [`Window` error].
+	///
+	/// [`Window` error]: error::Window
+	Window(error::Window),
+}
+
+derive_xrb! {
+	/// A [request] that changes a [window]'s parent to a different one.
+	///
+	/// If the [window] is mapped, an [`UnmapWindow` request] is first
+	/// automatically performed. The [window] is then removed from its current
+	/// parent and inserted as a child of the `new_parent`. If the [window] was
+	/// mapped originally, then a [`MapWindow` request] is then automatically
+	/// performed to map it again.
+	///
+	/// # Errors
+	/// A [`Match` error] is generated if the `new_parent` is not on the same
+	/// [screen] as the old parent.
+	///
+	/// A [`Match` error] is generated if the `new_parent` is the `target`
+	/// [window] itself, or a descendent of the `target` [window].
+	///
+	/// A [`Match` error] is generated if the `new_parent` is [`InputOnly`] but
+	/// the `target` [window] is not.
+	///
+	/// A [`Match` error] is generated if the `target` [window] has a
+	/// [`ParentRelative`] [`background_pixmap`] and the `new_parent` does not
+	/// have the same depth as the `target` [window].
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	/// [screen]: crate::visual::Screen
+	///
+	/// [`UnmapWindow` request]: UnmapWindow
+	/// [`MapWindow` request]: MapWindow
+	///
+	/// [`InputOnly`]: WindowClass::InputOnly
+	/// [`ParentRelative`]: crate::ParentRelatable::ParentRelative
+	///
+	/// [`background_pixmap`]: Attributes::background_pixmap
+	///
+	/// [`Match` error]: error::Match
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ReparentWindow: Request(7, ReparentWindowError) {
+		/// The [window] which will be transferred to be a child of the
+		/// `new_parent`.
+		///
+		/// [window]: Window
+		pub target: Window,
+		/// The `target`'s new parent [window].
+		///
+		/// # Errors
+		/// A [`Match` error] is generated if this [window] is not on the same
+		/// [screen] as the `target` [window].
+		///
+		/// A [`Match` error] is generated if this [window] is the same [window]
+		/// as the `target`, or is a descendent of the `target` [window].
+		///
+		/// A [`Match` error] is generated if this [window] is [`InputOnly`] but
+		/// the `target` [window] is not.
+		///
+		/// [window]: Window
+		/// [screen]: crate::visual::Screen
+		///
+		/// [`InputOnly`]: WindowClass::InputOnly
+		///
+		/// [`Match` error]: error::Match
+		pub new_parent: Window,
+
+		/// The `target`'s new coordinates relative to its `new_parent`'s
+		/// top-left corner.
+		pub coords: Point,
 	}
 }
