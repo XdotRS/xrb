@@ -9,9 +9,18 @@
 //! [Requests]: crate::message::Request
 //! [core X11 protocol]: super
 
-use crate::{unit::Px, visual::VisualId, CopyableFromParent, Rectangle, Window, WindowClass};
+use crate::{
+	set::Attributes,
+	unit::Px,
+	visual::VisualId,
+	x11::error,
+	CopyableFromParent,
+	Rectangle,
+	Window,
+	WindowClass,
+};
 
-use crate::{set::Attributes, x11::error};
+use crate::x11::reply;
 use xrbk_macro::derive_xrb;
 
 extern crate self as xrb;
@@ -219,5 +228,20 @@ derive_xrb! {
 		///
 		/// [attributes]: Attributes
 		pub attributes: Attributes,
+	}
+
+	/// A [request] that returns the current [attributes] of the [window].
+	///
+	/// [request]: crate::message::Request
+	/// [attributes]: Attributes
+	/// [window]: Window
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GetWindowAttributes: Request(3, error::Window) -> reply::GetWindowAttributes {
+		/// The [window] for which this [request] gets the [attributes].
+		///
+		/// [request]: crate::message::Request
+		/// [attributes]: Attributes
+		/// [window]: Window
+		pub window: Window,
 	}
 }

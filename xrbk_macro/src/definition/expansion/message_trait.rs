@@ -85,7 +85,7 @@ impl Reply {
 
 					#[allow(clippy::cast_possible_truncation)]
 					fn length(&self) -> u32 {
-						((<Self as ::xrbk::X11Size>::x11_size(&self) / 4) - 8) as u32
+						((<Self as ::xrbk::X11Size>::x11_size(self) / 4) - 8) as u32
 					}
 
 					fn sequence(&self) -> u16 {

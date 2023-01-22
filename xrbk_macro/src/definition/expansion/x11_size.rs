@@ -34,6 +34,7 @@ impl Struct {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn x11_size(&self) -> usize {
 					let mut size: usize = 0;
@@ -78,6 +79,7 @@ impl Request {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn x11_size(&self) -> usize {
 					// The size starts at `4` to account for the size
@@ -124,6 +126,7 @@ impl Reply {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn x11_size(&self) -> usize {
 					// The size starts at `8` to account for the size
@@ -176,6 +179,7 @@ impl Event {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn x11_size(&self) -> usize {
 					// The size starts at either `4` or `1`, depending
@@ -224,6 +228,7 @@ impl Error {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn x11_size(&self) -> usize {
 					// At least 11 bytes including all the required fields.
