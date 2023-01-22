@@ -21,7 +21,7 @@ use crate::{
 };
 
 use crate::x11::reply;
-use xrbk_macro::derive_xrb;
+use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 extern crate self as xrb;
 
@@ -219,11 +219,12 @@ derive_xrb! {
 	/// [`RESIZE_REDIRECT`]: crate::EventMask::RESIZE_REDIRECT
 	/// [`BUTTON_PRESS`]: crate::EventMask::BUTTON_PRESS
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
-	pub struct ChangeWindowAttributes: Request(2) {
+	pub struct ChangeWindowAttributes: Request(2, ChangeWindowAttributesError) {
 		/// The [window] which the `attributes` are changed on.
 		///
 		/// [window]: Window
-		pub window: Window,
+		pub target: Window,
+
 		/// The [attributes] which are changed.
 		///
 		/// [attributes]: Attributes
@@ -242,6 +243,147 @@ derive_xrb! {
 		/// [request]: crate::message::Request
 		/// [attributes]: Attributes
 		/// [window]: Window
+		pub target: Window,
+	}
+
+	/// A [request] that destroys the given [window] and all its descendents.
+	///
+	/// If the `target` [window] is mapped, an [`UnmapWindow` request] is
+	/// automatically performed.
+	///
+	/// The ordering of [`Destroy` events][event] is such that a
+	/// [`Destroy` event][event] is generated on every descendent of the target
+	/// [window] before being generated on the [window] itself.
+	///
+	/// This [request] has no effect on root [windows][window].
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if the `target` does not refer to a
+	/// defined [window].
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [event]: super::event::Destroy
+	///
+	/// [`UnmapWindow` request]: UnmapWindow
+	/// [`Window` error]: error::Window
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct DestroyWindow: Request(4, error::Window) {
+		/// The [window] which is the target of the `DestroyWindow` [request].
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		/// [request]: crate::message::Request
+		///
+		/// [`Window` error]: error::Window
+		pub target: Window,
+	}
+
+	/// A [request] that destroys every child of the given [window] in
+	/// bottom-to-top stacking order.
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if the `target` does not refer to a
+	/// defined [window].
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [`Window` error]: error::Window
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct DestroyChildren: Request(5, error::Window) {
+		/// The [window] which will have its children destroyed.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		pub target: Window,
+	}
+}
+
+/// An error generated because of a failed [`ChangeSavedWindows` request].
+///
+/// [`ChangeSavedWindows` request]: ChangeSavedWindows
+pub enum ChangeSavedWindowsError {
+	/// A [`Match` error].
+	///
+	/// [`Match` error]: error::Match
+	Match(error::Match),
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+	/// A [`Window` error].
+	///
+	/// [`Window` error]: error::Window
+	Window(error::Window),
+}
+
+/// Whether something is added or removed.
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub enum ChangeMode {
+	/// The change is achieved by adding the thing.
+	Add,
+	/// The change is achieved by removing the thing.
+	Remove,
+}
+
+derive_xrb! {
+	/// A [request] that [adds] or [removes] the specified [window] from the
+	/// set of [windows][window] which you have chosen to save.
+	///
+	/// When a client's resources are destroyed, each of the client's saved
+	/// [windows] which are descendents of [windows] created by the client is
+	/// [reparented] to the closest ancestor which is not created by the client.
+	///
+	/// # Errors
+	/// The given `window` must not be a [window] created by you, else a
+	/// [`Match` error] is generated.
+	///
+	/// A [`Window` error] is generated if the `window` does not refer to a
+	/// defined [window].
+	///
+	/// A [`Value` error] is generated if the `change_mode` is encoded
+	/// incorrectly. It is a bug in X Rust Bindings if that happens.
+	///
+	/// [window]: Window
+	/// [windows]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [adds]: ChangeMode::Add
+	/// [removes]: ChangeMode::Remove
+	///
+	/// [reparented]: ReparentWindow
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ChangeSavedWindows: Request(6, ChangeSavedWindowsError) {
+		#[metabyte]
+		/// Whether the `window` is added to or removed from your saved
+		/// [windows].
+		///
+		/// [windows]: Window
+		pub change_mode: ChangeMode,
+
+		/// The [window] which is added to or removed from your saved
+		/// [windows][window].
+		///
+		/// # Errors
+		/// A [`Match` error] is generated if you created this [window].
+		///
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Match` error]: error::Match
+		/// [`Window` error]: error::Window
 		pub window: Window,
 	}
 }

@@ -237,7 +237,7 @@ pub enum FillRule {
 ///
 /// [window]: crate::Window
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
-pub enum SubwindowMode {
+pub enum ChildMode {
 	/// Both source and destination [windows] are additionally clipped by all
 	/// viewable [`InputOutput`] children.
 	///
@@ -297,7 +297,7 @@ pub type ClipMask = Option<Pixmap>;
 /// |[`tile_stipple_x`]       |`0`                                          |
 /// |[`tile_stipple_y`]       |`0`                                          |
 /// |[`font`]                 |Depends on the server                        |
-/// |[`subwindow_mode`]       |[`SubwindowMode::ClipByChildren`]            |
+/// |[`child_mode`]           |[`ChildMode::ClipByChildren`]                |
 /// |[`graphics_exposure`]    |`true`                                       |
 /// |[`clip_x`]               |`0`                                          |
 /// |[`clip_y`]               |`0`                                          |
@@ -323,7 +323,7 @@ pub type ClipMask = Option<Pixmap>;
 /// [`tile_stipple_x`]: GraphicsOptions::tile_stipple_x
 /// [`tile_stipple_y`]: GraphicsOptions::tile_stipple_y
 /// [`font`]: GraphicsOptions::font
-/// [`subwindow_mode`]: GraphicsOptions::subwindow_mode
+/// [`child_mode`]: GraphicsOptions::child_mode
 /// [`graphics_exposure`]: GraphicsOptions::graphics_exposure
 /// [`clip_x`]: GraphicsOptions::clip_x
 /// [`clip_y`]: GraphicsOptions::clip_y
@@ -358,7 +358,7 @@ pub struct GraphicsOptions {
 
 	font: Option<Font>,
 
-	subwindow_mode: Option<__SubwindowMode>,
+	child_mode: Option<__ChildMode>,
 
 	graphics_exposures: Option<__bool>,
 
@@ -418,7 +418,7 @@ pub struct GraphicsOptionsBuilder {
 
 	font: Option<Font>,
 
-	subwindow_mode: Option<SubwindowMode>,
+	child_mode: Option<ChildMode>,
 
 	graphics_exposures: Option<bool>,
 
@@ -470,7 +470,7 @@ impl GraphicsOptionsBuilder {
 
 			font: None,
 
-			subwindow_mode: None,
+			child_mode: None,
 
 			graphics_exposures: None,
 
@@ -519,7 +519,7 @@ impl GraphicsOptionsBuilder {
 
 			font: self.font,
 
-			subwindow_mode: self.subwindow_mode.map(__SubwindowMode),
+			child_mode: self.child_mode.map(__ChildMode),
 
 			graphics_exposures: self.graphics_exposures.map(__bool),
 
@@ -776,16 +776,16 @@ impl GraphicsOptionsBuilder {
 	/// Configures whether descendent [windows] are included or masked out when
 	/// considering graphics operations.
 	///
-	/// See [`GraphicsOptions::subwindow_mode`] for more information.
+	/// See [`GraphicsOptions::child_mode`] for more information.
 	///
 	/// [windows]: crate::Window
-	pub fn subwindow_mode(&mut self, subwindow_mode: SubwindowMode) -> &mut Self {
-		if self.subwindow_mode.is_none() {
+	pub fn child_mode(&mut self, child_mode: ChildMode) -> &mut Self {
+		if self.child_mode.is_none() {
 			self.x11_size += 4;
 		}
 
-		self.subwindow_mode = Some(subwindow_mode);
-		self.mask |= GraphicsOptionsMask::SUBWINDOW_MODE;
+		self.child_mode = Some(child_mode);
+		self.mask |= GraphicsOptionsMask::CHILD_MODE;
 
 		self
 	}
@@ -1045,14 +1045,14 @@ impl GraphicsOptions {
 	/// Whether descendent [windows] are included or masked out when applying
 	/// graphics operations.
 	///
-	/// See [`SubwindowMode`] for more information.
+	/// See [`ChildMode`] for more information.
 	///
 	/// [windows]: crate::Window
 	#[must_use]
-	pub fn subwindow_mode(&self) -> Option<&SubwindowMode> {
-		self.subwindow_mode
+	pub fn child_mode(&self) -> Option<&ChildMode> {
+		self.child_mode
 			.as_ref()
-			.map(|__SubwindowMode(subwindow_mode)| subwindow_mode)
+			.map(|__ChildMode(child_mode)| child_mode)
 	}
 
 	/// Whether [`GraphicsExposure` events] are generated.
@@ -1255,14 +1255,14 @@ bitflags! {
 		/// [`GraphicsContext`]: crate::GraphicsContext
 		const FONT = 0x0000_4000;
 
-		/// Whether the [descendent windows being clipped when applying graphics options][subwindow]
+		/// Whether the[descendent windows being clipped when applying graphics options][child]
 		/// is configured in a [`GraphicsContext`].
 		///
-		/// See [`GraphicsOptions::subwindow_mode`] for more information.
+		/// See [`GraphicsOptions::child_mode`] for more information.
 		///
-		/// [subwindow]: GraphicsOptions::subwindow_mode
+		/// [child]: GraphicsOptions::child_mode
 		/// [`GraphicsContext`]: crate::GraphicsContext
-		const SUBWINDOW_MODE = 0x0000_8000;
+		const CHILD_MODE = 0x0000_8000;
 
 		/// Whether [`GraphicsExposure` events] are configured in a [`GraphicsContext`].
 		///
@@ -1417,10 +1417,10 @@ impl Readable for GraphicsOptions {
 		let font =
 			super::read_set_value(buf, &mut x11_size, mask.contains(GraphicsOptionsMask::FONT))?;
 
-		let subwindow_mode = super::read_set_value(
+		let child_mode = super::read_set_value(
 			buf,
 			&mut x11_size,
-			mask.contains(GraphicsOptionsMask::SUBWINDOW_MODE),
+			mask.contains(GraphicsOptionsMask::CHILD_MODE),
 		)?;
 
 		let graphics_exposures = super::read_set_value(
@@ -1490,7 +1490,7 @@ impl Readable for GraphicsOptions {
 
 			font,
 
-			subwindow_mode,
+			child_mode,
 
 			graphics_exposures,
 
@@ -1563,8 +1563,8 @@ impl Writable for GraphicsOptions {
 			font.write_to(buf)?;
 		}
 
-		if let Some(subwindow_mode) = &self.subwindow_mode {
-			subwindow_mode.write_to(buf)?;
+		if let Some(child_mode) = &self.child_mode {
+			child_mode.write_to(buf)?;
 		}
 
 		if let Some(graphics_exposures) = &self.graphics_exposures {
@@ -1688,6 +1688,10 @@ impl X11Size for __LineWidth {
 }
 
 impl Readable for __LineWidth {
+	#[allow(
+		clippy::cast_possible_truncation,
+		reason = "truncation is intended behavior"
+	)]
 	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
 	where
 		Self: Sized,
@@ -1925,39 +1929,39 @@ impl Writable for __FillRule {
 }
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-struct __SubwindowMode(SubwindowMode);
+struct __ChildMode(ChildMode);
 
-impl ConstantX11Size for __SubwindowMode {
+impl ConstantX11Size for __ChildMode {
 	const X11_SIZE: usize = 4;
 }
 
-impl X11Size for __SubwindowMode {
+impl X11Size for __ChildMode {
 	fn x11_size(&self) -> usize {
 		Self::X11_SIZE
 	}
 }
 
-impl Readable for __SubwindowMode {
+impl Readable for __ChildMode {
 	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
 	where
 		Self: Sized,
 	{
 		Ok(Self(match buf.get_u32() {
-			discrim if discrim == 0 => SubwindowMode::ClipByChildren,
-			discrim if discrim == 1 => SubwindowMode::IncludeDescendents,
+			discrim if discrim == 0 => ChildMode::ClipByChildren,
+			discrim if discrim == 1 => ChildMode::IncludeDescendents,
 
 			other_discrim => return Err(UnrecognizedDiscriminant(other_discrim as usize)),
 		}))
 	}
 }
 
-impl Writable for __SubwindowMode {
+impl Writable for __ChildMode {
 	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
-		let Self(subwindow_mode) = self;
+		let Self(child_mode) = self;
 
-		match subwindow_mode {
-			SubwindowMode::ClipByChildren => buf.put_u32(0),
-			SubwindowMode::IncludeDescendents => buf.put_u32(1),
+		match child_mode {
+			ChildMode::ClipByChildren => buf.put_u32(0),
+			ChildMode::IncludeDescendents => buf.put_u32(1),
 		}
 
 		Ok(())
