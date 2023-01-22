@@ -7,11 +7,13 @@
 	reason = "It makes sense for `Screen` to have many arguments because it has many fields."
 )]
 
-use crate::{BackingStore, Colormap, EventMask, Window};
+use crate::{Colormap, EventMask, MaintainContents, Window};
 use derive_more::{From, Into};
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
-/// A pixel's color.
+/// A color in the X Window System.
+///
+/// ***Note: you may be looking for [`RgbColor`].***
 ///
 /// The way that this color is interpreted depends on the [`VisualClass`] of the
 /// [`VisualType`]:
@@ -50,7 +52,15 @@ use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writa
 	Readable,
 	Writable,
 )]
-pub struct Pixel(u32);
+pub struct Color(u32);
+
+impl Color {
+	/// A `Color` where all bits are zero: `0x0000_0000`.
+	pub const ZERO: Self = Self(0x0000_0000);
+
+	/// A `Color` with a value of `1`.
+	pub const ONE: Self = Self(1);
+}
 
 /// A color comprised of red, green, and blue color channels.
 ///
@@ -84,6 +94,70 @@ pub struct RgbColor(
 	pub u16,
 );
 
+impl RgbColor {
+	/// Black (#000000).
+	pub const BLACK: Self = Self(0x0000, 0x0000, 0x0000);
+
+	/// Dark gray (#404040).
+	pub const DARK_GRAY: Self = Self(0x4000, 0x4000, 0x4000);
+	/// Dark grey (#404040).
+	pub const DARK_GREY: Self = Self(0x4000, 0x4000, 0x4000);
+
+	/// Gray (#808080).
+	pub const GRAY: Self = Self(0x8000, 0x8000, 0x8000);
+	/// Grey (#808080).
+	pub const GREY: Self = Self(0x8000, 0x8000, 0x8000);
+
+	/// Light gray (#c0c0c0).
+	pub const LIGHT_GRAY: Self = Self(0xc000, 0xc000, 0xc000);
+	/// Light grey (#c0c0c0).
+	pub const LIGHT_GREY: Self = Self(0xc000, 0xc000, 0xc000);
+
+	/// White (#ffffff).
+	pub const WHITE: Self = Self(0xffff, 0xffff, 0xffff);
+
+	/// Red (#ff0000).
+	pub const RED: Self = Self(0xffff, 0x0000, 0x0000);
+	/// Green (#00ff00).
+	pub const GREEN: Self = Self(0x0000, 0xffff, 0x0000);
+	/// Blue (#0000ff).
+	pub const BLUE: Self = Self(0x0000, 0x0000, 0xffff);
+
+	/// Yellow (#ffff00).
+	pub const YELLOW: Self = Self(0xffff, 0xffff, 0x0000);
+	/// Cyan (#00ffff).
+	pub const CYAN: Self = Self(0x0000, 0xffff, 0xffff);
+	/// Magenta (#ff00ff).
+	pub const MAGENTA: Self = Self(0xffff, 0x0000, 0xffff);
+
+	/// Orange (#ff8000).
+	pub const ORANGE: Self = Self(0xffff, 0x8000, 0x0000);
+	/// Pink (#ff0080).
+	pub const PINK: Self = Self(0xffff, 0x0000, 0x8000);
+	/// Lime  (#80ff00).
+	pub const LIME: Self = Self(0x8000, 0xffff, 0x0000);
+	/// Mint (#00ff80).
+	pub const MINT: Self = Self(0x0000, 0xffff, 0x8000);
+	/// Purple (#8000ff).
+	pub const PURPLE: Self = Self(0x8000, 0x0000, 0xffff);
+	/// Sky blue (#0080ff).
+	pub const SKY_BLUE: Self = Self(0x0000, 0x8000, 0xffff);
+
+	/// Dark red (#800000).
+	pub const DARK_RED: Self = Self(0x8000, 0x0000, 0x0000);
+	/// Dark green (#008000).
+	pub const DARK_GREEN: Self = Self(0x0000, 0x8000, 0x0000);
+	/// Dark blue (#000080).
+	pub const DARK_BLUE: Self = Self(0x0000, 0x0000, 0x8000);
+
+	/// Dark yellow (#808000).
+	pub const DARK_YELLOW: Self = Self(0x8000, 0x8000, 0x0000);
+	/// Dark cyan (#008080).
+	pub const DARK_CYAN: Self = Self(0x0000, 0x8000, 0x8000);
+	/// Dark magenta (#800080).
+	pub const DARK_MAGENTA: Self = Self(0x8000, 0x0000, 0x8000);
+}
+
 /// An error returned when a value meant to be interpreted as a hex color code
 /// is greater than `0xffffff`.
 ///
@@ -100,7 +174,7 @@ impl RgbColor {
 	///
 	/// # Examples
 	/// ```
-	/// use xrb::{RgbColor, RgbColorTooHigh};
+	/// use xrb::visual::{RgbColor, RgbColorTooHigh};
 	///
 	/// # fn main() -> Result<(), RgbColorTooHigh> {
 	/// #
@@ -143,7 +217,7 @@ impl RgbColor {
 		Ok(Self(red << BYTE, green << BYTE, blue << BYTE))
 	}
 
-	/// Converts a `Color` to a hex color code.
+	/// Converts an `RgbColor` to a hex color code.
 	///
 	/// # Lossy
 	/// This function is lossy: a `Color` is made up of three `u16` values,
@@ -152,7 +226,7 @@ impl RgbColor {
 	///
 	/// # Examples
 	/// ```
-	/// use xrb::RgbColor;
+	/// use xrb::visual::RgbColor;
 	///
 	/// let red: RgbColor = RgbColor(0xff80, 0x00ff, 0x0000);
 	/// assert_eq!(red.to_hex(), 0xff0000);
@@ -286,7 +360,7 @@ derive_xrb! {
 		pub max_installed_maps: u16,
 
 		pub root_visual: VisualId,
-		pub backing_stores: BackingStore,
+		pub backing_stores: MaintainContents,
 		pub save_unders: bool,
 		pub root_depth: u8,
 

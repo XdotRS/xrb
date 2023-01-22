@@ -16,12 +16,12 @@ use xrbk::{
 
 use crate::{
 	atom::Atom,
+	visual::VisualId,
 	Button,
 	Colormap,
 	Keycode,
 	Pixmap,
 	Timestamp,
-	VisualId,
 	Window,
 	WindowClass,
 };

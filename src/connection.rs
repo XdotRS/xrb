@@ -7,7 +7,11 @@
 use xrbk::X11Size;
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
-use crate::{Format, Keycode, Screen, String8};
+use crate::{
+	visual::{Format, Screen},
+	Keycode,
+	String8,
+};
 
 /// Calculates the number of bytes used to reach the next 4-byte boundary.
 const fn pad(n: usize) -> usize {
