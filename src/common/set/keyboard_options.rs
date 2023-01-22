@@ -869,9 +869,10 @@ impl Readable for __PercentOrDefault {
 			reset if reset == -1 => PercentOrDefault::Default,
 
 			value => match u8::try_from(value) {
-				Ok(value) if let Ok(percent) = Percentage::new(value) => {
-					PercentOrDefault::Percent(percent)
-				},
+				Ok(value) if (0..=100).contains(&value) => PercentOrDefault::Percent(unsafe {
+					// We can use this because we have ensured its bounds are respected.
+					Percentage::new_unchecked(value)
+				}),
 
 				_ => {
 					return Err(ReadError::Other(Box::new(ValueOutOfBounds {
