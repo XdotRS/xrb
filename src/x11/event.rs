@@ -2225,7 +2225,7 @@ derive_xrb! {
 		InstalledOrUninstalled,
 	}
 
-	#[derive(Debug, Hash, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	/// Whether a [window]'s [colormap] is currently installed.
 	///
 	/// [window]: Window
