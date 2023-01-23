@@ -23,6 +23,7 @@ use crate::{
 	Window,
 	WindowClass,
 };
+use xrbk::{Buf, BufMut, ReadResult, ReadableWithContext, Writable, WriteResult, X11Size};
 
 use crate::{set::WindowConfig, x11::reply};
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
@@ -345,10 +346,10 @@ pub enum ChangeSavedWindowsError {
 
 /// Whether something is added or removed.
 #[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
-pub enum ChangeMode {
-	/// The change is achieved by adding the thing.
+pub enum AddOrRemove {
+	/// The thing is added.
 	Add,
-	/// The change is achieved by removing the thing.
+	/// The thing is removed.
 	Remove,
 }
 
@@ -374,8 +375,8 @@ derive_xrb! {
 	/// [windows]: Window
 	/// [request]: crate::message::Request
 	///
-	/// [adds]: ChangeMode::Add
-	/// [removes]: ChangeMode::Remove
+	/// [adds]: AddOrRemove::Add
+	/// [removes]: AddOrRemove::Remove
 	///
 	/// [reparented]: ReparentWindow
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
@@ -385,7 +386,7 @@ derive_xrb! {
 		/// [windows].
 		///
 		/// [windows]: Window
-		pub change_mode: ChangeMode,
+		pub change_mode: AddOrRemove,
 
 		/// The [window] which is added to or removed from your saved
 		/// [windows][window].
@@ -964,5 +965,237 @@ derive_xrb! {
 		///
 		/// [`Atom` error]: error::Atom
 		pub target: Atom,
+	}
+}
+
+/// An [error] generated because a [`ModifyProperty` request] failed.
+///
+/// [error]: crate::message::Error
+///
+/// [`ModifyProperty` request]: ModifyProperty
+pub enum ModifyPropertyError {
+	/// An [`Atom` error].
+	///
+	/// [`Atom` error]: error::Atom
+	Atom(error::Atom),
+	/// A [`Match` error].
+	///
+	/// [`Match` error]: error::Match
+	Match(error::Match),
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+	/// A [`Window` error].
+	///
+	/// [`Window` error]: error::Window
+	Window(error::Window),
+}
+
+/// Whether a property is [replaced], [prepended] to a [window]'s list of
+/// properties, or [appended] to the [window]'s list of properties.
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub enum ModifyPropertyMode {
+	/// The property replaces an existing property; the previous value is
+	/// discarded.
+	Replace,
+
+	/// The property is prepended to the list of properties.
+	Prepend,
+
+	/// The property is appended to the list of properties.
+	Append,
+}
+
+/// Whether a [`DataList`] is formatted as a list of `i8` values, `i16` values,
+/// or `i32` values.
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub enum DataFormat {
+	/// The list is formatted as `i8` values.
+	I8 = 8,
+	/// The list is formatted as `i16` values.
+	I16 = 16,
+	/// The list is formatted as `i32` values.
+	I32 = 32,
+}
+
+/// A list of either `i8` values, `i16` values, or `i32` values.
+///
+/// This represents uninterpreted 'raw' data.
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub enum DataList {
+	/// A list of `i8` values.
+	I8(Vec<i8>),
+	/// A list of `i16` values.
+	I16(Vec<i16>),
+	/// A list of `i32` values.
+	I32(Vec<i32>),
+}
+
+impl DataList {
+	/// The length of the data.
+	///
+	/// This is how many values there are - not the number of bytes.
+	#[must_use]
+	pub fn len(&self) -> usize {
+		match self {
+			Self::I8(list) => list.len(),
+			Self::I16(list) => list.len(),
+			Self::I32(list) => list.len(),
+		}
+	}
+
+	/// Whether the `DataList` is empty.
+	#[must_use]
+	pub fn is_empty(&self) -> bool {
+		match self {
+			Self::I8(list) => list.is_empty(),
+			Self::I16(list) => list.is_empty(),
+			Self::I32(list) => list.is_empty(),
+		}
+	}
+}
+
+impl X11Size for DataList {
+	fn x11_size(&self) -> usize {
+		match self {
+			Self::I8(list) => list.x11_size(),
+			Self::I16(list) => list.x11_size(),
+			Self::I32(list) => list.x11_size(),
+		}
+	}
+}
+
+impl ReadableWithContext for DataList {
+	type Context = (DataFormat, u32);
+
+	fn read_with(buf: &mut impl Buf, (format, length): &(DataFormat, u32)) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		let length = &(*length as usize);
+
+		Ok(match format {
+			DataFormat::I8 => Self::I8(<Vec<i8>>::read_with(buf, length)?),
+			DataFormat::I16 => Self::I16(<Vec<i16>>::read_with(buf, length)?),
+			DataFormat::I32 => Self::I32(<Vec<i32>>::read_with(buf, length)?),
+		})
+	}
+}
+
+impl Writable for DataList {
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		match self {
+			Self::I8(list) => list.write_to(buf)?,
+			Self::I16(list) => list.write_to(buf)?,
+			Self::I32(list) => list.write_to(buf)?,
+		}
+
+		Ok(())
+	}
+}
+
+derive_xrb! {
+	/// A [request] that modifies the given `property` for the [window].
+	///
+	/// A [`Property` event] is generated on the `target` [window].
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if `target` does not refer to a defined
+	/// [window].
+	///
+	/// An [`Atom` error] is generated if either `property` or `type` do not
+	/// refer to defined [windows][window].
+	///
+	/// If the `change_mode` is [`Prepend`] or [`Append`], the `type` and
+	/// `format` must match that of the existing property's value, else a
+	/// [`Match` error] is generated.
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [`Property` event]: super::event::Property
+	///
+	/// [`Window` error]: error::Window
+	/// [`Atom` error]: error::Atom
+	/// [`Match` error]: error::Match
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ModifyProperty: Request(18, ModifyPropertyError) {
+		#[metabyte]
+		/// Whether the `property` is prepended to the [window]'s list of
+		/// properties, appended to the [window]'s list of properties, or
+		/// replaces the value of an existing property.
+		///
+		/// If the mode is [`Replace`], the previous property value is
+		/// discarded.
+		///
+		/// # Errors
+		/// If the mode is [`Prepend`] or [`Append`], the `type` and `format`
+		/// must match that of the existing property's value, else a
+		/// [`Match` error] is generated.
+		///
+		/// [window]: Window
+		///
+		/// [`Prepend`]: ModifyPropertyMode::Prepend
+		/// [`Append`]: ModifyPropertyMode::Append
+		///
+		/// [`Match` error]: error::Match
+		pub change_mode: ModifyPropertyMode,
+
+		/// The [window] which the `property` is modified for.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		pub target: Window,
+
+		/// The property which is modified.
+		///
+		/// # Errors
+		/// An [`Atom` error] is generated if this does not refer to a defined
+		/// [atom].
+		///
+		/// [atom]: Atom
+		///
+		/// [`Atom` error]: error::Atom
+		pub property: Atom,
+		/// The type of the property's data.
+		///
+		/// For example, if the property is of type [`Window`], then this would
+		/// be [`atom::WINDOW`].
+		///
+		/// # Errors
+		/// An [`Atom` error] is generated if this does not refer to a defined
+		/// [atom].
+		///
+		/// [atom]: Atom
+		/// [`atom::WINDOW`]: crate::atom::WINDOW
+		///
+		/// [`Atom` error]: error::Atom
+		pub r#type: Atom,
+
+		// Whether the `data` is formatted as `i8` values, `i16` values, or
+		// `i32` values.
+		let format: DataFormat = data => match data {
+			DataList::I8(_) => DataFormat::I8,
+			DataList::I16(_) => DataFormat::I16,
+			DataList::I32(_) => DataFormat::I32,
+		},
+		[_; 3],
+
+		// The length of `data` in number of values (i.e., an `i32` value is
+		// counted as one, rather than the number of bytes).
+		#[allow(clippy::cast_possible_truncation)]
+		let data_len: u32 = data => data.len() as u32,
+
+		/// The property's value.
+		///
+		/// See [`DataList`] for information on the format of this data.
+		#[context(format, data_len => (*format, *data_len))]
+		pub data: DataList,
 	}
 }
