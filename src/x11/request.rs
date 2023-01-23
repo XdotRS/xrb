@@ -24,7 +24,7 @@ use crate::{
 	DestinationWindow,
 	Drawable,
 	EventMask,
-	GrabMode,
+	FreezeMode,
 	Point,
 	Rectangle,
 	String8,
@@ -1715,7 +1715,7 @@ derive_xrb! {
 	/// selecting any of the [events][event] indicated in the `event_mask` on
 	/// the final destination.
 	///
-	/// Active [grabs] are ignored for this [request].
+	/// Active grabs are ignored for this [request].
 	///
 	/// # Errors
 	/// A [`Window` error] is generated if the `destination` is [`DestinationWindow::Other`] and the
@@ -1724,7 +1724,6 @@ derive_xrb! {
 	/// [window]: Window
 	/// [event]: Event
 	/// [request]: crate::message::Request
-	/// [grabs]: GrabMode
 	///
 	/// [`do_not_propagate_mask`]: Attributes::do_not_propagate_mask
 	///
@@ -1842,40 +1841,40 @@ derive_xrb! {
 		/// [events]: Event
 		pub event_mask: CursorEventMask,
 
-		/// The [grab mode] applied to the cursor.
+		/// The [freeze mode] applied to the cursor.
 		///
-		/// For [`GrabMode::Asynchronous`], cursor [event] processing continues
+		/// For [`FreezeMode::Unfrozen`], cursor [event] processing continues
 		/// as normal.
 		///
-		/// For [`GrabMode::Synchronous`], cursor [event] processing appears to
+		/// For [`FreezeMode::Frozen`], cursor [event] processing appears to
 		/// freeze - cursor [events][event] generated during this time are not
 		/// lost: they are queued to be processed later. The freeze ends when
 		/// either the grabbing client sends an [`AllowEvents` request], or when
 		/// the cursor grab is released.
 		///
 		/// [event]: Event
-		/// [grab mode]: GrabMode
+		/// [freeze mode]: FreezeMode
 		///
 		/// [`AllowEvents` request]: AllowEvents
 		#[doc(alias = "pointer_mode")]
-		pub cursor_grab_mode: GrabMode,
-		/// The [grab mode] applied to the keyboard.
+		pub cursor_freeze: FreezeMode,
+		/// The [freeze mode] applied to the keyboard.
 		///
-		/// For [`GrabMode::Asynchronous`], keyboard [event] processing
+		/// For [`FreezeMode::Unfrozen`], keyboard [event] processing
 		/// continues as normal.
 		///
-		/// For [`GrabMode::Synchronous`], keyboard [event] processing appears
+		/// For [`FreezeMode::Frozen`], keyboard [event] processing appears
 		/// to freeze - keyboard [events][event] generated during this time are
 		/// not lost: they are queued to be processed later. The freeze ends
 		/// when either the grabbing client sends an [`AllowEvents` request], or
 		/// when the keyboard grab is released.
 		///
 		/// [event]: Event
-		/// [grab mode]: GrabMode
+		/// [freeze mode]: FreezeMode
 		///
 		/// [`AllowEvents` request]: AllowEvents
 		#[doc(alias = "keyboard_mode")]
-		pub keyboard_grab_mode: GrabMode,
+		pub keyboard_freeze: FreezeMode,
 
 		/// Optionally confines the cursor to the given [window].
 		///

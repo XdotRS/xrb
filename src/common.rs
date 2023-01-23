@@ -165,6 +165,22 @@ pub enum GrabMode {
 	Ungrab,
 }
 
+/// Whether a grab causes a freeze in [event] processing.
+///
+/// [event]: crate::message::Event
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+pub enum FreezeMode {
+	/// [Event] processing is not frozen.
+	///
+	/// [Event]: crate::message::Event
+	Unfrozen,
+
+	/// [Event] processing is frozen.
+	///
+	/// [Event]: crate::message::Event
+	Frozen,
+}
+
 /// The status of an attempted grab.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum GrabStatus {
