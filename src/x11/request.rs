@@ -17,6 +17,7 @@ use crate::{
 	Any,
 	Atom,
 	CopyableFromParent,
+	CurrentableTime,
 	Drawable,
 	Point,
 	Rectangle,
@@ -1469,5 +1470,85 @@ derive_xrb! {
 		/// [`Window` error]: error::Window
 		#[doc(alias = "window")]
 		pub target: Window,
+	}
+}
+
+/// An [error] generated because of a failed [`SetSelectionOwner` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`SetSelectionOwner` request]: SetSelectionOwner
+pub enum SetSelectionOwnerError {
+	/// An [`Atom` error].
+	///
+	/// [`Atom` error]: error::Atom
+	Atom(error::Atom),
+	/// A [`Window` error].
+	///
+	/// [`Window` error]: error::Window
+	Window(error::Window),
+}
+
+derive_xrb! {
+	/// A [request] that changes the owner of the given selection.
+	///
+	/// If the `new_owner` is different to the previous owner of the selection,
+	/// and the previous owner was not [`None`], then a [`SelectionClear` event]
+	/// is sent to the previous owner.
+	///
+	/// If the given `time` is earlier than time of the previous owner change or
+	/// is later than the X server's [current time], this [request] has no
+	/// effect.
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if `owner` is [`Some`] but does not
+	/// refer to a defined [window].
+	///
+	/// An [`Atom` error] is generated if `selection` does not refer to a
+	/// defined [atom].
+	///
+	/// [window]: Window
+	/// [atom]: Atom
+	/// [request]: crate::message::Request
+	///
+	/// [current time]: CurrentableTime::CurrentTime
+	///
+	/// [`SelectionClear` event]: super::event::SelectionClear
+	///
+	/// [`Window` error]: error::Window
+	/// [`Atom` error]: error::Atom
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct SetSelectionOwner: Request(22, SetSelectionOwnerError) {
+		/// Sets the new owner of the `selection`.
+		///
+		/// [`None`] specifies that the `selection` is to have no owner.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this is [`Some`] but does not
+		/// refer to a defined [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		#[doc(alias = "owner")]
+		pub new_owner: Option<Window>,
+		/// The selection for which this [request] changes its owner.
+		///
+		/// # Errors
+		/// An [`Atom` error] is generated if this does not refer to a defined
+		/// [atom].
+		///
+		/// [atom]: Atom
+		/// [request]: crate::message::Request
+		///
+		/// [`Atom` error]: error::Atom
+		pub selection: Atom,
+
+		/// The time at which this change is recorded to occur at.
+		///
+		/// If this time is earlier than the server's current 'last-change' time
+		/// for the selection's owner, or this time is later than the server's
+		/// current time, this [request] has no effect.
+		pub time: CurrentableTime,
 	}
 }
