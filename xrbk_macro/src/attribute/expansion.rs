@@ -69,6 +69,9 @@ impl ToTokens for HideAttribute {
 		// Square brackets surrounding `hide`.
 		self.bracket_token.surround(tokens, |tokens| {
 			self.path.to_tokens(tokens);
+			self.paren_token.surround(tokens, |tokens| {
+				self.hidden_traits.to_tokens(tokens);
+			})
 		});
 	}
 }

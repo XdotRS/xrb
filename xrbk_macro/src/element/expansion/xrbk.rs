@@ -12,7 +12,7 @@ impl Element {
 	pub fn write_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		match self {
 			Self::Field(field) => {
-				if field.hide_attribute.is_none() {
+				if !field.is_ignoring_trait("Writable") {
 					field.write_tokens(tokens)
 				}
 			},
@@ -26,7 +26,7 @@ impl Element {
 	pub fn x11_size_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		match self {
 			Self::Field(field) => {
-				if field.hide_attribute.is_none() {
+				if !field.is_ignoring_trait("X11Size") {
 					field.x11_size_tokens(tokens)
 				}
 			},
@@ -40,7 +40,7 @@ impl Element {
 	pub fn read_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
 		match self {
 			Self::Field(field) => {
-				if field.hide_attribute.is_none() || field.context_attribute.is_some() {
+				if !field.is_ignoring_trait("Readable") || field.context_attribute.is_some() {
 					field.read_tokens(tokens)
 				}
 			},
@@ -54,7 +54,7 @@ impl Element {
 	pub fn add_x11_size_tokens(&self, tokens: &mut TokenStream2) {
 		match self {
 			Self::Field(field) => {
-				if field.hide_attribute.is_none() {
+				if !field.is_ignoring_trait("X11Size") {
 					field.add_x11_size_tokens(tokens)
 				}
 			},

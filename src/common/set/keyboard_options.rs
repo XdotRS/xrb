@@ -309,7 +309,26 @@ pub enum LedMode {
 ///
 /// This set is used in the [`ChangeKeyboardControl` request].
 ///
+/// This set has the following options:
+/// - [`key_click_volume`]
+/// - [`bell_volume`]
+/// - [`bell_pitch`]
+/// - [`bell_duration`]
+/// - [`led`]
+/// - [`led_mode`]
+/// - [`auto_repeated_key`]
+/// - [`auto_repeat_mode`]
+///
 /// [`ChangeKeyboardControl` request]: crate::x11::request::ChangeKeyboardControl
+///
+/// [`key_click_volume`]: KeyboardOptions::key_click_volume
+/// [`bell_volume`]: KeyboardOptions::bell_volume
+/// [`bell_pitch`]: KeyboardOptions::bell_pitch
+/// [`bell_duration`]: KeyboardOptions::bell_duration
+/// [`led`]: KeyboardOptions::led
+/// [`led_mode`]: KeyboardOptions::led_mode
+/// [`auto_repeated_key`]: KeyboardOptions::auto_repeated_key
+/// [`auto_repeat_mode`]: KeyboardOptions::auto_repeat_mode
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct KeyboardOptions {
 	x11_size: usize,

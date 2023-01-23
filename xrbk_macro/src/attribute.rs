@@ -5,7 +5,7 @@
 mod expansion;
 pub mod parsing;
 
-use syn::{token, Path, Token};
+use syn::{punctuated::Punctuated, token, Path, Token};
 
 use crate::Source;
 
@@ -106,7 +106,20 @@ pub struct ErrorDataAttribute {
 ///
 /// > **<sup>Syntax</sup>**\
 /// > _HideAttribute_ :\
-/// > &nbsp;&nbsp; `#` `[` `hide` `]`
+/// > &nbsp;&nbsp; `#` `[` `hide` `(` _HiddenTraits_ `)` `]`
+/// >
+/// > _HiddenTraits_ :\
+/// > &nbsp;&nbsp; _HiddenTrait_[^hidden-traits] ( `,`
+/// > _HiddenTrait_[^hidden-traits] )<sup>\*</sup>
+/// >
+/// > _HiddenTrait_ :\
+/// > &nbsp;&nbsp; &nbsp;&nbsp; `Readable` \
+/// > &nbsp;&nbsp; | `Writable` \
+/// > &nbsp;&nbsp; | `X11Size` \
+/// >
+/// > [^hidden-traits]: *HideAttribute*s may only specify traits listed in
+/// > *HiddenTraits*, any
+/// > other traits will have no effects.
 ///
 /// [`Field`]: crate::element::Field
 pub struct HideAttribute {
@@ -117,6 +130,16 @@ pub struct HideAttribute {
 
 	/// The attribute path: `hide` for a `HideAttribute`.
 	pub path: Path,
+
+	/// A pair of square brackets (`(` and `)`) surrounding the `hidden_traits`.
+	pub paren_token: token::Paren,
+
+	/// A list of traits which will ignore this field in their derived
+	/// implementations.
+	///
+	/// See the [`HideAttribute`] syntax section for which traits are allowed
+	/// here.
+	pub hidden_traits: Punctuated<Path, Token![,]>,
 }
 
 /// An attribute which provides the [`ContextualReadable::Context`] for a type

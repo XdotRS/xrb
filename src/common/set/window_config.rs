@@ -26,8 +26,25 @@ use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
 /// Unspecified configuration options are taken from the existing geometry of
 /// the [window].
 ///
+/// This set has the following options:
+/// - [`x`]
+/// - [`y`]
+/// - [`width`]
+/// - [`height`]
+/// - [`border_width`]
+/// - [`sibling`]
+/// - [`stack_mode`]
+///
 /// [window]: Window
 /// [`ConfigureWindow` request]: crate::x11::request::ConfigureWindow
+///
+/// [`x`]: WindowConfig::x
+/// [`y`]: WindowConfig::y
+/// [`width`]: WindowConfig::width
+/// [`height`]: WindowConfig::height
+/// [`border_width`]: WindowConfig::border_width
+/// [`sibling`]: WindowConfig::sibling
+/// [`stack_mode`]: WindowConfig::stack_mode
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct WindowConfig {
 	/// Total [`X11Size`] of this `WindowConfig`.
