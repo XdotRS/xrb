@@ -19,9 +19,12 @@ use crate::{
 	Atom,
 	CopyableFromParent,
 	CurrentableTime,
+	CursorAppearance,
+	CursorEventMask,
 	DestinationWindow,
 	Drawable,
 	EventMask,
+	GrabMode,
 	Point,
 	Rectangle,
 	String8,
@@ -1721,7 +1724,7 @@ derive_xrb! {
 	/// [window]: Window
 	/// [event]: Event
 	/// [request]: crate::message::Request
-	/// [grabs]: crate::GrabMode
+	/// [grabs]: GrabMode
 	///
 	/// [`do_not_propagate_mask`]: Attributes::do_not_propagate_mask
 	///
@@ -1762,5 +1765,172 @@ derive_xrb! {
 		///
 		/// [event]: Event
 		pub event: E,
+	}
+}
+
+/// An [error] generated because of a failed [`GrabCursor` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`GrabCursor` request]: GrabCursor
+#[doc(alias = "GrabPointerError")]
+pub enum GrabCursorError {
+	/// A [`CursorAppearance` error].
+	///
+	/// [`CursorAppearance` error]: error::CursorAppearance
+	#[doc(alias = "Cursor")]
+	CursorAppearance(error::CursorAppearance),
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+	/// A [`Window` error].
+	///
+	/// [`Window` error]: error::Window
+	Window(error::Window),
+}
+
+derive_xrb! {
+	/// A [request] to actively grab control of the cursor.
+	///
+	/// This [request] generates [`EnterWindow`] and [`LeaveWindow`] events.
+	///
+	/// # Replies
+	/// This [request] generates a [`GrabCursor` reply].
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if either the `grab_window` or the
+	/// `confine_to` [window] do not refer to defined [windows][window].
+	///
+	/// A [`CursorAppearance` error] is generated if the `cursor_appearance` is
+	/// [`Some`] and does not refer to a defined [cursor appearance].
+	///
+	/// [cursor appearance]: CursorAppearance
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [`EnterWindow`]: super::event::EnterWindow
+	/// [`LeaveWindow`]: super::event::LeaveWindow
+	/// [`GrabCursor` reply]: reply::GrabCursor
+	///
+	/// [`Window` error]: error::Window
+	/// [`CursorAppearance` error]: error::CursorAppearance
+	#[doc(alias = "GrabPointer")]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GrabCursor: Request(26, GrabCursorError) -> reply::GrabCursor {
+		/// Whether cursor [events] which would normally be reported to this
+		/// client are reported normally.
+		///
+		/// [events]: Event
+		#[metabyte]
+		pub owner_events: bool,
+
+		/// The [window] on which the cursor is grabbed.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		pub grab_window: Window,
+
+		/// A mask of the cursor [events] which are to be reported to the
+		/// grabbing client.
+		///
+		/// [events]: Event
+		pub event_mask: CursorEventMask,
+
+		/// The [grab mode] applied to the cursor.
+		///
+		/// For [`GrabMode::Asynchronous`], cursor [event] processing continues
+		/// as normal.
+		///
+		/// For [`GrabMode::Synchronous`], cursor [event] processing appears to
+		/// freeze - cursor [events][event] generated during this time are not
+		/// lost: they are queued to be processed later. The freeze ends when
+		/// either the grabbing client sends an [`AllowEvents` request], or when
+		/// the cursor grab is released.
+		///
+		/// [event]: Event
+		/// [grab mode]: GrabMode
+		///
+		/// [`AllowEvents` request]: AllowEvents
+		#[doc(alias = "pointer_mode")]
+		pub cursor_grab_mode: GrabMode,
+		/// The [grab mode] applied to the keyboard.
+		///
+		/// For [`GrabMode::Asynchronous`], keyboard [event] processing
+		/// continues as normal.
+		///
+		/// For [`GrabMode::Synchronous`], keyboard [event] processing appears
+		/// to freeze - keyboard [events][event] generated during this time are
+		/// not lost: they are queued to be processed later. The freeze ends
+		/// when either the grabbing client sends an [`AllowEvents` request], or
+		/// when the keyboard grab is released.
+		///
+		/// [event]: Event
+		/// [grab mode]: GrabMode
+		///
+		/// [`AllowEvents` request]: AllowEvents
+		#[doc(alias = "keyboard_mode")]
+		pub keyboard_grab_mode: GrabMode,
+
+		/// Optionally confines the cursor to the given [window].
+		///
+		/// This [window] does not need to have any relation to the
+		/// `grab_window`.
+		///
+		/// The cursor will be warped to the closest edge of this [window] if it
+		/// is not already within it. Subsequent changes to the configuration of
+		/// the [window] which cause the cursor to be outside of the [window]
+		/// will also trigger the cursor to be warped to the [window] again.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this is [`Some`] and does not
+		/// refer to a defined [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		pub confine_to: Option<Window>,
+
+		/// Optionally overrides the [appearance of the cursor], no matter which
+		/// [window] it is within, for the duration of the grab.
+		///
+		/// # Errors
+		/// A [`CursorAppearance` error] is generated if this does not refer to
+		/// a defined [cursor appearance].
+		///
+		/// [cursor appearance]: CursorAppearance
+		/// [appearance of the cursor]: CursorAppearance
+		/// [window]: Window
+		///
+		/// [`CursorAppearance` error]: error::CursorAppearance
+		#[doc(alias = "cursor")]
+		pub cursor_appearance: Option<CursorAppearance>,
+
+		/// The time at which this grab is recorded as having initiated.
+		pub time: CurrentableTime,
+	}
+
+	/// A [request] that ends a cursor grab if this client has it actively
+	/// grabbed.
+	///
+	/// Any queued [events] are released.
+	///
+	/// This [request] generates [`EnterWindow`] and [`LeaveWindow`] events.
+	///
+	/// [request]: crate::message::Request
+	/// [events]: Event
+	///
+	/// [`EnterWindow`]: super::event::EnterWindow
+	/// [`LeaveWindow`]: super::event::LeaveWindow
+	#[doc(alias = "UngrabPointer")]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct UngrabCursor: Request(27) {
+		/// The time at which the grab is recorded as having ceased.
+		pub time: CurrentableTime,
 	}
 }

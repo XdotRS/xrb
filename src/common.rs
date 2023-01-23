@@ -165,6 +165,32 @@ pub enum GrabMode {
 	Ungrab,
 }
 
+/// The status of an attempted grab.
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
+pub enum GrabStatus {
+	/// The grab was successful.
+	Success,
+
+	/// Another client already had a grab.
+	AlreadyGrabbed,
+	/// Another client already had an active grab and had frozen [event]
+	/// processing.
+	///
+	/// [event]: crate::message::Event
+	Frozen,
+	/// The given time was either earlier than the previous grab, or later than
+	/// the X server's [current time].
+	///
+	/// [current time]: CurrentableTime::CurrentTime
+	InvalidTime,
+	/// The grabbed [window] or the [window] which the cursor was confined to is
+	/// not viewable, or the [window] which the cursor was confined to is
+	/// completely outside of the root [window].
+	///
+	/// [window]: Window
+	NotViewable,
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum StackMode {
 	Above,
