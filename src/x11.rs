@@ -5,10 +5,10 @@
 //! Messages defined in the core X11 protocol: [requests], [replies], [events],
 //! and [errors].
 //!
-//! [requests]: x11::request
-//! [replies]: x11::reply
-//! [events]: x11::event
-//! [errors]: x11::error
+//! [requests]: request
+//! [replies]: reply
+//! [events]: event
+//! [errors]: error
 
 pub mod error;
 pub mod event;

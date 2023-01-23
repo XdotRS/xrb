@@ -866,7 +866,7 @@ derive_xrb! {
 	/// It is legal to pass an [`InputOnly`] [window] as a [drawable] to this
 	/// [request].
 	///
-	/// # Reply
+	/// # Replies
 	/// This [request] generates a [`GetGeometry` reply].
 	///
 	/// # Errors
@@ -904,7 +904,7 @@ derive_xrb! {
 	/// A [request] that returns the root [window], the parent, and the children
 	/// of the given [window].
 	///
-	/// # Reply
+	/// # Replies
 	/// This [request] generates a [`QueryWindowTree` reply].
 	///
 	/// # Errors
@@ -942,7 +942,7 @@ derive_xrb! {
 	/// [atom] by the specified `name` already exists, that [atom] will be
 	/// returned.
 	///
-	/// # Reply
+	/// # Replies
 	/// This [request] generates a [`GetAtom` reply].
 	///
 	/// [atom]: Atom
@@ -986,12 +986,17 @@ derive_xrb! {
 
 	/// A [request] that returns the name of the given [atom].
 	///
+	/// # Replies
+	/// This [request] generates a [`GetAtomName` reply].
+	///
 	/// # Errors
 	/// An [`Atom` error] is generated if the `target` does not refer to a
 	/// defined [atom].
 	///
 	/// [atom]: Atom
 	/// [request]: crate::message::Request
+	///
+	/// [`GetAtomName` reply]: reply::GetAtomName
 	///
 	/// [`Atom` error]: error::Atom
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
@@ -1372,6 +1377,9 @@ derive_xrb! {
 	/// A [request] that gets the value of the given `property` on the given
 	/// [window].
 	///
+	/// # Replies
+	/// This [request] generates a [`GetProperty` reply].
+	///
 	/// # Errors
 	/// A [`Window` error] is generated if `target` does not refer to a defined
 	/// [window].
@@ -1382,6 +1390,8 @@ derive_xrb! {
 	/// [window]: Window
 	/// [request]: crate::message::Request
 	/// [atoms]: Atom
+	///
+	/// [`GetProperty` reply]: reply::GetProperty
 	///
 	/// [`Window` error]: error::Window
 	/// [`Atom` error]: error::Atom
@@ -1449,12 +1459,17 @@ derive_xrb! {
 	/// A [request] that returns the list of properties defined for the given
 	/// [window].
 	///
+	/// # Replies
+	/// This [request] generates a [`ListProperties` reply].
+	///
 	/// # Errors
 	/// A [`Window` error] is generated if `target` does not refer to a defined
 	/// [window].
 	///
 	/// [window]: Window
 	/// [request]: crate::message::Request
+	///
+	/// [`ListProperties` reply]: reply::ListProperties
 	///
 	/// [`Window` error]: error::Window
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
@@ -1550,16 +1565,24 @@ derive_xrb! {
 		/// If this time is earlier than the server's current 'last-change' time
 		/// for the selection's owner, or this time is later than the server's
 		/// current time, this [request] has no effect.
+		///
+		/// [request]: crate::message::Request
 		pub time: CurrentableTime,
 	}
 
 	/// A [request] that returns the owner of a given selection.
+	///
+	/// # Replies
+	/// This [request] generates a [`GetSelectionOwner` reply].
 	///
 	/// # Errors
 	/// An [`Atom` error] is generated if `target` does not refer to a defined
 	/// [atom].
 	///
 	/// [atom]: Atom
+	/// [request]: crate::message::Request
+	///
+	/// [`GetSelectionOwner` reply]: reply::GetSelectionOwner
 	///
 	/// [`Atom` error]: error::Atom
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
@@ -1683,10 +1706,11 @@ derive_xrb! {
 	/// [events][event] indicated in the `event_mask` on the [window], the
 	/// [event] is sent to the closest ancestor [window] of the [window] which
 	/// some client has selected at least one of the indicated [events][event]
-	/// for (provided no [window] between the original destination and the
-	/// closest ancestor have that [event] in their [`do_not_propagate_mask`]).
-	/// The [event] is sent to every client selecting any of the [events][event]
-	/// indicated in the `event_mask` on the final destination.
+	/// for (provided no [windows][window] between the original destination and
+	/// the closest ancestor have that [event] in their
+	/// [`do_not_propagate_mask`]). The [event] is sent to every client
+	/// selecting any of the [events][event] indicated in the `event_mask` on
+	/// the final destination.
 	///
 	/// Active [grabs] are ignored for this [request].
 	///
@@ -1698,6 +1722,8 @@ derive_xrb! {
 	/// [event]: Event
 	/// [request]: crate::message::Request
 	/// [grabs]: crate::GrabMode
+	///
+	/// [`do_not_propagate_mask`]: Attributes::do_not_propagate_mask
 	///
 	/// [`Window` error]: error::Window
 	// FIXME: this requires that the event is absolutely 32 bytes, which is
