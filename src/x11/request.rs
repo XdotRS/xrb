@@ -14,6 +14,7 @@ use crate::{
 	unit::Px,
 	visual::VisualId,
 	x11::error,
+	Atom,
 	CopyableFromParent,
 	Drawable,
 	Point,
@@ -903,7 +904,7 @@ derive_xrb! {
 	/// # Reply
 	/// This [request] generates a [`GetAtom` reply].
 	///
-	/// [atom]: crate::Atom
+	/// [atom]: Atom
 	/// [request]: crate::message::Request
 	///
 	/// [`GetAtom` reply]: reply::GetAtom
@@ -917,7 +918,7 @@ derive_xrb! {
 		/// `name` which doesn't already refer to an [atom]. If it is `false`,
 		/// the X server will create a new [atom] for the given `name`.
 		///
-		/// [atom]: crate::Atom
+		/// [atom]: Atom
 		pub no_creation: bool,
 
 		// Encodes the length of `name`.
@@ -934,9 +935,34 @@ derive_xrb! {
 		/// If an [atom] by this name already exists, that [atom] will be
 		/// returned.
 		///
-		/// [atom]: crate::Atom
+		/// [atom]: Atom
 		#[context(name_len => usize::from(*name_len))]
 		pub name: String8,
 		[_; ..],
+	}
+
+	/// A [request] that returns the name of the given [atom].
+	///
+	/// # Errors
+	/// An [`Atom` error] is generated if the `target` does not refer to a
+	/// defined [atom].
+	///
+	/// [atom]: Atom
+	/// [request]: crate::message::Request
+	///
+	/// [`Atom` error]: error::Atom
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GetAtomName: Request(17, error::Atom) -> reply::GetAtomName {
+		/// The [atom] for which this [request] gets its name.
+		///
+		/// # Errors
+		/// An [`Atom` error] is generated if this does not refer to a defined
+		/// [atom].
+		///
+		/// [atom]: Atom
+		/// [request]: crate::message::Request
+		///
+		/// [`Atom` error]: error::Atom
+		pub target: Atom,
 	}
 }

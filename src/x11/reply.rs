@@ -21,6 +21,7 @@ use crate::{
 	EventMask,
 	MaintainContents,
 	Rectangle,
+	String8,
 	Window,
 	WindowClass,
 	WindowGravity,
@@ -336,6 +337,36 @@ derive_xrb! {
 		///
 		/// [atom]: Atom
 		pub atom: Option<Atom>,
+		[_; ..],
+	}
+
+	/// The [reply] to a [`GetAtomName` request].
+	///
+	/// [reply]: crate::message
+	#[derive(Debug, X11Size, Readable, Writable)]
+	pub struct GetAtomName: Reply for request::GetAtomName {
+		#[sequence]
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: crate::message::Reply
+		///
+		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		pub sequence: u16,
+
+		// The length of `name`.
+		#[allow(clippy::cast_possible_truncation)]
+		let name_len: u16 = name => name.len() as u16,
+		[_; 22],
+
+		/// The name of the [atom].
+		///
+		/// [atom]: Atom
+		#[context(name_len => usize::from(*name_len))]
+		pub name: String8,
 		[_; ..],
 	}
 }
