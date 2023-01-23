@@ -483,4 +483,32 @@ derive_xrb! {
 		#[context(properties_len => usize::from(*properties_len))]
 		pub properties: Vec<Atom>,
 	}
+
+	/// The [reply] to a [`GetSelectionOwner` request].
+	///
+	/// [reply]: crate::message::Reply
+	///
+	/// [`GetSelectionOwner` request]: request::GetSelectionOwner
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct GetSelectionOwner: Reply for request::GetSelectionOwner {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: crate::message::Reply
+		///
+		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		/// The owner of the given `selection`.
+		///
+		/// If this is [`None`], then the selection has no owner.
+		pub owner: Option<Window>,
+		[_; ..],
+	}
 }

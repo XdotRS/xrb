@@ -1551,4 +1551,28 @@ derive_xrb! {
 		/// current time, this [request] has no effect.
 		pub time: CurrentableTime,
 	}
+
+	/// A [request] that returns the owner of a given selection.
+	///
+	/// # Errors
+	/// An [`Atom` error] is generated if `target` does not refer to a defined
+	/// [atom].
+	///
+	/// [atom]: Atom
+	///
+	/// [`Atom` error]: error::Atom
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GetSelectionOwner: Request(23) -> reply::GetSelectionOwner {
+		/// The selection for which this [request] returns its owner.
+		///
+		/// # Errors
+		/// An [`Atom` error] is generated if this does not refer to a defined
+		/// [atom].
+		///
+		/// [atom]: Atom
+		/// [request]: crate::message::Request
+		///
+		/// [`Atom` error]: error::Atom
+		pub target: Atom,
+	}
 }
