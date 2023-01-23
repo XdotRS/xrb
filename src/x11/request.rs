@@ -1122,12 +1122,14 @@ derive_xrb! {
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct ModifyProperty: Request(18, ModifyPropertyError) {
 		#[metabyte]
-		/// Whether the `property` is prepended to the [window]'s list of
-		/// properties, appended to the [window]'s list of properties, or
-		/// replaces the value of an existing property.
+		/// The way in which the property is modified.
 		///
 		/// If the mode is [`Replace`], the previous property value is
 		/// discarded.
+		///
+		/// If the mode is [`Prepend`], the data is prepended to the existing
+		/// data. If the mode is [`Append`], the data is appended to the
+		/// existing data.
 		///
 		/// # Errors
 		/// If the mode is [`Prepend`] or [`Append`], the `type` and `format`

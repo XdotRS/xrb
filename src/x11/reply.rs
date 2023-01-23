@@ -26,6 +26,7 @@ use crate::{
 	WindowClass,
 	WindowGravity,
 };
+use derivative::Derivative;
 
 use crate::unit::Px;
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
@@ -59,9 +60,9 @@ derive_xrb! {
 	/// [reply]: crate::message::Reply
 	///
 	/// [`GetWindowAttributes` request]: request::GetWindowAttributes
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct GetWindowAttributes: Reply for request::GetWindowAttributes {
-		#[sequence]
 		/// The sequence number identifying the [request] that generated this
 		/// [reply].
 		///
@@ -71,9 +72,10 @@ derive_xrb! {
 		/// [reply]: crate::message::Reply
 		///
 		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
 
-		#[metabyte]
 		/// The conditions under which the X server should maintain the obscured
 		/// [regions] of the [window].
 		///
@@ -83,6 +85,7 @@ derive_xrb! {
 		/// [window]: Window
 		///
 		/// [`Attributes::maintain_contents`]: crate::set::Attributes::maintain_contents
+		#[metabyte]
 		pub maintain_contents: MaintainContents,
 
 		/// The visual used by the [window].
@@ -224,9 +227,9 @@ derive_xrb! {
 	/// [reply]: crate::message::Reply
 	///
 	/// [`GetGeometry` request]: request::GetGeometry
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct GetGeometry: Reply for request::GetGeometry {
-		#[sequence]
 		/// The sequence number identifying the [request] that generated this
 		/// [reply].
 		///
@@ -236,12 +239,14 @@ derive_xrb! {
 		/// [reply]: crate::message::Reply
 		///
 		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
 
-		#[metabyte]
 		/// The number of bits per pixel for the [drawable].
 		///
 		/// [drawable]: crate::Drawable
+		#[metabyte]
 		pub depth: u8,
 
 		/// The [drawable]'s root [window].
@@ -276,9 +281,9 @@ derive_xrb! {
 	/// [reply]: crate::message::Reply
 	///
 	/// [`QueryWindowTree` request]: request::QueryWindowTree
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct QueryWindowTree: Reply for request::QueryWindowTree {
-		#[sequence]
 		/// The sequence number identifying the [request] that generated this
 		/// [reply].
 		///
@@ -288,6 +293,8 @@ derive_xrb! {
 		/// [reply]: crate::message::Reply
 		///
 		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
 
 		/// The `target` [window]'s root [window].
@@ -316,9 +323,9 @@ derive_xrb! {
 	/// [reply]: crate::message::Reply
 	///
 	/// [`GetAtom` request]: request::GetAtom
-	#[derive(Debug, X11Size, Readable, Writable)]
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct GetAtom: Reply for request::GetAtom {
-		#[sequence]
 		/// The sequence number identifying the [request] that generated this
 		/// [reply].
 		///
@@ -328,6 +335,8 @@ derive_xrb! {
 		/// [reply]: crate::message::Reply
 		///
 		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
 
 		/// The returned [atom].
@@ -343,9 +352,11 @@ derive_xrb! {
 	/// The [reply] to a [`GetAtomName` request].
 	///
 	/// [reply]: crate::message
-	#[derive(Debug, X11Size, Readable, Writable)]
+	///
+	/// [`GetAtomName` request]: request::GetAtomName
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct GetAtomName: Reply for request::GetAtomName {
-		#[sequence]
 		/// The sequence number identifying the [request] that generated this
 		/// [reply].
 		///
@@ -355,6 +366,8 @@ derive_xrb! {
 		/// [reply]: crate::message::Reply
 		///
 		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
 
 		// The length of `name`.
