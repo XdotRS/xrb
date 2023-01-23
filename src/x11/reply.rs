@@ -14,6 +14,7 @@
 use super::request;
 use crate::{
 	visual::{Color, VisualId},
+	Atom,
 	BitGravity,
 	Colormap,
 	DeviceEventMask,
@@ -307,5 +308,34 @@ derive_xrb! {
 		/// [window]: Window
 		#[context(children_len => usize::from(*children_len))]
 		pub children: Vec<Window>,
+	}
+
+	/// The [reply] to a [`GetAtom` request].
+	///
+	/// [reply]: crate::message::Reply
+	///
+	/// [`GetAtom` request]: request::GetAtom
+	#[derive(Debug, X11Size, Readable, Writable)]
+	pub struct GetAtom: Reply for request::GetAtom {
+		#[sequence]
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: crate::message::Reply
+		///
+		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		pub sequence: u16,
+
+		/// The returned [atom].
+		///
+		/// If `no_creation` was set to `true` and an [atom] by the given `name`
+		/// didn't already exist, this will be [`None`].
+		///
+		/// [atom]: Atom
+		pub atom: Option<Atom>,
+		[_; ..],
 	}
 }

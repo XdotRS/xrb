@@ -18,6 +18,7 @@ use crate::{
 	Drawable,
 	Point,
 	Rectangle,
+	String8,
 	Window,
 	WindowClass,
 };
@@ -816,7 +817,7 @@ derive_xrb! {
 		/// [window]: Window
 		/// [request]: crate::message::Request
 		///
-		/// [`Window error]: error::Window
+		/// [`Window error`]: error::Window
 		pub target: Window,
 	}
 
@@ -890,5 +891,52 @@ derive_xrb! {
 		///
 		/// [`Window` error]: error::Window
 		pub target: Window,
+	}
+
+	/// A [request] that returns the [atom] with the given `name`.
+	///
+	/// If `no_creation` is false and an [atom] by the specified `name` does not
+	/// already exist, a new [atom] will be created and then returned. If an
+	/// [atom] by the specified `name` already exists, that [atom] will be
+	/// returned.
+	///
+	/// # Reply
+	/// This [request] generates a [`GetAtom` reply].
+	///
+	/// [atom]: crate::Atom
+	/// [request]: crate::message::Request
+	///
+	/// [`GetAtom` reply]: reply::GetAtom
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GetAtom: Request(16, error::Value) -> reply::GetAtom {
+		#[metabyte]
+		/// Whether the X server should avoid creating a new [atom] for an
+		/// unrecognised `name`.
+		///
+		/// If this is `true`, the X server won't create a new [atom] for a
+		/// `name` which doesn't already refer to an [atom]. If it is `false`,
+		/// the X server will create a new [atom] for the given `name`.
+		///
+		/// [atom]: crate::Atom
+		pub no_creation: bool,
+
+		// Encodes the length of `name`.
+		#[allow(clippy::cast_possible_truncation)]
+		let name_len: u16 = name => name.len() as u16,
+		[_; 2],
+
+		/// The name of the [atom] to either create or retrieve.
+		///
+		/// If an [atom] by this name does not already exist and `no_creation`
+		/// is `false`, a new [atom] with this name will be created and
+		/// returned.
+		///
+		/// If an [atom] by this name already exists, that [atom] will be
+		/// returned.
+		///
+		/// [atom]: crate::Atom
+		#[context(name_len => usize::from(*name_len))]
+		pub name: String8,
+		[_; ..],
 	}
 }
