@@ -10,15 +10,18 @@
 //! [core X11 protocol]: super
 
 use crate::{
-	set::Attributes,
+	message::Event,
+	set::{Attributes, WindowConfig},
 	unit::Px,
 	visual::VisualId,
-	x11::error,
+	x11::{error, reply},
 	Any,
 	Atom,
 	CopyableFromParent,
 	CurrentableTime,
+	DestinationWindow,
 	Drawable,
+	EventMask,
 	Point,
 	Rectangle,
 	String8,
@@ -39,9 +42,7 @@ use xrbk::{
 	X11Size,
 };
 
-use crate::{set::WindowConfig, x11::reply};
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
-
 extern crate self as xrb;
 
 /// An [error] generated because of a failed [`CreateWindow` request].
@@ -240,9 +241,9 @@ derive_xrb! {
 	/// [attributes]: Attributes
 	///
 	/// [`event_mask`]: Attributes::event_mask
-	/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
-	/// [`RESIZE_REDIRECT`]: crate::EventMask::RESIZE_REDIRECT
-	/// [`BUTTON_PRESS`]: crate::EventMask::BUTTON_PRESS
+	/// [`SUBSTRUCTURE_REDIRECT`]: EventMask::SUBSTRUCTURE_REDIRECT
+	/// [`RESIZE_REDIRECT`]: EventMask::RESIZE_REDIRECT
+	/// [`BUTTON_PRESS`]: EventMask::BUTTON_PRESS
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct ChangeWindowAttributes: Request(2, ChangeWindowAttributesError) {
 		/// The [window] which the `attributes` are changed on.
@@ -552,7 +553,7 @@ derive_xrb! {
 	///
 	/// [`override_redirect` attribute]: Attributes::override_redirect
 	///
-	/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
+	/// [`SUBSTRUCTURE_REDIRECT`]: EventMask::SUBSTRUCTURE_REDIRECT
 	///
 	/// [`Window` error]: error::Window
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
@@ -830,7 +831,7 @@ derive_xrb! {
 	///
 	/// [circulates]: CirculateDirection
 	///
-	/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
+	/// [`SUBSTRUCTURE_REDIRECT`]: EventMask::SUBSTRUCTURE_REDIRECT
 	///
 	/// [`CirculateWindowRequest` event]: super::event::CirculateWindowRequest
 	/// [`Circulate` event]: super::event::Circulate
@@ -1574,5 +1575,166 @@ derive_xrb! {
 		///
 		/// [`Atom` error]: error::Atom
 		pub target: Atom,
+	}
+}
+
+/// An [error] generated because of a failed [`ConvertSelection` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`ConvertSelection` request]: ConvertSelection
+pub enum ConvertSelectionError {
+	/// An [`Atom` error].
+	///
+	/// [`Atom` error]: error::Atom
+	Atom(error::Atom),
+	/// A [`Window` error].
+	///
+	/// [`Window` error]: error::Window
+	Window(error::Window),
+}
+
+derive_xrb! {
+	/// A [request] that asks the given selection's owner to convert it to the
+	/// given `target_type`.
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if `requester` does not refer to a
+	/// defined [window].
+	///
+	/// An [`Atom` error] is generated if any `selection`, `target_type`, or
+	/// `property` do not refer to defined [atoms].
+	///
+	/// [window]: Window
+	/// [atoms]: Atom
+	/// [request]: crate::message::Request
+	///
+	/// [`Window` error]: error::Window
+	/// [`Atom` error]: error::Atom
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ConvertSelection: Request(24, ConvertSelectionError) {
+		/// Your [window] which is requesting this conversion.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		pub requester: Window,
+
+		/// The selection which this [request] asks to be converted.
+		///
+		/// # Errors
+		/// An [`Atom` error] is generated if this does not refer to a defined
+		/// [atom].
+		///
+		/// [atom]: Atom
+		/// [request]: crate::message::Request
+		///
+		/// [`Atom` error]: error::Atom
+		pub selection: Atom,
+
+		/// The type which the selection should be converted into.
+		///
+		/// # Errors
+		/// An [`Atom` error] is generated if this does not refer to a defined
+		/// [atom].
+		///
+		/// [atom]: Atom
+		///
+		/// [`Atom` error]: error::Atom
+		pub target_type: Atom,
+		pub property: Option<Atom>,
+
+		/// The time at which this conversion is recorded as having taken place.
+		pub time: CurrentableTime,
+	}
+}
+
+/// An [error] generated because of a failed [`SendEvent` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`SendEvent` request]: SendEvent
+pub enum SendEventError {
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+	/// A [`Window` error].
+	///
+	/// [`Window` error]: error::Window
+	Window(error::Window),
+}
+
+derive_xrb! {
+	/// A [request] that sends the given [event] to the given [window].
+	///
+	/// If the `event_mask` is empty, the [event] is sent to the client that
+	/// created the [window] - if that client no longer exists, the [event] is
+	/// not sent.
+	///
+	/// If `propagate` is `false`, the [event] is sent to every client selecting
+	/// any of the [events][event] indicated in the `event_mask`.
+	///
+	/// If `propagate` is `true` and no clients have selected any of the
+	/// [events][event] indicated in the `event_mask` on the [window], the
+	/// [event] is sent to the closest ancestor [window] of the [window] which
+	/// some client has selected at least one of the indicated [events][event]
+	/// for (provided no [window] between the original destination and the
+	/// closest ancestor have that [event] in their [`do_not_propagate_mask`]).
+	/// The [event] is sent to every client selecting any of the [events][event]
+	/// indicated in the `event_mask` on the final destination.
+	///
+	/// Active [grabs] are ignored for this [request].
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if the `destination` is [`DestinationWindow::Other`] and the
+	/// specified [window] is not defined.
+	///
+	/// [window]: Window
+	/// [event]: Event
+	/// [request]: crate::message::Request
+	/// [grabs]: crate::GrabMode
+	///
+	/// [`Window` error]: error::Window
+	// FIXME: this requires that the event is absolutely 32 bytes, which is
+	//        currently not bounded.
+	//
+	// This feature would be nice for this:
+	// <https://github.com/rust-lang/rust/issues/92827>
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct SendEvent<E: Event>: Request(25, SendEventError) {
+		/// Whether the `event` should be propagated to the closest appropriate
+		/// ancestor, if necessary.
+		///
+		/// That is, whether the `event` should be propagated to the closest
+		/// ancestor of the `destination` [window] which some client has
+		/// selected any of the [events] indicated in the `event_mask` on if no
+		/// clients have selected any of the [events] in the `event_mask` on the
+		/// `destination` [window].
+		///
+		/// [window]: Window
+		/// [events]: Event
+		#[metabyte]
+		pub propagate: bool,
+
+		/// The destination [window] for the `event`.
+		///
+		/// [window]: Window
+		pub destination: DestinationWindow,
+
+		/// The mask of [events][event] which should be selected for the [event]
+		/// to be sent to the selecting clients.
+		///
+		/// [event]: Event
+		pub event_mask: EventMask,
+
+		/// The [event] that is sent.
+		///
+		/// [event]: Event
+		pub event: E,
 	}
 }
