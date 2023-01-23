@@ -119,6 +119,7 @@ derive_xrb! {
 		/// [window]: Window
 		///
 		/// [`ResourceIdChoice` error]: error::ResourceIdChoice
+		#[doc(alias = "wid")]
 		pub window_id: Window,
 		/// The [window] which should be used as the new [window]'s parent.
 		///
@@ -183,6 +184,7 @@ derive_xrb! {
 		///
 		/// [window]: Window
 		/// [attributes]: Attributes
+		#[doc(alias = "values")]
 		pub attributes: Attributes,
 	}
 }
@@ -245,11 +247,13 @@ derive_xrb! {
 		/// The [window] which the `attributes` are changed on.
 		///
 		/// [window]: Window
+		#[doc(alias = "window")]
 		pub target: Window,
 
 		/// The [attributes] which are changed.
 		///
 		/// [attributes]: Attributes
+		#[doc(alias = "values")]
 		pub attributes: Attributes,
 	}
 
@@ -265,6 +269,7 @@ derive_xrb! {
 		/// [request]: crate::message::Request
 		/// [attributes]: Attributes
 		/// [window]: Window
+		#[doc(alias = "window")]
 		pub target: Window,
 	}
 
@@ -302,6 +307,7 @@ derive_xrb! {
 		/// [request]: crate::message::Request
 		///
 		/// [`Window` error]: error::Window
+		#[doc(alias = "window")]
 		pub target: Window,
 	}
 
@@ -320,6 +326,7 @@ derive_xrb! {
 	/// [destroys]: DestroyWindow
 	///
 	/// [`Window` error]: error::Window
+	#[doc(alias = "DestroySubwindows")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct DestroyChildren: Request(5, error::Window) {
 		/// The [window] which will have its children [destroyed].
@@ -333,6 +340,7 @@ derive_xrb! {
 		/// [destroyed]: DestroyWindow
 		///
 		/// [`Window` error]: error::Window
+		#[doc(alias = "window")]
 		pub target: Window,
 	}
 }
@@ -392,6 +400,7 @@ derive_xrb! {
 	/// [removes]: AddOrRemove::Remove
 	///
 	/// [reparented]: ReparentWindow
+	#[doc(alias = "ChangeSaveSet")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct ChangeSavedWindows: Request(6, ChangeSavedWindowsError) {
 		#[metabyte]
@@ -399,6 +408,7 @@ derive_xrb! {
 		/// [windows].
 		///
 		/// [windows]: Window
+		#[doc(alias = "mode")]
 		pub change_mode: AddOrRemove,
 
 		/// The [window] which is added to or removed from your saved
@@ -486,6 +496,7 @@ derive_xrb! {
 		/// [window]: Window
 		///
 		/// [`Window` error]: error::Window
+		#[doc(alias = "window")]
 		pub target: Window,
 		/// The `target`'s new parent [window].
 		///
@@ -509,10 +520,12 @@ derive_xrb! {
 		///
 		/// [`Match` error]: error::Match
 		/// [`Window` error]: error::Window
+		#[doc(alias = "parent")]
 		pub new_parent: Window,
 
 		/// The `target`'s new coordinates relative to its `new_parent`'s
 		/// top-left corner.
+		#[doc(alias = "x", alias = "y")]
 		pub coords: Point,
 	}
 
@@ -553,6 +566,7 @@ derive_xrb! {
 		/// [request]: crate::message::Request
 		///
 		/// [`Window` error]: error::Window
+		#[doc(alias = "window")]
 		pub target: Window,
 	}
 
@@ -572,6 +586,7 @@ derive_xrb! {
 	///
 	///
 	/// [`Window` error]: error::Window
+	#[doc(alias = "MapSubwindows")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct MapChildren: Request(9, error::Window) {
 		/// The [window] which will have its unmapped children [mapped].
@@ -585,6 +600,7 @@ derive_xrb! {
 		/// [mapped]: MapWindow
 		///
 		/// [`Window` error]: error::Window
+		#[doc(alias = "window")]
 		pub target: Window,
 	}
 
@@ -617,6 +633,7 @@ derive_xrb! {
 		/// [request]: crate::message::Request
 		///
 		/// [`Window` error]: error::Window
+		#[doc(alias = "window")]
 		pub target: Window,
 	}
 
@@ -635,6 +652,7 @@ derive_xrb! {
 	/// [unmaps]: UnmapWindow
 	///
 	/// [`Window` error]: error::Window
+	#[doc(alias = "UnmapSubwindows")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct UnmapChildren: Request(11, error::Window) {
 		/// The [window] which will have its mapped children [unmapped].
@@ -648,6 +666,7 @@ derive_xrb! {
 		/// [unmapped]: UnmapWindow
 		///
 		/// [`Window` error]: error::Window
+		#[doc(alias = "window")]
 		pub target: Window,
 	}
 }
@@ -718,6 +737,7 @@ derive_xrb! {
 		/// [request]: crate::message::Request
 		///
 		/// [`Window` error]: error::Window
+		#[doc(alias = "window")]
 		pub target: Window,
 
 		/// The changes to the `target` [window]'s [configuration].
@@ -752,6 +772,7 @@ derive_xrb! {
 		/// [`InputOnly`]: WindowClass::InputOnly
 		///
 		/// [`Match` error]: error::Match
+		#[doc(alias = "values")]
 		pub config: WindowConfig,
 	}
 }
@@ -833,6 +854,7 @@ derive_xrb! {
 		/// [request]: crate::message::Request
 		///
 		/// [`Window error`]: error::Window
+		#[doc(alias = "window")]
 		pub target: Window,
 	}
 
@@ -873,6 +895,7 @@ derive_xrb! {
 		/// [request]: crate::message::Request
 		///
 		/// [`Drawable` error]: Error::Drawable
+		#[doc(alias = "drawable")]
 		pub target: Drawable,
 	}
 
@@ -892,6 +915,7 @@ derive_xrb! {
 	/// [`QueryWindowTree` reply]: reply::QueryWindowTree
 	///
 	/// [`Window` error]: error::Window
+	#[doc(alias = "QueryTree")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct QueryWindowTree: Request(15, error::Window) -> reply::QueryWindowTree {
 		/// The [window] for which this [request] gets its root [window],
@@ -905,6 +929,7 @@ derive_xrb! {
 		/// [request]: crate::message::Request
 		///
 		/// [`Window` error]: error::Window
+		#[doc(alias = "window")]
 		pub target: Window,
 	}
 
@@ -922,6 +947,7 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	///
 	/// [`GetAtom` reply]: reply::GetAtom
+	#[doc(alias = "InternAtom")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct GetAtom: Request(16, error::Value) -> reply::GetAtom {
 		#[metabyte]
@@ -933,6 +959,7 @@ derive_xrb! {
 		/// the X server will create a new [atom] for the given `name`.
 		///
 		/// [atom]: Atom
+		#[doc(alias = "only_if_exists")]
 		pub no_creation: bool,
 
 		// Encodes the length of `name`.
@@ -977,6 +1004,7 @@ derive_xrb! {
 		/// [request]: crate::message::Request
 		///
 		/// [`Atom` error]: error::Atom
+		#[doc(alias = "atom")]
 		pub target: Atom,
 	}
 }
@@ -986,6 +1014,7 @@ derive_xrb! {
 /// [error]: crate::message::Error
 ///
 /// [`ModifyProperty` request]: ModifyProperty
+#[doc(alias = "ChangePropertyError")]
 pub enum ModifyPropertyError {
 	/// An [`Atom` error].
 	///
@@ -1007,6 +1036,7 @@ pub enum ModifyPropertyError {
 
 /// Whether a property is [replaced], [prepended] to a [window]'s list of
 /// properties, or [appended] to the [window]'s list of properties.
+#[doc(alias = "ChangePropertyMode")]
 #[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 pub enum ModifyPropertyMode {
 	/// The property replaces an existing property; the previous value is
@@ -1164,6 +1194,7 @@ derive_xrb! {
 	/// [`Window` error]: error::Window
 	/// [`Atom` error]: error::Atom
 	/// [`Match` error]: error::Match
+	#[doc(alias = "ChangeProperty")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct ModifyProperty: Request(18, ModifyPropertyError) {
 		#[metabyte]
@@ -1187,6 +1218,7 @@ derive_xrb! {
 		/// [`Append`]: ModifyPropertyMode::Append
 		///
 		/// [`Match` error]: error::Match
+		#[doc(alias = "mode")]
 		pub change_mode: ModifyPropertyMode,
 
 		/// The [window] which the `property` is modified for.
@@ -1198,6 +1230,7 @@ derive_xrb! {
 		/// [window]: Window
 		///
 		/// [`Window` error]: error::Window
+		#[doc(alias = "window")]
 		pub target: Window,
 
 		/// The property which is modified.
@@ -1296,6 +1329,7 @@ derive_xrb! {
 		/// [request]: crate::message::Request
 		///
 		/// [`Window` error]: error::Window
+		#[doc(alias = "window")]
 		pub target: Window,
 
 		/// The property which is to be removed from the `target` [window].
@@ -1372,6 +1406,7 @@ derive_xrb! {
 		/// [window]: Window
 		///
 		/// [`Window` error]: error::Window
+		#[doc(alias = "window")]
 		pub target: Window,
 
 		/// The property for which this [request] gets its value.
@@ -1398,12 +1433,14 @@ derive_xrb! {
 		///
 		/// This offset is multiplied by 4 when applied to the start of the
 		/// `property`'s data.
+		#[doc(alias = "long_offset")]
 		pub offset: u32,
 		/// The length of the value of the `property` that is requested in
 		/// 4-byte units.
 		///
 		/// This length is multiplied by 4 and added to the `offset` to find the
 		/// endpoint of the value that is requested.
+		#[doc(alias = "long_length")]
 		pub length: u32,
 	}
 
@@ -1430,6 +1467,7 @@ derive_xrb! {
 		/// [request]: crate::message::Request
 		///
 		/// [`Window` error]: error::Window
+		#[doc(alias = "window")]
 		pub target: Window,
 	}
 }

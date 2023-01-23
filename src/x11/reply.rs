@@ -84,6 +84,7 @@ derive_xrb! {
 		/// [window]: Window
 		///
 		/// [`Attributes::maintain_contents`]: crate::set::Attributes::maintain_contents
+		#[doc(alias = "backing_store")]
 		#[metabyte]
 		pub maintain_contents: MaintainContents,
 
@@ -118,6 +119,7 @@ derive_xrb! {
 		/// [window]: Window
 		///
 		/// [`Attributes::window_gravity`]: crate::set::Attributes::window_gravity
+		#[doc(alias = "win_gravity")]
 		pub window_graivty: WindowGravity,
 
 		/// Defines which bit planes of the [window] hold dynamic data which is
@@ -128,6 +130,7 @@ derive_xrb! {
 		/// [window]: Window
 		///
 		/// [`Attributes::maintained_planes`]: crate::set::Attributes::maintained_planes
+		#[doc(alias = "backing_planes")]
 		pub maintained_planes: u32,
 		/// Defines the [color] used for bit planes which are not preserved for
 		/// `maintain_contents` and `maintain_windows_under` (see
@@ -138,6 +141,7 @@ derive_xrb! {
 		/// [color]: Color
 		///
 		/// [`Attributes::maintenance_fallback_color`]: crate::set::Attributes::maintenance_fallback_color
+		#[doc(alias = "backing_pixel")]
 		pub maintenance_fallback_color: Color,
 		/// Whether the X server should maintain the contents of [windows] under
 		/// this [window].
@@ -147,6 +151,7 @@ derive_xrb! {
 		/// [window]: Window
 		///
 		/// [`Attributes::maintain_windows_under`]: crate::set::Attributes::maintain_windows_under
+		#[doc(alias = "save_under")]
 		pub maintain_windows_under: bool,
 
 		// TODO
@@ -264,6 +269,7 @@ derive_xrb! {
 		/// [window]: Window
 		/// [pixmap]: create::Pixmap
 		/// [drawable]: crate::Drawable
+		#[doc(alias = "x", alias = "y", alias = "width", alias = "height")]
 		pub geometry: Rectangle,
 		/// The width of the [drawable]'s border.
 		///
@@ -280,6 +286,7 @@ derive_xrb! {
 	/// [reply]: crate::message::Reply
 	///
 	/// [`QueryWindowTree` request]: request::QueryWindowTree
+	#[doc(alias = "QueryTree")]
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
 	#[derivative(Hash, PartialEq, Eq)]
 	pub struct QueryWindowTree: Reply for request::QueryWindowTree {
@@ -322,6 +329,7 @@ derive_xrb! {
 	/// [reply]: crate::message::Reply
 	///
 	/// [`GetAtom` request]: request::GetAtom
+	#[doc(alias = "InternAtom")]
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
 	#[derivative(Hash, PartialEq, Eq)]
 	pub struct GetAtom: Reply for request::GetAtom {
@@ -426,6 +434,7 @@ derive_xrb! {
 		/// [window]: Window
 		///
 		/// [`Any`]: crate::Any::Any
+		#[doc(alias = "bytes_after")]
 		pub bytes_remaining: u32,
 
 		// The length of `value`.
@@ -470,6 +479,7 @@ derive_xrb! {
 		/// The properties defined for the given [window].
 		///
 		/// [window]: Window
+		#[doc(alias = "atoms")]
 		#[context(properties_len => usize::from(*properties_len))]
 		pub properties: Vec<Atom>,
 	}
