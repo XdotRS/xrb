@@ -11,9 +11,10 @@
 //! [request]: crate::message::Request
 //! [core X11 protocol]: super
 
-use super::request;
 use crate::{
+	unit::Px,
 	visual::{Color, VisualId},
+	x11::request::{self, DataFormat, DataList},
 	Atom,
 	BitGravity,
 	Colormap,
@@ -28,9 +29,7 @@ use crate::{
 };
 use derivative::Derivative;
 
-use crate::unit::Px;
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
-
 extern crate self as xrb;
 
 /// The state of the [window] regarding how it is mapped.
@@ -381,5 +380,97 @@ derive_xrb! {
 		#[context(name_len => usize::from(*name_len))]
 		pub name: String8,
 		[_; ..],
+	}
+
+	/// The [reply] to a [`GetProperty` request].
+	///
+	/// [reply]: crate::message::Reply
+	///
+	/// [`GetProperty` request]: request::GetProperty
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct GetProperty: Reply for request::GetProperty {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: crate::message::Reply
+		///
+		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		/// Whether the `value` is empty ([`None`]), or made up of `i8` values,
+		/// `i16` values, or `i32` values.
+		#[metabyte]
+		pub format: Option<DataFormat>,
+
+		/// The actual type of the property.
+		pub r#type: Option<Atom>,
+		/// The number of bytes remaining in the `property`'s data.
+		///
+		/// If the specified `property` does not exist for the `target`
+		/// [window], this is zero.
+		///
+		/// If the specified `property` exists but its `type` does not match the
+		/// specified type, this is the size of the property's data in bytes.
+		///
+		/// If the specified `property` exists and the type is either [`Any`] or
+		/// matches the actual `type` of the property, this is the number of
+		/// bytes remaining in the `property`'s data after the end of the
+		/// returned `value`.
+		///
+		/// [window]: Window
+		///
+		/// [`Any`]: crate::Any::Any
+		pub bytes_remaining: u32,
+
+		// The length of `value`.
+		#[allow(clippy::cast_possible_truncation)]
+		let value_len: u32 = value => value.len() as u32,
+		[_; 12],
+
+		/// The property's value.
+		///
+		/// If `format` is [`None`], this will be [`DataList::I8`], but with an
+		/// empty list.
+		#[context(format, value_len => (format.unwrap_or(DataFormat::I8), *value_len))]
+		pub value: DataList,
+	}
+
+	/// The [reply] for a [`ListProperties` request].
+	///
+	/// [reply]: crate::message::Reply
+	///
+	/// [`ListProperties` request]: request::ListProperties
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct ListProperties: Reply for request::ListProperties {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: crate::message::Reply
+		///
+		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		// The length of `properties`.
+		#[allow(clippy::cast_possible_truncation)]
+		let properties_len: u16 = properties => properties.len() as u16,
+		[_; 22],
+
+		/// The properties defined for the given [window].
+		///
+		/// [window]: Window
+		#[context(properties_len => usize::from(*properties_len))]
+		pub properties: Vec<Atom>,
 	}
 }

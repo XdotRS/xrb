@@ -14,6 +14,7 @@ use crate::{
 	unit::Px,
 	visual::VisualId,
 	x11::error,
+	Any,
 	Atom,
 	CopyableFromParent,
 	Drawable,
@@ -23,7 +24,19 @@ use crate::{
 	Window,
 	WindowClass,
 };
-use xrbk::{Buf, BufMut, ReadResult, ReadableWithContext, Writable, WriteResult, X11Size};
+use xrbk::{
+	Buf,
+	BufMut,
+	ConstantX11Size,
+	ReadError,
+	ReadError::UnrecognizedDiscriminant,
+	ReadResult,
+	ReadableWithContext,
+	Wrap,
+	Writable,
+	WriteResult,
+	X11Size,
+};
 
 use crate::{set::WindowConfig, x11::reply};
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
@@ -1019,6 +1032,38 @@ pub enum DataFormat {
 	I32 = 32,
 }
 
+impl ConstantX11Size for DataFormat {
+	const X11_SIZE: usize = 1;
+}
+
+impl Wrap for DataFormat {
+	type Integer = u8;
+}
+
+impl TryFrom<u8> for DataFormat {
+	type Error = ReadError;
+
+	fn try_from(value: u8) -> Result<Self, Self::Error> {
+		match value {
+			i8 if i8 == 8 => Ok(Self::I8),
+			i16 if i16 == 16 => Ok(Self::I16),
+			i32 if i32 == 32 => Ok(Self::I32),
+
+			other => Err(UnrecognizedDiscriminant(usize::from(other))),
+		}
+	}
+}
+
+impl From<DataFormat> for u8 {
+	fn from(format: DataFormat) -> Self {
+		match format {
+			DataFormat::I8 => 8,
+			DataFormat::I16 => 16,
+			DataFormat::I32 => 32,
+		}
+	}
+}
+
 /// A list of either `i8` values, `i16` values, or `i32` values.
 ///
 /// This represents uninterpreted 'raw' data.
@@ -1264,5 +1309,127 @@ derive_xrb! {
 		///
 		/// [`Atom` error]: error::Atom
 		pub property: Atom,
+	}
+}
+
+/// An [error] generated because of a failed [`GetProperty` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`GetProperty` request]: GetProperty
+pub enum GetPropertyError {
+	/// An [`Atom` error].
+	///
+	/// [`Atom` error]: error::Atom
+	Atom(error::Atom),
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+	/// A [`Window` error].
+	///
+	/// [`Window` error]: error::Window
+	Window(error::Window),
+}
+
+derive_xrb! {
+	/// A [request] that gets the value of the given `property` on the given
+	/// [window].
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if `target` does not refer to a defined
+	/// [window].
+	///
+	/// An [`Atom` error] is generated if either `property` or `type` do not
+	/// refer to defined [atoms].
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	/// [atoms]: Atom
+	///
+	/// [`Window` error]: error::Window
+	/// [`Atom` error]: error::Atom
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GetProperty: Request(20, GetPropertyError) -> reply::GetProperty {
+		/// Whether the `property` should be deleted from the `target` [window].
+		///
+		/// If the `type` matches the `property`'s actual type (or is [`Any`]),
+		/// the property is removed from the [window]. Otherwise, this is
+		/// ignored.
+		///
+		/// [window]: Window
+		///
+		/// [`Any`]: Any::Any
+		#[metabyte]
+		pub delete: bool,
+
+		/// The [window] on which the requested `property` is found.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		pub target: Window,
+
+		/// The property for which this [request] gets its value.
+		///
+		/// # Errors
+		/// An [`Atom` error] is generated if this does not refer to a defined
+		/// [atom].
+		///
+		/// [request]: crate::message::Request
+		pub property: Atom,
+		/// The property type to filter the [window]'s properties by.
+		///
+		/// This specifies that specifically a `property` of this type is
+		/// requested. If the type does not match, the value is not provided in
+		/// [the reply].
+		///
+		/// [window]: Window
+		///
+		/// [the reply]: reply::GetProperty
+		pub r#type: Any<Atom>,
+
+		/// The offset of the value of the `property` that is requested in
+		/// 4-byte units.
+		///
+		/// This offset is multiplied by 4 when applied to the start of the
+		/// `property`'s data.
+		pub offset: u32,
+		/// The length of the value of the `property` that is requested in
+		/// 4-byte units.
+		///
+		/// This length is multiplied by 4 and added to the `offset` to find the
+		/// endpoint of the value that is requested.
+		pub length: u32,
+	}
+
+	/// A [request] that returns the list of properties defined for the given
+	/// [window].
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if `target` does not refer to a defined
+	/// [window].
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [`Window` error]: error::Window
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ListProperties: Request(21, error::Window) -> reply::ListProperties {
+		/// The [window] for which this [request] returns its properties.
+		///
+		/// # Errors
+		/// A [`Window` error] is returned if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		/// [request]: crate::message::Request
+		///
+		/// [`Window` error]: error::Window
+		pub target: Window,
 	}
 }
