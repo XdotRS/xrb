@@ -1199,3 +1199,68 @@ derive_xrb! {
 		pub data: DataList,
 	}
 }
+
+/// An [error] generated because of a failed [`DeleteProperty` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`DeleteProperty` request]: DeleteProperty
+pub enum DeletePropertyError {
+	/// An [`Atom` error].
+	///
+	/// [`Atom` error]: error::Atom
+	Atom(error::Atom),
+	/// A [`Window` error].
+	///
+	/// [`Window` error]: error::Window
+	Window(error::Window),
+}
+
+derive_xrb! {
+	/// A [request] that removes the given `property` from a [window].
+	///
+	/// If the `property` does not exist on the [window], this [request] has no
+	/// effect. Otherwise, a [`Property` event] is generated on the [window].
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if the `target` does not refer to a
+	/// defined [window].
+	///
+	/// An [`Atom` error] is generated if the `property` does not refer to a
+	/// defined [atom].
+	///
+	/// [window]: Window
+	/// [atom]: Atom
+	/// [request]: crate::message::Request
+	///
+	/// [`Property` event]: super::event::Property
+	///
+	/// [`Window` error]: error::Window
+	/// [`Atom` error]: error::Atom
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct DeleteProperty: Request(19, DeletePropertyError) {
+		/// The [window] for which this [request] removes the `property`.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		/// [request]: crate::message::Request
+		///
+		/// [`Window` error]: error::Window
+		pub target: Window,
+
+		/// The property which is to be removed from the `target` [window].
+		///
+		/// # Errors
+		/// An [`Atom` error] is generated if this does not refer to a defined
+		/// [atom].
+		///
+		/// [atom]: Atom
+		/// [window]: Window
+		///
+		/// [`Atom` error]: error::Atom
+		pub property: Atom,
+	}
+}
