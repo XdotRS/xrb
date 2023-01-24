@@ -812,3 +812,92 @@ derive_xrb! {
 		pub keys: [u8; 32],
 	}
 }
+
+/// A property of a font.
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub struct FontProperty {
+	/// The name of the font property.
+	pub name: Atom,
+	/// The value of the property.
+	///
+	/// This is represented as four individual `u8` values because it is not
+	/// necessarily one numerical value; it must not be subject to the byte
+	/// swapping that would occur for a `u32` value.
+	pub value: [u8; 4],
+}
+
+/// Information about a particular character within a font.
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub struct CharacterInfo {
+	pub left_side_bearing: i16,
+	pub right_side_bearing: i16,
+
+	pub character_width: i16,
+
+	pub ascent: i16,
+	pub descent: i16,
+
+	pub attributes: u16,
+}
+
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub enum DrawDirection {
+	LeftToRight,
+	RightToLeft,
+}
+
+derive_xrb! {
+	/// The [reply] to a [`QueryFont` request].
+	///
+	/// [reply]: crate::message::Reply
+	///
+	/// [`QueryFont` request]: request::QueryFont
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct QueryFont: Reply for request::QueryFont {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: crate::message::Reply
+		///
+		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		pub min_bounds: CharacterInfo,
+		[_; 4],
+
+		pub max_bounds: CharacterInfo,
+		[_; 4],
+
+		pub min_character_or_byte2: u16,
+		pub max_character_or_byte2: u16,
+
+		pub default_character: u16,
+
+		#[allow(clippy::cast_possible_truncation)]
+		let properties_len: u16 = properties => properties.len() as u16,
+
+		pub draw_direction: DrawDirection,
+
+		pub min_byte1: u8,
+		pub max_byte1: u8,
+
+		pub all_characters_exist: bool,
+
+		pub font_ascent: i16,
+		pub font_descent: i16,
+
+		#[allow(clippy::cast_possible_truncation)]
+		let character_infos_len: u32 = character_infos => character_infos.len() as u32,
+
+		#[context(properties_len => usize::from(*properties_len))]
+		pub properties: Vec<FontProperty>,
+		#[context(character_infos_len => *character_infos_len as usize)]
+		pub character_infos: Vec<CharacterInfo>,
+	}
+}

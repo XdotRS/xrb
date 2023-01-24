@@ -29,6 +29,7 @@ use crate::{
 	EventMask,
 	FocusWindow,
 	Font,
+	Fontable,
 	FreezeMode,
 	Keycode,
 	Rectangle,
@@ -3142,5 +3143,17 @@ derive_xrb! {
 		///
 		/// [`Font` ID]: Font
 		pub target: Font,
+	}
+
+	/// A [request] that returns information about the given `target`
+	/// font.
+	///
+	/// [request]: crate::message::Request
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct QueryFont: Request(47, error::Font) -> reply::QueryFont {
+		/// The font which this [request] returns information about.
+		///
+		/// [request]: crate::message::Request
+		pub target: Fontable,
 	}
 }
