@@ -106,30 +106,39 @@ examples would be comparing the events in the events section of the
 
 ## Code style
 
-### Attributes and Documentation
+### Placement of attributes
+Many types and fields in XRB use attributes.  To keep the source code consistent and easily readable, attributes should be put _after_ doc comments.
 
-A lot of types and fields in xrb uses attributes, such as `#[derive(...)]` or other custom ones.
-To keep the code easely readable, those a preferably put after documentation comments.
-
-Here is an example:
+For example, do this:
 ```rust
-/// # Foo
-/// Documentation about [Foo]
-#[doc(alias("foo"))]
+/// A foo which does bar.
+#[doc(alias = "baz")]
 #[derive(Debug, Hash, X11Size)]
 pub struct Foo {
-    /// Documentation about the [data] field
-    #[custom_attribute_field]
-    pub data: Any,
+	/// Data which represents xyz.
+	#[custom_attribute]
+	pub data: Any,
 
-    /// Other doc
-    pub other_field: Any,
+	/// The other field within this `Foo`.
+	pub other_field: Any,
+}
+```
+But **not** this:
+```rust
+#[derive(Debug, Hash, X11Size)]
+/// A foo which does bar.
+#[doc(alias = "baz")]
+pub struct DoNotDoThis {
+	#[custom_attribute]
+	/// Data which represents xyz.
+	pub data: Any,
+
+	/// The other field within this `DoNotDoThis`.
+	pub other_field: Any,
 }
 ```
 
-Doing this helps grouping code related syntax together, so when documentation is taking a lot of place,
-it's not splitting elements far away from each other (if, for example attributes are placed before the doc comments).
-
+This consistently groups related syntax together - you know you'll always find the attributes after the documentation, if the documentation is quite long for example, and that you're looking at all of the attributes at once.
 
 ## Useful resources
  - [X Window System protocol version 11](https://x.org/releases/X11R7.7/doc/xproto/x11protocol.html)
