@@ -530,7 +530,7 @@ derive_xrb! {
 
 		/// The `target`'s new coordinates relative to its `new_parent`'s
 		/// top-left corner.
-		#[doc(alias = "x", alias = "y")]
+		#[doc(alias("x", "y"))]
 		pub coords: Point,
 	}
 
