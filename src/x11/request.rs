@@ -28,6 +28,7 @@ use crate::{
 	Drawable,
 	EventMask,
 	FocusWindow,
+	Font,
 	FreezeMode,
 	Keycode,
 	Rectangle,
@@ -3079,4 +3080,62 @@ derive_xrb! {
 	#[doc(alias = "QueryKeymap")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct QueryKeyboard: Request(44) -> reply::QueryKeyboard;
+}
+
+/// An [error] generated because of a failed [`AssignFont` request].
+///
+/// [`AssignFont` request]: AssignFont
+pub enum AssignFontError {
+	/// A [`ResourceIdChoice` error].
+	///
+	/// [`ResourceIdChoice` error]: error::ResourceIdChoice
+	ResourceIdChoice(error::ResourceIdChoice),
+	/// A [`Name` error].
+	///
+	/// [`Name` error]: error::Name
+	Name(error::Name),
+}
+
+derive_xrb! {
+	/// A [request] that associates the font by the given `name` with the given
+	/// `font_id`.
+	///
+	/// [request]: crate::message::Request
+	#[doc(alias("OpenFont", "CreateFont", "LoadFont", "AddFont"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct AssignFont: Request(45, AssignFontError) {
+		/// The [`Font` ID] to associate with the font specified by `name`.
+		///
+		/// [`Font` ID]: Font
+		pub font_id: Font,
+
+		// The length of `name`.
+		#[allow(clippy::cast_possible_truncation)]
+		let name_len: u16 = name => name.len() as u16,
+		[_; 2],
+
+		/// A pattern match against the name of the font
+		///
+		/// The name uses ISO Latin-1 encoding.
+		///
+		/// The character `?` matches against any single character (equivalent
+		/// to `.` in regular expressions) and `*` matches against any number of
+		/// characters (like `.*` in regular expressions).
+		#[context(name_len => usize::from(*name_len))]
+		pub name: String8,
+		[_; ..],
+	}
+
+	/// A [request] that removes the association between a given `font` ID and
+	/// the font it is associated with.
+	///
+	/// [request]: crate::message::Request
+	#[doc(alias("CloseFont", "DeleteFont", "UnloadFont", "RemoveFont"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct UnassignFont: Request(46) {
+		/// The [`Font` ID] which is having its association with a font removed.
+		///
+		/// [`Font` ID]: Font
+		pub font: Font,
+	}
 }
