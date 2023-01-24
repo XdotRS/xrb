@@ -18,8 +18,6 @@ use xrbk_macro::derive_xrb;
 extern crate self as xrb;
 
 derive_xrb! {
-	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [major opcode] and [minor opcode]
 	/// combination provided in a [request] does not specify a valid [request].
 	///
@@ -27,16 +25,17 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 	/// [minor opcode]: crate::message::Request::MINOR_OPCODE
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Request: Error(1) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[minor_opcode]
 		/// The [minor opcode] meant to refer to the type of [request] that was
 		/// sent.
 		///
@@ -47,9 +46,9 @@ derive_xrb! {
 		///
 		/// [request]: crate::message::Request
 		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
+		#[minor_opcode]
 		pub invalid_minor_opcode: u16,
 
-		#[major_opcode]
 		/// The [major opcode] meant to refer to the type of [request] that was
 		/// sent.
 		///
@@ -60,12 +59,11 @@ derive_xrb! {
 		///
 		/// [request]: crate::message::Request
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
+		#[major_opcode]
 		pub invalid_major_opcode: u8,
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when a numerical value contained in the [request]
 	/// falls outside of the range of accepted values.
 	///
@@ -74,16 +72,17 @@ derive_xrb! {
 	///
 	/// [request]: crate::message::Request
 	/// [error]: Error
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Value: Error(2) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[error_data]
 		/// The numerical value which fell outside of the accepted ranges.
 		///
 		/// This is represented as four bytes instead of a `u32` value because
@@ -91,30 +90,29 @@ derive_xrb! {
 		/// `u32` value. Encoding it as such if it wasn't meant to be could
 		/// cause issues with byte-swapping, where the bytes of a value would
 		/// be swapped to translate it to a `u32` value on the target platform.
+		#[error_data]
 		pub invalid_value: [u8; 4],
 
-		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
+		#[minor_opcode]
 		pub minor_opcode: u16,
 
-		#[major_opcode]
 		/// The [major opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
+		#[major_opcode]
 		pub major_opcode: u8,
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [`Window`] ID used in the [request] does
 	/// not refer to a defined [window].
 	///
@@ -122,16 +120,17 @@ derive_xrb! {
 	/// [`Window`]: crate::Window
 	/// [window]: crate::Window
 	/// [request]: crate::message::Request
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Window: Error(3) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[error_data]
 		/// The invalid [`Window`] ID.
 		///
 		/// This is of type `u32`, not [`Window`], because it does not refer to
@@ -139,30 +138,29 @@ derive_xrb! {
 		///
 		/// [`Window`]: crate::Window
 		/// [window]: crate::Window
+		#[error_data]
 		pub invalid_window_id: u32,
 
-		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
+		#[minor_opcode]
 		pub minor_opcode: u16,
 
-		#[major_opcode]
 		/// The [major opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
+		#[major_opcode]
 		pub major_opcode: u8,
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [`Pixmap`] ID used in the [request] does
 	/// not refer to a defined [pixmap].
 	///
@@ -170,16 +168,17 @@ derive_xrb! {
 	/// [`Pixmap`]: crate::Pixmap
 	/// [pixmap]: crate::Pixmap
 	/// [request]: crate::message::Request
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Pixmap: Error(4) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[error_data]
 		/// The invalid [`Pixmap`] ID.
 		///
 		/// This is of type `u32`, not [`Pixmap`], because it does not refer to
@@ -187,30 +186,29 @@ derive_xrb! {
 		///
 		/// [`Pixmap`]: crate::Pixmap
 		/// [pixmap]: crate::Pixmap
+		#[error_data]
 		pub invalid_pixmap_id: u32,
 
-		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
+		#[minor_opcode]
 		pub minor_opcode: u16,
 
-		#[major_opcode]
 		/// The [major opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
+		#[major_opcode]
 		pub major_opcode: u8,
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [`Atom`] ID used in the [request] does
 	/// not refer to a defined [atom].
 	///
@@ -218,16 +216,17 @@ derive_xrb! {
 	/// [`Atom`]: crate::Atom
 	/// [atom]: crate::Atom
 	/// [request]: crate::message::Request
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Atom: Error(5) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[error_data]
 		/// The invalid [`Atom`] ID.
 		///
 		/// This is of type `u32`, not [`Atom`], because it does not refer to
@@ -235,30 +234,29 @@ derive_xrb! {
 		///
 		/// [`Atom`]: crate::Atom
 		/// [atom]: crate::Atom
+		#[error_data]
 		pub invalid_atom_id: u32,
 
-		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
+		#[minor_opcode]
 		pub minor_opcode: u16,
 
-		#[major_opcode]
 		/// The [major opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
+		#[major_opcode]
 		pub major_opcode: u8,
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [`CursorAppearance`] ID used in the
 	/// [request] does not refer to a defined [cursor appearance].
 	///
@@ -266,16 +264,17 @@ derive_xrb! {
 	/// [`CursorAppearance`]: crate::CursorAppearance
 	/// [cursor appearance]: crate::CursorAppearance
 	/// [request]: crate::message::Request
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct CursorAppearance: Error(6) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[error_data]
 		/// The invalid [`CursorAppearance`] ID.
 		///
 		/// This is of type `u32`, not [`CursorAppearance`], because it does
@@ -284,30 +283,29 @@ derive_xrb! {
 		///
 		/// [`CursorAppearance`]: crate::CursorAppearance
 		/// [cursor appearance]: crate::CursorAppearance
+		#[error_data]
 		pub invalid_cursor_appearance_id: u32,
 
-		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
+		#[minor_opcode]
 		pub minor_opcode: u16,
 
-		#[major_opcode]
 		/// The [major opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
+		#[major_opcode]
 		pub major_opcode: u8,
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [`Font`] ID used in the [request] does
 	/// not refer to a defined [font].
 	///
@@ -315,16 +313,17 @@ derive_xrb! {
 	/// [`Font`]: crate::Font
 	/// [font]: crate::Font
 	/// [request]: crate::message::Request
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Font: Error(7) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[error_data]
 		/// The invalid [`Font`] ID.
 		///
 		/// This is of type `u32`, not [`Font`], because it does not refer to
@@ -332,30 +331,29 @@ derive_xrb! {
 		///
 		/// [`Font`]: crate::Font
 		/// [font]: crate::Font
+		#[error_data]
 		pub invalid_font_id: u32,
 
-		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
+		#[minor_opcode]
 		pub minor_opcode: u16,
 
-		#[major_opcode]
 		/// The [major opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
+		#[major_opcode]
 		pub major_opcode: u8,
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when there is a mismatch of some kind.
 	///
 	/// This [error] is generated for a number of reasons:
@@ -372,37 +370,37 @@ derive_xrb! {
 	/// [drawable]: crate::Drawable
 	/// [request]: crate::message::Request
 	/// [graphics context]: crate::GraphicsContext
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Match: Error(8) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
+		#[minor_opcode]
 		pub minor_opcode: u16,
 
-		#[major_opcode]
 		/// The [major opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
+		#[major_opcode]
 		pub major_opcode: u8,
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [`Drawable`] ID used in the [request]
 	/// does not refer to a defined [window] or [pixmap].
 	///
@@ -411,16 +409,17 @@ derive_xrb! {
 	/// [window]: crate::Window
 	/// [pixmap]: crate::Pixmap
 	/// [request]: crate::message::Request
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Drawable: Error(9) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[error_data]
 		/// The invalid [`Drawable`] ID.
 		///
 		/// This is of type `u32`, not [`Drawable`], because it does not refer to
@@ -429,30 +428,29 @@ derive_xrb! {
 		/// [`Drawable`]: crate::Drawable
 		/// [window]: crate::Window
 		/// [pixmap]: crate::Pixmap
+		#[error_data]
 		pub invalid_drawable_id: u32,
 
-		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
+		#[minor_opcode]
 		pub minor_opcode: u16,
 
-		#[major_opcode]
 		/// The [major opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
+		#[major_opcode]
 		pub major_opcode: u8,
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when access is not allowed for what the [request] is
 	/// trying to do.
 	///
@@ -477,72 +475,72 @@ derive_xrb! {
 	/// [select to receive]: crate::mask::EventMask
 	/// [button]: crate::Button
 	/// [colormap]: crate::Colormap
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Access: Error(10) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
+		#[minor_opcode]
 		pub minor_opcode: u16,
 
-		#[major_opcode]
 		/// The [major opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
+		#[major_opcode]
 		pub major_opcode: u8,
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the X server failed to allocate the requested
 	/// resource.
 	///
 	/// [error]: Error
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Alloc: Error(11) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
+		#[minor_opcode]
 		pub minor_opcode: u16,
 
-		#[major_opcode]
 		/// The [major opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
+		#[major_opcode]
 		pub major_opcode: u8,
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [`Colormap`] ID used in the [request]
 	/// does not refer to a defined [colormap].
 	///
@@ -550,16 +548,17 @@ derive_xrb! {
 	/// [`Colormap`]: crate::Colormap
 	/// [colormap]: crate::Colormap
 	/// [request]: crate::message::Request
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Colormap: Error(12) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[error_data]
 		/// The invalid [`Colormap`] ID.
 		///
 		/// This is of type `u32`, not [`Colormap`], because it does not refer to
@@ -567,30 +566,29 @@ derive_xrb! {
 		///
 		/// [`Colormap`]: crate::Colormap
 		/// [colormap]: crate::Colormap
+		#[error_data]
 		pub invalid_colormap_id: u32,
 
-		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
+		#[minor_opcode]
 		pub minor_opcode: u16,
 
-		#[major_opcode]
 		/// The [major opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
+		#[major_opcode]
 		pub major_opcode: u8,
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [`GraphicsContext`] ID used in the [request]
 	/// does not refer to a defined [graphics context].
 	///
@@ -598,16 +596,17 @@ derive_xrb! {
 	/// [`GraphicsContext`]: crate::GraphicsContext
 	/// [graphics context]: crate::GraphicsContext
 	/// [request]: crate::message::Request
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct GraphicsContext: Error(13) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[error_data]
 		/// The invalid [`GraphicsContext`] ID.
 		///
 		/// This is of type `u32`, not [`GraphicsContext`], because it does not refer to
@@ -615,107 +614,106 @@ derive_xrb! {
 		///
 		/// [`GraphicsContext`]: crate::GraphicsContext
 		/// [graphics context]: crate::GraphicsContext
+		#[error_data]
 		pub invalid_graphics_context_id: u32,
 
-		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
+		#[minor_opcode]
 		pub minor_opcode: u16,
 
-		#[major_opcode]
 		/// The [major opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
+		#[major_opcode]
 		pub major_opcode: u8,
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when a chosen resource ID is not in the range of
 	/// resource IDs assigned to the client, or the ID is already in use.
 	///
 	/// [error]: Error
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct ResourceIdChoice: Error(14) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[error_data]
 		/// The resource ID that was either not assigned to the client or was
 		/// already in use.
+		#[error_data]
 		pub unavailable_resource_id: u32,
 
-		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
+		#[minor_opcode]
 		pub minor_opcode: u16,
 
-		#[major_opcode]
 		/// The [major opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
+		#[major_opcode]
 		pub major_opcode: u8,
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the [request] specifies the name of a [font]
 	/// or color which does not exist.
 	///
 	/// [error]: Error
 	/// [request]: crate::message::Request
 	/// [font]: crate::Font
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Name: Error(15) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
+		#[minor_opcode]
 		pub minor_opcode: u16,
 
-		#[major_opcode]
 		/// The [major opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
+		#[major_opcode]
 		pub major_opcode: u8,
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when a [request] is not of the correct length.
 	///
 	/// The length may be too short or too long to hold the fields defined for
@@ -724,67 +722,69 @@ derive_xrb! {
 	///
 	/// [error]: Error
 	/// [request]: crate::message::Request
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Length: Error(16) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
+		#[minor_opcode]
 		pub minor_opcode: u16,
 
-		#[major_opcode]
 		/// The [major opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
+		#[major_opcode]
 		pub major_opcode: u8,
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [error] generated when the X server does not implement some aspect
 	/// of the [request].
 	///
 	/// [error]: Error
 	/// [request]: crate::message::Request
+	#[derive(Debug, Derivative, Writable, Readable, X11Size)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Implementation: Error(17) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The sequence number identifying the [request] that was
 		/// sent.
 		///
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[minor_opcode]
 		/// The [minor opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MINOR_OPCODE`][minor opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [minor opcode]: crate::message::Request::MINOR_OPCODE
+		#[minor_opcode]
 		pub minor_opcode: u16,
 
-		#[major_opcode]
 		/// The [major opcode] referring to the type of [request] that was sent.
 		///
 		/// See [`Request::MAJOR_OPCODE`][major opcode] for more information.
 		///
 		/// [request]: crate::message::Request
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
+		#[major_opcode]
 		pub major_opcode: u8,
 		[_; ..],
 	}

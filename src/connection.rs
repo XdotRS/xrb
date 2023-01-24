@@ -88,8 +88,8 @@ impl ConnectionResponse {
 }
 
 derive_xrb! {
-	#[derive(Debug, X11Size, Readable, Writable)]
 	/// There was a failure in attempting the connection.
+	#[derive(Debug, X11Size, Readable, Writable)]
 	pub struct ConnectionFailure {
 		#[allow(clippy::cast_possible_truncation)]
 		let reason_len: u8 = reason => reason.len() as u8,
@@ -112,8 +112,8 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
 	/// The connection was successfully established.
+	#[derive(Debug, X11Size, Readable, Writable)]
 	pub struct ConnectionSuccess {
 		_,
 		/// The major version of the X11 protocol used by the X server.
@@ -165,8 +165,8 @@ derive_xrb! {
 		pub roots: Vec<Screen>,
 	}
 
-	#[derive(Debug, X11Size, Readable, Writable)]
 	/// The connection was refused because authentication was unsuccessful.
+	#[derive(Debug, X11Size, Readable, Writable)]
 	pub struct ConnectionAuthenticationError {
 		[_; 5],
 

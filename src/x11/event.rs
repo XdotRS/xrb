@@ -35,8 +35,6 @@ use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
 extern crate self as xrb;
 
 derive_xrb! {
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a key is pressed.
 	///
 	/// This [event] is generated for all keys: that includes modifier keys.
@@ -48,19 +46,21 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`KEY_PRESS`]: crate::EventMask::KEY_PRESS
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct KeyPress: Event(2) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[metabyte]
 		/// The keycode of the key that was pressed.
+		#[metabyte]
 		pub keycode: Keycode,
 
 		/// The time at which this [event] was generated.
@@ -117,8 +117,6 @@ derive_xrb! {
 		_,
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a key is released.
 	///
 	/// This [event] is generated for all keys: that includes modifier keys.
@@ -129,19 +127,21 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [`KEY_RELEASE`]: crate::EventMask::KEY_RELEASE
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct KeyRelease: Event(3) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[metabyte]
 		/// The keycode of the key which was released.
+		#[metabyte]
 		pub keycode: Keycode,
 
 		/// The time at which this [event] was generated.
@@ -202,8 +202,6 @@ derive_xrb! {
 		_,
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [mouse button] is pressed.
 	///
 	/// # Recipients
@@ -213,19 +211,21 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [mouse button]: Button
 	/// [`BUTTON_PRESS`]: crate::EventMask::BUTTON_PRESS
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct ButtonPress: Event(4) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[metabyte]
 		/// The mouse button which was pressed.
+		#[metabyte]
 		pub button: Button,
 
 		/// The time at which this [event] was generated.
@@ -284,8 +284,6 @@ derive_xrb! {
 		_,
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [mouse button] is released.
 	///
 	/// # Recipients
@@ -295,19 +293,21 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [mouse button]: Button
 	/// [`BUTTON_RELEASE`]: crate::EventMask::BUTTON_RELEASE
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct ButtonRelease: Event(5) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[metabyte]
 		/// The mouse button which was released.
+		#[metabyte]
 		pub button: Button,
 
 		/// The time at which this [event] was generated.
@@ -366,12 +366,12 @@ derive_xrb! {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 /// The type of [`Motion` event] sent.
 ///
 /// This is used in the [`Motion` event].
 ///
 /// [`Motion` event]: Motion
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 pub enum MotionNotificationType {
 	/// The [`Motion` event] was not one generated for a client selecting
 	/// [`MOTION_HINT`].
@@ -399,8 +399,6 @@ pub enum MotionNotificationType {
 }
 
 derive_xrb! {
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when the cursor moves within a [window].
 	///
 	/// `Motion` events are only generated when the cursor motion begins and ends
@@ -440,19 +438,21 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Motion: Event(6) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[metabyte]
 		/// The type of `Motion` event sent.
+		#[metabyte]
 		pub notification_type: MotionNotificationType,
 
 		/// The time at which this event was generated.
@@ -510,7 +510,6 @@ derive_xrb! {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 /// Detail that describes how a [window] receiving a [`LeaveWindow`] or
 /// [`EnterWindow`] event relates to the [event] which took place.
 ///
@@ -559,6 +558,7 @@ derive_xrb! {
 ///
 /// [event]: crate::message::Event
 /// [window]: Window
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 pub enum EnterLeaveDetail {
 	/// Used for [`LeaveWindow` events] when the cursor leaves a [window] and
 	/// enters an ancestor of that [window], and for [`EnterWindow` events]
@@ -612,8 +612,8 @@ pub enum EnterLeaveDetail {
 }
 
 bitflags! {
-	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
 	/// A bitmask used in the [`EnterWindow`] and [`LeaveWindow`] events.
+	#[derive(Default, X11Size, Readable, ConstantX11Size, Writable)]
 	pub struct EnterLeaveMask: u8 {
 		/// Whether the `event_window` is the focused [window] or a descendant
 		/// of the focused [window].
@@ -628,8 +628,6 @@ bitflags! {
 }
 
 derive_xrb! {
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when the cursor enters a [window].
 	///
 	/// This [event] is triggered both when the cursor moves to be in a different
@@ -645,23 +643,25 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`ENTER_WINDOW`]: crate::EventMask::ENTER_WINDOW
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct EnterWindow: Event(7) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[metabyte]
 		/// Detail about how the [event] was generated.
 		///
 		/// See [`EnterLeaveDetail`] for more information.
 		///
 		/// [event]: crate::message::Event
+		#[metabyte]
 		pub detail: EnterLeaveDetail,
 
 		/// The time at which this [event] was generated.
@@ -719,8 +719,6 @@ derive_xrb! {
 		pub mask: EnterLeaveMask,
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when the cursor leaves a [window].
 	///
 	/// This event is triggered both when the cursor moves to be in a different
@@ -736,23 +734,25 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`LEAVE_WINDOW`]: crate::EventMask::LEAVE_WINDOW
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct LeaveWindow: Event(8) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[metabyte]
 		/// Detail about how the [event] was generated.
 		///
 		/// See [`EnterLeaveDetail`] for more information.
 		///
 		/// [event]: crate::message::Event
+		#[metabyte]
 		pub detail: EnterLeaveDetail,
 
 		/// The time at which this [event] was generated.
@@ -819,7 +819,6 @@ derive_xrb! {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 /// Detail describing how a [window] that receives a [`Focus`] or [`Unfocus`]
 /// event relates to the [event] that occurred.
 ///
@@ -940,6 +939,7 @@ derive_xrb! {
 ///
 /// [event]: crate::message::Event
 /// [window]: Window
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 pub enum FocusDetail {
 	/// Used for [`Unfocus` events] for the [window] which has been unfocused if
 	/// the newly focused [window] is an ancestor of that [window], and for
@@ -986,9 +986,9 @@ pub enum FocusDetail {
 	None,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 /// Detail about how an [`Unfocus`] or [`Focus`] event was generated in relation
 /// to grabs.
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 pub enum FocusGrabMode {
 	/// Used for [`Unfocus`] and [`Focus`] events generated when the keyboard is
 	/// not grabbed.
@@ -1007,8 +1007,6 @@ pub enum FocusGrabMode {
 }
 
 derive_xrb! {
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [window] is focused.
 	///
 	/// `Focus` events generated when the keyboard is not grabbed have
@@ -1025,23 +1023,25 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`FOCUS_CHANGE`]: crate::EventMask::FOCUS_CHANGE
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Focus: Event(9) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[metabyte]
 		/// Detail about how the [event] was generated.
 		///
 		/// See [`FocusDetail`] for more information.
 		///
 		/// [event]: crate::message::Event
+		#[metabyte]
 		pub detail: FocusDetail,
 
 		/// The window which was focused.
@@ -1066,8 +1066,6 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [window] is unfocused.
 	///
 	/// `Unfocus` events generated when the keyboard is not grabbed have
@@ -1084,23 +1082,25 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`FOCUS_CHANGE`]: crate::EventMask::FOCUS_CHANGE
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Unfocus: Event(10) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[metabyte]
 		/// Detail about how the [event] was generated.
 		///
 		/// See [`FocusDetail`] for more information.
 		///
 		/// [event]: crate::message::Event
+		#[metabyte]
 		pub detail: FocusDetail,
 
 		/// The window which was unfocused.
@@ -1125,7 +1125,6 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	/// An [event] describing the current state of the keyboard.
 	///
 	/// # Recipients
@@ -1135,6 +1134,7 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`KEYS_STATE`]: crate::EventMask::KEYS_STATE
+	#[derive(Debug, Hash, X11Size, Readable, Writable)]
 	pub struct KeysState: Event(11) {
 		/// A bit vector representing the current keyboard state.
 		///
@@ -1147,8 +1147,6 @@ derive_xrb! {
 		pub keys: [u8; 31],
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a rectangular area of a [window] needs to be
 	/// rendered.
 	///
@@ -1178,15 +1176,17 @@ derive_xrb! {
 	/// [`WindowClass::InputOnly`]: crate::WindowClass::InputOnly
 	///
 	/// [`EXPOSURE`]: crate::EventMask::EXPOSURE
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Expose: Event(12) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [event]: crate::message::Event
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The window which this `Expose` event applies to.
@@ -1202,8 +1202,6 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when using graphics operations when a region of a
 	/// source [`Drawable`] is obscured.
 	///
@@ -1217,15 +1215,17 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [`GraphicsContext`]: crate::GraphicsContext
 	/// [`graphics_exposure`]: crate::set::GraphicsOptions::graphics_exposure
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct GraphicsExposure: Event(13) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [event]: crate::message::Event
 		/// [request]: crate::message::Request
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The [`Drawable`] this `GraphicsExposure` event applies to.
@@ -1259,8 +1259,6 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a graphics request which might generate
 	/// [`GraphicsExposure` events] doesn't generate any.
 	///
@@ -1272,15 +1270,17 @@ derive_xrb! {
 	/// [`GraphicsExposure` events]: GraphicsExposure
 	/// [`GraphicsContext`]: crate::GraphicsContext
 	/// [`graphics_exposure`]: crate::set::GraphicsOptions::graphics_exposure
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct NoExposure: Event(14) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The [`Drawable`] this `NoExposure` event applies to.
@@ -1307,13 +1307,13 @@ derive_xrb! {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 /// The state of a [window]'s visibility.
 ///
 /// This is used in the [`Visibility` event].
 ///
 /// [window]: Window
 /// [`Visibility` event]: Visibility
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 pub enum VisibilityState {
 	/// There is nothing obscuring the `window`.
 	///
@@ -1344,8 +1344,6 @@ pub enum VisibilityState {
 }
 
 derive_xrb! {
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when changes to a [window]'s visibility occur.
 	///
 	/// The [window]'s visibility is calculated ignoring all of its subwindows.
@@ -1376,15 +1374,17 @@ derive_xrb! {
 	/// [`FullyObscured`]: VisibilityState::FullyObscured
 	///
 	/// [`VISIBILITY_CHANGE`]: crate::EventMask::VISIBILITY_CHANGE
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Visibility: Event(15) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The window this `Visibility` event applies to.
@@ -1394,8 +1394,6 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [window] is created.
 	///
 	/// # Recipients
@@ -1405,15 +1403,17 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Create: Event(16) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The parent of the `window` that was created.
@@ -1449,8 +1449,6 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [window] is destroyed.
 	///
 	/// # Recipients
@@ -1462,15 +1460,17 @@ derive_xrb! {
 	/// [window]: Window
 	/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
 	/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Destroy: Event(17) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The window on which this `Destroy` event was generated.
@@ -1487,8 +1487,6 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [window] is unmapped.
 	///
 	/// Unmapping a [window] is the X term for hiding it. This is commonly used to
@@ -1502,15 +1500,17 @@ derive_xrb! {
 	/// [window]: Window
 	/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
 	/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Unmap: Event(18) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The window on which this `Unmap` event was generated.
@@ -1535,8 +1535,6 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [window] is mapped.
 	///
 	/// Mapping a [window] is the X term for showing it. It is the reverse of
@@ -1550,15 +1548,17 @@ derive_xrb! {
 	/// [window]: Window
 	/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
 	/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Map: Event(19) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The window on which this `Map` event was generated.
@@ -1588,8 +1588,6 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when an unmapped [window] with an
 	/// [`override_redirect` attribute] of `false` sends a [`MapWindow` request].
 	///
@@ -1605,15 +1603,17 @@ derive_xrb! {
 	/// [`MapWindow` request]: super::request::MapWindow
 	///
 	/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct MapRequest: Event(20) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The `window`'s parent.
@@ -1625,8 +1625,6 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [window] is reparented.
 	///
 	/// Reparenting a [window] means to remove it from its current position in
@@ -1641,15 +1639,17 @@ derive_xrb! {
 	/// [window]: Window
 	/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
 	/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Reparent: Event(21) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The window on which this `Reparent` event was generated.
@@ -1685,8 +1685,6 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [`ConfigureWindow` request] changes the state
 	/// of a [window].
 	///
@@ -1699,15 +1697,17 @@ derive_xrb! {
 	/// [window]: Window
 	/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
 	/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Configure: Event(22) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The window on which this `Configure` event was generated.
@@ -1758,8 +1758,6 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [window] sends a [`ConfigureWindow` request].
 	///
 	/// This [event] is generated when a client other than the one selecting
@@ -1781,15 +1779,17 @@ derive_xrb! {
 	/// [`ConfigureWindow` request]: super::request::ConfigureWindow
 	///
 	/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct ConfigureWindowRequest: Event(23) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		#[metabyte]
@@ -1833,8 +1833,6 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [window] is moved because its parent is
 	/// resized.
 	///
@@ -1846,15 +1844,17 @@ derive_xrb! {
 	/// [window]: Window
 	/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
 	/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Gravity: Event(24) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The window which this `Gravity` event was generated on.
@@ -1875,8 +1875,6 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [window] on which a client is selecting
 	/// [`RESIZE_REDIRECT`] has a [`ConfigureWindow` request] sent by another
 	/// client attempt to change the [window]'s size.
@@ -1889,15 +1887,17 @@ derive_xrb! {
 	/// [window]: Window
 	/// [`RESIZE_REDIRECT`]: crate::EventMask::RESIZE_REDIRECT
 	/// [`ConfigureWindow` request]: super::request::ConfigureWindow
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct ResizeRequest: Event(25) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The window which the [`ConfigureWindow` request] attempted to
@@ -1920,7 +1920,6 @@ derive_xrb! {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 /// The new placement of a [window] restacked in a [`CirculateWindow` request].
 ///
 /// This is used in [`Circulate` events].
@@ -1928,6 +1927,7 @@ derive_xrb! {
 /// [window]: Window
 /// [`CirculateWindow` request]: super::request::CirculateWindow
 /// [`Circulate` events]: Circulate
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 pub enum Placement {
 	/// The `window` is now above all its siblings in the stack.
 	Top,
@@ -1936,8 +1936,6 @@ pub enum Placement {
 }
 
 derive_xrb! {
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [window] is restacked due to a
 	/// [`CirculateWindow` request].
 	///
@@ -1951,15 +1949,17 @@ derive_xrb! {
 	///
 	/// [`STRUCTURE_NOTIFY`]: crate::EventMask::STRUCTURE_NOTIFY
 	/// [`SUBSTRUCTURE_NOTIFY`]: crate::EventMask::SUBSTRUCTURE_NOTIFY
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Circulate: Event(26) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The window which this `Circulate` event was generated on.
@@ -1981,8 +1981,6 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [`CirculateWindow` request] is sent for a
 	/// [window] and that [window] actually needs to be restacked.
 	///
@@ -1994,15 +1992,17 @@ derive_xrb! {
 	/// [window]: Window
 	/// [`SUBSTRUCTURE_REDIRECT`]: crate::EventMask::SUBSTRUCTURE_REDIRECT
 	/// [`CirculateWindow` request]: super::request::CirculateWindow
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct CirculateRequest: Event(27) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The parent of the `window` the [`CirculateWindow` request] applies
@@ -2027,13 +2027,13 @@ derive_xrb! {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 /// Whether a `property` was [`Modified`] or [`Deleted`] in a [`Property`
 /// event].
 ///
 /// [`Property` event]: Property
 /// [`Modified`]: PropertyChange::Modified
 /// [`Deleted`]: PropertyChange::Deleted
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 pub enum PropertyChange {
 	/// The `property` was added or its value was changed.
 	Modified,
@@ -2042,8 +2042,6 @@ pub enum PropertyChange {
 }
 
 derive_xrb! {
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [window] property is added, modified, or
 	/// removed.
 	///
@@ -2054,15 +2052,17 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [window]: Window
 	/// [`PROPERTY_CHANGE`]: crate::EventMask::PROPERTY_CHANGE
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Property: Event(28) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The window on which the `property` was changed.
@@ -2080,8 +2080,6 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a new selection owner is defined for a
 	/// selection.
 	///
@@ -2093,15 +2091,17 @@ derive_xrb! {
 	///
 	/// [event]: crate::message::Event
 	/// [`SetSelectionOwner` request]: super::request::SetSelectionOwner
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct SelectionClear: Event(29) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The time at which the new `selection` owner was defined.
@@ -2113,8 +2113,6 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [`ConvertSelection` request] is sent.
 	///
 	/// The owner should convert the selection based on the specified target
@@ -2131,15 +2129,17 @@ derive_xrb! {
 	/// [`ConvertSelection` request]: super::request::ConvertSelection
 	/// [`Selection` event]: Selection
 	/// [`SendEvent` request]: super::request::SendEvent
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct ConvertSelectionRequest: Event(30) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The time at which the [`ConvertSelection` request] was sent.
@@ -2163,8 +2163,6 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// A reply to the [`ConvertSelection` request].
 	///
 	/// If the selection has no owner, this is generated by the X server. If the
@@ -2178,15 +2176,17 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [`ConvertSelection` request]: super::request::ConvertSelection
 	/// [`SendEvent` request]: super::request::SendEvent
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Selection: Event(31) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The time at which this `Selection` event was generated.
@@ -2210,10 +2210,10 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 	/// The reason why a [`Colormap` event] was generated.
 	///
 	/// [`Colormap` event]: Colormap
+	#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 	pub enum ColormapDetail {
 		/// The `window`'s [`colormap` attribute] was changed.
 		///
@@ -2225,11 +2225,11 @@ derive_xrb! {
 		InstalledOrUninstalled,
 	}
 
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	/// Whether a [window]'s [colormap] is currently installed.
 	///
 	/// [window]: Window
 	/// [colormap]: crate::Colormap
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub enum ColormapState {
 		/// The [window]'s [colormap] is not currently installed.
 		///
@@ -2243,8 +2243,6 @@ derive_xrb! {
 		Installed,
 	}
 
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [window]'s [colormap] is installed,
 	/// uninstalled, or its [`colormap` attribute] is changed.
 	///
@@ -2258,15 +2256,17 @@ derive_xrb! {
 	/// [`colormap` attribute]: crate::Attributes::colormap
 	///
 	/// [`COLORMAP_CHANGE`]: crate::EventMask::COLORMAP_CHANGE
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct Colormap: Event(32) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The window that this [event] relates to.
@@ -2291,11 +2291,11 @@ derive_xrb! {
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 /// Used in the [`ClientMessage` event] to represent whether its `data` is 20
 /// `i8` values, 10 `i16` values, or 5 `i32` values.
 ///
 /// [`ClientMessage` event]: ClientMessage
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 pub enum ClientMessageFormat {
 	/// 20 `i8` values: [`ClientMessageData::I8`].
 	I8 = 8,
@@ -2305,10 +2305,10 @@ pub enum ClientMessageFormat {
 	I32 = 32,
 }
 
-#[derive(Clone, Eq, PartialEq, Hash, Debug, Writable)]
 /// The `data` contained in a [`ClientMessage` event].
 ///
 /// [`ClientMessage` event]: ClientMessage
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Writable)]
 #[no_discrim]
 pub enum ClientMessageData {
 	/// Data comprised of 20 `i8` values.
@@ -2345,8 +2345,6 @@ impl ReadableWithContext for ClientMessageData {
 }
 
 derive_xrb! {
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated by a [`SendEvent` request].
 	///
 	/// # Recipients
@@ -2356,19 +2354,21 @@ derive_xrb! {
 	/// [event]: crate::message::Event
 	/// [`SendEvent` request]: super::request::SendEvent
 	/// [window]: Window
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct ClientMessage: Event(33) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
-		#[metabyte]
 		/// Whether `data` is `[i8; 20]`, `[i16; 10]`, or `[i32; 5]`.
+		#[metabyte]
 		let format: ClientMessageFormat = data => match data {
 			ClientMessageData::I8(_) => ClientMessageFormat::I8,
 			ClientMessageData::I16(_) => ClientMessageFormat::I16,
@@ -2380,19 +2380,19 @@ derive_xrb! {
 		/// How the `data` is to be interpreted by the `recipient`.
 		pub r#type: Atom,
 
-		#[context(format => *format)]
 		/// The data contained in this [event].
 		///
 		/// [event]: crate::message::Event
+		#[context(format => *format)]
 		pub data: ClientMessageData,
 	}
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 /// Detail about which [request] generated a [`MappingChange` event].
 ///
 /// [request]: crate::message::Request
 /// [`MappingChange` event]: MappingChange
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, X11Size, Readable, Writable)]
 pub enum MappingRequest {
 	/// The [`MappingChange` event] was generated by a
 	/// [`SetModifierMapping` request].
@@ -2417,8 +2417,6 @@ pub enum MappingRequest {
 }
 
 derive_xrb! {
-	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
-	#[derivative(Hash, PartialEq, Eq)]
 	/// An [event] generated when a [`SetModifierMapping`],
 	/// [`ChangeKeyboardMapping`], or [`SetCursorMapping`] request is successful.
 	///
@@ -2429,15 +2427,17 @@ derive_xrb! {
 	/// [`SetModifierMapping`]: super::request::SetModifierMapping
 	/// [`ChangeKeyboardMapping`]: super::request::ChangeKeyboardMapping
 	/// [`SetCursorMapping`]: super::request::SetCursorMapping
+	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
 	pub struct MappingChange: Event(34) {
-		#[sequence]
-		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		/// The [sequence number] associated with the last [request] related
 		/// to this [event] that was received before this [event] was generated.
 		///
 		/// [sequence number]: crate::message::Event::sequence
 		/// [request]: crate::message::Request
 		/// [event]: crate::message::Event
+		#[sequence]
+		#[derivative(PartialEq = "ignore", Hash = "ignore")]
 		pub sequence: u16,
 
 		/// The [request] that generated this `MappingChange` event.
