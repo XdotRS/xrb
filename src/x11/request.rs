@@ -2619,3 +2619,104 @@ derive_xrb! {
 		[_; 2],
 	}
 }
+
+/// Specifies the conditions under which queued events should be released for an
+/// [`AllowEvents` request].
+///
+/// [`AllowEvents` request]: AllowEvents
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub enum AllowEventsMode {
+	/// Unfreezes the cursor if it is frozen and you have active grab on the
+	/// cursor.
+	UnfreezeCursor,
+	/// Unfreezes the cursor, but freezes it again after the next
+	/// [`ButtonPress`] or [`ButtonRelease`].
+	///
+	/// Your client have an active grab on the cursor.
+	///
+	/// The cursor is frozen again specifically after the next [`ButtonPress`]
+	/// [`ButtonRelease`] event reported to your client which does not cause
+	/// grab to be released.
+	///
+	/// [`ButtonPress`]: super::event::ButtonPress
+	/// [`ButtonRelease`]: super::event::ButtonRelease
+	RefreezeCursor,
+	/// If the cursor is frozen as a result of the activation of a passive grab
+	/// or [`RefreezeCursor`] mode from your client, the grab is released and
+	/// the [event] is completely reprocessed.
+	///
+	/// [`RefreezeCursor`]: AllowEventsMode::RefreezeCursor
+	///
+	/// [event]: Event
+	ReplayCursor,
+
+	/// Unfreezes the keyboard if it is frozen and you have an active grab on
+	/// the keyboard.
+	UnfreezeKeyboard,
+	/// Unfreezes the keyboard, but freezes it again after the next
+	/// [`KeyPress`] or [`KeyPress`].
+	///
+	/// Your client have an active grab on the keyboard.
+	///
+	/// The keyboard is frozen again specifically after the next [`KeyPress`]
+	/// [`KeyRelease`] event reported to your client which does not cause
+	/// grab to be released.
+	///
+	/// [`KeyPress`]: super::event::KeyPress
+	/// [`KeyRelease`]: super::event::KeyRelease
+	RefreezeKeyboard,
+	/// If the keyboard is frozen as a result of the activation of a passive
+	/// grab or [`RefreezeKeyboard`] mode from your client, the grab is released
+	/// and the [event] is completely reprocessed.
+	///
+	/// [`RefreezeKeyboard`]: AllowEventsMode::RefreezeKeyboard
+	///
+	/// [event]: Event
+	ReplayKeyboard,
+
+	/// If both the cursor and the keyboard are frozen by your client, both are
+	/// unfrozen.
+	UnfreezeBoth,
+	/// If both the cursor and the keyboard are frozen by your client, both are
+	/// unfrozen but are both frozen again on the next button or key press or
+	/// release event.
+	///
+	/// Any [`ButtonPress`], [`ButtonRelease`], [`KeyPress`], or [`KeyRelease`]
+	/// event reported to your client will unfreeze both the cursor and the
+	/// keyboard.
+	///
+	/// [`ButtonPress`]: super::event::ButtonPress
+	/// [`ButtonRelease`]: super::event::ButtonRelease
+	///
+	/// [`KeyPress`]: super::event::KeyPress
+	/// [`KeyRelease`]: super::event::KeyRelease
+	RefreezeBoth,
+}
+
+derive_xrb! {
+	/// A [request] that releases some queued events if your client has caused a
+	/// device to be [frozen].
+	///
+	/// [frozen]: FreezeMode::Frozen
+	/// [request]: crate::message::Request
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct AllowEvents: Request(35, error::Value) {
+		/// The conditions under which the queued [events] are released.
+		///
+		/// [events]: Event
+		#[metabyte]
+		pub mode: AllowEventsMode,
+
+		/// The [time] at which this `AllowEvents` [request] is recorded as
+		/// having taken place.
+		///
+		/// This [request] has no effect if this time is earlier than the time
+		/// of your most recent active grab or later than the X server's
+		/// [current time].
+		///
+		/// [request]: crate::message::Request
+		/// [time]: CurrentableTime
+		/// [current time]: CurrentableTime::CurrentTime
+		pub time: CurrentableTime,
+	}
+}
