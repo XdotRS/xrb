@@ -547,4 +547,35 @@ derive_xrb! {
 
 		[_; ..],
 	}
+
+	/// The [reply] to a [`GrabKeyboard` request].
+	///
+	/// [reply]: crate::message::Reply
+	///
+	/// [`GrabKeyboard` request]: GrabKeyboard
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct GrabKeyboard: Reply for request::GrabKeyboard {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: crate::message::Reply
+		///
+		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		/// The status of the attempted grab.
+		///
+		/// See [`GrabStatus`] for more information.
+		#[doc(alias = "status")]
+		#[metabyte]
+		pub grab_status: GrabStatus,
+
+		[_; ..],
+	}
 }

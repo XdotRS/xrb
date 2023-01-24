@@ -1866,7 +1866,7 @@ derive_xrb! {
 		/// [freeze mode]: FreezeMode
 		///
 		/// [`AllowEvents` request]: AllowEvents
-		#[doc(alias = "pointer_mode")]
+		#[doc(alias("pointer_mode", "cursor_mode"))]
 		pub cursor_freeze: FreezeMode,
 		/// The [freeze mode] applied to the keyboard.
 		///
@@ -1920,14 +1920,13 @@ derive_xrb! {
 		#[doc(alias = "cursor")]
 		pub cursor_appearance: Option<CursorAppearance>,
 
-		/// The [time] at which this grab is recorded as having initiated.
+		/// The [time] at which this grab is recorded as having been initiated.
 		///
 		/// [time]: CurrentableTime
 		pub time: CurrentableTime,
 	}
 
-	/// A [request] that ends a cursor grab if this client has it actively
-	/// grabbed.
+	/// A [request] that ends an active cursor grab by your client.
 	///
 	/// Any queued [events] are released.
 	///
@@ -2265,5 +2264,130 @@ derive_xrb! {
 		/// [events]: Event
 		pub event_mask: CursorEventMask,
 		[_; 2],
+	}
+}
+
+/// An [error] generated because of a failed [`GrabKeyboard` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`GrabKeyboard` request]: GrabKeyboard
+pub enum GrabKeyboardError {
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+	/// A [`Window` error].
+	///
+	/// [`Window` error]: error::Window
+	Window(error::Window),
+}
+
+derive_xrb! {
+	/// A [request] to actively grab control of the keyboard.
+	///
+	/// This [request] generates [`Focus`] and [`Unfocus`] events.
+	///
+	/// # Replies
+	/// This [request] generates a [`GrabKeyboard` reply].
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if the `grab_window` does not refer to a
+	/// defined [window].
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [`Focus`]: super::event::Focus
+	/// [`Unfocus`]: super::event::Unfocus
+	///
+	/// [`GrabKeyboard` reply]: reply::GrabKeyboard
+	///
+	/// [`Window` error]: error::Window
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GrabKeyboard: Request(31, GrabKeyboardError) -> reply::GrabKeyboard {
+		/// Whether key [events] which would normally be reported to this client
+		/// are reported normally.
+		///
+		/// Both [`KeyPress`] and [`KeyRelease`] events are always reported, no
+		/// matter what events you have selected.
+		///
+		/// [events]: Event
+		///
+		/// [`KeyPress`]: super::event::KeyPress
+		/// [`KeyRelease`]: super::event::KeyRelease
+		#[metabyte]
+		pub owner_events: bool,
+
+		/// The [window] on which the keyboard is grabbed.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		pub grab_window: Window,
+
+		/// The [time] at which this grab is recorded as having been initiated.
+		///
+		/// [time]: CurrentableTime
+		pub time: CurrentableTime,
+
+		/// The [freeze mode] applied to the cursor.
+		///
+		/// For [`FreezeMode::Unfrozen`], cursor [event] processing continues
+		/// as normal.
+		///
+		/// For [`FreezeMode::Frozen`], cursor [event] processing appears to
+		/// freeze - cursor [events][event] generated during this time are not
+		/// lost: they are queued to be processed later. The freeze ends when
+		/// either the grabbing client sends an [`AllowEvents` request], or when
+		/// the cursor grab is released.
+		///
+		/// [event]: Event
+		/// [freeze mode]: FreezeMode
+		///
+		/// [`AllowEvents` request]: AllowEvents
+		#[doc(alias("pointer_mode", "cursor_mode"))]
+		pub cursor_freeze: FreezeMode,
+		/// The [freeze mode] applied to the keyboard.
+		///
+		/// For [`FreezeMode::Unfrozen`], keyboard [event] processing
+		/// continues as normal.
+		///
+		/// For [`FreezeMode::Frozen`], keyboard [event] processing appears
+		/// to freeze - keyboard [events][event] generated during this time are
+		/// not lost: they are queued to be processed later. The freeze ends
+		/// when either the grabbing client sends an [`AllowEvents` request], or
+		/// when the keyboard grab is released.
+		///
+		/// [event]: Event
+		/// [freeze mode]: FreezeMode
+		///
+		/// [`AllowEvents` request]: AllowEvents
+		#[doc(alias = "keyboard_mode")]
+		pub keyboard_freeze: FreezeMode,
+		[_; 2],
+	}
+
+	/// A [request] that ends an active keyboard grab by your client.
+	///
+	/// Any queued [events] are released.
+	///
+	/// This [request] generates [`Focus`] and [`Unfocus`] events.
+	///
+	/// [request]: crate::message::Request
+	/// [events]: Event
+	///
+	/// [`Focus`]: super::event::Focus
+	/// [`Unfocus`]: super::event::Unfocus
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct UngrabKeyboard: Request(32) {
+		/// The [time] at which the grab is recorded as having been released.
+		///
+		/// [time]: CurrentableTime
+		pub time: CurrentableTime,
 	}
 }
