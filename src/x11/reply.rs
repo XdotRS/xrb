@@ -13,7 +13,7 @@
 
 use crate::{
 	unit::Px,
-	visual::{Color, VisualId},
+	visual::{ColorId, VisualId},
 	x11::request::{self, DataFormat, DataList},
 	Atom,
 	BitGravity,
@@ -139,11 +139,11 @@ derive_xrb! {
 		///
 		/// See [`Attributes::maintenance_fallback_color`] for more information.
 		///
-		/// [color]: Color
+		/// [color]: ColorId
 		///
 		/// [`Attributes::maintenance_fallback_color`]: crate::set::Attributes::maintenance_fallback_color
 		#[doc(alias = "backing_pixel")]
-		pub maintenance_fallback_color: Color,
+		pub maintenance_fallback_color: ColorId,
 		/// Whether the X server should maintain the contents of [windows] under
 		/// this [window].
 		///

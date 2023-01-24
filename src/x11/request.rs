@@ -1519,9 +1519,9 @@ derive_xrb! {
 	/// and the previous owner was not [`None`], then a [`SelectionClear` event]
 	/// is sent to the previous owner.
 	///
-	/// If the given `time` is earlier than time of the previous owner change or
-	/// is later than the X server's [current time], this [request] has no
-	/// effect.
+	/// If the given `time` is earlier than the [time] of the previous owner
+	/// change or is later than the X server's [current time], this [request]
+	/// has no effect.
 	///
 	/// # Errors
 	/// A [`Window` error] is generated if `owner` is [`Some`] but does not
@@ -1532,6 +1532,7 @@ derive_xrb! {
 	///
 	/// [window]: Window
 	/// [atom]: Atom
+	/// [time]: CurrentableTime
 	/// [request]: crate::message::Request
 	///
 	/// [current time]: CurrentableTime::CurrentTime
@@ -1567,12 +1568,14 @@ derive_xrb! {
 		/// [`Atom` error]: error::Atom
 		pub selection: Atom,
 
-		/// The time at which this change is recorded to occur at.
+		/// The [time] at which this change is recorded to occur at.
 		///
-		/// If this time is earlier than the server's current 'last-change' time
-		/// for the selection's owner, or this time is later than the server's
-		/// current time, this [request] has no effect.
+		/// If this [time] is earlier than the server's current 'last-change'
+		/// [time] for the selection's owner, or this [time] is later than the
+		/// server's [current time], this [request] has no effect.
 		///
+		/// [time]: CurrentableTime
+		/// [current time]: CurrentableTime::CurrentTime
 		/// [request]: crate::message::Request
 		pub time: CurrentableTime,
 	}
@@ -1678,7 +1681,10 @@ derive_xrb! {
 		pub target_type: Atom,
 		pub property: Option<Atom>,
 
-		/// The time at which this conversion is recorded as having taken place.
+		/// The [time] at which this conversion is recorded as having taken
+		/// place.
+		///
+		/// [time]: CurrentableTime
 		pub time: CurrentableTime,
 	}
 }
@@ -1840,7 +1846,7 @@ derive_xrb! {
 		pub grab_window: Window,
 
 		/// A mask of the cursor [events] which are to be reported to the
-		/// grabbing client.
+		/// your client.
 		///
 		/// [events]: Event
 		pub event_mask: CursorEventMask,
@@ -1914,7 +1920,9 @@ derive_xrb! {
 		#[doc(alias = "cursor")]
 		pub cursor_appearance: Option<CursorAppearance>,
 
-		/// The time at which this grab is recorded as having initiated.
+		/// The [time] at which this grab is recorded as having initiated.
+		///
+		/// [time]: CurrentableTime
 		pub time: CurrentableTime,
 	}
 
@@ -1933,7 +1941,9 @@ derive_xrb! {
 	#[doc(alias = "UngrabPointer")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct UngrabCursor: Request(27) {
-		/// The time at which the grab is recorded as having been released.
+		/// The [time] at which the grab is recorded as having been released.
+		///
+		/// [time]: CurrentableTime
 		pub time: CurrentableTime,
 	}
 }
@@ -2185,6 +2195,75 @@ derive_xrb! {
 		///
 		/// [`ANY_MODIFIER`]: AnyModifierKeyMask::ANY_MODIFIER
 		pub modifiers: AnyModifierKeyMask,
+		[_; 2],
+	}
+}
+
+/// An [error] generated because of a failed [`ChangeActiveCursorGrab` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`ChangeActiveCursorGrab` request]: ChangeActiveCursorGrab
+#[doc(alias = "ChangeActivePointerGrabError")]
+pub enum ChangeActiveCursorGrabError {
+	/// A [`CursorAppearance` error].
+	///
+	/// [`CursorAppearance` error]: error::CursorAppearance
+	CursorAppearance(error::CursorAppearance),
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+}
+
+derive_xrb! {
+	/// A [request] which modifies the `event_mask` or `cursor_appearance` of an
+	/// [active cursor grab].
+	///
+	/// # Errors
+	/// A [`CursorAppearance` error] is generated if `cursor_appearance` does
+	/// not refer to a defined [cursor appearance].
+	///
+	/// [cursor appearance]: CursorAppearance
+	/// [request]: crate::message::Request
+	///
+	/// [active cursor grab]: GrabCursor
+	#[doc(alias = "ChangeActivePointerGrab")]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ChangeActiveCursorGrab: Request(30, ChangeActiveCursorGrabError) {
+		/// Optionally overrides the [appearance of the cursor], no matter which
+		/// [window] it is within, for the duration of the grab.
+		///
+		/// This replaces the previously specified `cursor_appearance` for the
+		/// grab - [`None`] means that the `cursor_appearance` is no longer
+		/// overridden.
+		///
+		/// # Errors
+		/// A [`CursorAppearance` error] is generated if this does not refer to
+		/// a defined [cursor appearance].
+		///
+		/// [cursor appearance]: CursorAppearance
+		/// [appearance of the cursor]: CursorAppearance
+		/// [window]: Window
+		///
+		/// [`CursorAppearance` error]: error::CursorAppearance
+		#[doc(alias = "cursor")]
+		pub cursor_appearance: Option<CursorAppearance>,
+
+		/// The [time] at which this change is recorded as having taken place.
+		///
+		/// This must be later than the [time] of the last cursor grab, and
+		/// equal to or earlier than the X server's [current time].
+		///
+		/// [time]: CurrentableTime
+		/// [current time]: CurrentableTime::CurrentTime
+		pub time: CurrentableTime,
+
+		/// A mask of the cursor [events] which are to be reported to the
+		/// your client.
+		///
+		/// [events]: Event
+		pub event_mask: CursorEventMask,
 		[_; 2],
 	}
 }
