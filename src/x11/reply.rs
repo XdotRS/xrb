@@ -784,6 +784,8 @@ derive_xrb! {
 
 	/// The [reply] to a [`QueryKeyboard` request].
 	///
+	/// [reply]: crate::message::Reply
+	///
 	/// [`QueryKeyboard` request]: request::QueryKeyboard
 	#[doc(alias = "QueryKeymap")]
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]

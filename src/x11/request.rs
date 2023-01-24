@@ -2725,11 +2725,15 @@ derive_xrb! {
 
 	/// A [request] that freezes processing of [requests][request] and
 	/// connection closes on all other clients' connections.
+	///
+	/// [request]: crate::message::Request
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct GrabServer: Request(36);
 
 	/// A [request] that unfreezes processing of [requests][request] and
 	/// connection closes on all other clients' connections.
+	///
+	/// [request]: crate::message::Request
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct UngrabServer: Request(37);
 
@@ -3126,16 +3130,17 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	/// A [request] that removes the association between a given `font` ID and
+	/// A [request] that removes the association between a given [`Font` ID] and
 	/// the font it is associated with.
 	///
 	/// [request]: crate::message::Request
+	/// [`Font` ID]: Font
 	#[doc(alias("CloseFont", "DeleteFont", "UnloadFont", "RemoveFont"))]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct UnassignFont: Request(46) {
 		/// The [`Font` ID] which is having its association with a font removed.
 		///
 		/// [`Font` ID]: Font
-		pub font: Font,
+		pub target: Font,
 	}
 }
