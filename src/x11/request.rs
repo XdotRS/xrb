@@ -2719,4 +2719,14 @@ derive_xrb! {
 		/// [current time]: CurrentableTime::CurrentTime
 		pub time: CurrentableTime,
 	}
+
+	/// A [request] that freezes processing of [requests][request] and
+	/// connection closes on all other clients' connections.
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GrabServer: Request(36);
+
+	/// A [request] that unfreezes processing of [requests][request] and
+	/// connection closes on all other clients' connections.
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct UngrabServer: Request(37);
 }
