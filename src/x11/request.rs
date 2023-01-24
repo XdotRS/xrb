@@ -3064,4 +3064,11 @@ derive_xrb! {
 		/// The [time] at which the focus is recorded as having changed.
 		pub time: CurrentableTime,
 	}
+
+	/// A [request] that returns the current focus.
+	///
+	/// [request]: crate::message::Request
+	#[doc(alias = "GetInputFocus")]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GetFocus: Request(43) -> reply::GetFocus;
 }

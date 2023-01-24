@@ -21,6 +21,7 @@ use crate::{
 	Coords,
 	DeviceEventMask,
 	EventMask,
+	FocusWindow,
 	GrabStatus,
 	MaintainContents,
 	ModifierMask,
@@ -33,7 +34,9 @@ use crate::{
 };
 use derivative::Derivative;
 
+use crate::x11::request::RevertFocus;
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
+
 extern crate self as xrb;
 
 /// The state of the [window] regarding how it is mapped.
@@ -742,6 +745,39 @@ derive_xrb! {
 		/// [window]: Window
 		#[doc(alias("dst_x", "dst_y", "dst_coords", "destination_coords"))]
 		pub output_coords: Coords,
+		[_; ..],
+	}
+
+	/// The [reply] to a [`GetFocus` request].
+	///
+	/// [reply]: crate::message::Reply
+	///
+	/// [`GetFocus` request]: request::GetFocus
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct GetFocus: Reply for request::GetFocus {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: crate::message::Reply
+		///
+		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		/// What the focus will retain to if the focused [window] becomes
+		/// unviewable.
+		///
+		/// [window]: Window
+		#[metabyte]
+		pub revert_to: RevertFocus,
+
+		/// The current focus.
+		pub focus: FocusWindow,
 		[_; ..],
 	}
 }
