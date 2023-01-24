@@ -84,6 +84,7 @@ impl Source {
 
 		tokens.append_tokens({
 			quote_spanned!(ident.span()=>
+				#[inline]
 				fn #ident(#args) -> #return_type {
 					#expr
 				}

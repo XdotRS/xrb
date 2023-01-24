@@ -16,7 +16,9 @@ use crate::{
 	visual::VisualId,
 	x11::{error, reply},
 	Any,
+	AnyModifierKeyMask,
 	Atom,
+	Button,
 	CopyableFromParent,
 	CurrentableTime,
 	CursorAppearance,
@@ -1929,7 +1931,258 @@ derive_xrb! {
 	#[doc(alias = "UngrabPointer")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct UngrabCursor: Request(27) {
-		/// The time at which the grab is recorded as having ceased.
+		/// The time at which the grab is recorded as having been released.
 		pub time: CurrentableTime,
+	}
+}
+
+/// An [error] generated because of a failed [`GrabButton` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`GrabButton` request]: GrabButton
+pub enum GrabButtonError {
+	/// An [`Access` error].
+	///
+	/// [`Access` error]: error::Access
+	Access(error::Access),
+	/// A [`CursorAppearance` error].
+	///
+	/// [`CursorAppearance` error]: error::CursorAppearance
+	CursorAppearance(error::CursorAppearance),
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+	/// A [`Window` error].
+	///
+	/// [`Window` error]: error::Window
+	Window(error::Window),
+}
+
+derive_xrb! {
+	/// A [request] that establishes a passive cursor grab.
+	///
+	/// If the following conditions are true, the grab is converted into an
+	/// active cursor grab (as described in the [`GrabCursor` request]):
+	/// - the cursor is not already actively grabbed; and
+	/// - the specified `button` and specified `modifiers` are held; and
+	/// - the cursor is within the `grab_window`; and
+	/// - if the `confine_to` [window] is specified, it is viewable; and
+	/// - a passive grab for the same `button` and `modifiers` combination does
+	///   not exist for any ancestor of the `grab_window`.
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if either the `grab_window` or the
+	/// `confine_to` [window] do not refer to defined [windows][window].
+	///
+	/// A [`CursorAppearance` error] is generated if the `cursor_appearance` is
+	/// [`Some`] and does not refer to a defined [cursor appearance].
+	///
+	/// An [`Access` error] is generated if some other client has already sent a
+	/// `GrabButton` [request] with the same `button` and `modifiers`
+	/// combination on the same `grab_window`.
+	///
+	/// [cursor appearance]: CursorAppearance
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [`GrabCursor` request]: GrabCursor
+	///
+	/// [`Access` error]: error::Access
+	/// [`Window` error]: error::Window
+	/// [`CursorAppearance` error]: error::CursorAppearance
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GrabButton: Request(28, GrabButtonError) {
+		/// Whether cursor [events] which would normally be reported to this
+		/// client are reported normally.
+		///
+		/// [events]: Event
+		#[metabyte]
+		pub owner_events: bool,
+
+		/// The [window] on which the `button` is grabbed.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		pub grab_window: Window,
+
+		/// A mask of the cursor [events] which are to be reported to the
+		/// grabbing client.
+		///
+		/// [events]: Event
+		pub event_mask: CursorEventMask,
+
+		/// The [freeze mode] applied to the cursor.
+		///
+		/// For [`FreezeMode::Unfrozen`], cursor [event] processing continues
+		/// as normal.
+		///
+		/// For [`FreezeMode::Frozen`], cursor [event] processing appears to
+		/// freeze - cursor [events][event] generated during this time are not
+		/// lost: they are queued to be processed later. The freeze ends when
+		/// either the grabbing client sends an [`AllowEvents` request], or when
+		/// the cursor grab is released.
+		///
+		/// [event]: Event
+		/// [freeze mode]: FreezeMode
+		///
+		/// [`AllowEvents` request]: AllowEvents
+		#[doc(alias = "pointer_mode")]
+		pub cursor_freeze: FreezeMode,
+		/// The [freeze mode] applied to the keyboard.
+		///
+		/// For [`FreezeMode::Unfrozen`], keyboard [event] processing
+		/// continues as normal.
+		///
+		/// For [`FreezeMode::Frozen`], keyboard [event] processing appears
+		/// to freeze - keyboard [events][event] generated during this time are
+		/// not lost: they are queued to be processed later. The freeze ends
+		/// when either the grabbing client sends an [`AllowEvents` request], or
+		/// when the keyboard grab is released.
+		///
+		/// [event]: Event
+		/// [freeze mode]: FreezeMode
+		///
+		/// [`AllowEvents` request]: AllowEvents
+		#[doc(alias = "keyboard_mode")]
+		pub keyboard_freeze: FreezeMode,
+
+		/// Optionally confines the cursor to the given [window].
+		///
+		/// This [window] does not need to have any relation to the
+		/// `grab_window`.
+		///
+		/// The cursor will be warped to the closest edge of this [window] if it
+		/// is not already within it. Subsequent changes to the configuration of
+		/// the [window] which cause the cursor to be outside of the [window]
+		/// will also trigger the cursor to be warped to the [window] again.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this is [`Some`] and does not
+		/// refer to a defined [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		pub confine_to: Option<Window>,
+
+		/// Optionally overrides the [appearance of the cursor], no matter which
+		/// [window] it is within, for the duration of the grab.
+		///
+		/// # Errors
+		/// A [`CursorAppearance` error] is generated if this does not refer to
+		/// a defined [cursor appearance].
+		///
+		/// [cursor appearance]: CursorAppearance
+		/// [appearance of the cursor]: CursorAppearance
+		/// [window]: Window
+		///
+		/// [`CursorAppearance` error]: error::CursorAppearance
+		pub cursor_appearance: Option<CursorAppearance>,
+
+		/// The [button] for which this grab is established.
+		///
+		/// [`Any`] means that the grab is effectively established for all
+		/// possible [buttons][button].
+		///
+		/// When this button and the given `modifiers`,
+		///
+		/// [button]: Button
+		///
+		/// [`Any`]: Any::Any
+		pub button: Any<Button>,
+		_,
+
+		/// The combination of modifiers which must be held for a press of the
+		/// `button` to activate the active cursor grab.
+		///
+		/// [`ANY_MODIFIER`] means _any_ modifiers: that includes no modifiers
+		/// at all.
+		///
+		/// [`ANY_MODIFIER`]: AnyModifierKeyMask::ANY_MODIFIER
+		pub modifiers: AnyModifierKeyMask,
+	}
+}
+
+/// An [error] generated because of a failed [`UngrabButton` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`UngrabButton` request]: UngrabButton
+pub enum UngrabButtonError {
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+	/// A [`Window` error].
+	///
+	/// [`Window` error]: error::Window
+	Window(error::Window),
+}
+
+derive_xrb! {
+	/// A [request] which releases a [passive button grab] by this client on the
+	/// specified `grab_window` if the grab was established by your client.
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if `grab_window` does not refer to a
+	/// defined [window].
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [passive button grab]: GrabButton
+	///
+	/// [`Window` error]: error::Window
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct UngrabButton: Request(29, UngrabButtonError) {
+		/// The [button] which the [passive button grab] was established for.
+		///
+		/// [`Any`] matches any `button` specified in the [passive button grab].
+		/// It is equivalent to sending this `UngrabButton` [request] for all
+		/// possible [buttons][button].
+		///
+		/// [button]: Button
+		/// [request]: crate::message::Request
+		///
+		/// [passive button grab]: GrabButton
+		///
+		/// [`Any`]: Any::Any
+		#[metabyte]
+		pub button: Any<Button>,
+
+		/// The [window] on which the [passive button grab] was established.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		///
+		/// [passive button grab]: GrabButton
+		///
+		/// [`Window` error]: error::Window
+		pub grab_window: Window,
+
+		/// The modifier combination specified by the [passive button grab].
+		///
+		/// [`ANY_MODIFIER`] matches any `modifiers` specified in the
+		/// [passive button grab] (including no modifiers). It is equivalent to
+		/// sending this `UngrabButton` [request] for all possible `modifiers`
+		/// combinations.
+		///
+		/// [request]: crate::message::Request
+		///
+		/// [passive button grab]: GrabButton
+		///
+		/// [`ANY_MODIFIER`]: AnyModifierKeyMask::ANY_MODIFIER
+		pub modifiers: AnyModifierKeyMask,
+		[_; 2],
 	}
 }

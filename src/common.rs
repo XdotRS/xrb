@@ -173,11 +173,13 @@ pub enum FreezeMode {
 	/// [Event] processing is not frozen.
 	///
 	/// [Event]: crate::message::Event
+	#[doc(alias = "Asynchronous")]
 	Unfrozen,
 
 	/// [Event] processing is frozen.
 	///
 	/// [Event]: crate::message::Event
+	#[doc(alias = "Synchronous")]
 	Frozen,
 }
 
