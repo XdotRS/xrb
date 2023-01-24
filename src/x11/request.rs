@@ -27,6 +27,7 @@ use crate::{
 	DestinationWindow,
 	Drawable,
 	EventMask,
+	FocusWindow,
 	FreezeMode,
 	Keycode,
 	Rectangle,
@@ -2966,5 +2967,101 @@ derive_xrb! {
 		/// [window]: Window
 		#[doc(alias("dst_x", "dst_y", "dst_coords", "destination_coords"))]
 		pub coords: Coords,
+	}
+}
+
+/// An [error] generated because of a failed [`SetFocus` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`SetFocus` request]: SetFocus
+#[doc(alias = "SetInputFocusError")]
+pub enum SetFocusError {
+	/// A [`Match` error].
+	///
+	/// [`Match` error]: error::Match
+	Match(error::Match),
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+	/// A [`Window` error].
+	///
+	/// [`Window` error]: error::Window
+	Window(error::Value),
+}
+
+/// What the focus should revert to if the focused [window] becomes unviewable.
+///
+/// This is used in the [`SetFocus` request].
+///
+/// [window]: Window
+///
+/// [`SetFocus` request]: SetFocus
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub enum RevertFocus {
+	/// Revert the focus to no [window].
+	///
+	/// It is recommended to use [`CursorRoot`] in place of this, because at
+	/// least the root [window] will have focus with [`CursorRoot`].
+	///
+	/// [`CursorRoot`]: RevertFocus::CursorRoot
+	///
+	/// [window]: Window
+	None,
+
+	/// Revert the focus to the root [window] which the cursor is on at the
+	/// time.
+	///
+	/// [window]: Window
+	CursorRoot,
+	/// Revert the focus to the parent of the [window] which the cursor is in at
+	/// the time.
+	Parent,
+}
+
+derive_xrb! {
+	/// A [request] which changes the current focus.
+	///
+	/// This [request] generates [`Focus`] and [`Unfocus`] events.
+	///
+	/// # Errors
+	/// A [`Match` error] is generated of the specified `new_focus` is not
+	/// viewable at the time of the [request].
+	///
+	/// A [`Window` error] is generated if `new_focus` is [`FocusWindow::Other`]
+	/// and does not refer to a defined [window].
+	///
+	/// [request]: crate::message::Request
+	///
+	/// [`Focus`]: super::event::Focus
+	/// [`Unfocus`]: super::event::Unfocus
+	///
+	/// [`Match` error]: error::Match
+	/// [`Window` error]: error::Window
+	#[doc(alias("SetInputFocus", "Focus", "FocusWindow"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct SetFocus: Request(42, SetFocusError) {
+		/// What the focus should revert to if the focused [window] becomes
+		/// unviewable.
+		///
+		/// [window]: Window
+		#[metabyte]
+		pub revert_to: RevertFocus,
+
+		/// The new focus.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this is [`FocusWindow::Other`]
+		/// but does not refer to a defined [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		#[doc(alias = "focus")]
+		pub new_focus: FocusWindow,
+
+		/// The [time] at which the focus is recorded as having changed.
+		pub time: CurrentableTime,
 	}
 }
