@@ -31,7 +31,6 @@ use crate::{
 	Keycode,
 	Rectangle,
 	String8,
-	Timestamp,
 	Window,
 	WindowClass,
 };
