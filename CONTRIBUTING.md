@@ -105,7 +105,31 @@ examples would be comparing the events in the events section of the
 [`x11::event`]: https://github.com/XdotRS/xrb/blob/main/src/x11/event.rs
 
 ## Code style
-TODO
+
+### Attributes and Documentation
+
+A lot of types and fields in xrb uses attributes, such as `#[derive(...)]` or other custom ones.
+To keep the code easely readable, those a preferably put after documentation comments.
+
+Here is an example:
+```rust
+/// # Foo
+/// Documentation about [Foo]
+#[doc(alias("foo"))]
+#[derive(Debug, Hash, X11Size)]
+pub struct Foo {
+    /// Documentation about the [data] field
+    #[custom_attribute_field]
+    pub data: Any,
+
+    /// Other doc
+    pub other_field: Any,
+}
+```
+
+Doing this helps grouping code related syntax together, so when documentation is taking a lot of place,
+it's not splitting elements far away from each other (if, for example attributes are placed before the doc comments).
+
 
 ## Useful resources
  - [X Window System protocol version 11](https://x.org/releases/X11R7.7/doc/xproto/x11protocol.html)
