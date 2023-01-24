@@ -31,6 +31,7 @@ use crate::{
 	Keycode,
 	Rectangle,
 	String8,
+	Timestamp,
 	Window,
 	WindowClass,
 };
@@ -2755,5 +2756,42 @@ derive_xrb! {
 		/// [`Window` error]: error::Window
 		#[doc(alias = "window")]
 		pub target: Window,
+	}
+
+	/// A [request] that returns the recorded cursor motion between the given
+	/// `start` and `end` times.
+	///
+	/// The `start` and `end` times are inclusive.
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if `target` does not refer to a defined
+	/// [window].
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [`Window` error]: error::Window
+	#[doc(alias = "GetMotionEvents")]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GetMotionHistory: Request(39, error::Window) -> reply::GetMotionHistory {
+		/// The [window] for which the motion history is returned.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		pub target: Window,
+
+		/// The start of the time period for which motion events are returned.
+		///
+		/// This is inclusive.
+		pub start: CurrentableTime,
+		/// The end of the time period for which motion events are returned.
+		///
+		/// This is inclusive.
+		pub end: CurrentableTime,
 	}
 }

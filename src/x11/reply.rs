@@ -26,6 +26,7 @@ use crate::{
 	ModifierMask,
 	Rectangle,
 	String8,
+	Timestamp,
 	Window,
 	WindowClass,
 	WindowGravity,
@@ -637,5 +638,59 @@ derive_xrb! {
 		/// The currently held mouse buttons and modifier keys.
 		pub modifiers: ModifierMask,
 		[_; ..],
+	}
+}
+
+/// The coordinates of the cursor at a certain [time].
+///
+/// This is used in the [`GetMotionHistory` reply].
+///
+/// [time]: Timestamp
+///
+/// [`GetMotionHistory` reply]: GetMotionHistory
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub struct TimeCoords {
+	/// The [time] at which the cursor was at the `coords`.
+	///
+	/// [time]: Timestamp
+	pub time: Timestamp,
+	/// The coordinates of the cursor at the `time`.
+	pub coords: Coords,
+}
+
+derive_xrb! {
+	/// The [reply] to a [`GetMotionHistory` request].
+	///
+	/// [reply]: crate::message::Reply
+	///
+	/// [`GetMotionHistory` request]: request::GetMotionHistory
+	#[doc(alias = "GetMotionEvents")]
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct GetMotionHistory: Reply for request::GetMotionHistory {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: crate::message::Reply
+		///
+		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		// The length of `motion_history`.
+		#[allow(clippy::cast_possible_truncation)]
+		let motion_history_len: u32 = motion_history => motion_history.len() as u32,
+		[_; 20],
+
+		/// The recorded cursor motion between the `start` and `end` times
+		/// (inclusive) for the given `target` [window].
+		///
+		/// [window]: Window
+		#[context(motion_history_len => *motion_history_len as usize)]
+		pub motion_history: Vec<TimeCoords>,
 	}
 }
