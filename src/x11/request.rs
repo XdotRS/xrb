@@ -777,7 +777,7 @@ derive_xrb! {
 		/// [`InputOnly`]: WindowClass::InputOnly
 		///
 		/// [`Match` error]: error::Match
-		#[doc(alias = "values")]
+		#[doc(alias("values", "value_mask", "value_list", "window_config"))]
 		pub config: WindowConfig,
 	}
 }
