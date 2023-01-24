@@ -74,7 +74,7 @@ bitflags! {
 		///
 		/// [`EnterWindow`]: crate::x11::event::EnterWindow
 		/// [`Focus`]: crate::x11::event::Focus
-		const KEYS_STATE = 0x0000_4000;
+		const KEYBOARD_STATE = 0x0000_4000;
 
 		/// Events generated for arbitrary rectangular areas of windows that
 		/// need to be rendered.

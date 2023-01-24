@@ -753,6 +753,7 @@ derive_xrb! {
 	/// [reply]: crate::message::Reply
 	///
 	/// [`GetFocus` request]: request::GetFocus
+	#[doc(alias = "GetInputFocus")]
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
 	#[derivative(Hash, PartialEq, Eq)]
 	pub struct GetFocus: Reply for request::GetFocus {
@@ -779,5 +780,33 @@ derive_xrb! {
 		/// The current focus.
 		pub focus: FocusWindow,
 		[_; ..],
+	}
+
+	/// The [reply] to a [`QueryKeyboard` request].
+	///
+	/// [`QueryKeyboard` request]: request::QueryKeyboard
+	#[doc(alias = "QueryKeymap")]
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct QueryKeyboard: Reply for request::QueryKeyboard {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: crate::message::Reply
+		///
+		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		/// A bit vector representing the currently held keys of the keyboard.
+		///
+		/// A bit is `0` if the key is not held, and `1` if it is held. Byte
+		/// `N`, starting at `0`, contains the bits for keys `8N` to `8N + 7`.
+		/// The least significant bit in the byte represents key `8N`.
+		pub keys: [u8; 32],
 	}
 }

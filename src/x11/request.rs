@@ -3071,4 +3071,12 @@ derive_xrb! {
 	#[doc(alias = "GetInputFocus")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct GetFocus: Request(43) -> reply::GetFocus;
+
+	/// A [request] that returns a bit vector of the currently held keys on the
+	/// keyboard.
+	///
+	/// [request]: crate::message::Request
+	#[doc(alias = "QueryKeymap")]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct QueryKeyboard: Request(44) -> reply::QueryKeyboard;
 }

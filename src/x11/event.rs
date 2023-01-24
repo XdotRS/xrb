@@ -1129,13 +1129,13 @@ derive_xrb! {
 	/// An [event] describing the current state of the keyboard.
 	///
 	/// # Recipients
-	/// This [event] is reported to clients selecting [`KEYS_STATE`] on a [window]
-	/// immediately after every [`EnterWindow`] and [`Focus`] event.
+	/// This [event] is reported to clients selecting [`KEYBOARD_STATE`] on a
+	/// [window] immediately after every [`EnterWindow`] and [`Focus`] event.
 	///
 	/// [event]: crate::message::Event
 	/// [window]: Window
-	/// [`KEYS_STATE`]: crate::EventMask::KEYS_STATE
-	pub struct KeysState: Event(11) {
+	/// [`KEYBOARD_STATE`]: crate::EventMask::KEYBOARD_STATE
+	pub struct KeyboardState: Event(11) {
 		/// A bit vector representing the current keyboard state.
 		///
 		/// Each bit set to 1 indicates that the corresponding key is currently
