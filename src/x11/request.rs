@@ -41,6 +41,7 @@ use xrbk::{
 	ReadError,
 	ReadError::UnrecognizedDiscriminant,
 	ReadResult,
+	Readable,
 	ReadableWithContext,
 	Wrap,
 	Writable,
@@ -2841,5 +2842,129 @@ derive_xrb! {
 		///
 		/// [window]: Window
 		pub original_coords: Coords,
+	}
+}
+
+/// Represents dimensions within the `source` [window] of a
+/// [`WarpCursor` request].
+///
+/// [window]: Window
+///
+/// [`WarpCursor` request]: WarpCursor
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub enum WarpSourceDimension {
+	/// Set the `source_width` to the width of the `source` [window] minus the x
+	/// coordinate or the `source_height` to the height of the `source` [window]
+	/// minus the y coordinate.
+	///
+	/// [window]: Window
+	FillRemaining,
+	/// This specific width or height.
+	Other(u16),
+}
+
+impl ConstantX11Size for WarpSourceDimension {
+	const X11_SIZE: usize = 2;
+}
+
+impl X11Size for WarpSourceDimension {
+	fn x11_size(&self) -> usize {
+		Self::X11_SIZE
+	}
+}
+
+impl Readable for WarpSourceDimension {
+	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		Ok(match buf.get_u16() {
+			zero if zero == 0 => Self::FillRemaining,
+			other => Self::Other(other),
+		})
+	}
+}
+
+impl Writable for WarpSourceDimension {
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		match self {
+			Self::FillRemaining => buf.put_u16(0),
+			Self::Other(other) => other.write_to(buf)?,
+		}
+
+		Ok(())
+	}
+}
+
+derive_xrb! {
+	/// A [request] that instantly moves the cursor to a new location.
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if either the `source` or the `destination` are [`Some`] and
+	/// do not refer to defined [windows].
+	///
+	/// [windows]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [`Window` error]: error::Window
+	#[doc(alias = "WarpPointer")]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct WarpCursor: Request(41, error::Window) {
+		/// The [window] which the cursor is being warped from.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this is [`Some`] but does not
+		/// refer to a defined [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		#[doc(alias("src", "src_window"))]
+		pub source: Option<Window>,
+		/// The [window] which the cursor is being warped to.
+		///
+		/// If this is [`None`], the cursor is simply offset by the `coords`. If
+		/// this is [`Some`], the cursor is set to the `coords` relative to this
+		/// [window].
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this is [`SOme`] but does not
+		/// refer to a defined [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		#[doc(alias("dst", "dst_window"))]
+		pub destination: Option<Window>,
+
+		/// The coordinates of the top-left corner of the rectangular area
+		/// within the `source` [window] which the cursor must be within for it
+		/// to be warped.
+		///
+		/// [window]: Window
+		#[doc(alias("src_coords", "src_x", "src_y", "source_x", "source_y"))]
+		pub source_coords: Coords,
+		/// The width of the rectangular area within the `source` [window] which
+		/// the cursor must be within for it to be warped.
+		///
+		/// [window]: Window
+		#[doc(alias = "src_width")]
+		pub source_width: WarpSourceDimension,
+		/// The height of the rectangular area within the `source` [window]
+		/// which the cursor must be within for it to be warped.
+		///
+		/// [window]: Window
+		#[doc(alias = "src_height")]
+		pub source_height: WarpSourceDimension,
+
+		/// The coordinates applied to the cursor.
+		///
+		/// If `destination` is [`None`], the cursor is offset by these
+		/// coordinates. Otherwise, the cursor is moved to these coordinates
+		/// relative to the `destination` [window].
+		///
+		/// [window]: Window
+		#[doc(alias("dst_x", "dst_y", "dst_coords", "destination_coords"))]
+		pub coords: Coords,
 	}
 }
