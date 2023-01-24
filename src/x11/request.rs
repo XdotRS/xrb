@@ -2793,4 +2793,53 @@ derive_xrb! {
 		/// This is inclusive.
 		pub end: CurrentableTime,
 	}
+
+	/// Converts coordinates relative to the given `original` [window] to
+	/// `output_coords` relative to the given `output` [window].
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if either `original` or `output` do not
+	/// refer to defined [windows][window].
+	///
+	/// [window]: Window
+	///
+	/// [`Window` error]: error::Window
+	#[doc(alias = "TranslateCoordinates")]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ConvertCoordinates: Request(40, error::Window) -> reply::ConvertCoordinates {
+		/// The [window] which the `original_coords` are relative to.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		#[doc(alias("src_window", "source", "input"))]
+		pub original: Window,
+		/// The [window] which the `output_coords` will be relative to.
+		///
+		/// The `original_coords` are converted to coordinates relative to the
+		/// top-left corner of this [window].
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		#[doc(alias("dst_window", "destination"))]
+		pub output: Window,
+
+		/// The coordinates, relative to the `original` [window]'s top-left
+		/// corner, which will be converted.
+		///
+		/// These coordinates will be converted such that the `output_coords`
+		/// are relative to the `output` [window].
+		///
+		/// [window]: Window
+		pub original_coords: Coords,
+	}
 }

@@ -693,4 +693,55 @@ derive_xrb! {
 		#[context(motion_history_len => *motion_history_len as usize)]
 		pub motion_history: Vec<TimeCoords>,
 	}
+
+
+	/// The [reply] to a [`ConvertCoordinates` request].
+	///
+	/// [reply]: crate::message::Reply
+	///
+	/// [`ConvertCoordinates` request]: request::ConvertCoordinates
+	#[doc(alias = "TranslateCoordinates")]
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct ConvertCoordinates: Reply for request::ConvertCoordinates {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: crate::message::Reply
+		///
+		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		/// Whether the `original` [window] and the `output` [window] are on the
+		/// same [screen].
+		///
+		/// [window]: Window
+		/// [screen]: crate::visual::Screen
+		#[metabyte]
+		pub same_screen: bool,
+
+		/// If the `output_coords` are contained within a mapped child of the
+		/// `output` [window], this is that child.
+		///
+		/// If `same_screen` is `false`, this is always [`None`].
+		// TODO: should always be [`None`] if `same_screen` is false
+		pub child: Option<Window>,
+
+		/// The converted coordinates which are now relative to the top-left
+		/// corner of the `output` [window].
+		///
+		// FIXME: should always be [`None`], but requires overriding the reading
+		//        behavior here
+		/// If `same_screen` is `false`, these are always zero.
+		///
+		/// [window]: Window
+		#[doc(alias("dst_x", "dst_y", "dst_coords", "destination_coords"))]
+		pub output_coords: Coords,
+		[_; ..],
+	}
 }
