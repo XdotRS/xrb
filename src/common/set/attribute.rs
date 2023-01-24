@@ -4,7 +4,7 @@
 
 use super::__bool;
 use crate::{
-	visual::Color,
+	visual::ColorId,
 	BitGravity,
 	Colormap,
 	CopyableFromParent,
@@ -83,7 +83,7 @@ pub type ColormapAttribute = CopyableFromParent<Colormap>;
 /// |[`window_gravity`]        |[`NorthWest`]|[`InputOutput`] and [`InputOnly`]|
 /// |[`maintain_contents`]     |[`NotUseful`]      |[`InputOutput`] only       |
 /// |[`maintained_planes`]     |`0x_ffff_ffff`     |[`InputOutput`] only       |
-/// |[`maintenance_fallback_color`]|[`Color::ZERO`]|[`InputOutput`] only       |
+/// |[`maintenance_fallback_color`]|[`ColorId::ZERO`]|[`InputOutput`] only     |
 /// |[`override_redirect`]     |`false`      |[`InputOutput`] and [`InputOnly`]|
 /// |[`maintain_windows_under`]|`false`            |[`InputOutput`] only       |
 /// |[`event_mask`]           |[`empty()`][e]|[`InputOutput`] and [`InputOnly`]|
@@ -131,17 +131,17 @@ pub struct Attributes {
 	mask: AttributesMask,
 
 	background_pixmap: Option<BackgroundPixmap>,
-	background_color: Option<Color>,
+	background_color: Option<ColorId>,
 
 	border_pixmap: Option<BorderPixmap>,
-	border_color: Option<Color>,
+	border_color: Option<ColorId>,
 
 	bit_gravity: Option<__BitGravity>,
 	window_gravity: Option<__WindowGravity>,
 
 	maintain_contents: Option<MaintainContents>,
 	maintained_planes: Option<u32>,
-	maintenance_fallback_color: Option<Color>,
+	maintenance_fallback_color: Option<ColorId>,
 
 	override_redirect: Option<__bool>,
 	maintain_windows_under: Option<__bool>,
@@ -179,17 +179,17 @@ pub struct AttributesBuilder {
 	mask: AttributesMask,
 
 	background_pixmap: Option<BackgroundPixmap>,
-	background_color: Option<Color>,
+	background_color: Option<ColorId>,
 
 	border_pixmap: Option<BorderPixmap>,
-	border_color: Option<Color>,
+	border_color: Option<ColorId>,
 
 	bit_gravity: Option<BitGravity>,
 	window_gravity: Option<WindowGravity>,
 
 	maintain_contents: Option<MaintainContents>,
 	maintained_planes: Option<u32>,
-	maintenance_fallback_color: Option<Color>,
+	maintenance_fallback_color: Option<ColorId>,
 
 	override_redirect: Option<bool>,
 	maintain_windows_under: Option<bool>,
@@ -312,7 +312,7 @@ impl AttributesBuilder {
 	///
 	/// [window]: crate::Window
 	/// [`background_pixmap`]: AttributesBuilder::background_pixmap
-	pub fn background_color(&mut self, background_color: Color) -> &mut Self {
+	pub fn background_color(&mut self, background_color: ColorId) -> &mut Self {
 		if self.background_color.is_none() {
 			self.x11_size += 4;
 		}
@@ -358,7 +358,7 @@ impl AttributesBuilder {
 	/// [window]: crate::Window
 	///
 	/// [`border_pixmap`]: AttributesBuilder::border_pixmap
-	pub fn border_color(&mut self, border_color: Color) -> &mut Self {
+	pub fn border_color(&mut self, border_color: ColorId) -> &mut Self {
 		if self.border_color.is_none() {
 			self.x11_size += 4;
 		}
@@ -446,7 +446,7 @@ impl AttributesBuilder {
 	///
 	/// [`maintain_contents`]: Attributes::maintain_contents
 	/// [`maintain_windows_under`]: Attributes::maintain_windows_under
-	pub fn maintenance_fallback_color(&mut self, maintenance_fallback_color: Color) -> &mut Self {
+	pub fn maintenance_fallback_color(&mut self, maintenance_fallback_color: ColorId) -> &mut Self {
 		if self.maintenance_fallback_color.is_none() {
 			self.x11_size += 4;
 		}
@@ -622,7 +622,7 @@ impl Attributes {
 		clippy::missing_const_for_fn,
 		reason = "const is omitted for API uniformity with the other methods and sets"
 	)]
-	pub fn background_color(&self) -> Option<&Color> {
+	pub fn background_color(&self) -> Option<&ColorId> {
 		self.background_color.as_ref()
 	}
 
@@ -658,7 +658,7 @@ impl Attributes {
 		clippy::missing_const_for_fn,
 		reason = "const is omitted for API uniformity with the other methods and sets"
 	)]
-	pub fn border_color(&self) -> Option<&Color> {
+	pub fn border_color(&self) -> Option<&ColorId> {
 		self.border_color.as_ref()
 	}
 
@@ -741,7 +741,7 @@ impl Attributes {
 		clippy::missing_const_for_fn,
 		reason = "const is omitted for API uniformity with the other methods and sets"
 	)]
-	pub fn maintenance_fallback_color(&self) -> Option<&Color> {
+	pub fn maintenance_fallback_color(&self) -> Option<&ColorId> {
 		self.maintenance_fallback_color.as_ref()
 	}
 
