@@ -232,6 +232,7 @@ derive_xrb! {
 	/// [reply]: crate::message::Reply
 	///
 	/// [`GetGeometry` request]: request::GetGeometry
+	#[doc(alias("GetX", "GetY", "GetWidth", "GetHeight", "GetBorderWidth"))]
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
 	#[derivative(Hash, PartialEq, Eq)]
 	pub struct GetGeometry: Reply for request::GetGeometry {
@@ -270,7 +271,7 @@ derive_xrb! {
 		/// [window]: Window
 		/// [pixmap]: create::Pixmap
 		/// [drawable]: crate::Drawable
-		#[doc(alias = "x", alias = "y", alias = "width", alias = "height")]
+		#[doc(alias("x", "y", "width", "height"))]
 		pub geometry: Rectangle,
 		/// The width of the [drawable]'s border.
 		///
@@ -287,7 +288,9 @@ derive_xrb! {
 	/// [reply]: crate::message::Reply
 	///
 	/// [`QueryWindowTree` request]: request::QueryWindowTree
-	#[doc(alias = "QueryTree")]
+	#[doc(alias("QueryTree", "GetTree", "GetWindowTree"))]
+	#[doc(alias("QueryParent", "QueryChildren", "QueryRoot"))]
+	#[doc(alias("GetParent", "GetChildren", "GetRoot"))]
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
 	#[derivative(Hash, PartialEq, Eq)]
 	pub struct QueryWindowTree: Reply for request::QueryWindowTree {
@@ -330,7 +333,7 @@ derive_xrb! {
 	/// [reply]: crate::message::Reply
 	///
 	/// [`GetAtom` request]: request::GetAtom
-	#[doc(alias = "InternAtom")]
+	#[doc(alias("InternAtom", "CreateAtom"))]
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
 	#[derivative(Hash, PartialEq, Eq)]
 	pub struct GetAtom: Reply for request::GetAtom {

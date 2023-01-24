@@ -191,7 +191,7 @@ derive_xrb! {
 		///
 		/// [window]: Window
 		/// [attributes]: Attributes
-		#[doc(alias = "values")]
+		#[doc(alias("values", "value_mask", "value_list", "attribute_mask", "attribute_list"))]
 		pub attributes: Attributes,
 	}
 }
@@ -260,7 +260,7 @@ derive_xrb! {
 		/// The [attributes] which are changed.
 		///
 		/// [attributes]: Attributes
-		#[doc(alias = "values")]
+		#[doc(alias("values", "value_mask", "value_list", "attribute_mask", "attribute_list"))]
 		pub attributes: Attributes,
 	}
 
@@ -922,7 +922,9 @@ derive_xrb! {
 	/// [`QueryWindowTree` reply]: reply::QueryWindowTree
 	///
 	/// [`Window` error]: error::Window
-	#[doc(alias = "QueryTree")]
+	#[doc(alias("QueryTree", "GetTree", "GetWindowTree"))]
+	#[doc(alias("QueryParent", "QueryChildren", "QueryRoot"))]
+	#[doc(alias("GetParent", "GetChildren", "GetRoot"))]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct QueryWindowTree: Request(15, error::Window) -> reply::QueryWindowTree {
 		/// The [window] for which this [request] gets its root [window],
@@ -954,7 +956,7 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	///
 	/// [`GetAtom` reply]: reply::GetAtom
-	#[doc(alias = "InternAtom")]
+	#[doc(alias("InternAtom", "CreateAtom"))]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct GetAtom: Request(16, error::Value) -> reply::GetAtom {
 		#[metabyte]
@@ -1194,7 +1196,7 @@ derive_xrb! {
 	/// An [`Atom` error] is generated if either `property` or `type` do not
 	/// refer to defined [windows][window].
 	///
-	/// If the `change_mode` is [`Prepend`] or [`Append`], the `type` and
+	/// If the `modify_mode` is [`Prepend`] or [`Append`], the `type` and
 	/// `format` must match that of the existing property's value, else a
 	/// [`Match` error] is generated.
 	///
@@ -1231,7 +1233,7 @@ derive_xrb! {
 		///
 		/// [`Match` error]: error::Match
 		#[doc(alias = "mode")]
-		pub change_mode: ModifyPropertyMode,
+		pub modify_mode: ModifyPropertyMode,
 
 		/// The [window] which the `property` is modified for.
 		///
