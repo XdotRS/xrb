@@ -7,7 +7,7 @@ use xrbk_macro::{ConstantX11Size, Readable, Writable, X11Size};
 use crate::{
 	set::{__Px, __bool, __u8},
 	unit::Px,
-	visual::Color,
+	visual::ColorId,
 	Font,
 	Pixmap,
 };
@@ -283,8 +283,8 @@ pub type ClipMask = Option<Pixmap>;
 /// |-------------------------|---------------------------------------------|
 /// |[`function`]             |[`Function::Copy`]                           |
 /// |[`plane_mask`]           |`0xffff_ffff`                                |
-/// |[`foreground_color`]     |[`Color::ZERO`]                              |
-/// |[`background_color`]     |[`Color::ONE`]                               |
+/// |[`foreground_color`]     |[`ColorId::ZERO`]                            |
+/// |[`background_color`]     |[`ColorId::ONE`]                             |
 /// |[`line_width`]           |[`LineWidth::Thin`]                          |
 /// |[`line_style`]           |[`LineStyle::Solid`]                         |
 /// |[`cap_style`]            |[`CapStyle::Butt`]                           |
@@ -339,8 +339,8 @@ pub struct GraphicsOptions {
 
 	plane_mask: Option<u32>,
 
-	foreground_color: Option<Color>,
-	background_color: Option<Color>,
+	foreground_color: Option<ColorId>,
+	background_color: Option<ColorId>,
 
 	line_width: Option<__LineWidth>,
 
@@ -399,8 +399,8 @@ pub struct GraphicsOptionsBuilder {
 
 	plane_mask: Option<u32>,
 
-	foreground_color: Option<Color>,
-	background_color: Option<Color>,
+	foreground_color: Option<ColorId>,
+	background_color: Option<ColorId>,
 
 	line_width: Option<LineWidth>,
 
@@ -571,7 +571,7 @@ impl GraphicsOptionsBuilder {
 	/// See [`GraphicsOptions::foreground_color`] for more information.
 	///
 	/// [foreground color]: GraphicsOptions::foreground_color
-	pub fn foreground_color(&mut self, foreground_color: Color) -> &mut Self {
+	pub fn foreground_color(&mut self, foreground_color: ColorId) -> &mut Self {
 		if self.foreground_color.is_none() {
 			self.x11_size += 4;
 		}
@@ -586,7 +586,7 @@ impl GraphicsOptionsBuilder {
 	/// See [`GraphicsOptions::background_color`] for more information.
 	///
 	/// [background color]: GraphicsOptions::background_color
-	pub fn background_color(&mut self, background_color: Color) -> &mut Self {
+	pub fn background_color(&mut self, background_color: ColorId) -> &mut Self {
 		if self.background_color.is_none() {
 			self.x11_size += 4;
 		}
@@ -910,7 +910,7 @@ impl GraphicsOptions {
 	///
 	/// See [`Function`] for information on each function and its meaning.
 	///
-	/// [color]: Color
+	/// [color]: ColorId
 	#[must_use]
 	pub fn function(&self) -> Option<&Function> {
 		self.function.as_ref().map(|__Function(function)| function)
@@ -928,12 +928,12 @@ impl GraphicsOptions {
 
 	/// The foreground color used in graphics operations.
 	#[must_use]
-	pub const fn foreground_color(&self) -> Option<&Color> {
+	pub const fn foreground_color(&self) -> Option<&ColorId> {
 		self.foreground_color.as_ref()
 	}
 	/// The background color used in graphics operations.
 	#[must_use]
-	pub const fn background_color(&self) -> Option<&Color> {
+	pub const fn background_color(&self) -> Option<&ColorId> {
 		self.background_color.as_ref()
 	}
 
