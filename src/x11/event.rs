@@ -19,7 +19,7 @@ use crate::{
 	GrabMode,
 	Keycode,
 	ModifierMask,
-	Point,
+	Coords,
 	Rectangle,
 	Region,
 	StackMode,
@@ -99,12 +99,12 @@ derive_xrb! {
 		///
 		/// [event]: crate::message::Event
 		/// [window]: Window
-		pub root_coords: Point,
+		pub root_coords: Coords,
 		/// The coordinates of the cursor at the `time` this [event] was
 		/// generated, relative to the `event_window`'s origin.
 		///
 		/// [event]: crate::message::Event
-		pub event_coords: Point,
+		pub event_coords: Coords,
 
 		/// The state of mouse buttons and modifier keys immediately
 		/// before this [event] was generated.
@@ -181,12 +181,12 @@ derive_xrb! {
 		///
 		/// [window]: Window
 		/// [event]: crate::message::Event
-		pub root_coords: Point,
+		pub root_coords: Coords,
 		/// The coordinates of the cursor at the `time` this [event] was
 		/// generated, relative to the `event_window`'s origin.
 		///
 		/// [event]: crate::message::Event
-		pub event_coords: Point,
+		pub event_coords: Coords,
 
 		/// The state of [mouse buttons] and modifier keys immediately
 		/// before this [event] was generated.
@@ -263,12 +263,12 @@ derive_xrb! {
 		///
 		/// [event]: crate::message::Event
 		/// [window]: Window
-		pub root_coords: Point,
+		pub root_coords: Coords,
 		/// The coordinates of the cursor at the `time` this [event] was generated,
 		/// relative to the `event_window`'s origin.
 		///
 		/// [event]: crate::message::Event
-		pub event_coords: Point,
+		pub event_coords: Coords,
 
 		/// The state of [mouse buttons] and modifier keys immediately
 		/// before this [event] was generated.
@@ -344,12 +344,12 @@ derive_xrb! {
 		/// relative to the `root` window's origin.
 		///
 		/// [event]: crate::message::Event
-		pub root_coords: Point,
+		pub root_coords: Coords,
 		/// The coordinates of the cursor at the `time` this [event] was generated,
 		/// relative to the `event_window`'s origin.
 		///
 		/// [event]: crate::message::Event
-		pub event_coords: Point,
+		pub event_coords: Coords,
 
 		/// The state of [mouse buttons] and modifier keys immediately
 		/// before this [event] was generated.
@@ -393,7 +393,7 @@ pub enum MotionNotificationType {
 	/// [`MOTION_HINT`]: crate::EventMask::MOTION_HINT
 	/// [mouse button]: Button
 	///
-	/// [`QueryCursor`]: super::request::QueryCursor
+	/// [`QueryCursor`]: super::request::QueryCursorLocation
 	/// [`GetMotionEvents`]: super::request::GetMotionEvents
 	Hint,
 }
@@ -435,7 +435,7 @@ derive_xrb! {
 	/// [`MOTION_HINT`]: crate::EventMask::MOTION_HINT
 	///
 	/// [`Hint`]: MotionNotificationType::Hint
-	/// [`QueryCursor`]: super::request::QueryCursor
+	/// [`QueryCursor`]: super::request::QueryCursorLocation
 	/// [`GetMotionEvents`]: super::request::GetMotionEvents
 	///
 	/// [event]: crate::message::Event
@@ -488,12 +488,12 @@ derive_xrb! {
 		///
 		/// [event]: crate::message::Event
 		/// [window]: Window
-		pub root_coords: Point,
+		pub root_coords: Coords,
 		/// The coordinates of the cursor at the `time` this [event] was generated,
 		/// relative to the `event_window`'s origin.
 		///
 		/// [event]: crate::message::Event
-		pub event_coords: Point,
+		pub event_coords: Coords,
 
 		/// The state of [mouse buttons] and modifier keys immediately
 		/// before this [event] was generated.
@@ -687,7 +687,7 @@ derive_xrb! {
 		///
 		/// This is always the final position of the cursor, not its initial
 		/// position.
-		pub root_coords: Point,
+		pub root_coords: Coords,
 		/// The position of the cursor at the time this event was generated,
 		/// relative to the `event_window`'s origin, if the `event_window` is on
 		/// the [`SAME_SCREEN`].
@@ -699,7 +699,7 @@ derive_xrb! {
 		/// position.
 		///
 		/// [`SAME_SCREEN`]: EnterLeaveMask::SAME_SCREEN
-		pub event_coords: Point,
+		pub event_coords: Coords,
 
 		/// The state of mouse buttons and modifier keys immediately
 		/// before this event was generated.
@@ -781,7 +781,7 @@ derive_xrb! {
 		///
 		/// [event]: crate::message::Event
 		/// [window]: Window
-		pub root_coords: Point,
+		pub root_coords: Coords,
 		/// The position of the cursor at the `time` this [event] was generated,
 		/// relative to the `event_window`'s origin, if the `event_window` is on
 		/// the [`SAME_SCREEN`].
@@ -795,7 +795,7 @@ derive_xrb! {
 		/// [event]: crate::message::Event
 		/// [`SAME_SCREEN`]: EnterLeaveMask::SAME_SCREEN
 		/// [screen]: crate::Screen
-		pub event_coords: Point,
+		pub event_coords: Coords,
 
 		/// The state of [mouse buttons] and modifier keys immediately
 		/// before this [event] was generated.
@@ -1668,7 +1668,7 @@ derive_xrb! {
 		pub new_parent: Window,
 
 		/// The `window`'s new coordinates relative to its `new_parent`'s origin.
-		pub coords: Point,
+		pub coords: Coords,
 
 		/// Whether [`MapWindow`] and [`ConfigureWindow`] requests on the
 		/// `window` should override a [`SUBSTRUCTURE_REDIRECT`] on the
@@ -1871,7 +1871,7 @@ derive_xrb! {
 
 		/// The new coordinates of the `window`, relative to its parent's
 		/// origin.
-		pub coords: Point,
+		pub coords: Coords,
 		[_; ..],
 	}
 

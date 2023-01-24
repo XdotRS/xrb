@@ -18,10 +18,12 @@ use crate::{
 	Atom,
 	BitGravity,
 	Colormap,
+	Coords,
 	DeviceEventMask,
 	EventMask,
 	GrabStatus,
 	MaintainContents,
+	ModifierMask,
 	Rectangle,
 	String8,
 	Window,
@@ -576,6 +578,64 @@ derive_xrb! {
 		#[metabyte]
 		pub grab_status: GrabStatus,
 
+		[_; ..],
+	}
+
+
+	/// The [reply] to a [`QueryCursorLocation` request].
+	///
+	/// [reply]: crate::message::Reply
+	///
+	/// [`QueryCursorLocation` request]: request::QueryCursorLocation
+	#[doc(alias("QueryPointer, QueryCursor, GetCursorPos, GetCursorLocation"))]
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct QueryCursorLocation: Reply for request::QueryCursorLocation {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: crate::message::Reply
+		///
+		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		/// Whether the cursor is on the `same_screen` as the given `target`
+		/// [window].
+		#[metabyte]
+		pub same_screen: bool,
+
+		/// The root [window] which the cursor is located within.
+		///
+		/// [window]: Window
+		pub root: Window,
+		/// The child [window] containing the cursor, if any.
+		///
+		/// If the cursor is not on the `same_screen` (i.e., `same_screen` is
+		/// `false`), this will always be [`None`].
+		///
+		/// [window]: Window
+		// TODO: should always be [`None`] if `same_screen` is false
+		pub child: Option<Window>,
+
+		/// The coordinates of the cursor relative to the top-left corner of the
+		/// `root` [window].
+		///
+		/// [window]: Window
+		pub root_coords: Coords,
+		/// The coordinates of the cursor relative to the top-left corner of the
+		/// given `target` [window].
+		///
+		/// [window]: Window
+		// TODO: should always be [`None`] if `same_screen` is false
+		pub target_coords: Coords,
+
+		/// The currently held mouse buttons and modifier keys.
+		pub modifiers: ModifierMask,
 		[_; ..],
 	}
 }

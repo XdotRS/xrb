@@ -393,7 +393,7 @@ impl ReadableWithContext for String16 {
 	Readable,
 	Writable,
 )]
-pub struct Point {
+pub struct Coords {
 	#[allow(missing_docs)]
 	pub x: Px<i16>,
 	#[allow(missing_docs)]

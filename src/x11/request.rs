@@ -28,7 +28,7 @@ use crate::{
 	EventMask,
 	FreezeMode,
 	Keycode,
-	Point,
+	Coords,
 	Rectangle,
 	String8,
 	Window,
@@ -534,7 +534,7 @@ derive_xrb! {
 		/// The `target`'s new coordinates relative to its `new_parent`'s
 		/// top-left corner.
 		#[doc(alias("x", "y"))]
-		pub coords: Point,
+		pub coords: Coords,
 	}
 
 	/// A [request] that maps the given [window].
@@ -2632,7 +2632,7 @@ pub enum AllowEventsMode {
 	/// Unfreezes the cursor, but freezes it again after the next
 	/// [`ButtonPress`] or [`ButtonRelease`].
 	///
-	/// Your client have an active grab on the cursor.
+	/// Your client must have an active grab on the cursor.
 	///
 	/// The cursor is frozen again specifically after the next [`ButtonPress`]
 	/// [`ButtonRelease`] event reported to your client which does not cause
@@ -2656,7 +2656,7 @@ pub enum AllowEventsMode {
 	/// Unfreezes the keyboard, but freezes it again after the next
 	/// [`KeyPress`] or [`KeyPress`].
 	///
-	/// Your client have an active grab on the keyboard.
+	/// Your client must have an active grab on the keyboard.
 	///
 	/// The keyboard is frozen again specifically after the next [`KeyPress`]
 	/// [`KeyRelease`] event reported to your client which does not cause
@@ -2729,4 +2729,31 @@ derive_xrb! {
 	/// connection closes on all other clients' connections.
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct UngrabServer: Request(37);
+
+	/// A [request] that gets the current location of the cursor.
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if the `target` does not refer to a
+	/// defined [window].
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [`Window` error]: error::Window
+	#[doc(alias("QueryPointer, QueryCursor, GetCursorPos, GetCursorLocation"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct QueryCursorLocation: Request(38, error::Window) -> reply::QueryCursorLocation {
+		/// Specifies a [window] to receive relative coordinates of the cursor
+		/// in relation to, if the cursor is on the same screen.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		#[doc(alias = "window")]
+		pub target: Window,
+	}
 }
