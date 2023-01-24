@@ -27,6 +27,7 @@ use crate::{
 	Drawable,
 	EventMask,
 	FreezeMode,
+	Keycode,
 	Point,
 	Rectangle,
 	String8,
@@ -1050,6 +1051,12 @@ pub enum ModifyPropertyError {
 
 /// Whether a property is [replaced], [prepended] to a [window]'s list of
 /// properties, or [appended] to the [window]'s list of properties.
+///
+/// [replaced]: ModifyPropertyMode::Replace
+/// [prepended]: ModifyPropertyMode::Prepend
+/// [appended]: ModifyPropertyMode::Append
+///
+/// [window]: Window
 #[doc(alias = "ChangePropertyMode")]
 #[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 pub enum ModifyPropertyMode {
@@ -1203,6 +1210,9 @@ derive_xrb! {
 	/// [window]: Window
 	/// [request]: crate::message::Request
 	///
+	/// [`Prepend`]: ModifyPropertyMode::Prepend
+	/// [`Append`]: ModifyPropertyMode::Append
+	///
 	/// [`Property` event]: super::event::Property
 	///
 	/// [`Window` error]: error::Window
@@ -1228,6 +1238,7 @@ derive_xrb! {
 		///
 		/// [window]: Window
 		///
+		/// [`Replace`]: ModifyPropertyMode::Replace
 		/// [`Prepend`]: ModifyPropertyMode::Prepend
 		/// [`Append`]: ModifyPropertyMode::Append
 		///
@@ -1434,6 +1445,7 @@ derive_xrb! {
 		/// An [`Atom` error] is generated if this does not refer to a defined
 		/// [atom].
 		///
+		/// [atom]: Atom
 		/// [request]: crate::message::Request
 		pub property: Atom,
 		/// The property type to filter the [window]'s properties by.
@@ -1972,7 +1984,8 @@ pub enum GrabButtonError {
 }
 
 derive_xrb! {
-	/// A [request] that establishes a passive cursor grab.
+	/// A [request] that establishes a passive cursor grab for a given `button`
+	/// and `modifiers` combination.
 	///
 	/// If the following conditions are true, the grab is converted into an
 	/// active cursor grab (as described in the [`GrabCursor` request]):
@@ -2044,7 +2057,7 @@ derive_xrb! {
 		/// [freeze mode]: FreezeMode
 		///
 		/// [`AllowEvents` request]: AllowEvents
-		#[doc(alias = "pointer_mode")]
+		#[doc(alias("pointer_mode", "cursor_mode"))]
 		pub cursor_freeze: FreezeMode,
 		/// The [freeze mode] applied to the keyboard.
 		///
@@ -2227,6 +2240,8 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	///
 	/// [active cursor grab]: GrabCursor
+	///
+	/// [`CursorAppearance` error]: error::CursorAppearance
 	#[doc(alias = "ChangeActivePointerGrab")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct ChangeActiveCursorGrab: Request(30, ChangeActiveCursorGrabError) {
@@ -2389,5 +2404,218 @@ derive_xrb! {
 		///
 		/// [time]: CurrentableTime
 		pub time: CurrentableTime,
+	}
+}
+
+/// An [error] generated because of a failed [`GrabKey` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`GrabKey` request]: GrabKey
+pub enum GrabKeyError {
+	/// An [`Access` error].
+	///
+	/// [`Access` error]: error::Access
+	Access(error::Access),
+	/// A [`CursorAppearance` error].
+	///
+	/// [`CursorAppearance` error]: error::CursorAppearance
+	CursorAppearance(error::CursorAppearance),
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+	/// A [`Window` error].
+	///
+	/// [`Window` error]: error::Window
+	Window(error::Window),
+}
+
+derive_xrb! {
+	/// A [request] that establishes a passive key grab for a particular `key`
+	/// and `modifiers` combination.
+	///
+	/// If the following conditions are true, the grab is converted into an
+	/// active keyboard grab (as described in the [`GrabKeyboard` request]):
+	/// - the keyboard is not already actively grabbed; and
+	/// - the specified `key` and specified `modifiers` are held; and
+	/// - either the `grab_window` is an ancestor, or is, the currently focused
+	///   [window], or the `grab_window` is a descendent of the currently
+	///   focused [window] and contains the cursor; and
+	/// - a passive grab for the same `key` and `modifiers` combination does
+	///   not exist for any ancestor of the `grab_window`.
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if the `grab_window` does not refer to a
+	/// defined [window].
+	///
+	/// An [`Access` error] is generated if some other client has already sent a
+	/// `GrabKey` [request] with the same `key` and `modifiers` combination on
+	/// the same `grab_window`.
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [`GrabKeyboard` request]: GrabKeyboard
+	///
+	/// [`Access` error]: error::Access
+	/// [`Window` error]: error::Window
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GrabKey: Request(33, GrabKeyError) {
+		/// Whether key [events] which would normally be reported to this client
+		/// are reported normally.
+		///
+		/// Both [`KeyPress`] and [`KeyRelease`] events are always reported, no
+		/// matter what events you have selected.
+		///
+		/// [events]: Event
+		///
+		/// [`KeyPress`]: super::event::KeyPress
+		/// [`KeyRelease`]: super::event::KeyRelease
+		#[metabyte]
+		pub owner_events: bool,
+
+		/// The [window] on which the `key` is grabbed.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		pub grab_window: Window,
+
+		/// The combination of modifiers which must be held for a press of the
+		/// `key` to activate the active key grab.
+		///
+		/// [`ANY_MODIFIER`] means _any_ modifiers: that includes no modifiers
+		/// at all.
+		///
+		/// [`ANY_MODIFIER`]: AnyModifierKeyMask::ANY_MODIFIER
+		pub modifiers: AnyModifierKeyMask,
+		/// The key for which this grab is established.
+		///
+		/// [`Any`] means that the grab is effectively established for all
+		/// possible keys.
+		///
+		/// When this key and the given `modifiers`,
+		///
+		/// [button]: Button
+		///
+		/// [`Any`]: Any::Any
+		pub key: Any<Keycode>,
+
+		/// The [freeze mode] applied to the cursor.
+		///
+		/// For [`FreezeMode::Unfrozen`], cursor [event] processing continues
+		/// as normal.
+		///
+		/// For [`FreezeMode::Frozen`], cursor [event] processing appears to
+		/// freeze - cursor [events][event] generated during this time are not
+		/// lost: they are queued to be processed later. The freeze ends when
+		/// either the grabbing client sends an [`AllowEvents` request], or when
+		/// the cursor grab is released.
+		///
+		/// [event]: Event
+		/// [freeze mode]: FreezeMode
+		///
+		/// [`AllowEvents` request]: AllowEvents
+		#[doc(alias("pointer_mode", "cursor_mode"))]
+		pub cursor_freeze: FreezeMode,
+		/// The [freeze mode] applied to the keyboard.
+		///
+		/// For [`FreezeMode::Unfrozen`], keyboard [event] processing
+		/// continues as normal.
+		///
+		/// For [`FreezeMode::Frozen`], keyboard [event] processing appears
+		/// to freeze - keyboard [events][event] generated during this time are
+		/// not lost: they are queued to be processed later. The freeze ends
+		/// when either the grabbing client sends an [`AllowEvents` request], or
+		/// when the keyboard grab is released.
+		///
+		/// [event]: Event
+		/// [freeze mode]: FreezeMode
+		///
+		/// [`AllowEvents` request]: AllowEvents
+		#[doc(alias = "keyboard_mode")]
+		pub keyboard_freeze: FreezeMode,
+		[_; 3],
+	}
+}
+
+/// An [error] generated because of a failed [`UngrabKey` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`UngrabKey` request]: UngrabKey
+pub enum UngrabKeyError {
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+	/// A [`Window` error].
+	///
+	/// [`Window` error]: error::Window
+	Window(error::Window),
+}
+
+derive_xrb! {
+	/// A [request] which releases a [passive key grab] on the specified
+	/// `grab_window` if the grab was established by your client.
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if `grab_window` does not refer to a
+	/// defined [window].
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [passive key grab]: GrabKey
+	///
+	/// [`Window` error]: error::Window
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct UngrabKey: Request(34, UngrabKeyError) {
+		/// The key which the [passive key grab] was established for.
+		///
+		/// [`Any`] matches any `key` specified in the [passive key grab].
+		/// It is equivalent to sending this `UngrabKey` [request] for all
+		/// possible keys.
+		///
+		/// [request]: crate::message::Request
+		///
+		/// [passive key grab]: GrabKey
+		///
+		/// [`Any`]: Any::Any
+		#[metabyte]
+		pub key: Any<Keycode>,
+
+		/// The [window] on which the [passive key grab] was established.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		///
+		/// [passive key grab]: GrabKey
+		///
+		/// [`Window` error]: error::Window
+		pub grab_window: Window,
+
+		/// The modifier combination specified by the [passive key grab].
+		///
+		/// [`ANY_MODIFIER`] matches any `modifiers` specified in the
+		/// [passive key grab] (including no modifiers). It is equivalent to
+		/// sending this `UngrabKey` [request] for all possible `modifiers`
+		/// combinations.
+		///
+		/// [request]: crate::message::Request
+		///
+		/// [passive key grab]: GrabKey
+		///
+		/// [`ANY_MODIFIER`]: AnyModifierKeyMask::ANY_MODIFIER
+		pub modifiers: AnyModifierKeyMask,
+		[_; 2],
 	}
 }

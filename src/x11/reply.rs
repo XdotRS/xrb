@@ -552,7 +552,7 @@ derive_xrb! {
 	///
 	/// [reply]: crate::message::Reply
 	///
-	/// [`GrabKeyboard` request]: GrabKeyboard
+	/// [`GrabKeyboard` request]: request::GrabKeyboard
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
 	#[derivative(Hash, PartialEq, Eq)]
 	pub struct GrabKeyboard: Reply for request::GrabKeyboard {
