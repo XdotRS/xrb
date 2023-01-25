@@ -51,6 +51,7 @@ use crate::{
 	Fontable,
 	FreezeMode,
 	Keycode,
+	LengthString8,
 	Rectangle,
 	String16,
 	String8,
@@ -3327,6 +3328,33 @@ derive_xrb! {
 		/// characters (like `.*` in regular expressions).
 		#[context(pattern_len => usize::from(*pattern_len))]
 		pub pattern: String8,
+		[_; ..],
+	}
+
+	/// A [request] that defines the directories which are searched for
+	/// available fonts.
+	///
+	/// # Errors
+	/// A [`Value` error] is generated if the operating system rejects the given
+	/// paths for whatever reason.
+	///
+	/// [request]: crate::message::Request
+	///
+	/// [`Value` error]: error::Value
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct SetFontPath: Request(51, error::Value) {
+		// The length of `directories`.
+		#[allow(clippy::cast_possible_truncation)]
+		let directories_len: u16 = directories => directories.len() as u16,
+		[_; 2],
+
+		/// The directories to be searched in the order listed.
+		///
+		/// Specifying an empty list here restores the default font search path
+		/// defined for the X server.
+		#[doc(alias = "path")]
+		#[context(directories_len => usize::from(*directories_len))]
+		pub directories: Vec<LengthString8>,
 		[_; ..],
 	}
 }
