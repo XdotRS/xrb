@@ -3124,7 +3124,7 @@ derive_xrb! {
 		let name_len: u16 = name => name.len() as u16,
 		[_; 2],
 
-		/// A pattern match against the name of the font
+		/// A pattern match against the name of the font.
 		///
 		/// The name uses ISO Latin-1 encoding.
 		///
@@ -3201,6 +3201,9 @@ derive_xrb! {
 	/// If the font has no specified `fallback_character`, undefined characters
 	/// in the `text` are ignored.
 	///
+	/// # Replies
+	/// This [request] generates a [`QueryTextExtents` reply].
+	///
 	/// # Errors
 	/// A [`Font` error] is generated if `font` does not refer to a defined
 	/// [`Font`] nor [`GraphicsContext`].
@@ -3208,6 +3211,8 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	///
 	/// [`GraphicsContext`]: crate::GraphicsContext
+	///
+	/// [`QueryTextExtents` reply]: reply::QueryTextExtents
 	///
 	/// [`Font` error]: error::Font
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
@@ -3248,5 +3253,80 @@ derive_xrb! {
 		})]
 		pub text: String16,
 		[_; odd_length => query_text_extents_padding(*odd_length)]
+	}
+
+	/// A [request] that lists the names of available fonts (as controlled by
+	/// the [font search path]).
+	///
+	/// # Replies
+	/// This [request] generates a [`ListFonts` reply].
+	///
+	/// [request]: crate::message::Request
+	///
+	/// [font search path]: SetFontPath
+	///
+	/// [`ListFonts` reply]: reply::ListFonts
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ListFonts: Request(49) -> reply::ListFonts {
+		/// The maximum number of names that will appear in the returned font
+		/// `names`.
+		#[doc(alias("max_names", "max_names_len"))]
+		pub max_names_count: u16,
+
+		#[allow(clippy::cast_possible_truncation)]
+		let pattern_len: u16 = pattern => pattern.len() as u16,
+		/// A pattern match against the font names.
+		///
+		/// The case (uppercase or lowercase) of the pattern does not matter:
+		/// font names are converted to lowercase, as is the pattern.
+		///
+		/// Font names use ISO Latin-1 encoding.
+		///
+		/// The character `?` matches against any single character (equivalent
+		/// to `.` in regular expressions) and `*` matches against any number of
+		/// characters (like `.*` in regular expressions).
+		#[context(pattern_len => usize::from(*pattern_len))]
+		pub pattern: String8,
+		[_; ..],
+	}
+
+	/// A [request] that lists available fonts (as controlled by the
+	/// [font search path]) with information about them.
+	///
+	/// The information returned for each font almost entirely matches that returned in a
+	/// [`QueryFont` reply].
+	///
+	/// # Replies
+	/// This [request] generates a [`ListFonts` reply].
+	///
+	/// [request]: crate::message::Request
+	///
+	/// [font search path]: SetFontPath
+	///
+	/// [`ListFonts` reply]: reply::ListFonts
+	/// [`QueryFont` reply]: reply::QueryFont
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ListFontsWithInfo: Request(50) -> reply::ListFontsWithInfo {
+		/// The maximum number of [`FontWithInfo` replies] that will be returned.
+		///
+		/// [`FontWithInfo` replies]: reply::FontWithInfo
+		#[doc(alias("max_names", "max_names_len"))]
+		pub max_fonts_count: u16,
+
+		#[allow(clippy::cast_possible_truncation)]
+		let pattern_len: u16 = pattern => pattern.len() as u16,
+		/// A pattern match against the font names.
+		///
+		/// The case (uppercase or lowercase) of the pattern does not matter:
+		/// font names are converted to lowercase, as is the pattern.
+		///
+		/// Font names use ISO Latin-1 encoding.
+		///
+		/// The character `?` matches against any single character (equivalent
+		/// to `.` in regular expressions) and `*` matches against any number of
+		/// characters (like `.*` in regular expressions).
+		#[context(pattern_len => usize::from(*pattern_len))]
+		pub pattern: String8,
+		[_; ..],
 	}
 }
