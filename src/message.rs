@@ -102,7 +102,7 @@ pub trait Request: X11Size + Writable {
 	///
 	/// ```
 	/// use xrbk_macro::derive_xrb;
-	/// use xrb::{ColorChannelMask, Colormap, visual::Color, String8};
+	/// use xrb::{ColorChannelMask, Colormap, visual::ColorId, String8};
 	///
 	/// derive_xrb! {
 	///     #[derive(Debug, Hash, PartialEq, Eq, Readable, Writable, X11Size)]
@@ -111,7 +111,7 @@ pub trait Request: X11Size + Writable {
 	///         pub color_channel_mask: ColorChannelMask,
 	///
 	///         pub colormap: Colormap,
-	///         pub color: Color,
+	///         pub color: ColorId,
 	///
 	///         #[allow(clippy::cast_possible_truncation)]
 	///         let name_len: u16 = name => name.len() as u16,

@@ -58,13 +58,13 @@ use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writa
 	Readable,
 	Writable,
 )]
-pub struct Color(u32);
+pub struct ColorId(u32);
 
-impl Color {
-	/// A `Color` where all bits are zero: `0x0000_0000`.
+impl ColorId {
+	/// A `ColorId` where all bits are zero: `0x0000_0000`.
 	pub const ZERO: Self = Self(0x0000_0000);
 
-	/// A `Color` with a value of `1`.
+	/// A `ColorId` with a value of `1`.
 	pub const ONE: Self = Self(1);
 }
 
@@ -73,6 +73,7 @@ impl Color {
 /// Each of the channels is a `u16` value, where `0` is the minimum intensity
 /// and `65535` is the maximum intensity. The X server scales the values to
 /// match the display hardware.
+#[doc(alias("Color", "Rgb"))]
 #[derive(
 	Copy,
 	Clone,
@@ -333,8 +334,8 @@ derive_xrb! {
 		pub root: Window,
 		pub default_colormap: Colormap,
 
-		pub white: Color,
-		pub black: Color,
+		pub white: ColorId,
+		pub black: ColorId,
 
 		pub current_input_masks: EventMask,
 
