@@ -851,7 +851,8 @@ pub struct CharacterInfo {
 	///
 	/// [`LeftToRight`]: DrawDirection::LeftToRight
 	/// [`RightToLeft`]: DrawDirection::RightToLeft
-	pub character_width: i16,
+	#[doc(alias = "character_width")]
+	pub width: i16,
 
 	/// The extent of this character above the baseline.
 	pub ascent: i16,
@@ -935,9 +936,9 @@ derive_xrb! {
 		/// ```
 		#[doc(alias = "min_char_or_byte2")]
 		pub first_character_or_min_minor_index: u16,
-		/// If `min_byte1` and `max_byte1` are both zero, this is the character
-		/// index of the last element in `character_infos`. Otherwise, this is
-		/// a [`u8`] value used to index characters.
+		/// If `min_major_index` and `max_major_index` are both zero, this is
+		/// the character index of the last element in `character_infos`.
+		/// Otherwise, this is a [`u8`] value used to index characters.
 		///
 		/// If either `min_major_index` or `max_major_index` aren't zero, the
 		/// two indexes used to retrieve `character_infos` element `i` (counting
@@ -976,8 +977,8 @@ derive_xrb! {
 		#[allow(clippy::cast_possible_truncation)]
 		let properties_len: u16 = properties => properties.len() as u16,
 
-		/// A hint as to whether most [`CharacterInfo`s] in a font have a positive or
-		/// negative width.
+		/// A hint as to whether most [`CharacterInfo`s] in a font have a
+		/// positive or negative width.
 		///
 		/// See [`DrawDirection`] for more information.
 		///
@@ -1026,5 +1027,63 @@ derive_xrb! {
 		#[doc(alias = "char_infos")]
 		#[context(character_infos_len => *character_infos_len as usize)]
 		pub character_infos: Vec<CharacterInfo>,
+	}
+
+	/// The [reply] to a [`QueryTextExtents` request].
+	///
+	/// [reply]: crate::message::Reply
+	///
+	/// [`QueryTextExtents` request]: request::QueryTextExtents
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct QueryTextExtents: Reply for request::QueryTextExtents {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: crate::message::Reply
+		///
+		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		/// A hint as to whether most characters in a font have a positive
+		/// `width` or a negative `width`.
+		///
+		/// See [`DrawDirection`] for more information.
+		#[metabyte]
+		pub draw_direction: DrawDirection,
+
+		/// The extent of the font above the baseline, used for determining line
+		/// spacing.
+		///
+		/// Some specific characters may extend above this.
+		pub font_ascent: i16,
+		/// The extent of the font at or below the baseline, used for
+		/// determining line spacing.
+		///
+		/// Some specific characters may extend below this.
+		pub font_descent: i16,
+
+		/// The highest individual `ascent` of any character in `text`.
+		pub overall_ascent: i16,
+		/// The lowest individual `descent` of any character in `text`.
+		pub overall_descent: i16,
+
+		/// The sum of the `width`s of each character in the `text`.
+		pub overall_width: i32,
+
+		/// If the 'left side' of each character is the sum of the `width`s of
+		/// all characters before it plus its `left_side_bearing`, this is the
+		/// leftmost left side.
+		pub overall_left: i32,
+		/// If the 'right side' of each character is the sum of the `width`s of
+		/// all characters before it, plus its `width` and `right_side_bearing`,
+		/// this is the rightmost right side.
+		pub overall_right: i32,
+		[_; ..],
 	}
 }

@@ -2,12 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use super::*;
-use crate::TsExt;
-
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote_spanned;
 use syn::Path;
+
+use crate::{element::Element, TsExt};
+
+use super::*;
 
 impl Struct {
 	pub fn impl_x11_size(&self, tokens: &mut TokenStream2, trait_path: &Path) {
@@ -65,8 +66,10 @@ impl Request {
 
 		let sizes = TokenStream2::with_tokens(|tokens| {
 			for element in &self.content {
-				if !element.is_metabyte() && !element.is_sequence() {
+				if element.is_normal() {
 					element.x11_size_tokens(tokens, DefinitionType::Request);
+				} else if let Element::Let(r#let) = element && element.is_metabyte() {
+					r#let.function_call_tokens(tokens);
 				}
 			}
 		});
@@ -112,8 +115,10 @@ impl Reply {
 
 		let sizes = TokenStream2::with_tokens(|tokens| {
 			for element in &self.content {
-				if !element.is_metabyte() && !element.is_sequence() {
+				if element.is_normal() {
 					element.x11_size_tokens(tokens, DefinitionType::Reply);
+				} else if let Element::Let(r#let) = element && element.is_metabyte() {
+					r#let.function_call_tokens(tokens);
 				}
 			}
 		});
@@ -167,6 +172,8 @@ impl Event {
 			for element in &self.content {
 				if element.is_normal() {
 					element.x11_size_tokens(tokens, DefinitionType::Event);
+				} else if let Element::Let(r#let) = element && element.is_metabyte() {
+					r#let.function_call_tokens(tokens);
 				}
 			}
 		});
@@ -216,6 +223,8 @@ impl Error {
 			for element in &self.content {
 				if element.is_normal() {
 					element.x11_size_tokens(tokens, DefinitionType::Error);
+				} else if let Element::Let(r#let) = element && element.is_metabyte() {
+					r#let.function_call_tokens(tokens);
 				}
 			}
 		});

@@ -37,6 +37,7 @@ use crate::{
 	AnyModifierKeyMask,
 	Atom,
 	Button,
+	Char16,
 	Coords,
 	CopyableFromParent,
 	CurrentableTime,
@@ -51,6 +52,7 @@ use crate::{
 	FreezeMode,
 	Keycode,
 	Rectangle,
+	String16,
 	String8,
 	Window,
 	WindowClass,
@@ -3179,5 +3181,72 @@ derive_xrb! {
 		///
 		/// [`Font` error]: error::Font
 		pub target: Fontable,
+	}
+}
+
+/// A private function used in [`QueryTextExtents`] to determine padding.
+#[inline]
+const fn query_text_extents_padding(odd_length: bool) -> usize {
+	if odd_length {
+		2 // Char16::X11_SIZE
+	} else {
+		0
+	}
+}
+
+derive_xrb! {
+	/// A [request] that returns the extents of the given `text` when displayed
+	/// with the given `font`.
+	///
+	/// If the font has no specified `fallback_character`, undefined characters
+	/// in the `text` are ignored.
+	///
+	/// # Errors
+	/// A [`Font` error] is generated if `font` does not refer to a defined
+	/// [`Font`] nor [`GraphicsContext`].
+	///
+	/// [request]: crate::message::Request
+	///
+	/// [`GraphicsContext`]: crate::GraphicsContext
+	///
+	/// [`Font` error]: error::Font
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct QueryTextExtents: Request(48, error::Font) -> reply::QueryTextExtents {
+		// Whether `text` is of odd length. Is it is, it has 2 bytes of padding
+		// following it.
+		#[metabyte]
+		let odd_length: bool = text => text.len() % 2 != 0,
+
+		/// The font used in the `text`.
+		///
+		/// # Errors
+		/// A [`Font` error] is generated if this does not refer to a defined
+		/// [`Font`] nor [`GraphicsContext`].
+		///
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		///
+		/// [`Font` error]: error::Font
+		pub font: Fontable,
+
+		/// The text for which this [request] gets the extents when displayed
+		/// with `font`.
+		///
+		/// [request]: crate::message::Request
+		#[context(self::length, odd_length => {
+			// The length is in units of 4 bytes - we subtract the header, which is one of those
+			// units, then multiply by 4 to get the total number of bytes.
+			let length = usize::from(length - 1) * 4;
+			// We then remove the size of the previous field, `font`, to get the bytes from the
+			// start of `text` onwards.
+			let length = length - Fontable::X11_SIZE;
+			// We then remove the padding at the end, which can be determined from `odd_length`.
+			let length = length - query_text_extents_padding(*odd_length);
+
+			// We then divide the length, which is the number of bytes, by the number of bytes
+			// per character.
+			length / Char16::X11_SIZE
+		})]
+		pub text: String16,
+		[_; odd_length => query_text_extents_padding(*odd_length)]
 	}
 }

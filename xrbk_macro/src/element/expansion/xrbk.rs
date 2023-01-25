@@ -5,8 +5,9 @@
 use quote::quote_spanned;
 use syn::spanned::Spanned;
 
-use super::*;
 use crate::{definition::DefinitionType, TsExt};
+
+use super::*;
 
 impl Element {
 	pub fn write_tokens(&self, tokens: &mut TokenStream2, definition_type: DefinitionType) {
@@ -154,22 +155,8 @@ impl Let {
 		let formatted = &self.formatted;
 		let r#type = &self.r#type;
 
-		self.source.function_to_tokens(
-			tokens,
-			Some(&self.attributes),
-			formatted,
-			r#type.into_token_stream(),
-		);
+		self.function_call_tokens(tokens);
 
-		let function_call = TokenStream2::with_tokens(|tokens| {
-			self.source.call_to_tokens(tokens, formatted);
-		});
-
-		tokens.append_tokens({
-			quote_spanned!(formatted.span()=>
-				let #formatted = #function_call;
-			)
-		});
 		tokens.append_tokens({
 			let r#type = quote_spanned!(r#type.span()=>
 				<#r#type as ::xrbk::Writable>
@@ -182,6 +169,11 @@ impl Let {
 	}
 
 	pub fn x11_size_tokens(&self, tokens: &mut TokenStream2) {
+		self.function_call_tokens(tokens);
+		self.add_x11_size_tokens(tokens);
+	}
+
+	pub fn function_call_tokens(&self, tokens: &mut TokenStream2) {
 		let formatted = &self.formatted;
 
 		self.source.function_to_tokens(
@@ -195,13 +187,9 @@ impl Let {
 			self.source.call_to_tokens(tokens, formatted);
 		});
 
-		tokens.append_tokens({
-			quote_spanned!(self.span()=>
-				let #formatted = #function_call;
-			)
-		});
-
-		self.add_x11_size_tokens(tokens);
+		tokens.append_tokens(quote_spanned!(self.span()=>
+			let #formatted = #function_call;
+		));
 	}
 
 	pub fn read_tokens(&self, tokens: &mut TokenStream2) {
@@ -325,9 +313,12 @@ impl ArrayUnused {
 			UnusedContent::Source(source) => {
 				source.function_to_tokens(tokens, Some(&self.attributes), formatted, quote!(usize));
 
+				let call =
+					TokenStream2::with_tokens(|tokens| source.call_to_tokens(tokens, formatted));
+
 				tokens.append_tokens({
 					quote_spanned!(self.span()=>
-						let #formatted = #formatted();
+						let #formatted = #call;
 					)
 				});
 			},

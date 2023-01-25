@@ -32,8 +32,8 @@ impl ToTokens for SourceArg {
 
 impl ToTokens for SourceArgs {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
-		if let Some((_, r#type)) = &self.length_arg {
-			tokens.append_tokens(quote!(length: #r#type, ));
+		if let Some((SourceLengthArg { length_token, .. }, r#type)) = &self.length_arg {
+			tokens.append_tokens(quote!(#length_token: #r#type, ));
 		}
 
 		for pair in self.args.pairs() {
