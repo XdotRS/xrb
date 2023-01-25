@@ -2,13 +2,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use crate::unit::Px;
-use xrbk::{Buf, ConstantX11Size, ReadError, ReadResult, ReadableWithContext, Wrap};
+extern crate self as xrb;
 
 use derive_more::{From, Into};
 
+pub use atom::Atom;
+pub use mask::*;
+pub use res_id::*;
+pub use wrapper::*;
+use xrbk::{Buf, ConstantX11Size, ReadError, ReadResult, ReadableWithContext, Wrap, Writable};
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
-extern crate self as xrb;
+
+use crate::unit::Px;
 
 pub mod atom;
 pub mod set;
@@ -17,11 +22,6 @@ pub mod visual;
 mod mask;
 mod res_id;
 mod wrapper;
-
-pub use atom::Atom;
-pub use mask::*;
-pub use res_id::*;
-pub use wrapper::*;
 
 /// Whether something is enabled or disabled.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
@@ -325,6 +325,29 @@ impl ReadableWithContext for String8 {
 		Self: Sized,
 	{
 		Ok(Self(<Vec<Char8>>::read_with(reader, length)?))
+	}
+}
+
+derive_xrb! {
+	#[derive(
+		Clone,
+		Eq,
+		PartialEq,
+		Hash,
+		Debug,
+		From,
+		Into,
+		// XRBK traits
+		X11Size,
+		Readable,
+		Writable,
+	)]
+	pub struct LengthString8 {
+		#[allow(clippy::cast_possible_truncation)]
+		let len: u8 = string => string.len() as u8,
+
+		#[context(len => usize::from(*len))]
+		string: String8,
 	}
 }
 
