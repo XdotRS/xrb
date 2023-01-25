@@ -920,6 +920,8 @@ derive_xrb! {
 		/// two indexes used to retrieve `character_infos` element `i` (counting
 		/// from `i = 0`) are:
 		/// ```
+		/// # let i = 0;
+		/// #
 		/// # let first_character_or_min_minor_index = 0;
 		/// # let last_character_or_max_minor_index = 1;
 		/// #
@@ -944,6 +946,8 @@ derive_xrb! {
 		/// two indexes used to retrieve `character_infos` element `i` (counting
 		/// from `i = 0`) are:
 		/// ```
+		/// # let i = 0;
+		/// #
 		/// # let first_character_or_min_minor_index = 0;
 		/// # let last_character_or_max_minor_index = 1;
 		/// #
