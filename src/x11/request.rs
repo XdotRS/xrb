@@ -3264,7 +3264,7 @@ derive_xrb! {
 	///
 	/// [request]: crate::message::Request
 	///
-	/// [font search path]: SetFontPath
+	/// [font search path]: SetFontSearchDirectories
 	///
 	/// [`ListFonts` reply]: reply::ListFonts
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
@@ -3302,7 +3302,7 @@ derive_xrb! {
 	///
 	/// [request]: crate::message::Request
 	///
-	/// [font search path]: SetFontPath
+	/// [font search path]: SetFontSearchDirectories
 	///
 	/// [`ListFonts` reply]: reply::ListFonts
 	/// [`QueryFont` reply]: reply::QueryFont
@@ -3341,8 +3341,9 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	///
 	/// [`Value` error]: error::Value
+	#[doc(alias = "SetFontPath")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
-	pub struct SetFontPath: Request(51, error::Value) {
+	pub struct SetFontSearchDirectories: Request(51, error::Value) {
 		// The length of `directories`.
 		#[allow(clippy::cast_possible_truncation)]
 		let directories_len: u16 = directories => directories.len() as u16,
@@ -3357,4 +3358,13 @@ derive_xrb! {
 		pub directories: Vec<LengthString8>,
 		[_; ..],
 	}
+
+	/// A [request] that returns the current directories which are searched to
+	/// find available fonts.
+	///
+	/// See also: [`SetFontSearchDirectories`].
+	///
+	/// [request]: crate::message::Request
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GetFontSearchDirectories: Request(52) -> reply::GetFontSearchDirectories;
 }

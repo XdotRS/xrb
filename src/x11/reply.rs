@@ -1595,3 +1595,39 @@ impl ReadableWithContext for TerminateListFontsWithInfo {
 		})
 	}
 }
+
+derive_xrb! {
+	/// The [reply] to a [`GetFontSearchDirectories` request].
+	///
+	/// [reply]: Reply
+	///
+	/// [`GetFontSearchDirectories` request]: request::GetFontSearchDirectories
+	#[doc(alias = "GetFontPath")]
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct GetFontSearchDirectories: Reply for request::GetFontSearchDirectories {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: Reply
+		///
+		/// [`Reply::sequence`]: Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		// The length of `directories`.
+		#[allow(clippy::cast_possible_truncation)]
+		let directories_len: u16 = directories => directories.len() as u16,
+		[_; 22],
+
+		/// The directories that are searched in the order listed.
+		#[doc(alias = "path")]
+		#[context(directories_len => usize::from(*directories_len))]
+		pub directories: Vec<LengthString8>,
+		[_; ..],
+	}
+}
