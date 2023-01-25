@@ -9,6 +9,24 @@
 //! [Requests]: crate::message::Request
 //! [core X11 protocol]: super
 
+extern crate self as xrb;
+
+use xrbk::{
+	Buf,
+	BufMut,
+	ConstantX11Size,
+	ReadError,
+	ReadError::UnrecognizedDiscriminant,
+	ReadResult,
+	Readable,
+	ReadableWithContext,
+	Wrap,
+	Writable,
+	WriteResult,
+	X11Size,
+};
+use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
+
 use crate::{
 	message::Event,
 	set::{Attributes, WindowConfig},
@@ -37,23 +55,6 @@ use crate::{
 	Window,
 	WindowClass,
 };
-use xrbk::{
-	Buf,
-	BufMut,
-	ConstantX11Size,
-	ReadError,
-	ReadError::UnrecognizedDiscriminant,
-	ReadResult,
-	Readable,
-	ReadableWithContext,
-	Wrap,
-	Writable,
-	WriteResult,
-	X11Size,
-};
-
-use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
-extern crate self as xrb;
 
 /// An [error] generated because of a failed [`CreateWindow` request].
 ///
@@ -2802,14 +2803,15 @@ derive_xrb! {
 		pub end: CurrentableTime,
 	}
 
-	/// Converts coordinates relative to the given `original` [window] to
-	/// `output_coords` relative to the given `output` [window].
+	/// A [request] that converts coordinates relative to the given `original`
+	/// [window] to `output_coords` relative to the given `output` [window].
 	///
 	/// # Errors
 	/// A [`Window` error] is generated if either `original` or `output` do not
 	/// refer to defined [windows][window].
 	///
 	/// [window]: Window
+	/// [request]: crate::message::Request
 	///
 	/// [`Window` error]: error::Window
 	#[doc(alias = "TranslateCoordinates")]
@@ -3038,6 +3040,7 @@ derive_xrb! {
 	/// A [`Window` error] is generated if `new_focus` is [`FocusWindow::Other`]
 	/// and does not refer to a defined [window].
 	///
+	/// [window]: Window
 	/// [request]: crate::message::Request
 	///
 	/// [`Focus`]: super::event::Focus
@@ -3148,12 +3151,33 @@ derive_xrb! {
 	/// A [request] that returns information about the given `target`
 	/// font.
 	///
+	/// # Replies
+	/// This [request] generates a [`QueryFont` reply].
+	///
+	/// # Errors
+	/// A [`Font` error] is generated if the `target` does not refer to a
+	/// defined [`Font`] nor [`GraphicsContext`].
+	///
 	/// [request]: crate::message::Request
+	///
+	/// [`GraphicsContext`]: crate::GraphicsContext
+	///
+	/// [`QueryFont` reply]: reply::QueryFont
+	///
+	/// [`Font` error]: error::Font
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct QueryFont: Request(47, error::Font) -> reply::QueryFont {
 		/// The font which this [request] returns information about.
 		///
+		/// # Errors
+		/// A [`Font` error] is generated if this does not refer to a defined
+		/// [`Font`] nor [`GraphicsContext`].
+		///
 		/// [request]: crate::message::Request
+		///
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		///
+		/// [`Font` error]: error::Font
 		pub target: Fontable,
 	}
 }

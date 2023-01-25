@@ -33,7 +33,9 @@
 #![warn(clippy::complexity)]
 #![warn(clippy::cargo)]
 #![warn(clippy::missing_const_for_fn)]
+// Warn for these doc lints.
 #![warn(missing_docs)]
+#![warn(broken_intra_doc_links)]
 // Allow these lints.
 #![allow(clippy::doc_markdown)]
 #![allow(clippy::wildcard_imports)]

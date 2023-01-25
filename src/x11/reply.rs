@@ -11,10 +11,16 @@
 //! [request]: crate::message::Request
 //! [core X11 protocol]: super
 
+extern crate self as xrb;
+
+use derivative::Derivative;
+
+use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
+
 use crate::{
 	unit::Px,
 	visual::{ColorId, VisualId},
-	x11::request::{self, DataFormat, DataList},
+	x11::request::{self, DataFormat, DataList, RevertFocus},
 	Atom,
 	BitGravity,
 	Colormap,
@@ -32,12 +38,6 @@ use crate::{
 	WindowClass,
 	WindowGravity,
 };
-use derivative::Derivative;
-
-use crate::x11::request::RevertFocus;
-use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
-
-extern crate self as xrb;
 
 /// The state of the [window] regarding how it is mapped.
 ///
@@ -814,6 +814,8 @@ derive_xrb! {
 }
 
 /// A property of a font.
+///
+/// The value of this property is uninterpreted by XRB.
 #[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 pub struct FontProperty {
 	/// The name of the font property.
@@ -827,22 +829,53 @@ pub struct FontProperty {
 }
 
 /// Information about a particular character within a font.
+///
+/// For a nonexistent character, all of these fields are zero.
 #[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 pub struct CharacterInfo {
+	/// The extent of this character's appearance beyond its left edge.
+	///
+	/// If this is negative, the character's appearance extends to the left of
+	/// its x coordinate. If this is positive, the character's appearance starts
+	/// after its x coordinate.
 	pub left_side_bearing: i16,
+	/// The extent of this character's appearance beyond its right edge.
+	///
+	/// If this is negative, the character's appearance ends before its width.
+	/// If this is positive, the character's appearance extends beyond its
+	/// width.
 	pub right_side_bearing: i16,
 
+	/// The width of this character - positive if it is read [`LeftToRight`],
+	/// negative if it is read [`RightToLeft`].
+	///
+	/// [`LeftToRight`]: DrawDirection::LeftToRight
+	/// [`RightToLeft`]: DrawDirection::RightToLeft
 	pub character_width: i16,
 
+	/// The extent of this character above the baseline.
 	pub ascent: i16,
+	/// The extent of this character at or below the baseline.
 	pub descent: i16,
 
+	/// The interpretation of these character attributes depends on the X
+	/// server.
 	pub attributes: u16,
 }
 
+/// A hint as to whether most [`CharacterInfo`]s in a font have a positive or
+/// negative width.
+///
+/// A positive width means the character is [`LeftToRight`]. A negative width
+/// means the character is [`RightToLeft`].
+///
+/// [`LeftToRight`]: DrawDirection::LeftToRight
+/// [`RightToLeft`]: DrawDirection::RightToLeft
 #[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 pub enum DrawDirection {
+	/// Most [`CharacterInfo`]s in the font have a positive width.
 	LeftToRight,
+	/// Most [`CharacterInfo`]s in the font have a negative width.
 	RightToLeft,
 }
 
@@ -868,35 +901,129 @@ derive_xrb! {
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
 
+		/// A [`CharacterInfo`] representing the minimum bounds of all fields in
+		/// each [`CharacterInfo`] in `character_infos`.
 		pub min_bounds: CharacterInfo,
 		[_; 4],
 
+		/// A [`CharacterInfo`] representing the maximum bounds of all fields in
+		/// each [`CharacterInfo`] in `character_infos`.
 		pub max_bounds: CharacterInfo,
 		[_; 4],
 
-		pub min_character_or_byte2: u16,
-		pub max_character_or_byte2: u16,
+		/// If `min_byte1` and `max_byte1` are both zero, this is the character
+		/// index of the first element in `character_infos`. Otherwise, this is
+		/// a [`u8`] value used to index characters.
+		///
+		/// If either `min_major_index` or `max_major_index` aren't zero, the
+		/// two indexes used to retrieve `character_infos` element `i` (counting
+		/// from `i = 0`) are:
+		/// ```
+		/// # let first_character_or_min_minor_index = 0;
+		/// # let last_character_or_max_minor_index = 1;
+		/// #
+		/// # let min_major_index = 2;
+		/// #
+		/// let major_index_range = {
+		///     last_character_or_max_minor_index
+		///     - first_character_or_min_minor_index
+		///     + 1
+		/// };
+		///
+		/// let major_index = i / major_index_range + min_major_index;
+		/// let minor_index = i % major_index_range + first_character_or_min_minor_index;
+		/// ```
+		#[doc(alias = "min_char_or_byte2")]
+		pub first_character_or_min_minor_index: u16,
+		/// If `min_byte1` and `max_byte1` are both zero, this is the character
+		/// index of the last element in `character_infos`. Otherwise, this is
+		/// a [`u8`] value used to index characters.
+		///
+		/// If either `min_major_index` or `max_major_index` aren't zero, the
+		/// two indexes used to retrieve `character_infos` element `i` (counting
+		/// from `i = 0`) are:
+		/// ```
+		/// # let first_character_or_min_minor_index = 0;
+		/// # let last_character_or_max_minor_index = 1;
+		/// #
+		/// # let min_major_index = 2;
+		/// #
+		/// let major_index_range = {
+		///     last_character_or_max_minor_index
+		///     - first_character_or_min_minor_index
+		///     + 1
+		/// };
+		///
+		/// let major_index = i / major_index_range + min_major_index;
+		/// let minor_index = i % major_index_range + first_character_or_min_minor_index;
+		/// ```
+		#[doc(alias = "max_char_or_byte2")]
+		pub last_character_or_max_minor_index: u16,
 
-		pub default_character: u16,
+		/// The character used when an undefined or nonexistent character is
+		/// used.
+		///
+		/// If a font uses two bytes to index its characters (such as that used
+		/// for [`Char16`]), the first of the two bytes is found in the most
+		/// significant byte of this `fallback_character`, and the second of the
+		/// two bytes if found in the least significant byte.
+		///
+		/// [`Char16`]: crate::Char16
+		#[doc(alias("default_char", "default_character", "fallback_char"))]
+		pub fallback_character: u16,
 
+		// The length of `properties`.
 		#[allow(clippy::cast_possible_truncation)]
 		let properties_len: u16 = properties => properties.len() as u16,
 
+		/// A hint as to whether most [`CharacterInfo`s] in a font have a positive or
+		/// negative width.
+		///
+		/// See [`DrawDirection`] for more information.
+		///
+		/// [`CharacterInfo`s]: CharacterInfo
 		pub draw_direction: DrawDirection,
 
-		pub min_byte1: u8,
-		pub max_byte1: u8,
+		/// The value of the major index used to retrieve the first element in
+		/// `character_infos`.
+		#[doc(alias = "min_byte1")]
+		pub min_major_index: u8,
+		/// The value of the major index used to retrieve the last element in
+		/// `character_infos`.
+		#[doc(alias = "max_byte1")]
+		pub max_major_index: u8,
 
+		/// Whether all of the [`CharacterInfo`s] in `character_infos` have
+		/// nonzero bounds.
+		///
+		/// [`CharacterInfo`s]: CharacterInfo
 		pub all_characters_exist: bool,
 
+		/// The extent of the font above the baseline, used for determining line
+		/// spacing.
+		///
+		/// Some specific characters may extend above this.
 		pub font_ascent: i16,
+		/// The extent of the font at or below the baseline, used for
+		/// determining line spacing.
+		///
+		/// Some specific characters may extend below this.
 		pub font_descent: i16,
 
+		// The length of `character_infos`.
 		#[allow(clippy::cast_possible_truncation)]
 		let character_infos_len: u32 = character_infos => character_infos.len() as u32,
 
+		/// A list of [`FontProperty`s] associated with the font.
+		///
+		/// [`FontProperty`s]: FontProperty
 		#[context(properties_len => usize::from(*properties_len))]
 		pub properties: Vec<FontProperty>,
+		/// A list of the characters associated with the font, represented by
+		/// [`CharacterInfo`s].
+		///
+		/// [`CharacterInfo`s]: CharacterInfo
+		#[doc(alias = "char_infos")]
 		#[context(character_infos_len => *character_infos_len as usize)]
 		pub character_infos: Vec<CharacterInfo>,
 	}
