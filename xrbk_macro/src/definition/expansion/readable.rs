@@ -2,18 +2,25 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use super::*;
-use crate::{element::Element, TsExt};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote_spanned};
 use syn::Path;
+
+use crate::{element::Element, TsExt};
+
+use super::*;
 
 impl Struct {
 	pub fn impl_readable(&self, tokens: &mut TokenStream2, trait_path: &Path) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		// Expand the tokens to declare the x11_size variable if there is an
 		// UnusedContent::Infer unused bytes element to use it.
@@ -71,7 +78,12 @@ impl Request {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let declare_x11_size = if self.content.contains_infer() {
 			// The x11_size starts at `4` to account for the size of a request's header
@@ -148,7 +160,12 @@ impl Reply {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let declare_x11_size = if self.content.contains_infer() {
 			Some(quote_spanned!(trait_path.span()=> let mut size: usize = 8;))
@@ -222,7 +239,12 @@ impl Event {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let declare_x11_size = if self.content.contains_infer() {
 			let size: usize = if self.content.sequence_element().is_some() {
@@ -306,7 +328,12 @@ impl Error {
 	pub fn impl_readable(&self, tokens: &mut TokenStream2, trait_path: &Path) {
 		let ident = &self.ident;
 
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let declare_x11_size = if self.content.contains_infer() {
 			// 11 bytes includes:
@@ -412,7 +439,8 @@ impl Enum {
 		);
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = &self.where_clause;
 
 		let discriminants = TokenStream2::with_tokens(|tokens| {
 			for variant in &self.variants {

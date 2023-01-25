@@ -14,7 +14,12 @@ impl Struct {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let declare_x11_size = if self.content.contains_infer() {
 			Some(quote_spanned!(trait_path.span()=> let mut size: usize = 0;))
@@ -67,7 +72,12 @@ impl Request {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let declare_x11_size = if self.content.contains_infer() {
 			// The x11_size starts at `4` to account for the size of a request's header
@@ -147,7 +157,12 @@ impl Reply {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let declare_x11_size = if self.content.contains_infer() {
 			// The x11_size starts at `8` to account for the size of a reply's\
@@ -229,7 +244,12 @@ impl Event {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let declare_x11_size = if self.content.contains_infer() {
 			let x11_size: usize = if self.content.sequence_element().is_some() {
@@ -318,7 +338,12 @@ impl Error {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let declare_x11_size = if self.content.contains_infer() {
 			// 11 bytes includes:
@@ -436,7 +461,8 @@ impl Enum {
 		);
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = &self.where_clause;
 
 		let discriminants = TokenStream2::with_tokens(|tokens| {
 			for variant in &self.variants {

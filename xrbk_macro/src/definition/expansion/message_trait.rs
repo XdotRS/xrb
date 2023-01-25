@@ -12,7 +12,13 @@ use crate::TsExt;
 impl Request {
 	pub fn impl_trait(&self, tokens: &mut TokenStream2) {
 		let name = &self.ident;
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let reply = if let Some((_, r#type)) = &self.reply {
 			quote!(#r#type)
@@ -60,7 +66,13 @@ impl Request {
 impl Reply {
 	pub fn impl_trait(&self, tokens: &mut TokenStream2) {
 		let name = &self.ident;
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let request = &self.request;
 		let sequence = match &self.content {
@@ -100,7 +112,13 @@ impl Reply {
 impl Event {
 	pub fn impl_trait(&self, tokens: &mut TokenStream2) {
 		let name = &self.ident;
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let code = &self.event_code;
 		let sequence = match &self.content {
@@ -143,7 +161,13 @@ impl Event {
 impl Error {
 	pub fn impl_trait(&self, tokens: &mut TokenStream2) {
 		let name = &self.ident;
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let error_path = &self.error_token;
 		let error_code = &self.error_code;
