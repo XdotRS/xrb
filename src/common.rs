@@ -10,7 +10,7 @@ pub use atom::Atom;
 pub use mask::*;
 pub use res_id::*;
 pub use wrapper::*;
-use xrbk::{Buf, ConstantX11Size, ReadError, ReadResult, ReadableWithContext, Wrap, Writable};
+use xrbk::{Buf, ConstantX11Size, ReadError, ReadResult, ReadableWithContext, Wrap};
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
 use crate::unit::Px;
