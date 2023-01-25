@@ -104,10 +104,10 @@ pub enum WindowGravity {
 
 // The `derive_xrb!` attribute here is used to write the discriminants as `u16`.
 derive_xrb! {
-	#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 	/// A [window]'s class; whether it has a visual output form.
 	///
 	/// [window]: Window
+	#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 	pub enum WindowClass: u16 {
 		/// A [window] that both receives input and has a visual output (i.e. what
 		/// one would normally consider a window to be).
