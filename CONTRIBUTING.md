@@ -105,7 +105,40 @@ examples would be comparing the events in the events section of the
 [`x11::event`]: https://github.com/XdotRS/xrb/blob/main/src/x11/event.rs
 
 ## Code style
-TODO
+
+### Placement of attributes
+Many types and fields in XRB use attributes.  To keep the source code consistent and easily readable, attributes should be put _after_ doc comments.
+
+For example, do this:
+```rust
+/// A foo which does bar.
+#[doc(alias = "baz")]
+#[derive(Debug, Hash, X11Size)]
+pub struct Foo {
+	/// Data which represents xyz.
+	#[custom_attribute]
+	pub data: Any,
+
+	/// The other field within this `Foo`.
+	pub other_field: Any,
+}
+```
+But **not** this:
+```rust
+#[derive(Debug, Hash, X11Size)]
+/// A foo which does bar.
+#[doc(alias = "baz")]
+pub struct DoNotDoThis {
+	#[custom_attribute]
+	/// Data which represents xyz.
+	pub data: Any,
+
+	/// The other field within this `DoNotDoThis`.
+	pub other_field: Any,
+}
+```
+
+This consistently groups related syntax together - you know you'll always find the attributes after the documentation, if the documentation is quite long for example, and that you're looking at all of the attributes at once.
 
 ## Useful resources
  - [X Window System protocol version 11](https://x.org/releases/X11R7.7/doc/xproto/x11protocol.html)
