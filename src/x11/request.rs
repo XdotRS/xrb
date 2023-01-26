@@ -3471,4 +3471,33 @@ derive_xrb! {
 		/// [pixmap]: Pixmap
 		pub height: Px<u16>,
 	}
+
+	/// A [request] that removes the association between a given
+	/// [`Pixmap` ID][pixmap] and the [pixmap] it is associated with.
+	///
+	/// The stored [pixmap] will be freed when it is no longer referenced by any
+	/// other resource.
+	///
+	/// # Errors
+	/// A [`Pixmap` error] is generated if `target` does not refer to a defined
+	/// [pixmap].
+	///
+	/// [pixmap]: Pixmap
+	/// [request]: crate::message::Request
+	///
+	/// [`Pixmap` error]: error::Pixmap
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct FreePixmap: Request(54, error::Pixmap) {
+		/// The [pixmap] which is to have its association with its ID removed.
+		///
+		/// # Errors
+		/// A [`Pixmap` error] is generated if this does not refer to a defined
+		/// [pixmap].
+		///
+		/// [pixmap]: Pixmap
+		///
+		/// [`Pixmap` error]: error::Pixmap
+		#[doc(alias = "pixmap")]
+		pub target: Pixmap,
+	}
 }
