@@ -52,6 +52,7 @@ use crate::{
 	FreezeMode,
 	Keycode,
 	LengthString8,
+	Pixmap,
 	Rectangle,
 	String16,
 	String8,
@@ -130,7 +131,7 @@ derive_xrb! {
 		///
 		/// # Errors
 		/// If the provided [`Window` ID][window] is already used or it is not
-		/// allocated to this client, a [`ResourceIdChoice` error] is generated.
+		/// allocated to your client, a [`ResourceIdChoice` error] is generated.
 		///
 		/// [window]: Window
 		///
@@ -888,7 +889,7 @@ derive_xrb! {
 	/// defined [window] nor [pixmap].
 	///
 	/// [window]: Window
-	/// [pixmap]: crate::Pixmap
+	/// [pixmap]: Pixmap
 	/// [drawable]: Drawable
 	/// [request]: crate::message::Request
 	///
@@ -906,7 +907,7 @@ derive_xrb! {
 		/// defined [window] nor [pixmap].
 		///
 		/// [window]: Window
-		/// [pixmap]: crate::Pixmap
+		/// [pixmap]: Pixmap
 		/// [drawable]: Drawable
 		/// [request]: crate::message::Request
 		///
@@ -3367,4 +3368,107 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct GetFontSearchDirectories: Request(52) -> reply::GetFontSearchDirectories;
+}
+
+/// An [error] generated because of a failed [`CreatePixmap` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`CreatePixmap` request]: CreatePixmap
+pub enum CreatePixmapError {
+	/// A [`Drawable` error].
+	///
+	/// [`Drawable` error]: error::Drawable
+	Drawable(error::Drawable),
+	/// A [`ResourceIdChoice` error].
+	///
+	/// [`ResourceIdChoice` error]: error::ResourceIdChoice
+	ResourceIdChoice(error::ResourceIdChoice),
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+}
+
+derive_xrb! {
+	/// A [request] that creates a new [pixmap] and assigned the provided
+	/// [`Pixmap` ID][pixmap] to it.
+	///
+	/// The initial contents of the [pixmap] are undefined.
+	///
+	/// # Errors
+	/// A [`Value` error] is generated if `depth` is not a depth supported by
+	/// the `drawable`'s root [window].
+	///
+	/// A [`ResourceIdChoice` error] is generated if `pixmap_id` specifies an ID
+	/// already used for another resource, or an ID not allocated to your client.
+	///
+	/// A [`Drawable` error] is generated if `drawable` does not refer to a
+	/// defined [window] nor [`GraphicsContext`].
+	///
+	/// [window]: Window
+	/// [pixmap]: Pixmap
+	/// [request]: crate::message::Request
+	///
+	/// [`GraphicsContext`]: crate::GraphicsContext
+	///
+	/// [`Drawable` error]: error::Drawable
+	/// [`ResourceIdChoice` error]: error::ResourceIdChoice
+	/// [`Value` error]: error::Value
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct CreatePixmap: Request(53, CreatePixmapError) {
+		/// The depth of the [pixmap].
+		///
+		/// # Errors
+		/// A [`Value` error] is generated if this depth is not supported by the
+		/// root [window] of the `drawable`.
+		///
+		/// [pixmap]: Pixmap
+		/// [window]: Window
+		///
+		/// [`Value` error]: error::Value
+		#[metabyte]
+		pub depth: u8,
+
+		/// The [`Pixmap` ID][pixmap] which is to be assigned to the [pixmap].
+		///
+		/// # Errors
+		/// A [`ResourceIdChoice` error] is generated if this resource ID is already used or if
+		/// it isn't allocated to your client.
+		///
+		/// [pixmap]: Pixmap
+		///
+		/// [`ResourceIdChoice` error]: error::ResourceIdChoice
+		#[doc(alias = "pid")]
+		pub pixmap_id: Pixmap,
+		// TODO: what is this for??
+		//       possible theory: pixmaps are references to drawables, which are either other
+		//       pixmaps referring to other drawables, or windows...
+		/// It is legal to use an [`InputOnly`] [window] as a [drawable] in this
+		/// [request].
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [`GraphicsContext`].
+		///
+		/// [window]: Window
+		/// [drawable]: Drawable
+		/// [request]: crate::message::Request
+		///
+		/// [`GraphicsContext`]: crate::GraphicsContext
+		///
+		/// [`InputOnly`]: WindowClass::InputOnly
+		///
+		/// [`Drawable` error]: error::Drawable
+		pub drawable: Drawable,
+
+		/// The width of the [pixmap].
+		///
+		/// [pixmap]: Pixmap
+		pub width: Px<u16>,
+		/// The height of the [pixmap].
+		///
+		/// [pixmap]: Pixmap
+		pub height: Px<u16>,
+	}
 }
