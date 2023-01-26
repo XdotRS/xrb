@@ -29,7 +29,7 @@ use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use crate::{
 	message::Event,
-	set::{Attributes, WindowConfig},
+	set::{Attributes, GraphicsOptions, WindowConfig},
 	unit::Px,
 	visual::VisualId,
 	x11::{error, reply},
@@ -50,6 +50,7 @@ use crate::{
 	Font,
 	Fontable,
 	FreezeMode,
+	GraphicsContext,
 	Keycode,
 	LengthString8,
 	Pixmap,
@@ -3164,7 +3165,7 @@ derive_xrb! {
 	///
 	/// [request]: crate::message::Request
 	///
-	/// [`GraphicsContext`]: crate::GraphicsContext
+	/// [`GraphicsContext`]: GraphicsContext
 	///
 	/// [`QueryFont` reply]: reply::QueryFont
 	///
@@ -3179,7 +3180,7 @@ derive_xrb! {
 		///
 		/// [request]: crate::message::Request
 		///
-		/// [`GraphicsContext`]: crate::GraphicsContext
+		/// [`GraphicsContext`]: GraphicsContext
 		///
 		/// [`Font` error]: error::Font
 		pub target: Fontable,
@@ -3212,7 +3213,7 @@ derive_xrb! {
 	///
 	/// [request]: crate::message::Request
 	///
-	/// [`GraphicsContext`]: crate::GraphicsContext
+	/// [`GraphicsContext`]: GraphicsContext
 	///
 	/// [`QueryTextExtents` reply]: reply::QueryTextExtents
 	///
@@ -3230,7 +3231,7 @@ derive_xrb! {
 		/// A [`Font` error] is generated if this does not refer to a defined
 		/// [`Font`] nor [`GraphicsContext`].
 		///
-		/// [`GraphicsContext`]: crate::GraphicsContext
+		/// [`GraphicsContext`]: GraphicsContext
 		///
 		/// [`Font` error]: error::Font
 		pub font: Fontable,
@@ -3391,7 +3392,7 @@ pub enum CreatePixmapError {
 }
 
 derive_xrb! {
-	/// A [request] that creates a new [pixmap] and assigned the provided
+	/// A [request] that creates a new [pixmap] and assigns the provided
 	/// [`Pixmap` ID][pixmap] to it.
 	///
 	/// The initial contents of the [pixmap] are undefined.
@@ -3404,13 +3405,11 @@ derive_xrb! {
 	/// already used for another resource, or an ID not allocated to your client.
 	///
 	/// A [`Drawable` error] is generated if `drawable` does not refer to a
-	/// defined [window] nor [`GraphicsContext`].
+	/// defined [window] nor [pixmap].
 	///
 	/// [window]: Window
 	/// [pixmap]: Pixmap
 	/// [request]: crate::message::Request
-	///
-	/// [`GraphicsContext`]: crate::GraphicsContext
 	///
 	/// [`Drawable` error]: error::Drawable
 	/// [`ResourceIdChoice` error]: error::ResourceIdChoice
@@ -3433,8 +3432,8 @@ derive_xrb! {
 		/// The [`Pixmap` ID][pixmap] which is to be assigned to the [pixmap].
 		///
 		/// # Errors
-		/// A [`ResourceIdChoice` error] is generated if this resource ID is already used or if
-		/// it isn't allocated to your client.
+		/// A [`ResourceIdChoice` error] is generated if this resource ID is
+		/// already used or if it isn't allocated to your client.
 		///
 		/// [pixmap]: Pixmap
 		///
@@ -3449,13 +3448,12 @@ derive_xrb! {
 		///
 		/// # Errors
 		/// A [`Drawable` error] is generated if this does not refer to a
-		/// defined [window] nor [`GraphicsContext`].
+		/// defined [window] nor [pixmap].
 		///
 		/// [window]: Window
+		/// [pixmap]: Pixmap
 		/// [drawable]: Drawable
 		/// [request]: crate::message::Request
-		///
-		/// [`GraphicsContext`]: crate::GraphicsContext
 		///
 		/// [`InputOnly`]: WindowClass::InputOnly
 		///
@@ -3499,5 +3497,98 @@ derive_xrb! {
 		/// [`Pixmap` error]: error::Pixmap
 		#[doc(alias = "pixmap")]
 		pub target: Pixmap,
+	}
+}
+
+/// An [error] generated because of a failed [`CreateGraphicsContext` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`CreateGraphicsContext` request]: CreateGraphicsContext
+pub enum CreateGraphicsContextError {
+	/// A [`Drawable` error].
+	///
+	/// [`Drawable` error]: error::Drawable
+	Drawable(error::Drawable),
+	/// A [`Font` error].
+	///
+	/// [`Font` error]: error::Font
+	Font(error::Font),
+	/// A [`ResourceIdChoice` error].
+	///
+	/// [`ResourceIdChoice` error]: error::ResourceIdChoice
+	ResourceIdChoice(error::ResourceIdChoice),
+	/// A [`Match` error].
+	///
+	/// [`Match` error]: error::Match
+	Match(error::Match),
+	/// A [`Pixmap` error].
+	///
+	/// [`Pixmap` error]: error::Pixmap
+	Pixmap(error::Pixmap),
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+}
+
+derive_xrb! {
+	/// A [request] that creates a new [`GraphicsContext`] and assigns the
+	/// provided [`GraphicsContext` ID] to it.
+	///
+	/// # Errors
+	/// A [`ResourceIdChoice` error] is generated if `graphics_context_id`
+	/// specifies an ID already used for another resource, or an ID which is not
+	/// allocated to your client.
+	///
+	/// A [`Drawable` error] is generated if `source` does not refer to a
+	/// defined [window] nor [pixmap].
+	///
+	/// [pixmap]: Pixmap
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [`GraphicsContext` ID]: GraphicsContext
+	///
+	/// [`ResourceIdChoice` error]: error::ResourceIdChoice
+	/// [`Drawable` error]: error::Drawable
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct CreateGraphicsContext: Request(55, CreateGraphicsContextError) {
+		/// The [`GraphicsContext` ID] which is to be assigned to the
+		/// [`GraphicsContext`].
+		///
+		/// # Errors
+		/// A [`ResourceIdChoice` error] is generated if this resource ID is
+		/// already used or if it isn't allocated to your client.
+		///
+		/// [`GraphicsContext` ID]: GraphicsContext
+		///
+		/// [`ResourceIdChoice` error]: error::ResourceIdChoice
+		pub graphics_context_id: GraphicsContext,
+		// FIXME: is this the source???
+		/// The [drawable] used as the 'source' in graphics operations.
+		///
+		/// See also: [`Function`].
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [pixmap].
+		///
+		/// [drawable]: Drawable
+		/// [window]: Window
+		/// [pixmap]: Pixmap
+		///
+		/// [`Function`]: crate::set::Function
+		///
+		/// [`Drawable` error]: error::Drawable
+		pub source: Drawable,
+
+		/// The [graphics options] with which the [`GraphicsContext`] is configured.
+		///
+		/// These options are used when the [`GraphicsContext`] is used in
+		/// graphics operations.
+		///
+		/// [graphics options]: GraphicsOptions
+		pub graphics_options: GraphicsOptions,
 	}
 }

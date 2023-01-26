@@ -12,6 +12,7 @@ use crate::{
 	Pixmap,
 };
 use bitflags::bitflags;
+use derivative::Derivative;
 use xrbk::{
 	Buf,
 	BufMut,
@@ -330,9 +331,13 @@ pub type ClipMask = Option<Pixmap>;
 /// [`clip_mask`]: GraphicsOptions::clip_mask
 /// [`dash_offset`]: GraphicsOptions::dash_offset
 /// [`dashes`]: GraphicsOptions::dashes
+#[derive(Derivative, Debug)]
+#[derivative(Hash, PartialEq, Eq)]
 pub struct GraphicsOptions {
+	#[derivative(Hash = "ignore", PartialEq = "ignore")]
 	x11_size: usize,
 
+	#[derivative(Hash = "ignore", PartialEq = "ignore")]
 	mask: GraphicsOptionsMask,
 
 	function: Option<__Function>,
