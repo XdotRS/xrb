@@ -65,10 +65,8 @@ use crate::{
 macro_rules! request_error {
 	(
 		$(#[$meta:meta])*
-		$vis:vis enum $Name:ident for $Request:ident {
-			$FirstError:ident
-			$(, $Error:ident)+
-			$(,)?
+		$vis:vis enum $Name:ident for $Request:ty {
+			$($($Error:ident),+$(,)?)?
 		}
 	) => {
 		#[doc = concat!(
@@ -81,16 +79,7 @@ macro_rules! request_error {
 		#[doc = ""]
 		$(#[$meta])*
 		$vis enum $Name {
-			#[doc = concat!(
-				"A [`",
-				stringify!($FirstError),
-				"` error](error::",
-				stringify!($FirstError),
-				")."
-			)]
-			$FirstError(error::$FirstError)
-
-			$(,
+			$($(
 				#[doc = concat!(
 					"A [`",
 					stringify!($Error),
@@ -99,7 +88,7 @@ macro_rules! request_error {
 					")."
 				)]
 				$Error(error::$Error)
-			)+
+			),+)?
 		}
 	};
 }
@@ -3295,7 +3284,7 @@ derive_xrb! {
 	/// specifies an ID already used for another resource, or an ID which is not
 	/// allocated to your client.
 	///
-	/// A [`Drawable` error] is generated if `source` does not refer to a
+	/// A [`Drawable` error] is generated if `drawable` does not refer to a
 	/// defined [window] nor [pixmap].
 	///
 	/// [pixmap]: Pixmap
@@ -3322,9 +3311,12 @@ derive_xrb! {
 		#[doc(alias("cid", "gid", "gcid", "context_id"))]
 		pub graphics_context_id: GraphicsContext,
 
-		/// The [drawable] used as the source in graphics operations.
-		///
-		/// See also: [`Function`].
+		/// > *<sup>TODO</sup>*
+		/// > ***We don't yet understand what this field is for. If you have any
+		/// > ideas, please feel free to open an issue or a discussion on the
+		/// > [GitHub repo]!***
+		/// >
+		/// > [GitHub repo]: https://github.com/XdotRS/xrb/
 		///
 		/// # Errors
 		/// A [`Drawable` error] is generated if this does not refer to a
@@ -3334,17 +3326,21 @@ derive_xrb! {
 		/// [window]: Window
 		/// [pixmap]: Pixmap
 		///
-		/// [`Function`]: crate::set::Function
-		///
 		/// [`Drawable` error]: error::Drawable
-		#[doc(alias("drawable", "src", "source_drawable", "src_drawable"))]
-		// FIXME: is this the source??
-		pub source: Drawable,
+		pub drawable: Drawable,
 
 		/// The [graphics options] used in graphics operations when this
 		/// [`GraphicsContext`] is provided.
 		///
+		/// These [graphics options] may be later configured through the
+		/// [`SetDashes` request], [`SetClipRectangles` request], and the
+		/// [`ChangeGraphicsOptions` request].
+		///
 		/// [graphics options]: GraphicsOptions
+		///
+		/// [`SetDashes` request]: SetDashes
+		/// [`SetClipRectangles` request]: SetClipRectangles
+		/// [`ChangeGraphicsOptions` request]: ChangeGraphicsOptions
 		#[doc(alias("values", "value_mask", "value_list"))]
 		#[doc(alias("options", "option_mask", "option_list"))]
 		#[doc(alias("graphics_option_mask", "graphics_option_list"))]
