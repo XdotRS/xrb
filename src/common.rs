@@ -16,10 +16,8 @@ use xrbk::{
 	ConstantX11Size,
 	ReadError,
 	ReadResult,
-	Readable,
 	ReadableWithContext,
 	Wrap,
-	Writable,
 };
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
@@ -476,12 +474,12 @@ pub struct Rectangle {
 
 impl Rectangle {
 	/// Returns the rectangle's `x` and `y` coordinates as [`Coords`].
-	pub const fn as_coords(&self) -> Coords {
+	#[must_use] pub const fn as_coords(&self) -> Coords {
 		Coords::new(self.x, self.y)
 	}
 
 	/// Returns the rectangle's `width` and `height` as [`Dimensions`].
-	pub const fn as_dimensions(&self) -> Dimensions {
+	#[must_use] pub const fn as_dimensions(&self) -> Dimensions {
 		Dimensions::new(self.width, self.height)
 	}
 }
