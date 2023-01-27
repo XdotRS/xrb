@@ -62,40 +62,55 @@ use crate::{
 	WindowClass,
 };
 
-/// An [error] generated because of a failed [`CreateWindow` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`CreateWindow` request]: CreateWindow
-pub enum CreateWindowError {
-	/// A [`Colormap` error].
-	///
-	/// [`Colormap` error]: error::Colormap
-	Colormap(error::Colormap),
-	/// A [`CursorAppearance` error].
-	///
-	/// [`CursorAppearance` error]: error::CursorAppearance
-	CursorAppearance(error::CursorAppearance),
-	/// A [`ResourceIdChoice` error].
-	///
-	/// [`ResourceIdChoice` error]: error::ResourceIdChoice
-	ResourceIdChoice(error::ResourceIdChoice),
-	/// A [`Match` error].
-	///
-	/// [`Match` error]: error::Match
-	Match(error::Match),
-	/// A [`Pixmap` error].
-	///
-	/// [`Pixmap` error]: error::Pixmap
-	Pixmap(error::Pixmap),
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Window),
+macro_rules! request_error {
+	(
+		$vis:vis enum $Name:ident for $Request:ident {
+			$FirstError:ident
+			$(, $Error:ident)+
+			$(,)?
+		}
+	) => {
+		#[doc = concat!(
+			"An [error](crate::message::Error) generated because of a failed [`",
+			stringify!($Request),
+			"` request](",
+			stringify!($Request),
+			")."
+		)]
+		$vis enum $Name {
+			#[doc = concat!(
+				"A [`",
+				stringify!($FirstError),
+				"` error](error::",
+				stringify!($FirstError),
+				")."
+			)]
+			$FirstError(error::$FirstError)
+
+			$(,
+				#[doc = concat!(
+					"A [`",
+					stringify!($Error),
+					"` error](error::",
+					stringify!($Error),
+					")."
+				)]
+				$Error(error::$Error)
+			)+
+		}
+	};
+}
+
+request_error! {
+	pub enum CreateWindowError for CreateWindow {
+		Colormap,
+		CursorAppearance,
+		ResourceIdChoice,
+		Match,
+		Pixmap,
+		Value,
+		Window,
+	}
 }
 
 derive_xrb! {
@@ -208,40 +223,16 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`ChangeWindowAttributes` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`ChangeWindowAttributes` request]: ChangeWindowAttributes
-pub enum ChangeWindowAttributesError {
-	/// An [`Access` error].
-	///
-	/// [`Access` error]: error::Access
-	Access(error::Access),
-	/// A [`Colormap` error].
-	///
-	/// [`Colormap` error]: error::Colormap
-	Colormap(error::Colormap),
-	/// A [`CursorAppearance` error].
-	///
-	/// [`CursorAppearance` error]: error::CursorAppearance
-	CursorAppearance(error::CursorAppearance),
-	/// A [`Match` error].
-	///
-	/// [`Match` error]: error::Match
-	Match(error::Match),
-	/// A [`Pixmap` error].
-	///
-	/// [`Pixmap` error]: error::Pixmap
-	Pixmap(error::Pixmap),
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Window),
+request_error! {
+	pub enum ChangeWindowAttributesError for ChangeWindowAttributes {
+		Access,
+		Colormap,
+		CursorAppearance,
+		Match,
+		Pixmap,
+		Value,
+		Window,
+	}
 }
 
 derive_xrb! {
@@ -364,24 +355,12 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`ChangeSavedWindows` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`ChangeSavedWindows` request]: ChangeSavedWindows
-pub enum ChangeSavedWindowsError {
-	/// A [`Match` error].
-	///
-	/// [`Match` error]: error::Match
-	Match(error::Match),
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Window),
+request_error! {
+	pub enum ChangeSavedWindowsError for ChangeSavedWindows {
+		Match,
+		Value,
+		Window,
+	}
 }
 
 /// Whether something is added or removed.
@@ -447,20 +426,11 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`ReparentWindow` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`ReparentWindow` request]: ReparentWindow
-pub enum ReparentWindowError {
-	/// A [`Match` error].
-	///
-	/// [`Match` error]: error::Match
-	Match(error::Match),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Window),
+request_error! {
+	pub enum ReparentWindowError for ReparentWindow {
+		Match,
+		Window,
+	}
 }
 
 derive_xrb! {
@@ -690,24 +660,12 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`ConfigureWindow` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`ConfigureWindow` request]: ConfigureWindow
-pub enum ConfigureWindowError {
-	/// A [`Match` error].
-	///
-	/// [`Match` error]: error::Match
-	Match(error::Match),
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Window),
+request_error! {
+	pub enum ConfigureWindowError for ConfigureWindow {
+		Match,
+		Value,
+		Window,
+	}
 }
 
 derive_xrb! {
@@ -796,20 +754,11 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`CirculateWindow` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`CirculateWindow` request]: CirculateWindow
-pub enum CirculateWindowError {
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Window),
+request_error! {
+	pub enum CirculateWindowError for CirculateWindow {
+		Value,
+		Window,
+	}
 }
 
 /// The direction with which a [window]'s mapped children are circulated in
@@ -1035,29 +984,13 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because a [`ModifyProperty` request] failed.
-///
-/// [error]: crate::message::Error
-///
-/// [`ModifyProperty` request]: ModifyProperty
-#[doc(alias = "ChangePropertyError")]
-pub enum ModifyPropertyError {
-	/// An [`Atom` error].
-	///
-	/// [`Atom` error]: error::Atom
-	Atom(error::Atom),
-	/// A [`Match` error].
-	///
-	/// [`Match` error]: error::Match
-	Match(error::Match),
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Window),
+request_error! {
+	pub enum ModifyPropertyError for ModifyProperty {
+		Atom,
+		Match,
+		Value,
+		Window,
+	}
 }
 
 /// Whether a property is [replaced], [prepended] to a [window]'s list of
@@ -1316,20 +1249,11 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`DeleteProperty` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`DeleteProperty` request]: DeleteProperty
-pub enum DeletePropertyError {
-	/// An [`Atom` error].
-	///
-	/// [`Atom` error]: error::Atom
-	Atom(error::Atom),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Window),
+request_error! {
+	pub enum DeletePropertyError for DeleteProperty {
+		Atom,
+		Window,
+	}
 }
 
 derive_xrb! {
@@ -1382,24 +1306,12 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`GetProperty` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`GetProperty` request]: GetProperty
-pub enum GetPropertyError {
-	/// An [`Atom` error].
-	///
-	/// [`Atom` error]: error::Atom
-	Atom(error::Atom),
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Window),
+request_error! {
+	pub enum GetPropertyError for GetProperty {
+		Atom,
+		Value,
+		Window,
+	}
 }
 
 derive_xrb! {
@@ -1519,20 +1431,11 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`SetSelectionOwner` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`SetSelectionOwner` request]: SetSelectionOwner
-pub enum SetSelectionOwnerError {
-	/// An [`Atom` error].
-	///
-	/// [`Atom` error]: error::Atom
-	Atom(error::Atom),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Window),
+request_error! {
+	pub enum SetSelectionOwnerError for SetSelectionOwner {
+		Atom,
+		Window,
+	}
 }
 
 derive_xrb! {
@@ -1634,20 +1537,11 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`ConvertSelection` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`ConvertSelection` request]: ConvertSelection
-pub enum ConvertSelectionError {
-	/// An [`Atom` error].
-	///
-	/// [`Atom` error]: error::Atom
-	Atom(error::Atom),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Window),
+request_error! {
+	pub enum ConvertSelectionError for ConvertSelection {
+		Atom,
+		Window,
+	}
 }
 
 derive_xrb! {
@@ -1712,20 +1606,11 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`SendEvent` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`SendEvent` request]: SendEvent
-pub enum SendEventError {
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Window),
+request_error! {
+	pub enum SendEventError for SendEvent {
+		Value,
+		Window,
+	}
 }
 
 derive_xrb! {
@@ -1800,26 +1685,12 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`GrabCursor` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`GrabCursor` request]: GrabCursor
-#[doc(alias = "GrabPointerError")]
-pub enum GrabCursorError {
-	/// A [`CursorAppearance` error].
-	///
-	/// [`CursorAppearance` error]: error::CursorAppearance
-	#[doc(alias = "Cursor")]
-	CursorAppearance(error::CursorAppearance),
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Window),
+request_error! {
+	pub enum GrabCursorError for GrabCursor {
+		CursorAppearance,
+		Value,
+		Window,
+	}
 }
 
 derive_xrb! {
@@ -1970,28 +1841,13 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`GrabButton` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`GrabButton` request]: GrabButton
-pub enum GrabButtonError {
-	/// An [`Access` error].
-	///
-	/// [`Access` error]: error::Access
-	Access(error::Access),
-	/// A [`CursorAppearance` error].
-	///
-	/// [`CursorAppearance` error]: error::CursorAppearance
-	CursorAppearance(error::CursorAppearance),
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Window),
+request_error! {
+	pub enum GrabButtonError for GrabButton {
+		Access,
+		CursorAppearance,
+		Value,
+		Window,
+	}
 }
 
 derive_xrb! {
@@ -2145,20 +2001,11 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`UngrabButton` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`UngrabButton` request]: UngrabButton
-pub enum UngrabButtonError {
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Window),
+request_error! {
+	pub enum UngrabButtonError for UngrabButton {
+		Value,
+		Window,
+	}
 }
 
 derive_xrb! {
@@ -2222,21 +2069,11 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`ChangeActiveCursorGrab` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`ChangeActiveCursorGrab` request]: ChangeActiveCursorGrab
-#[doc(alias = "ChangeActivePointerGrabError")]
-pub enum ChangeActiveCursorGrabError {
-	/// A [`CursorAppearance` error].
-	///
-	/// [`CursorAppearance` error]: error::CursorAppearance
-	CursorAppearance(error::CursorAppearance),
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
+request_error! {
+	pub enum ChangeActiveCursorGrabError for ChangeActiveCursorGrab {
+		CursorAppearance,
+		Value,
+	}
 }
 
 derive_xrb! {
@@ -2293,20 +2130,11 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`GrabKeyboard` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`GrabKeyboard` request]: GrabKeyboard
-pub enum GrabKeyboardError {
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Window),
+request_error! {
+	pub enum GrabKeyboardError for GrabKeyboard {
+		Value,
+		Window,
+	}
 }
 
 derive_xrb! {
@@ -2418,28 +2246,13 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`GrabKey` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`GrabKey` request]: GrabKey
-pub enum GrabKeyError {
-	/// An [`Access` error].
-	///
-	/// [`Access` error]: error::Access
-	Access(error::Access),
-	/// A [`CursorAppearance` error].
-	///
-	/// [`CursorAppearance` error]: error::CursorAppearance
-	CursorAppearance(error::CursorAppearance),
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Window),
+request_error! {
+	pub enum GrabKeyError for GrabKey {
+		Access,
+		CursorAppearance,
+		Value,
+		Window,
+	}
 }
 
 derive_xrb! {
@@ -2555,20 +2368,11 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`UngrabKey` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`UngrabKey` request]: UngrabKey
-pub enum UngrabKeyError {
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Window),
+request_error! {
+	pub enum UngrabKeyError for UngrabKey {
+		Value,
+		Window,
+	}
 }
 
 derive_xrb! {
@@ -2984,25 +2788,12 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`SetFocus` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`SetFocus` request]: SetFocus
-#[doc(alias = "SetInputFocusError")]
-pub enum SetFocusError {
-	/// A [`Match` error].
-	///
-	/// [`Match` error]: error::Match
-	Match(error::Match),
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
-	/// A [`Window` error].
-	///
-	/// [`Window` error]: error::Window
-	Window(error::Value),
+request_error! {
+	pub enum SetFocusError for SetFocus {
+		Match,
+		Value,
+		Window,
+	}
 }
 
 /// What the focus should revert to if the focused [window] becomes unviewable.
@@ -3096,18 +2887,11 @@ derive_xrb! {
 	pub struct QueryKeyboard: Request(44) -> reply::QueryKeyboard;
 }
 
-/// An [error] generated because of a failed [`AssignFont` request].
-///
-/// [`AssignFont` request]: AssignFont
-pub enum AssignFontError {
-	/// A [`ResourceIdChoice` error].
-	///
-	/// [`ResourceIdChoice` error]: error::ResourceIdChoice
-	ResourceIdChoice(error::ResourceIdChoice),
-	/// A [`Name` error].
-	///
-	/// [`Name` error]: error::Name
-	Name(error::Name),
+request_error! {
+	pub enum AssignFontError for AssignFont {
+		ResourceIdChoice,
+		Name,
+	}
 }
 
 derive_xrb! {
@@ -3372,24 +3156,12 @@ derive_xrb! {
 	pub struct GetFontSearchDirectories: Request(52) -> reply::GetFontSearchDirectories;
 }
 
-/// An [error] generated because of a failed [`CreatePixmap` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`CreatePixmap` request]: CreatePixmap
-pub enum CreatePixmapError {
-	/// A [`Drawable` error].
-	///
-	/// [`Drawable` error]: error::Drawable
-	Drawable(error::Drawable),
-	/// A [`ResourceIdChoice` error].
-	///
-	/// [`ResourceIdChoice` error]: error::ResourceIdChoice
-	ResourceIdChoice(error::ResourceIdChoice),
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
+request_error! {
+	pub enum CreatePixmapError for CreatePixmap {
+		Drawable,
+		ResourceIdChoice,
+		Value,
+	}
 }
 
 derive_xrb! {
@@ -3500,36 +3272,15 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`CreateGraphicsContext` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`CreateGraphicsContext` request]: CreateGraphicsContext
-pub enum CreateGraphicsContextError {
-	/// A [`Drawable` error].
-	///
-	/// [`Drawable` error]: error::Drawable
-	Drawable(error::Drawable),
-	/// A [`Font` error].
-	///
-	/// [`Font` error]: error::Font
-	Font(error::Font),
-	/// A [`ResourceIdChoice` error].
-	///
-	/// [`ResourceIdChoice` error]: error::ResourceIdChoice
-	ResourceIdChoice(error::ResourceIdChoice),
-	/// A [`Match` error].
-	///
-	/// [`Match` error]: error::Match
-	Match(error::Match),
-	/// A [`Pixmap` error].
-	///
-	/// [`Pixmap` error]: error::Pixmap
-	Pixmap(error::Pixmap),
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
+request_error! {
+	pub enum CreateGraphicsContextError for GraphicsContext {
+		Drawable,
+		Font,
+		ResourceIdChoice,
+		Match,
+		Pixmap,
+		Value,
+	}
 }
 
 derive_xrb! {
@@ -3597,33 +3348,14 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`ChangeGraphicsOptions` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`ChangeGraphicsOptions` request]: ChangeGraphicsOptions
-#[doc(alias("ChangeGcError", "ChangeGCError", "ChangeGraphicsContextError"))]
-pub enum ChangeGraphicsOptionsError {
-	/// A [`Font` error].
-	///
-	/// [`Font` error]: error::Font
-	Font(error::Font),
-	/// A [`GraphicsContext` error].
-	///
-	/// [`GraphicsContext` error]: error::GraphicsContext
-	GraphicsContext(error::GraphicsContext),
-	/// A [`Match` error].
-	///
-	/// [`Match` error]: error::Match
-	Match(error::Match),
-	/// A [`Pixmap` error].
-	///
-	/// [`Pixmap` error]: error::Pixmap
-	Pixmap(error::Pixmap),
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
+request_error! {
+	pub enum ChangeGraphicsOptionsError for ChangeGraphicsOptions {
+		Font,
+		GraphicsContext,
+		Match,
+		Pixmap,
+		Value,
+	}
 }
 
 derive_xrb! {
@@ -3678,30 +3410,12 @@ derive_xrb! {
 	}
 }
 
-/// An [error] generated because of a failed [`CopyGraphicsOptions` request].
-///
-/// [error]: crate::message::Error
-///
-/// [`CopyGraphicsOptions` request]: CopyGraphicsOptions
-#[doc(alias(
-	"CopyGcError",
-	"CopyGCError",
-	"CopyGraphicsContextError",
-	"CopyGcontextError"
-))]
-pub enum CopyGraphicsOptionsError {
-	/// A [`GraphicsContext` error].
-	///
-	/// [`GraphicsContext` error]: error::GraphicsContext
-	GraphicsContext(error::GraphicsContext),
-	/// A [`Match` error].
-	///
-	/// [`Match` error]: error::Match
-	Match(error::Match),
-	/// A [`Value` error].
-	///
-	/// [`Value` error]: error::Value
-	Value(error::Value),
+request_error! {
+	pub enum CopyGraphicsOptionsError for CopyGraphicsOptions {
+		GraphicsContext,
+		Match,
+		Value,
+	}
 }
 
 derive_xrb! {
