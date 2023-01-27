@@ -3690,7 +3690,7 @@ derive_xrb! {
 			length -= GraphicsContext::X11_SIZE;
 			length -= 2 * <Px<i16>>::X11_SIZE;
 
-			length / Rectangle::X11_SIZE
+			length / <Rectangle<i16, u16>>::X11_SIZE
 		})]
 		pub clip_rectangles: Vec<Rectangle>,
 	}

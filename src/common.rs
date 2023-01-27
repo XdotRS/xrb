@@ -3,15 +3,25 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 extern crate self as xrb;
-use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
 use derive_more::{From, Into};
-use xrbk::{pad, Buf, ConstantX11Size, ReadError, ReadResult, ReadableWithContext, Wrap};
 
 pub use atom::Atom;
 pub use mask::*;
 pub use res_id::*;
 pub use wrapper::*;
+use xrbk::{
+	pad,
+	Buf,
+	ConstantX11Size,
+	ReadError,
+	ReadResult,
+	Readable,
+	ReadableWithContext,
+	Wrap,
+	Writable,
+};
+use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
 use crate::unit::Px;
 
@@ -407,48 +417,93 @@ impl ReadableWithContext for String16 {
 	Debug,
 	From,
 	Into,
-	// `new` and `unwrap` const fns
+	// `new` const fn
 	new,
-	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
 	Readable,
 	Writable,
 )]
-pub struct Coords {
-	#[allow(missing_docs)]
-	pub x: Px<i16>,
-	#[allow(missing_docs)]
-	pub y: Px<i16>,
+pub struct Coords<T = i16>
+where
+	T: Writable + Readable + ConstantX11Size,
+{
+	/// The x coordinate, measured in pixels.
+	pub x: Px<T>,
+	/// The y coordinate, measured in pixels.
+	pub y: Px<T>,
+}
+
+/// 2D dimensions (width and height), measured in pixels.
+#[derive(
+	Copy,
+	Clone,
+	Eq,
+	PartialEq,
+	Hash,
+	Debug,
+	From,
+	Into,
+	// `new` const fn
+	new,
+	// XRBK traits
+	X11Size,
+	ConstantX11Size,
+	Readable,
+	Writable,
+)]
+pub struct Dimensions<T = u16>
+where
+	T: Writable + Readable + ConstantX11Size,
+{
+	/// The width, measured in pixels.
+	pub width: Px<T>,
+	/// The height, measured in pixels.
+	pub height: Px<T>,
 }
 
 /// A rectangle with coordinates and dimensions.
-#[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable)]
-pub struct Rectangle {
+#[derive(
+	Copy, Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable,
+)]
+pub struct Rectangle<Xy = i16, Wh = u16>
+where
+	Xy: Copy + Readable + Writable + ConstantX11Size,
+	Wh: Copy + Readable + Writable + ConstantX11Size,
+{
 	/// The x-coordinate of the upper left corner of the `Rectangle`.
-	pub x: Px<i16>,
+	pub x: Px<Xy>,
 	/// The y-coordinate of the upper left corner of the `Rectangle`.
-	pub y: Px<i16>,
+	pub y: Px<Xy>,
 	/// The width of the `Rectangle`.
-	pub width: Px<u16>,
+	pub width: Px<Wh>,
 	/// The height of the `Rectangle`.
-	pub height: Px<u16>,
+	pub height: Px<Wh>,
 }
 
-/// Same as a [`Rectangle`], but with unsigned coordinates.
-#[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable)]
-pub struct Region {
-	/// The x-coordinate of the upper left corner of the `Region`.
-	pub x: Px<u16>,
-	/// The y-coordinate of the upper left corner of the `Region`.
-	pub y: Px<u16>,
+impl<Xy, Wh> Rectangle<Xy, Wh>
+where
+	Xy: Copy + Readable + Writable + ConstantX11Size,
+	Wh: Copy + Readable + Writable + ConstantX11Size,
+{
+	/// Returns the rectangle's `x` and `y` coordinates as [`Coords`].
+	///
+	/// This copies the values of `x` and `y`.
+	pub const fn as_coords(&self) -> Coords<Xy> {
+		Coords::new(self.x, self.y)
+	}
 
-	/// The width of the `Region`.
-	pub width: Px<u16>,
-	/// The height of the `Region`.
-	pub height: Px<u16>,
+	/// Returns the rectangle's `width` and `height` as [`Dimensions`].
+	///
+	/// This copies the values of `width` and `height`.
+	pub const fn as_dimensions(&self) -> Dimensions<Wh> {
+		Dimensions::new(self.width, self.height)
+	}
 }
+
+/// A [`Rectangle`] with unsigned coordinates.
+pub type Region = Rectangle<u16, u16>;
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable)]
 pub struct Arc {
