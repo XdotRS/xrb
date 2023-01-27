@@ -29,7 +29,7 @@ use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use crate::{
 	message::Event,
-	set::{Attributes, GraphicsOptions, WindowConfig},
+	set::{Attributes, GraphicsOptions, GraphicsOptionsMask, WindowConfig},
 	unit::Px,
 	visual::VisualId,
 	x11::{error, reply},
@@ -3564,6 +3564,7 @@ derive_xrb! {
 		/// [`GraphicsContext` ID]: GraphicsContext
 		///
 		/// [`ResourceIdChoice` error]: error::ResourceIdChoice
+		#[doc(alias("cid", "gid", "gcid", "context_id"))]
 		pub graphics_context_id: GraphicsContext,
 
 		/// The [drawable] used as the source in graphics operations.
@@ -3581,12 +3582,16 @@ derive_xrb! {
 		/// [`Function`]: crate::set::Function
 		///
 		/// [`Drawable` error]: error::Drawable
+		#[doc(alias("drawable", "src", "source_drawable", "src_drawable"))]
 		pub source: Drawable,
 
 		/// The [graphics options] used in graphics operations when this
 		/// [`GraphicsContext`] is provided.
 		///
 		/// [graphics options]: GraphicsOptions
+		#[doc(alias("values", "value_mask", "value_list"))]
+		#[doc(alias("options", "option_mask", "option_list"))]
+		#[doc(alias("graphics_option_mask", "graphics_option_list"))]
 		pub graphics_options: GraphicsOptions,
 	}
 }
@@ -3659,11 +3664,105 @@ derive_xrb! {
 		/// [request]: crate::message::Request
 		///
 		/// [`GraphicsContext` error]: error::GraphicsContext
+		#[doc(alias("gc", "graphics_context", "context"))]
 		pub target: GraphicsContext,
 
 		/// The changes which are made to the `target`'s [graphics options].
 		///
 		/// [graphics options]: GraphicsOptions
+		#[doc(alias("values", "value_mask", "value_list"))]
+		#[doc(alias("options", "option_mask", "option_list"))]
+		#[doc(alias("graphics_option_mask", "graphics_option_list"))]
 		pub changed_options: GraphicsOptions,
+	}
+}
+
+/// An [error] generated because of a failed [`CopyGraphicsOptions` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`CopyGraphicsOptions` request]: CopyGraphicsOptions
+#[doc(alias(
+	"CopyGcError",
+	"CopyGCError",
+	"CopyGraphicsContextError",
+	"CopyGcontextError"
+))]
+pub enum CopyGraphicsOptionsError {
+	/// A [`GraphicsContext` error].
+	///
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	GraphicsContext(error::GraphicsContext),
+	/// A [`Match` error].
+	///
+	/// [`Match` error]: error::Match
+	Match(error::Match),
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+}
+
+derive_xrb! {
+	/// A [request] that copies the specified [graphics options] from the
+	/// `source` [`GraphicsContext`] into the `destination` [`GraphicsContext`].
+	///
+	/// # Errors
+	/// A [`GraphicsContext` error] is generated if either the `source` or the
+	/// `destination` do not refer to defined [`GraphicsContext`s].
+	///
+	/// A [`Match` error] is generated if the `source` and the `destination` do
+	/// not have the same root [window] and depth.
+	///
+	/// [graphics options]: GraphicsOptions
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [`GraphicsContext`s]: GraphicsContext
+	///
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	/// [`Match` error]: error::Match
+	#[doc(alias("CopyGc", "CopyGC", "CopyGraphicsContext", "CopyGcontext"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct CopyGraphicsOptions: Request(57, CopyGraphicsOptionsError) {
+		/// The [`GraphicsContext`] from which the [options] specified in
+		/// `options_mask` are copied.
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// A [`Match` error] is generated if this does not have the same root
+		/// [window] and depth as the `destination`.
+		///
+		/// [options]: GraphicsOptions
+		/// [window]: Window
+		///
+		/// [`GraphicsContext` error]: error::GraphicsContext
+		/// [`Match` error]: error::Match
+		#[doc(alias("src_gc", "source_graphics_context", "src"))]
+		pub source: GraphicsContext,
+		/// The [`GraphicsContext`] into which the [options] specified in
+		/// `options_mask` are copied from the `source`.
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// A [`Match` error] is generated if this does not have the same root
+		/// [window] and depth as the `source`.
+		///
+		/// [options]: GraphicsOptions
+		/// [window]: Window
+		///
+		/// [`GraphicsContext` error]: error::GraphicsContext
+		/// [`Match` error]: error::Match
+		#[doc(alias("dst_gc", "destination_graphics_context", "dst"))]
+		pub destination: GraphicsContext,
+
+		/// A mask that specifies which options are copied from the `source`
+		/// into the `destination`.
+		#[doc(alias("value_mask"))]
+		pub options_mask: GraphicsOptionsMask,
 	}
 }
