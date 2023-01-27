@@ -3338,6 +3338,7 @@ derive_xrb! {
 		///
 		/// [`Drawable` error]: error::Drawable
 		#[doc(alias("drawable", "src", "source_drawable", "src_drawable"))]
+		// FIXME: is this the source??
 		pub source: Drawable,
 
 		/// The [graphics options] used in graphics operations when this
@@ -3791,5 +3792,124 @@ derive_xrb! {
 		///
 		/// [window]: Window
 		pub area: Rectangle,
+	}
+}
+
+request_error! {
+	pub enum CopyAreaError for CopyArea {
+		Drawable,
+		GraphicsContext,
+		Match,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that copies an area of the given `source` [drawable] into
+	/// the given `destination` [drawable].
+	///
+	/// [Regions][regions] of the `source` that are obscured and have not been
+	/// [maintained], as well as [regions] specified by the `source_area` which
+	/// fall outside of the `source` itself, are not copied. If the
+	/// `destination` has a background, however, and those [regions] of the
+	/// `source` which are not copied correspond to [regions] of the
+	/// `destination` which are visible or [maintained], those [regions] will be
+	/// filled with the `destination`'s background. If the `graphics_context`'s
+	/// [`graphics_exposure`] is `true`, [`GraphicsExposure` events] will be
+	/// generated for those [regions] (or a [`NoExposure` event] if none are
+	/// generated).
+	///
+	/// # Graphics options used
+	/// This [request] uses the following options of the `graphics_context`:
+	/// - [`function`]
+	/// - [`plane_mask`]
+	/// - [`child_mode`]
+	/// - [`graphics_exposure`]
+	/// - [`clip_x`]
+	/// - [`clip_y`]
+	/// - [`clip_mask`]
+	///
+	/// # Errors
+	/// A [`Drawable` error] is generated if either `source` or `destination` do
+	/// not refer to defined [windows] nor [pixmaps].
+	///
+	/// A [`GraphicsContext` error] is generated if `graphics_context` does not
+	/// refer to a defined [`GraphicsContext`].
+	///
+	/// [drawable]: Drawable
+	/// [windows]: Window
+	/// [pixmaps]: Pixmap
+	/// [regions]: crate::Region
+	/// [request]: crate::message::Request
+	///
+	/// [maintained]: crate::MaintainContents
+	///
+	/// [`function`]: GraphicsOptions::function
+	/// [`plane_mask`]: GraphicsOptions::plane_mask
+	/// [`child_mode`]: GraphicsOptions::child_mode
+	/// [`graphics_exposure`]: GraphicsOptions::graphics_exposure
+	/// [`clip_x`]: GraphicsOptions::clip_x
+	/// [`clip_y`]: GraphicsOptions::clip_y
+	/// [`clip_mask`]: GraphicsOptions::clip_y
+	///
+	/// [`GraphicsExposure` events]: super::event::GraphicsExposure
+	/// [`NoExposure` event]: super::event::NoExposure
+	///
+	/// [`Drawable` error]: error::Drawable
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	/// [`Match` error]: error::Match
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct CopyArea: Request(62, CopyAreaError) {
+		/// The [drawable] from which the area is copied.
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [pixmap].
+		///
+		/// A [`Match` error] is generated if this does not have the same root
+		/// [window] and depth as the `destination`.
+		///
+		/// [drawable]: Drawable
+		/// [window]: Window
+		/// [pixmap]: Pixmap
+		///
+		/// [`Drawable` error]: error::Drawable
+		/// [`Match` error]: error::Match
+		pub source: Drawable,
+		/// The [drawable] into which the area is copied.
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [pixmap].
+		///
+		/// A [`Match` error] is generated if this does not have the same root
+		/// [window] and depth as the `destination`.
+		///
+		/// [drawable]: Drawable
+		/// [window]: Window
+		/// [pixmap]: Pixmap
+		///
+		/// [`Drawable` error]: error::Drawable
+		/// [`Match` error]: error::Match
+		pub destination: Drawable,
+
+		/// The [`GraphicsContext`] used in this graphics operation.
+		pub graphics_context: GraphicsContext,
+
+		/// The area within the `source` [drawable] which is copied.
+		///
+		/// The `x` and `y` coordinates are relative to the top-left corner of
+		/// the `source`.
+		///
+		/// [drawable]: Drawable
+		pub source_area: Rectangle,
+		/// The coordinates at which the copied area will be placed within the
+		/// `destination` [drawable].
+		///
+		/// These coordinates are relative to the top-left corner of the
+		/// `destination`, and specify what the top-left corner of the copied
+		/// area will be when it has been copied.
+		///
+		/// [drawable]: Drawable
+		pub destination_coords: Coords,
 	}
 }
