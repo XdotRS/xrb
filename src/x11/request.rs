@@ -3296,17 +3296,17 @@ derive_xrb! {
 	/// A [request] that lists available fonts (as controlled by the
 	/// [font search path]) with information about them.
 	///
-	/// The information returned for each font almost entirely matches that returned in a
-	/// [`QueryFont` reply].
+	/// The information returned for each font almost entirely matches that
+	/// returned in a [`QueryFont` reply].
 	///
 	/// # Replies
-	/// This [request] generates a [`ListFonts` reply].
+	/// This [request] generates [`ListFontsWithInfo` replies].
 	///
 	/// [request]: crate::message::Request
 	///
 	/// [font search path]: SetFontSearchDirectories
 	///
-	/// [`ListFonts` reply]: reply::ListFonts
+	/// [`ListFontsWithInfo` replies]: reply::ListFontsWithInfo
 	/// [`QueryFont` reply]: reply::QueryFont
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct ListFontsWithInfo: Request(50) -> reply::ListFontsWithInfo {
@@ -3402,7 +3402,8 @@ derive_xrb! {
 	/// the `drawable`'s root [window].
 	///
 	/// A [`ResourceIdChoice` error] is generated if `pixmap_id` specifies an ID
-	/// already used for another resource, or an ID not allocated to your client.
+	/// already used for another resource, or an ID not allocated to your
+	/// client.
 	///
 	/// A [`Drawable` error] is generated if `drawable` does not refer to a
 	/// defined [window] nor [pixmap].
@@ -3441,8 +3442,6 @@ derive_xrb! {
 		#[doc(alias = "pid")]
 		pub pixmap_id: Pixmap,
 		// TODO: what is this for??
-		//       possible theory: pixmaps are references to drawables, which are either other
-		//       pixmaps referring to other drawables, or windows...
 		/// It is legal to use an [`InputOnly`] [window] as a [drawable] in this
 		/// [request].
 		///
@@ -3552,6 +3551,7 @@ derive_xrb! {
 	///
 	/// [`ResourceIdChoice` error]: error::ResourceIdChoice
 	/// [`Drawable` error]: error::Drawable
+	#[doc(alias("CreateGc", "CreateGC", "CreateGcontext", "CreateGContext"))]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct CreateGraphicsContext: Request(55, CreateGraphicsContextError) {
 		/// The [`GraphicsContext` ID] which is to be assigned to the
@@ -3565,8 +3565,8 @@ derive_xrb! {
 		///
 		/// [`ResourceIdChoice` error]: error::ResourceIdChoice
 		pub graphics_context_id: GraphicsContext,
-		// FIXME: is this the source???
-		/// The [drawable] used as the 'source' in graphics operations.
+
+		/// The [drawable] used as the source in graphics operations.
 		///
 		/// See also: [`Function`].
 		///
@@ -3583,12 +3583,87 @@ derive_xrb! {
 		/// [`Drawable` error]: error::Drawable
 		pub source: Drawable,
 
-		/// The [graphics options] with which the [`GraphicsContext`] is configured.
-		///
-		/// These options are used when the [`GraphicsContext`] is used in
-		/// graphics operations.
+		/// The [graphics options] used in graphics operations when this
+		/// [`GraphicsContext`] is provided.
 		///
 		/// [graphics options]: GraphicsOptions
 		pub graphics_options: GraphicsOptions,
+	}
+}
+
+/// An [error] generated because of a failed [`ChangeGraphicsOptions` request].
+///
+/// [error]: crate::message::Error
+///
+/// [`ChangeGraphicsOptions` request]: ChangeGraphicsOptions
+#[doc(alias("ChangeGcError", "ChangeGCError", "ChangeGraphicsContextError"))]
+pub enum ChangeGraphicsOptionsError {
+	/// A [`Font` error].
+	///
+	/// [`Font` error]: error::Font
+	Font(error::Font),
+	/// A [`GraphicsContext` error].
+	///
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	GraphicsContext(error::GraphicsContext),
+	/// A [`Match` error].
+	///
+	/// [`Match` error]: error::Match
+	Match(error::Match),
+	/// A [`Pixmap` error].
+	///
+	/// [`Pixmap` error]: error::Pixmap
+	Pixmap(error::Pixmap),
+	/// A [`Value` error].
+	///
+	/// [`Value` error]: error::Value
+	Value(error::Value),
+}
+
+derive_xrb! {
+	/// A [request] that changes the [graphics options] configured in a
+	/// [`GraphicsContext`].
+	///
+	/// Changing the [`clip_mask`] overrides any [`SetClipRectangles` request]
+	/// on the [`GraphicsContext`].
+	///
+	/// Changing [`dash_offset`] or [`dashes`] overrides any
+	/// [`SetDashes` request] on the [`GraphicsContext`].
+	///
+	/// # Errors
+	/// A [`GraphicsContext` error] is generated if `target` does not refer to a
+	/// defined [`GraphicsContext`].
+	///
+	/// [request]: crate::message::Request
+	///
+	/// [graphics options]: GraphicsOptions
+	///
+	/// [`clip_mask`]: GraphicsOptions::clip_mask
+	/// [`dashes`]: GraphicsOptions::dashes
+	///
+	/// [`SetClipRectangles` request]: SetClipRectangles
+	/// [`SetDashes` request]: SetDashes
+	///
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	#[doc(alias("ChangeGc", "ChangeGC", "ChangeGraphicsContext"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ChangeGraphicsOptions: Request(56, ChangeGraphicsOptionsError) {
+		/// The [`GraphicsContext`] for which this [request] changes its
+		/// [graphics options].
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// [graphics options]: GraphicsOptions
+		/// [request]: crate::message::Request
+		///
+		/// [`GraphicsContext` error]: error::GraphicsContext
+		pub target: GraphicsContext,
+
+		/// The changes which are made to the `target`'s [graphics options].
+		///
+		/// [graphics options]: GraphicsOptions
+		pub changed_options: GraphicsOptions,
 	}
 }
