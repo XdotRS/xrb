@@ -1250,11 +1250,11 @@ derive_xrb! {
 		/// The [major opcode] identifying the graphics request used.
 		///
 		/// For the core protocol, this always refers to [`CopyArea`] or
-		/// [`CopyPlane`].
+		/// [`CopyBitPlane`].
 		///
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		/// [`CopyArea`]: super::request::CopyArea
-		/// [`CopyPlane`]: super::request::CopyPlane
+		/// [`CopyBitPlane`]: super::request::CopyBitPlane
 		pub major_opcode: u8,
 		[_; ..],
 	}
@@ -1301,7 +1301,7 @@ derive_xrb! {
 		///
 		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
 		/// [`CopyArea`]: super::request::CopyArea
-		/// [`CopyPlane`]: super::request::CopyPlane
+		/// [`CopyPlane`]: super::request::CopyBitPlane
 		pub major_opcode: u8,
 		[_; ..],
 	}

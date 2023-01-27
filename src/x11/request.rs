@@ -45,6 +45,7 @@ use crate::{
 	CursorAppearance,
 	CursorEventMask,
 	DestinationWindow,
+	Dimensions,
 	Drawable,
 	EventMask,
 	FocusWindow,
@@ -3804,8 +3805,8 @@ derive_xrb! {
 	/// the given `destination` [drawable].
 	///
 	/// [Regions][regions] of the `source` that are obscured and have not been
-	/// [maintained], as well as [regions] specified by the `source_area` which
-	/// fall outside of the `source` itself, are not copied. If the
+	/// [maintained], as well as [regions] specified by `source_coords` and
+	/// `dimensions` fall outside of the `source` itself, are not copied. If the
 	/// `destination` has a background, however, and those [regions] of the
 	/// `source` which are not copied correspond to [regions] of the
 	/// `destination` which are visible or [maintained], those [regions] will be
@@ -3815,7 +3816,7 @@ derive_xrb! {
 	/// generated).
 	///
 	/// # Graphics options used
-	/// This [request] uses the following options of the `graphics_context`:
+	/// This [request] uses the following [options] of the `graphics_context`:
 	/// - [`function`]
 	/// - [`plane_mask`]
 	/// - [`child_mode`]
@@ -3835,6 +3836,7 @@ derive_xrb! {
 	/// [windows]: Window
 	/// [pixmaps]: Pixmap
 	/// [regions]: crate::Region
+	/// [options]: GraphicsOptions
 	/// [request]: crate::message::Request
 	///
 	/// [maintained]: crate::MaintainContents
@@ -3889,15 +3891,23 @@ derive_xrb! {
 		pub destination: Drawable,
 
 		/// The [`GraphicsContext`] used in this graphics operation.
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// [`GraphicsContext` error]: error::GraphicsContext
 		pub graphics_context: GraphicsContext,
 
-		/// The area within the `source` [drawable] which is copied.
+		/// The coordinates of the area which is copied from the `source`
+		/// [drawable].
 		///
-		/// The `x` and `y` coordinates are relative to the top-left corner of
-		/// the `source`.
+		/// These coordinates are relative to the top-left corner of the
+		/// `source`, and specify the top-left corner of the area which is
+		/// copied.
 		///
 		/// [drawable]: Drawable
-		pub source_area: Rectangle,
+		pub source_coords: Coords,
 		/// The coordinates at which the copied area will be placed within the
 		/// `destination` [drawable].
 		///
@@ -3907,5 +3917,173 @@ derive_xrb! {
 		///
 		/// [drawable]: Drawable
 		pub destination_coords: Coords,
+
+		/// The dimensions of the area that is copied.
+		pub dimensions: Dimensions,
+	}
+}
+
+request_error! {
+	#[doc(alias("CopyPlaneError"))]
+	pub enum CopyBitPlaneError for CopyBitPlane {
+		Drawable,
+		GraphicsContext,
+		Match,
+		Value,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that copies a [region] of the `source` [drawable], masked by the given
+	/// `bit_plane`, and filled according to the [`foreground_color`] and [`background_color`] in
+	/// the `graphics_context`.
+	///
+	/// Effectively, a [pixmap] with the given `dimensions` and the same depth
+	/// as the `destination` [drawable] is created. It is filled with the
+	/// [`foreground_color`] where the `bit_plane` in the `source` [drawable]
+	/// contains a bit set to 1, and [`background_color`] where the `bit_plane`
+	/// in the `source` [drawable] contains a bit set to 0.
+	///
+	/// # Graphics options used
+	/// This [request] uses the following [options] of the `graphics_context`:
+	/// - [`function`]
+	/// - [`plane_mask`]
+	/// - [`foreground_color`]
+	/// - [`background_color`]
+	/// - [`child_mode`]
+	/// - [`graphics_exposure`]
+	/// - [`clip_x`]
+	/// - [`clip_y`]
+	/// - [`clip_mask`]
+	///
+	/// # Errors
+	/// A [`Drawable` error] is generated if either the `source` or the
+	/// `destination` do not refer to defined [windows][window] nor
+	/// [pixmaps][pixmap].
+	///
+	/// A [`GraphicsContext` error] is generated if the `graphics_context` does
+	/// not refer to a defined [`GraphicsContext`].
+	///
+	/// A [`Match` error] is generated if the `source` [drawable] does not have
+	/// the same root [window] as the `destination` [drawable].
+	///
+	/// A [`Value` error] is generated if the `bit_plane` does not have exactly
+	/// one bit set to 1, or if the value of the `bit_plane` is not less than
+	/// 2<sup>`depth`</sup>, where `depth` is the `source` [drawable]'s depth.
+	///
+	/// [drawable]: Drawable
+	/// [pixmap]: Pixmap
+	/// [window]: Window
+	/// [region]: crate::Region
+	/// [options]: GraphicsOptions
+	/// [request]: crate::message::Request
+	///
+	/// [`function`]: GraphicsOptions::function
+	/// [`plane_mask`]: GraphicsOptions::plane_mask
+	/// [`foreground_color`]: GraphicsOptions::foreground_color
+	/// [`background_color`]: GraphicsOptions::background_color
+	/// [`child_mode`]: GraphicsOptions::child_mode
+	/// [`graphics_exposure`]: GraphicsOptions::graphics_exposure
+	/// [`clip_x`]: GraphicsOptions::clip_x
+	/// [`clip_y`]: GraphicsOptions::clip_y
+	/// [`clip_mask`]: GraphicsOptions::clip_mask
+	///
+	/// [`Drawable` error]: error::Drawable
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	/// [`Match` error]: error::Match
+	/// [`Value` error]: error::Value
+	#[doc(alias("CopyPlane"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct CopyBitPlane: Request(63, CopyBitPlaneError) {
+		/// The [drawable] used as the source in this graphics operation.
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [pixmap].
+		///
+		/// A [`Match` error] is generated if this does not have the same root
+		/// [window] as the `destination`.
+		///
+		/// [drawable]: Drawable
+		/// [pixmap]: Pixmap
+		/// [window]: Window
+		///
+		/// [`Drawable` error]: error::Drawable
+		/// [`Match` error]: error::Match
+		#[doc(alias("src", "src_drawable", "source_drawable"))]
+		pub source: Drawable,
+		/// The [drawable] which the filled [region] is copied into.
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [pixmap].
+		///
+		/// A [`Match` error] is generated if this does not have the same root
+		/// [window] as the `source`.
+		///
+		/// [region]: crate::Region
+		/// [drawable]: Drawable
+		/// [pixmap]: Pixmap
+		/// [window]: Window
+		///
+		/// [`Drawable` error]: error::Drawable
+		/// [`Match` error]: error::Match
+		#[doc(alias("dst", "dst_drawable", "destination_drawable"))]
+		pub destination: Drawable,
+
+		/// The [`GraphicsContext`] used in this graphics operation.
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// [`GraphicsContext` error]: error::GraphicsContext
+		#[doc(alias("gc", "context", "gcontext"))]
+		pub graphics_context: GraphicsContext,
+
+		/// The coordinates of the [region] within the `source` [drawable] which
+		/// is used.
+		///
+		/// These coordinates are relative to the top-left corner of the
+		/// `source`, and specify the top-left corner of the [region] which is
+		/// copied.
+		///
+		/// [region]: crate::Region
+		/// [drawable]: Drawable
+		#[doc(alias("src_x", "src_y", "source_x", "source_y", "src_coords"))]
+		pub source_coords: Coords,
+		/// The coordinates at which the copied [region] will be placed within
+		/// the `destination` [drawable].
+		///
+		/// These coordinates are relative to the top-left corner of the
+		/// `destination`, and specify what the top-left corner of the copied
+		/// [region] will be when it has been copied.
+		///
+		/// [region]: crate::Region
+		/// [drawable]: Drawable
+		#[doc(alias("dst_x", "dst_y", "destination_x", "destination_y", "dst_coords"))]
+		pub destination_coords: Coords,
+
+		/// The dimensions of the [region] that is copied.
+		///
+		/// [region]: crate::Region
+		#[doc(alias("width", "height"))]
+		pub dimensions: Dimensions,
+
+		/// The bit plane that is copied.
+		///
+		/// Exactly one bit must be set and the value must be less than
+		/// 2<sup>`depth`</sup>, where `depth` is the depth of the `source`
+		/// [drawable].
+		///
+		/// # Errors
+		/// A [`Value` error] is generated if this does not have exactly one bit
+		/// set to 1, or if this value is not less than 2<sup>`depth`</sup>,
+		/// where `depth` is the depth of the `source` [drawable].
+		///
+		/// [drawable]: Drawable
+		///
+		/// [`Value` error]: error::Value
+		pub bit_plane: u32,
 	}
 }
