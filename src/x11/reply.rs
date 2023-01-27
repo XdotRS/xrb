@@ -16,6 +16,7 @@ extern crate self as xrb;
 use derivative::Derivative;
 
 use xrbk::{
+	pad,
 	Buf,
 	BufMut,
 	ConstantX11Size,
@@ -415,7 +416,7 @@ derive_xrb! {
 		/// [atom]: Atom
 		#[context(name_len => usize::from(*name_len))]
 		pub name: String8,
-		[_; ..],
+		[_; name => pad(name)],
 	}
 
 	/// The [reply] to a [`GetProperty` request].
@@ -1147,7 +1148,7 @@ derive_xrb! {
 		/// `max_names_count` will appear here, though).
 		#[context(names_len => usize::from(*names_len))]
 		pub names: Vec<LengthString8>,
-		[_; ..],
+		[_; names => pad(names)],
 	}
 }
 
@@ -1363,10 +1364,6 @@ pub struct FontWithInfo {
 
 	/// The name of this font.
 	pub name: String8,
-}
-
-fn pad<T: X11Size>(thing: &T) -> usize {
-	(4 - (thing.x11_size() % 4)) % 4
 }
 
 impl X11Size for FontWithInfo {
@@ -1628,6 +1625,6 @@ derive_xrb! {
 		#[doc(alias = "path")]
 		#[context(directories_len => usize::from(*directories_len))]
 		pub directories: Vec<LengthString8>,
-		[_; ..],
+		[_; directories => pad(directories)],
 	}
 }

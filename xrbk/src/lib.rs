@@ -33,12 +33,25 @@ use std::{
 	fmt::{Debug, Display},
 };
 
+pub use bytes::{Buf, BufMut};
 use thiserror::Error;
+
+/// Determines the number of unused bytes required to be inserted after the
+/// given `value` to reach a multiple of four bytes in size.
+///
+/// This is frequently used in X11 because all messages must have a total length
+/// that is a multiple of four bytes. This function can determine how many
+/// unused bytes need to be added to ensure that.
+pub fn pad<T: X11Size>(value: &T) -> usize {
+	const ALIGNMENT: usize = 4;
+
+	let x11_size = value.x11_size();
+
+	(ALIGNMENT - (x11_size % ALIGNMENT)) % ALIGNMENT
+}
 
 pub type ReadResult<T> = Result<T, ReadError>;
 pub type WriteResult = Result<(), WriteError>;
-
-pub use bytes::{Buf, BufMut};
 
 pub trait DebugDisplay: Debug + Display {}
 impl<T: Debug + Display> DebugDisplay for T {}

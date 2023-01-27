@@ -10,8 +10,10 @@
 //! [core X11 protocol]: super
 
 extern crate self as xrb;
+use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use xrbk::{
+	pad,
 	Buf,
 	BufMut,
 	ConstantX11Size,
@@ -25,7 +27,6 @@ use xrbk::{
 	WriteResult,
 	X11Size,
 };
-use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use crate::{
 	message::Event,
@@ -999,7 +1000,7 @@ derive_xrb! {
 		/// [atom]: Atom
 		#[context(name_len => usize::from(*name_len))]
 		pub name: String8,
-		[_; ..],
+		[_; name => pad(name)],
 	}
 
 	/// A [request] that returns the name of the given [atom].
@@ -3136,7 +3137,7 @@ derive_xrb! {
 		/// characters (like `.*` in regular expressions).
 		#[context(name_len => usize::from(*name_len))]
 		pub name: String8,
-		[_; ..],
+		[_; name => pad(name)],
 	}
 
 	/// A [request] that removes the association between a given [`Font` ID] and
@@ -3290,7 +3291,7 @@ derive_xrb! {
 		/// characters (like `.*` in regular expressions).
 		#[context(pattern_len => usize::from(*pattern_len))]
 		pub pattern: String8,
-		[_; ..],
+		[_; pattern => pad(pattern)],
 	}
 
 	/// A [request] that lists available fonts (as controlled by the
@@ -3330,7 +3331,7 @@ derive_xrb! {
 		/// characters (like `.*` in regular expressions).
 		#[context(pattern_len => usize::from(*pattern_len))]
 		pub pattern: String8,
-		[_; ..],
+		[_; pattern => pad(pattern)],
 	}
 
 	/// A [request] that defines the directories which are searched for
@@ -3353,12 +3354,12 @@ derive_xrb! {
 
 		/// The directories to be searched in the order listed.
 		///
-		/// Specifying an empty list here restores the default font search path
-		/// defined for the X server.
+		/// Specifying an empty list here restores the default font search
+		/// directories defined for the X server.
 		#[doc(alias = "path")]
 		#[context(directories_len => usize::from(*directories_len))]
 		pub directories: Vec<LengthString8>,
-		[_; ..],
+		[_; directories => pad(directories)],
 	}
 
 	/// A [request] that returns the current directories which are searched to

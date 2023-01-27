@@ -3,15 +3,15 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 extern crate self as xrb;
+use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
 use derive_more::{From, Into};
+use xrbk::{pad, Buf, ConstantX11Size, ReadError, ReadResult, ReadableWithContext, Wrap};
 
 pub use atom::Atom;
 pub use mask::*;
 pub use res_id::*;
 pub use wrapper::*;
-use xrbk::{Buf, ConstantX11Size, ReadError, ReadResult, ReadableWithContext, Wrap};
-use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
 use crate::unit::Px;
 
@@ -491,6 +491,6 @@ derive_xrb! {
 
 		#[context(address_len => *address_len as usize)]
 		pub address: Vec<u8>,
-		[_; ..],
+		[_; address => pad(address)],
 	}
 }
