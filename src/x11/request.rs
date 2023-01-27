@@ -3548,3 +3548,153 @@ derive_xrb! {
 		[_; dashes => pad(dashes)],
 	}
 }
+
+request_error! {
+	pub enum SetClipRectanglesError for SetClipMask {
+		GraphicsContext,
+		Match,
+		Value,
+	}
+}
+
+/// Specifies the ordering of [rectangles] given by `clip_rectangles` in a
+/// [`SetClipRectangles` request].
+///
+/// [rectangles]: Rectangle
+///
+/// [`SetClipRectangles` request]: SetClipRectangles
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub enum ClipRectanglesOrdering {
+	/// No particular order is specified.
+	///
+	/// The [rectangles] given by `clip_rectangles` in a
+	/// [`SetClipRectangles` request] are given in no particular order.
+	///
+	/// [rectangles]: Rectangle
+	///
+	/// [`SetClipRectangles` request]: SetClipRectangles
+	Unsorted,
+
+	/// [Rectangles][rectangles] are ordered by their y coordinate.
+	///
+	/// The [rectangles] given by `clip_rectangles` in a
+	/// [`SetClipRectangles` request] are sorted by their y coordinate from low
+	/// to high.
+	///
+	/// The ordering among [rectangles] with equal y coordinates is not
+	/// specified.
+	///
+	/// [rectangles]: Rectangle
+	///
+	/// [`SetClipRectangles` request]: SetClipRectangles
+	SortedByY,
+
+	/// [Rectangles][rectangles] are ordered primarily by their y coordinate,
+	/// and secondarily by their x coordinate.
+	///
+	/// The [rectangles] given by `clip_rectangles` in a
+	/// [`SetClipRectangles` request] are sorted by their y coordinate from low
+	/// to high, and those of equal y are sorted by their x coordinate from low
+	/// to high.
+	///
+	/// [rectangles]: Rectangle
+	///
+	/// [`SetClipRectangles` request]: SetClipRectangles
+	SortedByYx,
+
+	/// [Rectangles][rectangles] are ordered primarily by their y coordinate,
+	/// secondarily by their x coordinate, and each one which intersects a given
+	/// y coordinate has an equal y coordinate and height.
+	///
+	/// The [rectangles] given by `clip_rectangles` in a
+	/// [`SetClipRectangles` request] are sorted by their y coordinate from low
+	/// to high, those of equal y are sorted by their x coordinate from low to
+	/// high, and every [rectangle] which intersects a given y coordinate is
+	/// guaranteed to have the same y coordinate and height as every other
+	/// intersecting [rectangle][rectangles].
+	///
+	/// [rectangles]: Rectangle
+	///
+	/// [`SetClipRectangles` request]: SetClipRectangles
+	BandedByYx,
+}
+
+derive_xrb! {
+	/// A [request] that sets the clip mask of a [`GraphicsContext`] based on
+	/// the provided list of [rectangles], as well as the [`clip_x`] and
+	/// [`clip_y`].
+	///
+	/// # Errors
+	/// A [`GraphicsContext` error] is generated if `target` does not refer to a
+	/// defined [`GraphicsContext`].
+	///
+	/// [rectangles]: Rectangle
+	///
+	/// [`clip_x`]: GraphicsOptions::clip_x
+	/// [`clip_y`]: GraphicsOptions::clip_y
+	///
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct SetClipRectangles: Request(59, SetClipRectanglesError) {
+		/// Specifies the ordering of [rectangles] within `clip_rectangles`.
+		///
+		/// See [`ClipRectanglesOrdering`] for more information.
+		///
+		/// [rectangles]: Rectangle
+		#[metabyte]
+		pub ordering: ClipRectanglesOrdering,
+
+		/// The [`GraphicsContext`] on which this [request] configures its clip
+		/// mask.
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// [`GraphicsContext` error]: error::GraphicsContext
+		pub target: GraphicsContext,
+
+		/// The x coordinate of the top-left corner of the clip mask.
+		///
+		/// This is relative to the top-left corner of the destination
+		/// [drawable] used in a particular graphics operation.
+		///
+		/// The coordinates used in the [rectangles] in `clip_rectangles` are
+		/// relative to this x coordinate.
+		///
+		/// [drawable]: Drawable
+		/// [rectangles]: Rectangle
+		pub clip_x: Px<i16>,
+		/// The y coordinate of the top-left corner of the clip mask.
+		///
+		/// This is relative to the top-left corner of the destination
+		/// [drawable] used in a particular graphics operation.
+		///
+		/// The coordinates used in the [rectangles] in `clip_rectangles` are
+		/// relative to this y coordinate.
+		///
+		/// [drawable]: Drawable
+		/// [rectangles]: Rectangle
+		pub clip_y: Px<i16>,
+
+		/// A list of non-overlapping [rectangles] that are used to mask the
+		/// effects of a graphics operation.
+		///
+		/// These [rectangles] specify the areas within which the effects of a
+		/// graphics operation are applied.
+		///
+		/// If this list is empty, graphics operations will have no graphical
+		/// effect.
+		///
+		/// [rectangles]: Rectangle
+		#[context(self::length => {
+			let mut length = usize::from(length - 1) * 4;
+
+			length -= GraphicsContext::X11_SIZE;
+			length -= 2 * <Px<i16>>::X11_SIZE;
+
+			length / Rectangle::X11_SIZE
+		})]
+		pub clip_rectangles: Vec<Rectangle>,
+	}
+}
