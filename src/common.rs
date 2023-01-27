@@ -10,15 +10,7 @@ pub use atom::Atom;
 pub use mask::*;
 pub use res_id::*;
 pub use wrapper::*;
-use xrbk::{
-	pad,
-	Buf,
-	ConstantX11Size,
-	ReadError,
-	ReadResult,
-	ReadableWithContext,
-	Wrap,
-};
+use xrbk::{pad, Buf, ConstantX11Size, ReadError, ReadResult, ReadableWithContext, Wrap};
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
 use crate::unit::Px;
@@ -474,12 +466,14 @@ pub struct Rectangle {
 
 impl Rectangle {
 	/// Returns the rectangle's `x` and `y` coordinates as [`Coords`].
-	#[must_use] pub const fn as_coords(&self) -> Coords {
+	#[must_use]
+	pub const fn as_coords(&self) -> Coords {
 		Coords::new(self.x, self.y)
 	}
 
 	/// Returns the rectangle's `width` and `height` as [`Dimensions`].
-	#[must_use] pub const fn as_dimensions(&self) -> Dimensions {
+	#[must_use]
+	pub const fn as_dimensions(&self) -> Dimensions {
 		Dimensions::new(self.width, self.height)
 	}
 }
