@@ -3725,3 +3725,71 @@ derive_xrb! {
 		pub target: GraphicsContext,
 	}
 }
+
+request_error! {
+	pub enum ClearAreaError for ClearArea {
+		Match,
+		Value,
+		Window,
+	}
+}
+
+derive_xrb! {
+	/// A [request] which clears a particular area of a [window].
+	///
+	/// If the [window] has a defined background ([`background_pixmap`] or
+	/// [`background_color`], the `area` is replaced by that background.
+	/// Otherwise, in the background is [`None`], the contents are not changed.
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if `target` does not refer to a defined
+	/// [window].
+	///
+	/// A [`Match` error] is generated if the `target` is an [`InputOnly`]
+	/// [window].
+	///
+	/// [window]: Window
+	/// [request]: crate::message::Request
+	///
+	/// [`background_pixmap`]: Attributes::background_pixmap
+	/// [`background_color`]: Attributes::background_color
+	///
+	/// [`InputOnly`]: WindowClass::InputOnly
+	///
+	/// [`Window` error]: error::Window
+	/// [`Match` error]: error::Match
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ClearArea: Request(61, ClearAreaError) {
+		/// Whether [`GraphicsExposure` events] should be generated for regions
+		/// of the `area` which are visible or maintained.
+		///
+		/// [`GraphicsExposure` events]: super::event::GraphicsExposure
+		#[metabyte]
+		pub graphics_exposure: bool,
+
+		/// The [window] which this [request] clears an area of.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// A [`Match` error] is generated if this is an [`InputOnly`] [window].
+		///
+		/// [window]: Window
+		/// [request]: crate::message::Request
+		///
+		/// [`InputOnly`]: WindowClass::InputOnly
+		///
+		/// [`Window` error]: error::Window
+		/// [`Match` error]: error::Match
+		pub target: Window,
+
+		/// The area of the `target` [window] which is cleared.
+		///
+		/// The `x` and `y` coordinates are relative to the top-left corner of
+		/// the `target` [window].
+		///
+		/// [window]: Window
+		pub area: Rectangle,
+	}
+}
