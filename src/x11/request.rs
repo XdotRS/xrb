@@ -64,6 +64,7 @@ use crate::{
 
 macro_rules! request_error {
 	(
+		$(#[$meta:meta])*
 		$vis:vis enum $Name:ident for $Request:ident {
 			$FirstError:ident
 			$(, $Error:ident)+
@@ -77,6 +78,8 @@ macro_rules! request_error {
 			stringify!($Request),
 			")."
 		)]
+		#[doc = ""]
+		$(#[$meta])*
 		$vis enum $Name {
 			#[doc = concat!(
 				"A [`",
@@ -3368,6 +3371,9 @@ derive_xrb! {
 	/// Changing [`dash_offset`] or [`dashes`] overrides any
 	/// [`SetDashes` request] on the [`GraphicsContext`].
 	///
+	/// The [`SetDashes` request] allows an alternating pattern of dashes to be
+	/// configured, while configuring [`dashes`] with this [request] does not.
+	///
 	/// # Errors
 	/// A [`GraphicsContext` error] is generated if `target` does not refer to a
 	/// defined [`GraphicsContext`].
@@ -3479,5 +3485,66 @@ derive_xrb! {
 		/// into the `destination`.
 		#[doc(alias("value_mask"))]
 		pub options_mask: GraphicsOptionsMask,
+	}
+}
+
+request_error! {
+	pub enum SetDashesError for SetDashes {
+		GraphicsContext,
+		Value,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that sets the [`dash_offset`] and the pattern of dashes on a
+	/// [`GraphicsContext`].
+	///
+	/// Configuring [`dashes`] or [`dash_offset`] with a
+	/// [`ChangeGraphicsOptions` request] overrides the effects of this
+	/// [request].
+	///
+	/// Configuring [`dashes`] with a [`ChangeGraphicsOptions` request] does not
+	/// allow an alternating pattern of dashes to be specified; this [request]
+	/// does.
+	///
+	/// # Errors
+	/// A [`GraphicsContext` error] is generated if `target` does not refer to a
+	/// defined [`GraphicsContext`].
+	///
+	/// [request]: crate::message::Request
+	///
+	/// [`dashes`]: GraphicsOptions::dashes
+	/// [`dash_offset`]: GraphicsOptions::dash_offset
+	///
+	/// [`ChangeGraphicsOptions` request]: ChangeGraphicsOptions
+	///
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct SetDashes: Request(58, SetDashesError) {
+		/// The [`GraphicsContext`] on which this [request] configures its
+		/// dashes.
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// [request]: crate::message::Request
+		pub target: GraphicsContext,
+
+		/// The offset from the endpoints or joinpoints of a dashed line before
+		/// the dashes are drawn.
+		pub dash_offset: Px<u16>,
+
+		// The length of `dashes`.
+		#[allow(clippy::cast_possible_truncation)]
+		let dashes_len: u16 = dashes => dashes.len() as u16,
+		/// The pattern of dashes used when drawing dashed lines.
+		///
+		/// Each element represents the length of a dash in the pattern,
+		/// measured in pixels. A `dashes` list of odd length is appended to
+		/// itself to produce a list of even length.
+		#[context(dashes_len => usize::from(*dashes_len))]
+		pub dashes: Vec<Px<u8>>,
+		[_; dashes => pad(dashes)],
 	}
 }
