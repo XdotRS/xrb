@@ -417,22 +417,20 @@ impl ReadableWithContext for String16 {
 	Debug,
 	From,
 	Into,
-	// `new` const fn
+	// `new` and `unwrap` const fns
 	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
 	Readable,
 	Writable,
 )]
-pub struct Coords<T = i16>
-where
-	T: Writable + Readable + ConstantX11Size,
-{
+pub struct Coords {
 	/// The x coordinate, measured in pixels.
-	pub x: Px<T>,
+	pub x: Px<i16>,
 	/// The y coordinate, measured in pixels.
-	pub y: Px<T>,
+	pub y: Px<i16>,
 }
 
 /// 2D dimensions (width and height), measured in pixels.
@@ -445,66 +443,64 @@ where
 	Debug,
 	From,
 	Into,
-	// `new` const fn
+	// `new` and `unwrap` const fns
 	new,
+	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
 	Readable,
 	Writable,
 )]
-pub struct Dimensions<T = u16>
-where
-	T: Writable + Readable + ConstantX11Size,
-{
+pub struct Dimensions {
 	/// The width, measured in pixels.
-	pub width: Px<T>,
+	pub width: Px<u16>,
 	/// The height, measured in pixels.
-	pub height: Px<T>,
+	pub height: Px<u16>,
 }
 
 /// A rectangle with coordinates and dimensions.
 #[derive(
 	Copy, Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable,
 )]
-pub struct Rectangle<Xy = i16, Wh = u16>
-where
-	Xy: Copy + Readable + Writable + ConstantX11Size,
-	Wh: Copy + Readable + Writable + ConstantX11Size,
-{
+pub struct Rectangle {
 	/// The x-coordinate of the upper left corner of the `Rectangle`.
-	pub x: Px<Xy>,
+	pub x: Px<i16>,
 	/// The y-coordinate of the upper left corner of the `Rectangle`.
-	pub y: Px<Xy>,
+	pub y: Px<i16>,
 	/// The width of the `Rectangle`.
-	pub width: Px<Wh>,
+	pub width: Px<u16>,
 	/// The height of the `Rectangle`.
-	pub height: Px<Wh>,
+	pub height: Px<u16>,
 }
 
-impl<Xy, Wh> Rectangle<Xy, Wh>
-where
-	Xy: Copy + Readable + Writable + ConstantX11Size,
-	Wh: Copy + Readable + Writable + ConstantX11Size,
-{
+impl Rectangle {
 	/// Returns the rectangle's `x` and `y` coordinates as [`Coords`].
-	///
-	/// This copies the values of `x` and `y`.
-	pub const fn as_coords(&self) -> Coords<Xy> {
+	pub const fn as_coords(&self) -> Coords {
 		Coords::new(self.x, self.y)
 	}
 
 	/// Returns the rectangle's `width` and `height` as [`Dimensions`].
-	///
-	/// This copies the values of `width` and `height`.
-	pub const fn as_dimensions(&self) -> Dimensions<Wh> {
+	pub const fn as_dimensions(&self) -> Dimensions {
 		Dimensions::new(self.width, self.height)
 	}
 }
 
-/// A [`Rectangle`] with unsigned coordinates.
-pub type Region = Rectangle<u16, u16>;
+/// Same as a [`Rectangle`], but with unsigned coordinates.
+#[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable)]
+pub struct Region {
+	/// The x-coordinate of the upper left corner of the `Region`.
+	pub x: Px<u16>,
+	/// The y-coordinate of the upper left corner of the `Region`.
+	pub y: Px<u16>,
 
+	/// The width of the `Region`.
+	pub width: Px<u16>,
+	/// The height of the `Region`.
+	pub height: Px<u16>,
+}
+
+/// This copies the values of `width` and `height`.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable)]
 pub struct Arc {
 	pub x: Px<i16>,
