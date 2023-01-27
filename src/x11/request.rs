@@ -10,7 +10,6 @@
 //! [core X11 protocol]: super
 
 extern crate self as xrb;
-use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use xrbk::{
 	pad,
@@ -27,6 +26,7 @@ use xrbk::{
 	WriteResult,
 	X11Size,
 };
+use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use crate::{
 	message::Event,
@@ -3696,5 +3696,32 @@ derive_xrb! {
 			length / Rectangle::X11_SIZE
 		})]
 		pub clip_rectangles: Vec<Rectangle>,
+	}
+
+	/// A [request] that deletes the given [`GraphicsContext`].
+	///
+	/// The association between the [`GraphicsContext` ID] and the
+	/// [`GraphicsContext`] itself is removed in the process.
+	///
+	/// # Errors
+	/// A [`GraphicsContext` error] is generated if `target` does not refer to a
+	/// defined [`GraphicsContext`].
+	///
+	/// [`GraphicsContext` ID]: GraphicsContext
+	///
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	#[doc(alias("FreeGc", "FreeGC", "FreeGcontext", "FreeGraphicsContext"))]
+	#[doc(alias("DestroyGc", "DestroyGC", "DestroyGcontext"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct DestroyGraphicsContext: Request(60, error::GraphicsContext) {
+		/// The [`GraphicsContext`] which is to be deleted.
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// [`GraphicsContext` error]: error::GraphicsContext
+		#[doc(alias("gc", "graphics_context", "context", "gcontext"))]
+		pub target: GraphicsContext,
 	}
 }
