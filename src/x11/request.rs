@@ -36,7 +36,6 @@ use crate::{
 	x11::{error, reply},
 	Any,
 	AnyModifierKeyMask,
-	Arc,
 	Atom,
 	Button,
 	Char16,
