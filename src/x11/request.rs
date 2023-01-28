@@ -4091,3 +4091,126 @@ derive_xrb! {
 		pub bit_plane: u32,
 	}
 }
+
+request_error! {
+	#[doc(alias("PolyPointError", "DrawPointError"))]
+	pub enum DrawPointsError for DrawPoints {
+		Drawable,
+		GraphicsContext,
+		Match,
+		Value,
+	}
+}
+
+/// Whether [coordinates] of elements to be drawn in graphics operations are
+/// relative to the [drawable] or the previous element.
+///
+/// The first element is always relative to the [drawable].
+///
+/// [coordinates]: Coords
+/// [drawable]: Drawable
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub enum CoordinateMode {
+	/// [Coordinates] are relative to the top-left corner of the [drawable].
+	///
+	/// [Coordinates]: Coords
+	/// [drawable]: Drawable
+	Drawable,
+
+	/// [Coordinates][coords] are relative to the [coordinates][coords] of the
+	/// previous element.
+	///
+	/// [coords]: Coords
+	Previous,
+}
+
+derive_xrb! {
+	/// A [request] that draws the  given `points` on the `target` [drawable].
+	///
+	/// The points are drawn by combining the `graphics_context`'s
+	/// [`foreground_color`] with the existing color at those coordinates in the
+	/// [drawable]. They are drawn in the order that they are specified in the
+	/// list.
+	///
+	/// # Graphics options used
+	/// This [request] uses the following [options] of the `graphics_context`:
+	/// - [`function`]
+	/// - [`plane_mask`]
+	/// - [`foreground_color`]
+	/// - [`child_mode`]
+	/// - [`clip_x`]
+	/// - [`clip_y`]
+	/// - [`clip_mask`]
+	///
+	/// # Errors
+	/// A [`Drawable` error] is generated if `target` does not refer to a
+	/// defined [drawable].
+	///
+	/// A [`GraphicsContext` error] is generated if `graphics_context` does not
+	/// refer to a defined [`GraphicsContext`].
+	///
+	/// [drawable]: Drawable
+	/// [options]: GraphicsOptions
+	/// [request]: crate::message::Request
+	///
+	/// [`function`]: GraphicsOptions::function
+	/// [`plane_mask`]: GraphicsOptions::plane_mask
+	/// [`foreground_color`]: GraphicsOptions::foreground_color
+	/// [`child_mode`]: GraphicsOptions::child_mode
+	/// [`clip_x`]: GraphicsOptions::clip_x
+	/// [`clip_y`]: GraphicsOptions::clip_y
+	/// [`clip_mask`]: GraphicsOptions::clip_mask
+	///
+	/// [`Drawable` error]: error::Drawable
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	/// [`Match` error]: error::Match
+	#[doc(alias("PolyPoint", "DrawPoint"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct DrawPoints: Request(64, DrawPointsError) {
+		/// Whether the `points` are drawn relative to the `target` or the
+		/// previously drawn point.
+		///
+		/// The first point is always drawn relative to the `target`.
+		///
+		/// See [`CoordinateMode`] for more information.
+		#[metabyte]
+		pub coordinate_mode: CoordinateMode,
+
+		/// The [drawable] on which the given `points` are drawn.
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [drawable].
+		///
+		/// [drawable]: Drawable
+		///
+		/// [`Drawable` error]: error::Drawable
+		#[doc(alias("drawable"))]
+		pub target: Drawable,
+
+		/// The [`GraphicsContext`] used in this graphics operation.
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// [`GraphicsContext` error]: error::GraphicsContext
+		#[doc(alias("gc", "context", "gcontext"))]
+		pub graphics_context: GraphicsContext,
+
+		/// The points which are to be drawn.
+		///
+		/// Each point is represented by its [coordinates].
+		///
+		/// The points are drawn in the order that they appear in the list.
+		///
+		/// Each point is drawn by combining the [`foreground_color`] with the
+		/// existing color of the pixel at the point's [coordinates].
+		///
+		/// [coordinates]: Coords
+		///
+		/// [`foreground_color`]: GraphicsOptions::foreground_color
+		#[context(self::remaining => remaining / Coords::X11_SIZE)]
+		pub points: Vec<Coords>,
+	}
+}
