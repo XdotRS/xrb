@@ -26,7 +26,7 @@ use xrbk::{
 	WriteResult,
 	X11Size,
 };
-use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
+use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
 
 use crate::{
 	message::Event,
@@ -4306,7 +4306,6 @@ derive_xrb! {
 	///
 	/// [`Drawable` error]: error::Drawable
 	/// [`GraphicsContext` error]: error::GraphicsContext
-	/// [`Match` error]: error::Match
 	#[doc(alias("PolyLine", "DrawLines", "DrawLine"))]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct DrawPath: Request(65, DrawPathError) {
@@ -4354,5 +4353,124 @@ derive_xrb! {
 		/// [coordinates]: Coords
 		#[context(self::remaining => remaining / Coords::X11_SIZE)]
 		pub points: Vec<Coords>,
+	}
+}
+
+request_error! {
+	#[doc(alias("PolySegmentError", "DrawSegmentError"))]
+	pub enum DrawLinesError for DrawLines {
+		Drawable,
+		GraphicsContext,
+		Match,
+	}
+}
+
+/// A line from the given `start` point to the given `end` point.
+#[doc(alias("Segment"))]
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
+pub struct Line {
+	/// The start of the line.
+	pub start: Coords,
+	/// The end of the line.
+	pub end: Coords,
+}
+
+derive_xrb! {
+	/// A [request] that draws the given `lines`.
+	///
+	/// No join points are created. Intersecting [lines] have their intersecting
+	/// pixels drawn multiple times.
+	///
+	/// # Graphics options used
+	/// This [request] uses the following [options] of the `graphics_context`:
+	/// - [`function`]
+	/// - [`plane_mask`]
+	/// - [`line_width`]
+	/// - [`line_style`]
+	/// - [`cap_style`]
+	/// - [`fill_style`]
+	/// - [`child_mode`]
+	/// - [`clip_x`]
+	/// - [`clip_y`]
+	/// - [`clip_mask`]
+	///
+	/// This [request] may also use these [options], depending on the
+	/// configuration of the `graphics_context`:
+	/// - [`foreground_color`]
+	/// - [`background_color`]
+	/// - [`tile`]
+	/// - [`stipple`]
+	/// - [`tile_stipple_x`]
+	/// - [`tile_stipple_y`]
+	/// - [`dash_offset`]
+	/// - [`dashes`]
+	///
+	/// # Errors
+	/// A [`Drawable` error] is generated if `target` does not refer to a
+	/// defined [window] nor [pixmap].
+	///
+	/// A [`GraphicsContext` error] is generated if `graphics_context` does not
+	/// refer to a defined [`GraphicsContext`].
+	///
+	/// [drawable]: Drawable
+	/// [window]: Window
+	/// [pixmap]: Pixmap
+	/// [lines]: Line
+	/// [request]: crate::message::Request
+	///
+	/// [`function`]: GraphicsOptions::function
+	/// [`plane_mask`]: GraphicsOptions::plane_mask
+	/// [`line_width`]: GraphicsOptions::line_width
+	/// [`line_style`]: GraphicsOptions::line_style
+	/// [`cap_style`]: GraphicsOptions::cap_style
+	/// [`fill_style`]: GraphicsOptions::fill_style
+	/// [`child_mode`]: GraphicsOptions::child_mode
+	/// [`clip_x`]: GraphicsOptions::clip_x
+	/// [`clip_y`]: GraphicsOptions::clip_y
+	/// [`clip_mask`]: GraphicsOptions::clip_mask
+	///
+	/// [`foreground_color`]: GraphicsOptions::foreground_color
+	/// [`background_color`]: GraphicsOptions::background_color
+	/// [`tile`]: GraphicsOptions::tile
+	/// [`stipple`]: GraphicsOptions::stipple
+	/// [`tile_stipple_x`]: GraphicsOptions::tile_stipple_x
+	/// [`tile_stipple_y`]: GraphicsOptions::tile_stipple_y
+	/// [`dash_offset`]: GraphicsOptions::dash_offset
+	/// [`dashes`]: GraphicsOptions::dashes
+	///
+	/// [`Drawable` error]: error::Drawable
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	#[doc(alias("PolySegment", "DrawSegment"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct DrawLines: Request(66, DrawLinesError) {
+		/// The [drawable] on which the given `lines` are drawn.
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [pixmap].
+		///
+		/// [drawable]: Drawable
+		/// [window]: Window
+		/// [pixmap]: Pixmap
+		///
+		/// [`Drawable` error]: error::Drawable
+		#[doc(alias("drawable"))]
+		pub target: Drawable,
+
+		/// The [`GraphicsContext`] used in this graphics operation.
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// [`GraphicsContext` error]: error::GraphicsContext
+		#[doc(alias("gc", "context", "gcontext"))]
+		pub graphics_context: GraphicsContext,
+
+		/// The lines which are to be drawn.
+		///
+		/// The lines are drawn in the order that they appear in this list.
+		#[context(self::remaining => remaining / Line::X11_SIZE)]
+		pub lines: Vec<Line>,
 	}
 }
