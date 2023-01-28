@@ -4974,3 +4974,116 @@ derive_xrb! {
 		pub rectangles: Vec<Rectangle>,
 	}
 }
+
+request_error! {
+	#[doc(alias("PolyFillArcError"))]
+	pub enum FillArcsError for FillArcs {
+		Drawable,
+		GraphicsContext,
+		Match,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that fills the given `arcs`.
+	///
+	/// If the `graphics_context`'s [`arc_mode`] is [`ArcMode::Chord`], the
+	/// [arcs][arc] are filled by joining each [arc]'s endpoints with a single
+	/// [line]. If the [`arc_mode`] is [`ArcMode::PieSlice`], however, the
+	/// [arcs][arc] are filled by joining each [arc]'s endpoints with the center
+	/// of that [arc], thus using two [lines][line].
+	///
+	/// # Graphics options used
+	/// This [request] uses the following [options] of the `graphics_context`:
+	/// - [`function`]
+	/// - [`plane_mask`]
+	/// - [`fill_style`]
+	/// - [`arc_mode`]
+	/// - [`child_mode`]
+	/// - [`clip_x`]
+	/// - [`clip_y`]
+	/// - [`clip_mask`]
+	///
+	/// This [request] may also use these [options], depending on the
+	/// configuration of the `graphics_context`:
+	/// - [`foreground_color`]
+	/// - [`background_color`]
+	/// - [`tile`]
+	/// - [`stipple`]
+	/// - [`tile_stipple_x`]
+	/// - [`tile_stipple_y`]
+	///
+	/// # Errors
+	/// A [`Drawable` error] is generated if `target` does not refer to a
+	/// defined [window] nor [pixmap].
+	///
+	/// A [`GraphicsContext` error] is generated if `graphics_context` does not
+	/// refer to a defined [`GraphicsContext`].
+	///
+	/// [window]: Window
+	/// [pixmap]: Pixmap
+	/// [options]: GraphicsOptions
+	/// [arc]: Arc
+	/// [line]: Line
+	/// [request]: crate::message::Request
+	///
+	/// [`ArcMode::Chord`]: crate::set::ArcMode::Chord
+	/// [`ArcMode::PieSlice`]: crate::set::ArcMode::PieSlice
+	///
+	/// [`function`]: GraphicsOptions::function
+	/// [`plane_mask`]: GraphicsOptions::plane_mask
+	/// [`fill_style`]: GraphicsOptions::fill_style
+	/// [`arc_mode`]: GraphicsOptions::arc_mode
+	/// [`child_mode`]: GraphicsOptions::child_mode
+	/// [`clip_x`]: GraphicsOptions::clip_x
+	/// [`clip_y`]: GraphicsOptions::clip_y
+	/// [`clip_mask`]: GraphicsOptions::clip_mask
+	///
+	/// [`foreground_color`]: GraphicsOptions::foreground_color
+	/// [`background_color`]: GraphicsOptions::background_color
+	/// [`tile`]: GraphicsOptions::tile
+	/// [`stipple`]: GraphicsOptions::stipple
+	/// [`tile_stipple_x`]: GraphicsOptions::tile_stipple_x
+	/// [`tile_stipple_y`]: GraphicsOptions::tile_stipple_y
+	///
+	/// [`Drawable` error]: error::Drawable
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	#[doc(alias("PolyFillArc"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct FillArcs: Request(71, FillArcsError) {
+		/// The [drawable] on which the [arcs] are filled.
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [pixmap].
+		///
+		/// [drawable]: Drawable
+		/// [window]: Window
+		/// [pixmap]: Pixmap
+		/// [arcs]: Arc
+		///
+		/// [`Drawable` error]: error::Drawable
+		#[doc(alias("drawable"))]
+		pub target: Drawable,
+
+		/// The [`GraphicsContext`] used in this graphics operation.
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// [`GraphicsContext` error]: error::GraphicsContext
+		#[doc(alias("gc", "context", "gcontext"))]
+		pub graphics_context: GraphicsContext,
+
+		/// The [arcs] which are to be filled.
+		///
+		/// The [arcs] are filled in the order that they appear in this list. If
+		/// there are intersecting [arcs], the intersecting pixels will be drawn
+		/// multiple times.
+		///
+		/// [arcs]: Arc
+		#[context(self::remaining => remaining / Arc::X11_SIZE)]
+		pub arcs: Vec<Arc>,
+	}
+}
