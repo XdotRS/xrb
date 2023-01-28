@@ -3026,19 +3026,13 @@ derive_xrb! {
 		/// with `font`.
 		///
 		/// [request]: crate::message::Request
-		#[context(self::length, odd_length => {
-			// The length is in units of 4 bytes - we subtract the header, which is one of those
-			// units, then multiply by 4 to get the total number of bytes.
-			let length = usize::from(length - 1) * 4;
-			// We then remove the size of the previous field, `font`, to get the bytes from the
-			// start of `text` onwards.
-			let length = length - Fontable::X11_SIZE;
-			// We then remove the padding at the end, which can be determined from `odd_length`.
-			let length = length - query_text_extents_padding(*odd_length);
+		#[context(self::remaining, odd_length => {
+			// We remove the padding at the end, which can be determined from `odd_length`.
+			let remaining = remaining - query_text_extents_padding(*odd_length);
 
 			// We then divide the length, which is the number of bytes, by the number of bytes
 			// per character.
-			length / Char16::X11_SIZE
+			remaining / Char16::X11_SIZE
 		})]
 		pub text: String16,
 		[_; odd_length => query_text_extents_padding(*odd_length)]
@@ -3320,7 +3314,7 @@ derive_xrb! {
 		#[doc(alias("cid", "gid", "gcid", "context_id"))]
 		pub graphics_context_id: GraphicsContext,
 
-		/// > *<sup>TODO</sup>*
+		/// > *<sup>TODO</sup>*\
 		/// > ***We don't yet understand what this field is for. If you have any
 		/// > ideas, please feel free to open an issue or a discussion on the
 		/// > [GitHub repo]!***
@@ -3700,14 +3694,7 @@ derive_xrb! {
 		/// effect.
 		///
 		/// [rectangles]: Rectangle
-		#[context(self::length => {
-			let mut length = usize::from(length - 1) * 4;
-
-			length -= GraphicsContext::X11_SIZE;
-			length -= 2 * <Px<i16>>::X11_SIZE;
-
-			length / Rectangle::X11_SIZE
-		})]
+		#[context(self::remaining => remaining / Rectangle::X11_SIZE)]
 		pub clip_rectangles: Vec<Rectangle>,
 	}
 

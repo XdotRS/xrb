@@ -2,17 +2,19 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use super::*;
-use crate::TsExt;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, quote_spanned, ToTokens};
 use syn::{punctuated::Pair, Attribute};
 
-impl ToTokens for SourceLengthArg {
+use crate::TsExt;
+
+use super::*;
+
+impl ToTokens for SourceRemainingArg {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
 		self.self_token.to_tokens(tokens);
 		self.double_colon_token.to_tokens(tokens);
-		self.length_token.to_tokens(tokens);
+		self.remaining_token.to_tokens(tokens);
 	}
 }
 
@@ -32,8 +34,14 @@ impl ToTokens for SourceArg {
 
 impl ToTokens for SourceArgs {
 	fn to_tokens(&self, tokens: &mut TokenStream2) {
-		if let Some((SourceLengthArg { length_token, .. }, r#type)) = &self.length_arg {
-			tokens.append_tokens(quote!(#length_token: #r#type, ));
+		if let Some((
+			SourceRemainingArg {
+				remaining_token, ..
+			},
+			_,
+		)) = &self.remaining_arg
+		{
+			tokens.append_tokens(quote!(#remaining_token: usize, ));
 		}
 
 		for pair in self.args.pairs() {
@@ -50,8 +58,15 @@ impl ToTokens for SourceArgs {
 
 impl SourceArgs {
 	pub fn formatted_tokens(&self, tokens: &mut TokenStream2) {
-		if let Some((SourceLengthArg { length_token, .. }, ..)) = &self.length_arg {
-			quote_spanned!(length_token.span()=> #length_token,).to_tokens(tokens);
+		if let Some((_, definition_type)) = &self.remaining_arg {
+			match definition_type {
+				DefinitionType::Request => quote!((((length - 1) as usize) * 4) - size,),
+				DefinitionType::Reply => {
+					quote!(((length as usize) * 4) + (32 - 8) - size,)
+				},
+				_ => unreachable!(),
+			}
+			.to_tokens(tokens);
 		}
 
 		for pair in self.args.pairs() {

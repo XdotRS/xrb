@@ -61,16 +61,16 @@ impl ParseWithContext for SourceArg {
 	}
 }
 
-impl Parse for SourceLengthArg {
+impl Parse for SourceRemainingArg {
 	fn parse(input: ParseStream) -> syn::Result<Self> {
 		let self_token = input.parse()?;
 		let double_colon_token = input.parse()?;
 
-		let length_token = {
+		let remaining_token = {
 			let ident: Ident = input.parse()?;
 
-			if ident != "length" {
-				return Err(Error::new(ident.span(), "expected message `length`"));
+			if ident != "remaining" {
+				return Err(Error::new(ident.span(), "expected `remaining` bytes"));
 			}
 
 			ident
@@ -79,7 +79,7 @@ impl Parse for SourceLengthArg {
 		Ok(Self {
 			self_token,
 			double_colon_token,
-			length_token,
+			remaining_token,
 		})
 	}
 }
@@ -94,20 +94,21 @@ impl ParseWithContext for SourceArgs {
 		let (maps, definition_type) = context;
 
 		let mut args = Punctuated::new();
-		let mut length_arg = None;
+		let mut remaining_arg = None;
 
-		while input.peek(Ident) || (definition_type.length_syntax() && input.peek(Token![self])) {
-			if let Some(r#type) = definition_type.length_type() && input.peek(Token![self]) {
-				if length_arg.is_some() {
-					let length_arg2: SourceLengthArg = input.parse()?;
+		while input.peek(Ident) || (definition_type.remaining_syntax() && input.peek(Token![self]))
+		{
+			if definition_type.remaining_syntax() && input.peek(Token![self]) {
+				if remaining_arg.is_some() {
+					let remaining_arg2: SourceRemainingArg = input.parse()?;
 
 					return Err(Error::new(
-						length_arg2.span(),
-						"duplicate message length argument",
+						remaining_arg2.span(),
+						"duplicate remaining bytes argument",
 					));
 				}
 
-				length_arg = Some((input.parse()?, r#type));
+				remaining_arg = Some((input.parse()?, definition_type));
 
 				if input.peek(Token![,]) {
 					input.parse::<Token![,]>()?;
@@ -125,7 +126,10 @@ impl ParseWithContext for SourceArgs {
 			}
 		}
 
-		Ok(Self { args, length_arg })
+		Ok(Self {
+			args,
+			remaining_arg,
+		})
 	}
 }
 

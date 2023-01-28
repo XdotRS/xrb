@@ -21,12 +21,6 @@ impl Struct {
 			StructlikeContent::Unit { where_clause, .. } => where_clause,
 		};
 
-		let declare_x11_size = if self.content.contains_infer() {
-			Some(quote_spanned!(trait_path.span()=> let mut size: usize = 0;))
-		} else {
-			None
-		};
-
 		let pat = TokenStream2::with_tokens(|tokens| {
 			self.content.pat_cons_to_tokens(tokens);
 		});
@@ -35,9 +29,9 @@ impl Struct {
 			for element in &self.content {
 				element.write_tokens(tokens, DefinitionType::Basic);
 
-				if self.content.contains_infer() {
-					element.add_x11_size_tokens(tokens);
-				}
+				// if self.content.contains_infer() {
+				element.add_x11_size_tokens(tokens);
+				// }
 			}
 		});
 
@@ -49,12 +43,13 @@ impl Struct {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn write_to(
 					&self,
 					buf: &mut impl ::xrbk::BufMut,
 				) -> Result<(), ::xrbk::WriteError> {
-					#declare_x11_size
+					let mut size: usize = 0;
 					// Destructure the struct's fields, if any.
 					let Self #pat = self;
 
@@ -79,14 +74,6 @@ impl Request {
 			StructlikeContent::Unit { where_clause, .. } => where_clause,
 		};
 
-		let declare_x11_size = if self.content.contains_infer() {
-			// The x11_size starts at `4` to account for the size of a request's header
-			// being 4 bytes.
-			Some(quote_spanned!(trait_path.span()=> let mut size: usize = 4;))
-		} else {
-			None
-		};
-
 		let pat = TokenStream2::with_tokens(|tokens| {
 			self.content.pat_cons_to_tokens(tokens);
 		});
@@ -96,9 +83,9 @@ impl Request {
 				if !element.is_metabyte() && !element.is_sequence() {
 					element.write_tokens(tokens, DefinitionType::Request);
 
-					if self.content.contains_infer() {
-						element.add_x11_size_tokens(tokens);
-					}
+					// if self.content.contains_infer() {
+					element.add_x11_size_tokens(tokens);
+					// }
 				}
 			}
 		});
@@ -126,12 +113,13 @@ impl Request {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn write_to(
 					&self,
 					buf: &mut impl ::xrbk::BufMut,
 				) -> Result<(), ::xrbk::WriteError> {
-					#declare_x11_size
+					let mut size: usize = 4;
 					// Destructure the request struct's fields, if any.
 					let Self #pat = self;
 
@@ -164,14 +152,6 @@ impl Reply {
 			StructlikeContent::Unit { where_clause, .. } => where_clause,
 		};
 
-		let declare_x11_size = if self.content.contains_infer() {
-			// The x11_size starts at `8` to account for the size of a reply's\
-			// header being 8 bytes.
-			Some(quote_spanned!(trait_path.span()=> let mut size: usize = 8;))
-		} else {
-			None
-		};
-
 		let pat = TokenStream2::with_tokens(|tokens| {
 			self.content.pat_cons_to_tokens(tokens);
 		});
@@ -181,9 +161,9 @@ impl Reply {
 				if !element.is_metabyte() && !element.is_sequence() {
 					element.write_tokens(tokens, DefinitionType::Reply);
 
-					if self.content.contains_infer() {
-						element.add_x11_size_tokens(tokens);
-					}
+					// if self.content.contains_infer() {
+					element.add_x11_size_tokens(tokens);
+					// }
 				}
 			}
 		});
@@ -211,12 +191,13 @@ impl Reply {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn write_to(
 					&self,
 					buf: &mut impl ::xrbk::BufMut,
 				) -> Result<(), ::xrbk::WriteError> {
-					#declare_x11_size
+					let mut size: usize = 8;
 					// Destructure the reply struct's fields, if any.
 					let Self #pat = self;
 
@@ -251,16 +232,10 @@ impl Event {
 			StructlikeContent::Unit { where_clause, .. } => where_clause,
 		};
 
-		let declare_x11_size = if self.content.contains_infer() {
-			let x11_size: usize = if self.content.sequence_element().is_some() {
-				4
-			} else {
-				1
-			};
-
-			Some(quote_spanned!(trait_path.span()=> let mut size: usize = #x11_size;))
+		let x11_size: usize = if self.content.sequence_element().is_some() {
+			4
 		} else {
-			None
+			1
 		};
 
 		let pat = TokenStream2::with_tokens(|tokens| {
@@ -272,9 +247,9 @@ impl Event {
 				if element.is_normal() {
 					element.write_tokens(tokens, DefinitionType::Event);
 
-					if self.content.contains_infer() {
-						element.add_x11_size_tokens(tokens);
-					}
+					// if self.content.contains_infer() {
+					element.add_x11_size_tokens(tokens);
+					// }
 				}
 			}
 		});
@@ -307,12 +282,13 @@ impl Event {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn write_to(
 					&self,
 					buf: &mut impl ::xrbk::BufMut,
 				) -> Result<(), ::xrbk::WriteError> {
-					#declare_x11_size
+					let mut size: usize = #x11_size;
 					// Destructure the event struct's fields, if any.
 					let Self #pat = self;
 
@@ -343,19 +319,6 @@ impl Error {
 			StructlikeContent::Regular { where_clause, .. } => where_clause,
 			StructlikeContent::Tuple { where_clause, .. } => where_clause,
 			StructlikeContent::Unit { where_clause, .. } => where_clause,
-		};
-
-		let declare_x11_size = if self.content.contains_infer() {
-			// 11 bytes includes:
-			// - 1 byte to say it's an error
-			// - 1 byte for its code
-			// - 2 bytes for its sequence number
-			// - 4 bytes for its (optional) error data
-			// - 2 bytes for the request's minor opcode
-			// - 1 byte for the request's major opcode
-			Some(quote_spanned!(trait_path.span()=> let mut size: usize = 11;))
-		} else {
-			None
 		};
 
 		let pat = TokenStream2::with_tokens(|tokens| {
@@ -420,12 +383,20 @@ impl Error {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn write_to(
 					&self,
 					buf: &mut impl ::xrbk::BufMut,
 				) -> Result<(), ::xrbk::WriteError> {
-					#declare_x11_size
+					// 11 bytes includes:
+					// - 1 byte to say it's an error
+					// - 1 byte for its code
+					// - 2 bytes for its sequence number
+					// - 4 bytes for its (optional) error data
+					// - 2 bytes for the request's minor opcode
+					// - 1 byte for the request's major opcode
+					let mut size: usize = 11;
 					// Destructure the error struct's fields, if any.
 					let Self #pat = self;
 
@@ -494,7 +465,7 @@ impl Enum {
 			for variant in &self.variants {
 				let ident = &variant.ident;
 
-				let declare_x11_size = if variant.content.contains_infer() {
+				let declare_x11_size = {
 					let discrim_type = quote_spanned!(discrim_type.span()=>
 						<#discrim_type as ::xrbk::ConstantX11Size>
 					);
@@ -502,8 +473,6 @@ impl Enum {
 					Some(quote_spanned!(trait_path.span()=>
 						let mut size: usize = #discrim_type::X11_SIZE;
 					))
-				} else {
-					None
 				};
 
 				if variant.discriminant.is_some() {
@@ -520,9 +489,9 @@ impl Enum {
 					for element in &variant.content {
 						element.write_tokens(tokens, DefinitionType::Basic);
 
-						if variant.content.contains_infer() {
-							element.add_x11_size_tokens(tokens);
-						}
+						// if variant.content.contains_infer() {
+						element.add_x11_size_tokens(tokens);
+						// }
 					}
 				});
 
@@ -553,6 +522,7 @@ impl Enum {
 					clippy::identity_op,
 					clippy::cast_possible_truncation,
 					clippy::unnecessary_cast,
+					unused_mut,
 				)]
 				fn write_to(
 					&self,

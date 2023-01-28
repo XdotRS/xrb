@@ -432,7 +432,7 @@ impl DefinitionType {
 		}
 	}
 
-	pub fn length_syntax(&self) -> bool {
+	pub fn remaining_syntax(&self) -> bool {
 		matches!(self, Self::Request | Self::Reply)
 	}
 }
