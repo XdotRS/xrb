@@ -4144,12 +4144,14 @@ derive_xrb! {
 	///
 	/// # Errors
 	/// A [`Drawable` error] is generated if `target` does not refer to a
-	/// defined [drawable].
+	/// defined [window] nor [pixmap].
 	///
 	/// A [`GraphicsContext` error] is generated if `graphics_context` does not
 	/// refer to a defined [`GraphicsContext`].
 	///
 	/// [drawable]: Drawable
+	/// [window]: Window
+	/// [pixmap]: Pixmap
 	/// [options]: GraphicsOptions
 	/// [request]: crate::message::Request
 	///
@@ -4180,9 +4182,11 @@ derive_xrb! {
 		///
 		/// # Errors
 		/// A [`Drawable` error] is generated if this does not refer to a
-		/// defined [drawable].
+		/// defined [window] nor [pixmap].
 		///
 		/// [drawable]: Drawable
+		/// [window]: Window
+		/// [pixmap]: Pixmap
 		///
 		/// [`Drawable` error]: error::Drawable
 		#[doc(alias("drawable"))]
@@ -4210,6 +4214,144 @@ derive_xrb! {
 		/// [coordinates]: Coords
 		///
 		/// [`foreground_color`]: GraphicsOptions::foreground_color
+		#[context(self::remaining => remaining / Coords::X11_SIZE)]
+		pub points: Vec<Coords>,
+	}
+}
+
+request_error! {
+	#[doc(alias("PolyLineError", "DrawLinesError", "DrawLineError"))]
+	pub enum DrawPathError for DrawPath {
+		Drawable,
+		GraphicsContext,
+		Match,
+		Value,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that draws a path comprised of lines that join the given
+	/// `points`.
+	///
+	/// The lines are drawn in the order that the points appear in `points`.
+	/// They join at each intermediate point. If the first and last points are
+	/// in the same location, they are also joined to create a closed path (with
+	/// no endpoints).
+	///
+	/// Intersecting [thin] lines have their intersecting pixels drawn multiple
+	/// times. Intersecting [thick] lines, however, only have their intersecting
+	/// pixels drawn once.
+	///
+	/// # Graphics options used
+	/// This [request] uses the following [options] of the `graphics_context`:
+	/// - [`function`]
+	/// - [`plane_mask`]
+	/// - [`line_width`]
+	/// - [`line_style`]
+	/// - [`cap_style`]
+	/// - [`join_style`]
+	/// - [`fill_style`]
+	/// - [`child_mode`]
+	/// - [`clip_x`]
+	/// - [`clip_y`]
+	/// - [`clip_mask`]
+	///
+	/// This [request] may also use these [options], depending on the
+	/// configuration of the `graphics_context`:
+	/// - [`foreground_color`]
+	/// - [`background_color`]
+	/// - [`tile`]
+	/// - [`stipple`]
+	/// - [`tile_stipple_x`]
+	/// - [`tile_stipple_y`]
+	/// - [`dash_offset`]
+	/// - [`dashes`]
+	///
+	/// # Errors
+	/// A [`Drawable` error] is generated if `target` does not refer to a
+	/// defined [window] nor [pixmap].
+	///
+	/// A [`GraphicsContext` error] is generated if `graphics_context` does not
+	/// refer to a defined [`GraphicsContext`].
+	///
+	/// [thin]: crate::set::LineWidth::Thin
+	/// [thick]: crate::set::LineWidth::Thick
+	///
+	/// [drawable]: Drawable
+	/// [window]: Window
+	/// [pixmap]: Pixmap
+	/// [options]: GraphicsOptions
+	/// [request]: crate::message::Request
+	///
+	/// [`function`]: GraphicsOptions::function
+	/// [`plane_mask`]: GraphicsOptions::plane_mask
+	/// [`line_width`]: GraphicsOptions::line_width
+	/// [`line_style`]: GraphicsOptions::line_style
+	/// [`cap_style`]: GraphicsOptions::cap_style
+	/// [`join_style`]: GraphicsOptions::join_style
+	/// [`fill_style`]: GraphicsOptions::fill_style
+	/// [`child_mode`]: GraphicsOptions::child_mode
+	/// [`clip_x`]: GraphicsOptions::clip_x
+	/// [`clip_y`]: GraphicsOptions::clip_y
+	/// [`clip_mask`]: GraphicsOptions::clip_mask
+	///
+	/// [`foreground_color`]: GraphicsOptions::foreground_color
+	/// [`background_color`]: GraphicsOptions::background_color
+	/// [`tile`]: GraphicsOptions::tile
+	/// [`stipple`]: GraphicsOptions::stipple
+	/// [`tile_stipple_x`]: GraphicsOptions::tile_stipple_x
+	/// [`tile_stipple_y`]: GraphicsOptions::tile_stipple_y
+	/// [`dash_offset`]: GraphicsOptions::dash_offset
+	/// [`dashes`]: GraphicsOptions::dashes
+	///
+	/// [`Drawable` error]: error::Drawable
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	/// [`Match` error]: error::Match
+	#[doc(alias("PolyLine", "DrawLines", "DrawLine"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct DrawPath: Request(65, DrawPathError) {
+		/// Whether the [coordinates] of each point in `points` are relative to
+		/// the `target` or to the previous point.
+		///
+		/// The first point is always relative to the `target` [drawable].
+		///
+		/// [coordinates]: Coords
+		/// [drawable]: Drawable
+		#[metabyte]
+		pub coordinate_mode: CoordinateMode,
+
+		/// The [drawable] on which the path is drawn.
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [pixmap].
+		///
+		/// [drawable]: Drawable
+		/// [window]: Window
+		/// [pixmap]: Pixmap
+		///
+		/// [`Drawable` error]: error::Drawable
+		#[doc(alias("drawable"))]
+		pub target: Drawable,
+
+		/// The [`GraphicsContext`] used in this graphics operation.
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// [`GraphicsContext` error]: error::GraphicsContext
+		#[doc(alias("gc", "context", "gcontext"))]
+		pub graphics_context: GraphicsContext,
+
+		/// The points which are to be connected by lines.
+		///
+		/// Each point is represented by its [coordinates].
+		///
+		/// The points are connected by lines in the order that they appear in
+		/// this list.
+		///
+		/// [coordinates]: Coords
 		#[context(self::remaining => remaining / Coords::X11_SIZE)]
 		pub points: Vec<Coords>,
 	}
