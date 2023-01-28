@@ -257,7 +257,7 @@ impl SingleUnused {
 	pub fn write_tokens(&self, tokens: &mut TokenStream2) {
 		tokens.append_tokens({
 			quote_spanned!(self.span()=>
-				buf.put_u8(0);
+				<_ as ::xrbk::BufMut>::put_u8(buf, 0);
 			)
 		});
 	}
@@ -269,7 +269,7 @@ impl SingleUnused {
 	pub fn read_tokens(&self, tokens: &mut TokenStream2) {
 		tokens.append_tokens({
 			quote_spanned!(self.span()=>
-				buf.advance(1);
+				<_ as ::xrbk::Buf>::advance(buf, 1);
 			)
 		});
 	}
@@ -332,7 +332,7 @@ impl ArrayUnused {
 
 		tokens.append_tokens({
 			quote_spanned!(self.span()=>
-				buf.put_bytes(0u8, #formatted);
+				<_ as ::xrbk::BufMut>::put_bytes(buf, 0u8, #formatted);
 			)
 		});
 	}
@@ -349,7 +349,7 @@ impl ArrayUnused {
 
 		tokens.append_tokens({
 			quote_spanned!(self.span()=>
-				buf.advance(#formatted);
+				<_ as ::xrbk::Buf>::advance(buf, #formatted);
 			)
 		})
 	}

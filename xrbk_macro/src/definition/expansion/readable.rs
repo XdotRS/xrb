@@ -104,7 +104,7 @@ impl Request {
 				element.read_tokens(tokens, DefinitionType::Request);
 			}))
 		} else {
-			Some(quote_spanned!(trait_path.span()=> buf.advance(1);))
+			Some(quote_spanned!(trait_path.span()=> <_ as ::xrbk::Buf>::advance(buf, 1);))
 		};
 
 		tokens.append_tokens(quote_spanned!(trait_path.span()=>
@@ -128,7 +128,7 @@ impl Request {
 					// read.
 					#metabyte
 					// Read the request's length.
-					let length = buf.get_u16();
+					let length = <_ as ::xrbk::Buf>::get_u16(buf);
 					let buf = &mut <_ as ::xrbk::Buf>::take(
 						buf,
 						((length - 1) as usize) * 4,
@@ -178,7 +178,7 @@ impl Reply {
 				element.read_tokens(tokens, DefinitionType::Reply);
 			})
 		} else {
-			quote_spanned!(trait_path.span()=> buf.advance(1);)
+			quote_spanned!(trait_path.span()=> <_ as ::xrbk::Buf>::advance(buf, 1);)
 		};
 
 		let sequence = match self.content.sequence_element() {
@@ -204,9 +204,9 @@ impl Reply {
 					// Metabyte position
 					#metabyte
 					// Sequence field
-					let #sequence = buf.get_u16();
+					let #sequence = <_ as ::xrbk::Buf>::get_u16(buf);
 					// Length
-					let length = buf.get_u32();
+					let length = <_ as ::xrbk::Buf>::get_u32(buf);
 					let buf = &mut <_ as ::xrbk::Buf>::take(
 						buf,
 						(((length) as usize) * 4) + (32 - 8),
@@ -265,14 +265,16 @@ impl Event {
 			}))
 		} else {
 			Some(quote_spanned!(trait_path.span()=>
-				buf.advance(1);
+				<_ as ::xrbk::Buf>::advance(buf, 1);
 			))
 		};
 
 		let sequence = if let Some(Element::Field(field)) = self.content.sequence_element() {
 			let formatted = &field.formatted;
 
-			Some(quote_spanned!(trait_path.span()=> let #formatted = buf.get_u16();))
+			Some(quote_spanned!(trait_path.span()=>
+				let #formatted = <_ as ::xrbk::Buf>::get_u16(buf);
+			))
 		} else {
 			None
 		};
@@ -339,7 +341,9 @@ impl Error {
 			Some(Element::Field(field)) => {
 				let formatted = &field.formatted;
 
-				quote_spanned!(trait_path.span()=> let #formatted = buf.get_u16();)
+				quote_spanned!(trait_path.span()=>
+					let #formatted = <_ as ::xrbk::Buf>::get_u16(buf);
+				)
 			},
 
 			_ => panic!("errors must have sequence fields"),
@@ -349,7 +353,9 @@ impl Error {
 			Some(Element::Field(field)) => {
 				let formatted = &field.formatted;
 
-				quote_spanned!(trait_path.span()=> let #formatted = buf.get_u16();)
+				quote_spanned!(trait_path.span()=>
+					let #formatted = <_ as ::xrbk::Buf>::get_u16(buf);
+				)
 			},
 
 			_ => panic!("errors must have minor opcode fields"),
@@ -359,7 +365,9 @@ impl Error {
 			Some(Element::Field(field)) => {
 				let formatted = &field.formatted;
 
-				quote_spanned!(trait_path.span()=> let #formatted = buf.get_u8();)
+				quote_spanned!(trait_path.span()=>
+					let #formatted = <_ as ::xrbk::Buf>::get_u8(buf);
+				)
 			},
 
 			_ => panic!("errors must have major opcode fields"),
@@ -370,7 +378,7 @@ impl Error {
 				TokenStream2::with_tokens(|tokens| field.read_tokens(tokens))
 			},
 
-			_ => quote_spanned!(trait_path.span()=> buf.advance(4);),
+			_ => quote_spanned!(trait_path.span()=> <_ as ::xrbk::Buf>::advance(buf, 4);),
 		};
 
 		tokens.append_tokens(quote_spanned!(trait_path.span()=>

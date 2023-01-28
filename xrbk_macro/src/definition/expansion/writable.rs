@@ -93,7 +93,10 @@ impl Request {
 		let metabyte = if self.minor_opcode.is_some() {
 			// TODO: can't be in metabyte, must check this in protocol!!
 			quote_spanned!(trait_path.span()=>
-				buf.put_u16(<Self as xrb::message::Request>::MINOR_OPCODE.unwrap());
+				<_ as ::xrbk::BufMut>::put_u16(
+					buf,
+					<Self as xrb::message::Request>::MINOR_OPCODE.unwrap(),
+				);
 			)
 		} else if let Some(element) = self.content.metabyte_element() {
 			TokenStream2::with_tokens(|tokens| {
@@ -101,7 +104,10 @@ impl Request {
 			})
 		} else {
 			quote_spanned!(trait_path.span()=>
-				buf.put_u8(0);
+				<_ as ::xrbk::BufMut>::put_u8(
+					buf,
+					0,
+				);
 			)
 		};
 
@@ -124,11 +130,17 @@ impl Request {
 					let Self #pat = self;
 
 					// Major opcode
-					buf.put_u8(<Self as xrb::message::Request>::MAJOR_OPCODE);
+					<_ as ::xrbk::BufMut>::put_u8(
+						buf,
+						<Self as xrb::message::Request>::MAJOR_OPCODE
+					);
 					// Metabyte position
 					#metabyte
 					// Length
-					buf.put_u16(<Self as xrb::message::Request>::length(&self));
+					<_ as ::xrbk::BufMut>::put_u16(
+						buf,
+						<Self as xrb::message::Request>::length(&self),
+					);
 
 					// Other elements
 					#writes
@@ -174,7 +186,7 @@ impl Reply {
 			})
 		} else {
 			quote_spanned!(trait_path.span()=>
-				buf.put_u8(0);
+				<_ as ::xrbk::BufMut>::put_u8(buf, 0);
 			)
 		};
 
@@ -206,9 +218,15 @@ impl Reply {
 					// Metabyte position
 					#metabyte
 					// Sequence field
-					buf.put_u16(*#sequence);
+					<_ as ::xrbk::BufMut>::put_u16(
+						buf,
+						*#sequence,
+					);
 					// Length
-					buf.put_u32(<Self as xrb::message::Reply>::length(&self));
+					<_ as ::xrbk::BufMut>::put_u32(
+						buf,
+						<Self as xrb::message::Reply>::length(&self),
+					);
 
 					// Other elements
 					#writes
@@ -262,14 +280,16 @@ impl Event {
 			}))
 		} else {
 			Some(quote_spanned!(trait_path.span()=>
-				buf.put_u8(0);
+				<_ as ::xrbk::BufMut>::put_u8(buf, 0);
 			))
 		};
 
 		let sequence = if let Some(Element::Field(field)) = self.content.sequence_element() {
 			let formatted = &field.formatted;
 
-			Some(quote_spanned!(trait_path.span()=> buf.put_u16(*#formatted);))
+			Some(quote_spanned!(trait_path.span()=>
+				<_ as ::xrbk::BufMut>::put_u16(buf, *#formatted);
+			))
 		} else {
 			None
 		};
@@ -293,7 +313,10 @@ impl Event {
 					let Self #pat = self;
 
 					// Event code
-					buf.put_u8(<Self as xrb::message::Event>::CODE);
+					<_ as ::xrbk::BufMut>::put_u8(
+						buf,
+						<Self as xrb::message::Event>::CODE,
+					);
 					// Metabyte position
 					#metabyte
 					// Sequence field
@@ -341,7 +364,12 @@ impl Error {
 			Some(Element::Field(field)) => {
 				let formatted = &field.formatted;
 
-				quote_spanned!(trait_path.span()=> buf.put_u16(*#formatted);)
+				quote_spanned!(trait_path.span()=>
+					<_ as ::xrbk::BufMut>::put_u16(
+						buf,
+						*#formatted,
+					);
+				)
 			},
 
 			_ => panic!("errors must have sequence fields"),
@@ -351,7 +379,9 @@ impl Error {
 			Some(Element::Field(field)) => {
 				let formatted = &field.formatted;
 
-				quote_spanned!(trait_path.span()=> buf.put_u16(*#formatted);)
+				quote_spanned!(trait_path.span()=>
+					<_ as ::xrbk::BufMut>::put_u16(buf, *#formatted);
+				)
 			},
 
 			_ => panic!("errors must have minor opcode fields"),
@@ -361,7 +391,9 @@ impl Error {
 			Some(Element::Field(field)) => {
 				let formatted = &field.formatted;
 
-				quote_spanned!(trait_path.span()=> buf.put_u8(*#formatted);)
+				quote_spanned!(trait_path.span()=>
+					<_ as ::xrbk::BufMut>::put_u8(buf, *#formatted);
+				)
 			},
 
 			_ => panic!("errors must have major opcode fields"),
@@ -372,7 +404,9 @@ impl Error {
 				TokenStream2::with_tokens(|tokens| field.write_tokens(tokens))
 			},
 
-			_ => quote_spanned!(trait_path.span()=> buf.put_bytes(0, 4);),
+			_ => quote_spanned!(trait_path.span()=>
+				<_ as ::xrbk::BufMut>::put_bytes(buf, 0, 4);
+			),
 		};
 
 		tokens.append_tokens(quote_spanned!(trait_path.span()=>
@@ -401,9 +435,12 @@ impl Error {
 					let Self #pat = self;
 
 					// A first byte of `0` means that this is an error.
-					buf.put_u8(0);
+					<_ as ::xrbk::BufMut>::put_u8(buf, 0);
 					// Error code, uniquely identifying the error.
-					buf.put_u8(<Self as xrb::message::Error>::CODE);
+					<_ as ::xrbk::BufMut>::put_u8(
+						buf,
+						<Self as xrb::message::Error>::CODE,
+					);
 					// Sequence number.
 					#sequence
 					// An optional 4-byte data field.
