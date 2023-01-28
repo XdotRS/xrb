@@ -4531,6 +4531,7 @@ derive_xrb! {
 	/// [pixmap]: Pixmap
 	/// [lines]: Line
 	/// [rectangles]: Rectangle
+	/// [options]: GraphicsOptions
 	/// [request]: crate::message::Request
 	///
 	/// [`function`]: GraphicsOptions::function
@@ -4642,6 +4643,12 @@ derive_xrb! {
 	/// A [`GraphicsContext` error] is generated if `graphics_context` does not
 	/// refer to a defined [`GraphicsContext`].
 	///
+	/// [arc]: Arc
+	/// [window]: Window
+	/// [pixmap]: Pixmap
+	/// [options]: GraphicsOptions
+	/// [request]: crate::message::Request
+	///
 	/// [`function`]: GraphicsOptions::function
 	/// [`plane_mask`]: GraphicsOptions::plane_mask
 	/// [`line_width`]: GraphicsOptions::line_width
@@ -4665,9 +4672,6 @@ derive_xrb! {
 	///
 	/// [`Drawable` error]: error::Drawable
 	/// [`GraphicsContext` error]: error::GraphicsContext
-	///
-	/// [arc]: Arc
-	/// [request]: crate::message::Request
 	#[doc(alias("PolyArc"))]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct DrawArcs: Request(68, DrawArcsError) {
@@ -4707,5 +4711,159 @@ derive_xrb! {
 		/// [arc]: Arc
 		#[context(self::remaining => remaining / Arc::X11_SIZE)]
 		pub arcs: Vec<Arc>,
+	}
+}
+
+request_error! {
+	#[doc(alias("FillPolyError"))]
+	pub enum FillPolygonError for FillPolygon {
+		Drawable,
+		GraphicsContext,
+		Match,
+		Value,
+	}
+}
+
+/// Specifies properties of a polygon that may allow for optimizations when
+/// drawing it.
+///
+/// This is used in the [`FillPolygon` request].
+///
+/// [`FillPolygon` request]: FillPolygon
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub enum ShapeMode {
+	/// The shape may intersect itself.
+	Complex,
+
+	/// The shape may not intersect itself, but it is not (fully) convex.
+	///
+	/// If these properties are known to be true by the client, specifying this
+	/// mode may improve performance over [`Complex`](ShapeMode::Complex).
+	Nonconvex,
+
+	/// The shape may not intersect itself and it is convex.
+	///
+	/// Convex means that no [line] could be drawn between two points in the
+	/// shape which intersects the shape's path.
+	///
+	/// If these properties are known to be true by the client, specifying this
+	/// mode may improve performance over [`Nonconvex`](ShapeMode::Nonconvex).
+	///
+	/// [line]: Line
+	Convex,
+}
+
+derive_xrb! {
+	/// A [request] that fills the area enclosed the given path.
+	///
+	/// # Graphics options used
+	/// This [request] uses the following [options] of the `graphics_context`:
+	/// - [`function`]
+	/// - [`plane_mask`]
+	/// - [`fill_style`]
+	/// - [`fill_rule`]
+	/// - [`child_mode`]
+	/// - [`clip_x`]
+	/// - [`clip_y`]
+	/// - [`clip_mask`]
+	///
+	/// This [request] may also use these [options], depending on the
+	/// configuration of the `graphics_context`:
+	/// - [`foreground_color`]
+	/// - [`background_color`]
+	/// - [`tile`]
+	/// - [`stipple`]
+	/// - [`tile_stipple_x`]
+	/// - [`tile_stipple_y`]
+	///
+	/// # Errors
+	/// A [`Drawable` error] is generated if `target` does not refer to a
+	/// defined [window] nor [pixmap].
+	///
+	/// A [`GraphicsContext` error] is generated if `graphics_context` does not
+	/// refer to a defined [`GraphicsContext`].
+	///
+	/// [window]: Window
+	/// [pixmap]: Pixmap
+	/// [options]: GraphicsOptions
+	/// [request]: crate::message::Request
+	///
+	/// [`function`]: GraphicsOptions::function
+	/// [`plane_mask`]: GraphicsOptions::plane_mask
+	/// [`fill_style`]: GraphicsOptions::fill_style
+	/// [`fill_rule`]: GraphicsOptions::fill_rule
+	/// [`child_mode`]: GraphicsOptions::child_mode
+	/// [`clip_x`]: GraphicsOptions::clip_x
+	/// [`clip_y`]: GraphicsOptions::clip_y
+	/// [`clip_mask`]: GraphicsOptions::clip_mask
+	///
+	/// [`foreground_color`]: GraphicsOptions::foreground_color
+	/// [`background_color`]: GraphicsOptions::background_color
+	/// [`tile`]: GraphicsOptions::tile
+	/// [`stipple`]: GraphicsOptions::stipple
+	/// [`tile_stipple_x`]: GraphicsOptions::tile_stipple_x
+	/// [`tile_stipple_y`]: GraphicsOptions::tile_stipple_y
+	///
+	/// [`Drawable` error]: error::Drawable
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	#[doc(alias("FillPoly"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct FillPolygon: Request(69, FillPolygonError) {
+		/// The [drawable] on which the filled polygon is drawn.
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [pixmap].
+		///
+		/// [drawable]: Drawable
+		/// [window]: Window
+		/// [pixmap]: Pixmap
+		///
+		/// [`Drawable` error]: error::Drawable
+		#[doc(alias("drawable"))]
+		pub target: Drawable,
+
+		/// The [`GraphicsContext`] used in this graphics operation.
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// [`GraphicsContext` error]: error::GraphicsContext
+		#[doc(alias("gc", "context", "gcontext"))]
+		pub graphics_context: GraphicsContext,
+
+		/// Specifies whether the polygon self-intersects and whether it is
+		/// convex.
+		///
+		/// If the relevant properties of the specified polygon are known by the
+		/// client, specifying a more restrictive [shape mode] may improve
+		/// performance.
+		///
+		/// See [`ShapeMode`] for more information.
+		///
+		/// [shape mode]: ShapeMode
+		pub shape: ShapeMode,
+		/// Whether the [coordinates] of each point in `points` are relative to
+		/// the `target` or to the previous point.
+		///
+		/// The first point is always relative to the `target` [drawable].
+		///
+		/// [coordinates]: Coords
+		/// [drawable]: Drawable
+		pub coordinate_mode: CoordinateMode,
+		[_; 2],
+
+		/// The points which, when connected, specify the path of the polygon.
+		///
+		/// Each point is represented by its [coordinates].
+		///
+		/// The points are connected in the order that they appear in this list.
+		/// If the last point is not in the same location as the first point, it
+		/// is automatically connected to the first point to close the path.
+		///
+		/// [coordinates]: Coords
+		#[context(self::remaining => remaining / Coords::X11_SIZE)]
+		pub points: Vec<Coords>,
 	}
 }
