@@ -36,6 +36,7 @@ use crate::{
 	x11::{error, reply},
 	Any,
 	AnyModifierKeyMask,
+	Arc,
 	Atom,
 	Button,
 	Char16,
@@ -265,7 +266,7 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	/// [attributes]: Attributes
 	/// [window]: Window
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GetWindowAttributes: Request(3, error::Window) -> reply::GetWindowAttributes {
 		/// The [window] for which this [request] gets the [attributes].
 		///
@@ -298,7 +299,7 @@ derive_xrb! {
 	///
 	/// [`UnmapWindow` request]: UnmapWindow
 	/// [`Window` error]: error::Window
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct DestroyWindow: Request(4, error::Window) {
 		/// The [window] which is the target of the `DestroyWindow` [request].
 		///
@@ -330,7 +331,7 @@ derive_xrb! {
 	///
 	/// [`Window` error]: error::Window
 	#[doc(alias = "DestroySubwindows")]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct DestroyChildren: Request(5, error::Window) {
 		/// The [window] which will have its children [destroyed].
 		///
@@ -392,7 +393,7 @@ derive_xrb! {
 	///
 	/// [reparented]: ReparentWindow
 	#[doc(alias = "ChangeSaveSet")]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct ChangeSavedWindows: Request(6, ChangeSavedWindowsError) {
 		#[metabyte]
 		/// Whether the `window` is added to or removed from your saved
@@ -466,7 +467,7 @@ derive_xrb! {
 	///
 	/// [`Match` error]: error::Match
 	/// [`Window` error]: error::Window
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct ReparentWindow: Request(7, ReparentWindowError) {
 		/// The [window] which will be transferred to be a child of the
 		/// `new_parent`.
@@ -536,7 +537,7 @@ derive_xrb! {
 	/// [`SUBSTRUCTURE_REDIRECT`]: EventMask::SUBSTRUCTURE_REDIRECT
 	///
 	/// [`Window` error]: error::Window
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct MapWindow: Request(8, error::Window) {
 		/// The [window] which is the target of the `MapWindow` [request].
 		///
@@ -569,7 +570,7 @@ derive_xrb! {
 	///
 	/// [`Window` error]: error::Window
 	#[doc(alias = "MapSubwindows")]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct MapChildren: Request(9, error::Window) {
 		/// The [window] which will have its unmapped children [mapped].
 		///
@@ -603,7 +604,7 @@ derive_xrb! {
 	/// [`Unmap` event]: super::event::Unmap
 	///
 	/// [`Window` error]: error::Window
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct UnmapWindow: Request(10, error::Window) {
 		/// The [window] which is the target of the `UnmapWindow` [request].
 		///
@@ -635,7 +636,7 @@ derive_xrb! {
 	///
 	/// [`Window` error]: error::Window
 	#[doc(alias = "UnmapSubwindows")]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct UnmapChildren: Request(11, error::Window) {
 		/// The [window] which will have its mapped children [unmapped].
 		///
@@ -800,7 +801,7 @@ derive_xrb! {
 	/// [`Circulate` event]: super::event::Circulate
 	///
 	/// [`Window` error]: error::Window
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct CirculateWindow: Request(13, CirculateWindowError) {
 		#[metabyte]
 		/// Which of the [window]'s children might be circulated and in which
@@ -846,7 +847,7 @@ derive_xrb! {
 	/// [`GetGeometry` reply]: reply::GetGeometry
 	///
 	/// [`Drawable` error]: error::Drawable
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GetGeometry: Request(14, error::Drawable) -> reply::GetGeometry {
 		/// The [drawable] for which this [request] gets its geometry.
 		///
@@ -883,7 +884,7 @@ derive_xrb! {
 	#[doc(alias("QueryTree", "GetTree", "GetWindowTree"))]
 	#[doc(alias("QueryParent", "QueryChildren", "QueryRoot"))]
 	#[doc(alias("GetParent", "GetChildren", "GetRoot"))]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct QueryWindowTree: Request(15, error::Window) -> reply::QueryWindowTree {
 		/// The [window] for which this [request] gets its root [window],
 		/// parent, and children.
@@ -964,7 +965,7 @@ derive_xrb! {
 	/// [`GetAtomName` reply]: reply::GetAtomName
 	///
 	/// [`Atom` error]: error::Atom
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GetAtomName: Request(17, error::Atom) -> reply::GetAtomName {
 		/// The [atom] for which this [request] gets its name.
 		///
@@ -1274,7 +1275,7 @@ derive_xrb! {
 	///
 	/// [`Window` error]: error::Window
 	/// [`Atom` error]: error::Atom
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct DeleteProperty: Request(19, DeletePropertyError) {
 		/// The [window] for which this [request] removes the `property`.
 		///
@@ -1333,7 +1334,7 @@ derive_xrb! {
 	///
 	/// [`Window` error]: error::Window
 	/// [`Atom` error]: error::Atom
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GetProperty: Request(20, GetPropertyError) -> reply::GetProperty {
 		/// Whether the `property` should be deleted from the `target` [window].
 		///
@@ -1411,7 +1412,7 @@ derive_xrb! {
 	/// [`ListProperties` reply]: reply::ListProperties
 	///
 	/// [`Window` error]: error::Window
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct ListProperties: Request(21, error::Window) -> reply::ListProperties {
 		/// The [window] for which this [request] returns its properties.
 		///
@@ -1464,7 +1465,7 @@ derive_xrb! {
 	///
 	/// [`Window` error]: error::Window
 	/// [`Atom` error]: error::Atom
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct SetSelectionOwner: Request(22, SetSelectionOwnerError) {
 		/// Sets the new owner of the `selection`.
 		///
@@ -1518,7 +1519,7 @@ derive_xrb! {
 	/// [`GetSelectionOwner` reply]: reply::GetSelectionOwner
 	///
 	/// [`Atom` error]: error::Atom
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GetSelectionOwner: Request(23) -> reply::GetSelectionOwner {
 		/// The selection for which this [request] returns its owner.
 		///
@@ -1558,7 +1559,7 @@ derive_xrb! {
 	///
 	/// [`Window` error]: error::Window
 	/// [`Atom` error]: error::Atom
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct ConvertSelection: Request(24, ConvertSelectionError) {
 		/// Your [window] which is requesting this conversion.
 		///
@@ -1648,8 +1649,8 @@ derive_xrb! {
 	//
 	// This feature would be nice for this:
 	// <https://github.com/rust-lang/rust/issues/92827>
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
-	pub struct SendEvent<E: Event>: Request(25, SendEventError) {
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
+	pub struct SendEvent<E: Event + ConstantX11Size>: Request(25, SendEventError) {
 		/// Whether the `event` should be propagated to the closest appropriate
 		/// ancestor, if necessary.
 		///
@@ -1716,7 +1717,7 @@ derive_xrb! {
 	/// [`Window` error]: error::Window
 	/// [`CursorAppearance` error]: error::CursorAppearance
 	#[doc(alias = "GrabPointer")]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GrabCursor: Request(26, GrabCursorError) -> reply::GrabCursor {
 		/// Whether cursor [events] which would normally be reported to this
 		/// client are reported normally.
@@ -1829,7 +1830,7 @@ derive_xrb! {
 	/// [`EnterWindow`]: super::event::EnterWindow
 	/// [`LeaveWindow`]: super::event::LeaveWindow
 	#[doc(alias = "UngrabPointer")]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct UngrabCursor: Request(27) {
 		/// The [time] at which the grab is recorded as having been released.
 		///
@@ -1880,7 +1881,7 @@ derive_xrb! {
 	/// [`Access` error]: error::Access
 	/// [`Window` error]: error::Window
 	/// [`CursorAppearance` error]: error::CursorAppearance
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GrabButton: Request(28, GrabButtonError) {
 		/// Whether cursor [events] which would normally be reported to this
 		/// client are reported normally.
@@ -2019,7 +2020,7 @@ derive_xrb! {
 	/// [passive button grab]: GrabButton
 	///
 	/// [`Window` error]: error::Window
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct UngrabButton: Request(29, UngrabButtonError) {
 		/// The [button] which the [passive button grab] was established for.
 		///
@@ -2088,7 +2089,7 @@ derive_xrb! {
 	///
 	/// [`CursorAppearance` error]: error::CursorAppearance
 	#[doc(alias = "ChangeActivePointerGrab")]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct ChangeActiveCursorGrab: Request(30, ChangeActiveCursorGrabError) {
 		/// Optionally overrides the [appearance of the cursor], no matter which
 		/// [window] it is within, for the duration of the grab.
@@ -2155,7 +2156,7 @@ derive_xrb! {
 	/// [`GrabKeyboard` reply]: reply::GrabKeyboard
 	///
 	/// [`Window` error]: error::Window
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GrabKeyboard: Request(31, GrabKeyboardError) -> reply::GrabKeyboard {
 		/// Whether key [events] which would normally be reported to this client
 		/// are reported normally.
@@ -2234,7 +2235,7 @@ derive_xrb! {
 	///
 	/// [`Focus`]: super::event::Focus
 	/// [`Unfocus`]: super::event::Unfocus
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct UngrabKeyboard: Request(32) {
 		/// The [time] at which the grab is recorded as having been released.
 		///
@@ -2281,7 +2282,7 @@ derive_xrb! {
 	///
 	/// [`Access` error]: error::Access
 	/// [`Window` error]: error::Window
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GrabKey: Request(33, GrabKeyError) {
 		/// Whether key [events] which would normally be reported to this client
 		/// are reported normally.
@@ -2386,7 +2387,7 @@ derive_xrb! {
 	/// [passive key grab]: GrabKey
 	///
 	/// [`Window` error]: error::Window
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct UngrabKey: Request(34, UngrabKeyError) {
 		/// The key which the [passive key grab] was established for.
 		///
@@ -2511,7 +2512,7 @@ derive_xrb! {
 	///
 	/// [frozen]: FreezeMode::Frozen
 	/// [request]: crate::message::Request
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct AllowEvents: Request(35, error::Value) {
 		/// The conditions under which the queued [events] are released.
 		///
@@ -2536,14 +2537,14 @@ derive_xrb! {
 	/// connection closes on all other clients' connections.
 	///
 	/// [request]: crate::message::Request
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GrabServer: Request(36);
 
 	/// A [request] that unfreezes processing of [requests][request] and
 	/// connection closes on all other clients' connections.
 	///
 	/// [request]: crate::message::Request
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct UngrabServer: Request(37);
 
 	/// A [request] that gets the current location of the cursor.
@@ -2557,7 +2558,7 @@ derive_xrb! {
 	///
 	/// [`Window` error]: error::Window
 	#[doc(alias("QueryPointer, QueryCursor, GetCursorPos, GetCursorLocation"))]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct QueryCursorLocation: Request(38, error::Window) -> reply::QueryCursorLocation {
 		/// Specifies a [window] to receive relative coordinates of the cursor
 		/// in relation to, if the cursor is on the same screen.
@@ -2587,7 +2588,7 @@ derive_xrb! {
 	///
 	/// [`Window` error]: error::Window
 	#[doc(alias = "GetMotionEvents")]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GetMotionHistory: Request(39, error::Window) -> reply::GetMotionHistory {
 		/// The [window] for which the motion history is returned.
 		///
@@ -2622,7 +2623,7 @@ derive_xrb! {
 	///
 	/// [`Window` error]: error::Window
 	#[doc(alias = "TranslateCoordinates")]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct ConvertCoordinates: Request(40, error::Window) -> reply::ConvertCoordinates {
 		/// The [window] which the `original_coords` are relative to.
 		///
@@ -2724,7 +2725,7 @@ derive_xrb! {
 	///
 	/// [`Window` error]: error::Window
 	#[doc(alias = "WarpPointer")]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct WarpCursor: Request(41, error::Window) {
 		/// The [window] which the cursor is being warped from.
 		///
@@ -2845,7 +2846,7 @@ derive_xrb! {
 	/// [`Match` error]: error::Match
 	/// [`Window` error]: error::Window
 	#[doc(alias("SetInputFocus", "Focus", "FocusWindow"))]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct SetFocus: Request(42, SetFocusError) {
 		/// What the focus should revert to if the focused [window] becomes
 		/// unviewable.
@@ -2876,7 +2877,7 @@ derive_xrb! {
 	///
 	/// [request]: crate::message::Request
 	#[doc(alias = "GetInputFocus")]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GetFocus: Request(43) -> reply::GetFocus;
 
 	/// A [request] that returns a bit vector of the currently held keys on the
@@ -2884,7 +2885,7 @@ derive_xrb! {
 	///
 	/// [request]: crate::message::Request
 	#[doc(alias = "QueryKeymap")]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct QueryKeyboard: Request(44) -> reply::QueryKeyboard;
 }
 
@@ -2931,7 +2932,7 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	/// [`Font` ID]: Font
 	#[doc(alias("CloseFont", "DeleteFont", "UnloadFont", "RemoveFont"))]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct UnassignFont: Request(46) {
 		/// The [`Font` ID] which is having its association with a font removed.
 		///
@@ -2956,7 +2957,7 @@ derive_xrb! {
 	/// [`QueryFont` reply]: reply::QueryFont
 	///
 	/// [`Font` error]: error::Font
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct QueryFont: Request(47, error::Font) -> reply::QueryFont {
 		/// The font which this [request] returns information about.
 		///
@@ -3147,7 +3148,7 @@ derive_xrb! {
 	/// See also: [`SetFontSearchDirectories`].
 	///
 	/// [request]: crate::message::Request
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GetFontSearchDirectories: Request(52) -> reply::GetFontSearchDirectories;
 }
 
@@ -3183,7 +3184,7 @@ derive_xrb! {
 	/// [`Drawable` error]: error::Drawable
 	/// [`ResourceIdChoice` error]: error::ResourceIdChoice
 	/// [`Value` error]: error::Value
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct CreatePixmap: Request(53, CreatePixmapError) {
 		/// The depth of the [pixmap].
 		///
@@ -3251,7 +3252,7 @@ derive_xrb! {
 	/// [request]: crate::message::Request
 	///
 	/// [`Pixmap` error]: error::Pixmap
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct FreePixmap: Request(54, error::Pixmap) {
 		/// The [pixmap] which is to have its association with its ID removed.
 		///
@@ -3445,7 +3446,7 @@ derive_xrb! {
 	/// [`GraphicsContext` error]: error::GraphicsContext
 	/// [`Match` error]: error::Match
 	#[doc(alias("CopyGc", "CopyGC", "CopyGraphicsContext", "CopyGcontext"))]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct CopyGraphicsOptions: Request(57, CopyGraphicsOptionsError) {
 		/// The [`GraphicsContext`] from which the [options] specified in
 		/// `options_mask` are copied.
@@ -3714,7 +3715,7 @@ derive_xrb! {
 	/// [`GraphicsContext` error]: error::GraphicsContext
 	#[doc(alias("FreeGc", "FreeGC", "FreeGcontext", "FreeGraphicsContext"))]
 	#[doc(alias("DestroyGc", "DestroyGC", "DestroyGcontext"))]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct DestroyGraphicsContext: Request(60, error::GraphicsContext) {
 		/// The [`GraphicsContext`] which is to be deleted.
 		///
@@ -3760,7 +3761,7 @@ derive_xrb! {
 	///
 	/// [`Window` error]: error::Window
 	/// [`Match` error]: error::Match
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct ClearArea: Request(61, ClearAreaError) {
 		/// Whether [`GraphicsExposure` events] should be generated for regions
 		/// of the `area` which are visible or maintained.
@@ -3859,7 +3860,7 @@ derive_xrb! {
 	/// [`Drawable` error]: error::Drawable
 	/// [`GraphicsContext` error]: error::GraphicsContext
 	/// [`Match` error]: error::Match
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct CopyArea: Request(62, CopyAreaError) {
 		/// The [drawable] from which the area is copied.
 		///
@@ -3997,7 +3998,7 @@ derive_xrb! {
 	/// [`Match` error]: error::Match
 	/// [`Value` error]: error::Value
 	#[doc(alias("CopyPlane"))]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct CopyBitPlane: Request(63, CopyBitPlaneError) {
 		/// The [drawable] used as the source in this graphics operation.
 		///
@@ -4125,7 +4126,7 @@ pub enum CoordinateMode {
 }
 
 derive_xrb! {
-	/// A [request] that draws the  given `points` on the `target` [drawable].
+	/// A [request] that draws the given `points` on the `target` [drawable].
 	///
 	/// The points are drawn by combining the `graphics_context`'s
 	/// [`foreground_color`] with the existing color at those coordinates in the
