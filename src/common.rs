@@ -492,13 +492,18 @@ pub struct Region {
 	pub height: Px<u16>,
 }
 
-/// This copies the values of `width` and `height`.
+/// A circular or elliptical arc.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, ConstantX11Size, Readable, Writable)]
 pub struct Arc {
-	pub x: Px<i16>,
-	pub y: Px<i16>,
-	pub width: Px<u16>,
-	pub height: Px<u16>,
+	/// The [rectangle] which contains the arc.
+	///
+	/// The center of the arc is the center of this rectangle. If the arc were
+	/// to form a full circle, it would touch this [rectangle] in four places:
+	/// the left side, the top side, the right side, and the bottom side. It is
+	/// fully contained within this [rectangle].
+	///
+	/// [rectangle]: Rectangle
+	pub bounds: Rectangle,
 
 	/// Specifies the start of the `Arc`.
 	///

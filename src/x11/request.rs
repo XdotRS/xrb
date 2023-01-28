@@ -36,6 +36,7 @@ use crate::{
 	x11::{error, reply},
 	Any,
 	AnyModifierKeyMask,
+	Arc,
 	Atom,
 	Button,
 	Char16,
@@ -4594,5 +4595,117 @@ derive_xrb! {
 		/// [drawable]: Drawable
 		#[context(self::remaining => remaining / Rectangle::X11_SIZE)]
 		pub rectangles: Vec<Rectangle>,
+	}
+}
+
+request_error! {
+	#[doc(alias("PolyArcError"))]
+	pub enum DrawArcsError for DrawArcs {
+		Drawable,
+		GraphicsContext,
+		Match,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that draws circular or elliptical [arcs][arc].
+	///
+	/// # Graphics options used
+	/// This [request] uses the following [options] of the `graphics_context`:
+	/// - [`function`]
+	/// - [`plane_mask`]
+	/// - [`line_width`]
+	/// - [`line_style`]
+	/// - [`cap_style`]
+	/// - [`join_style`]
+	/// - [`fill_style`]
+	/// - [`child_mode`]
+	/// - [`clip_x`]
+	/// - [`clip_y`]
+	/// - [`clip_mask`]
+	///
+	/// This [request] may also use these [options], depending on the
+	/// configuration of the `graphics_context`:
+	/// - [`foreground_color`]
+	/// - [`background_color`]
+	/// - [`tile`]
+	/// - [`stipple`]
+	/// - [`tile_stipple_x`]
+	/// - [`tile_stipple_y`]
+	/// - [`dash_offset`]
+	/// - [`dashes`]
+	///
+	/// # Errors
+	/// A [`Drawable` error] is generated if `target` does not refer to a
+	/// defined [window] nor [pixmap].
+	///
+	/// A [`GraphicsContext` error] is generated if `graphics_context` does not
+	/// refer to a defined [`GraphicsContext`].
+	///
+	/// [`function`]: GraphicsOptions::function
+	/// [`plane_mask`]: GraphicsOptions::plane_mask
+	/// [`line_width`]: GraphicsOptions::line_width
+	/// [`line_style`]: GraphicsOptions::line_style
+	/// [`cap_style`]: GraphicsOptions::cap_style
+	/// [`join_style`]: GraphicsOptions::join_style
+	/// [`fill_style`]: GraphicsOptions::fill_style
+	/// [`child_mode`]: GraphicsOptions::child_mode
+	/// [`clip_x`]: GraphicsOptions::clip_x
+	/// [`clip_y`]: GraphicsOptions::clip_y
+	/// [`clip_mask`]: GraphicsOptions::clip_mask
+	///
+	/// [`foreground_color`]: GraphicsOptions::foreground_color
+	/// [`background_color`]: GraphicsOptions::background_color
+	/// [`tile`]: GraphicsOptions::tile
+	/// [`stipple`]: GraphicsOptions::stipple
+	/// [`tile_stipple_x`]: GraphicsOptions::tile_stipple_x
+	/// [`tile_stipple_y`]: GraphicsOptions::tile_stipple_y
+	/// [`dash_offset`]: GraphicsOptions::dash_offset
+	/// [`dashes`]: GraphicsOptions::dashes
+	///
+	/// [`Drawable` error]: error::Drawable
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	///
+	/// [arc]: Arc
+	/// [request]: crate::message::Request
+	#[doc(alias("PolyArc"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct DrawArcs: Request(68, DrawArcsError) {
+		/// The [drawable] on which the [arcs] are drawn.
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [pixmap].
+		///
+		/// [arcs]: Arc
+		/// [drawable]: Drawable
+		/// [window]: Window
+		/// [pixmap]: Pixmap
+		///
+		/// [`Drawable` error]: error::Drawable
+		#[doc(alias("drawable"))]
+		pub target: Drawable,
+
+		/// The [`GraphicsContext`] used in this graphics operation.
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// [`GraphicsContext` error]: error::GraphicsContext
+		#[doc(alias("gc", "context", "gcontext"))]
+		pub graphics_context: GraphicsContext,
+
+		/// The [arcs][arc] which are to be drawn.
+		///
+		/// If the last point in an [arc] is in the same location as the first
+		/// point in the next [arc], the two [arcs][arc] are joined with a
+		/// joinpoint. If the last point of the last [arc] and the first point
+		/// of the first [arc] are in the same location, they will also be
+		/// joined.
+		///
+		/// [arc]: Arc
+		#[context(self::remaining => remaining / Arc::X11_SIZE)]
+		pub arcs: Vec<Arc>,
 	}
 }
