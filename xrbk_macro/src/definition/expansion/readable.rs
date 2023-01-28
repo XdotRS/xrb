@@ -129,7 +129,10 @@ impl Request {
 					#metabyte
 					// Read the request's length.
 					let length = buf.get_u16();
-					let buf = &mut buf.take(((length - 1) as usize) * 4);
+					let buf = &mut <_ as ::xrbk::Buf>::take(
+						buf,
+						((length - 1) as usize) * 4,
+					);
 
 					// Read other elements.
 					#reads
@@ -204,7 +207,10 @@ impl Reply {
 					let #sequence = buf.get_u16();
 					// Length
 					let length = buf.get_u32();
-					let buf = &mut buf.take((((length) as usize) * 4) + (32 - 8));
+					let buf = &mut <_ as ::xrbk::Buf>::take(
+						buf,
+						(((length) as usize) * 4) + (32 - 8),
+					);
 
 					// Other elements
 					#reads
