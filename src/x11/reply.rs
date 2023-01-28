@@ -164,8 +164,8 @@ derive_xrb! {
 		/// [`Attributes::maintenance_fallback_color`]: crate::set::Attributes::maintenance_fallback_color
 		#[doc(alias = "backing_pixel")]
 		pub maintenance_fallback_color: ColorId,
-		/// Whether the X server should maintain the contents of [windows] under
-		/// this [window].
+		/// Whether the X server should maintain the contents of
+		/// [windows][window] under this [window].
 		///
 		/// See [`Attributes::maintain_windows_under`] for more information.
 		///
@@ -294,7 +294,7 @@ derive_xrb! {
 		/// of the [window]'s parent.
 		///
 		/// [window]: Window
-		/// [pixmap]: create::Pixmap
+		/// [pixmap]: crate::Pixmap
 		/// [drawable]: crate::Drawable
 		#[doc(alias("x", "y", "width", "height"))]
 		pub geometry: Rectangle,
@@ -629,6 +629,8 @@ derive_xrb! {
 
 		/// Whether the cursor is on the `same_screen` as the given `target`
 		/// [window].
+		///
+		/// [window]: Window
 		#[metabyte]
 		pub same_screen: bool,
 
@@ -751,6 +753,8 @@ derive_xrb! {
 		/// `output` [window], this is that child.
 		///
 		/// If `same_screen` is `false`, this is always [`None`].
+		///
+		/// [window]: Window
 		// TODO: should always be [`None`] if `same_screen` is false
 		pub child: Option<Window>,
 

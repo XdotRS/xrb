@@ -687,6 +687,8 @@ derive_xrb! {
 	///
 	/// [configures]: WindowConfig
 	///
+	/// [`InputOnly`]: WindowClass::InputOnly
+	///
 	/// [`width`]: WindowConfig::width
 	/// [`height`]: WindowConfig::height
 	/// [`border_width`]: WindowConfig::border_width
@@ -732,6 +734,8 @@ derive_xrb! {
 		/// [window].
 		///
 		/// [configuration]: WindowConfig
+		/// [window]: Window
+		/// [request]: crate::message::Request
 		///
 		/// [`width`]: WindowConfig::width
 		/// [`height`]: WindowConfig::height
@@ -855,7 +859,7 @@ derive_xrb! {
 		/// [drawable]: Drawable
 		/// [request]: crate::message::Request
 		///
-		/// [`Drawable` error]: Error::Drawable
+		/// [`Drawable` error]: error::Drawable
 		#[doc(alias = "drawable")]
 		pub target: Drawable,
 	}
@@ -1451,7 +1455,7 @@ derive_xrb! {
 	///
 	/// [window]: Window
 	/// [atom]: Atom
-	/// [time]: CurrentableTime
+	/// [time]: crate::Timestamp
 	/// [request]: crate::message::Request
 	///
 	/// [current time]: CurrentableTime::CurrentTime
@@ -1493,7 +1497,7 @@ derive_xrb! {
 		/// [time] for the selection's owner, or this [time] is later than the
 		/// server's [current time], this [request] has no effect.
 		///
-		/// [time]: CurrentableTime
+		/// [time]: crate::Timestamp
 		/// [current time]: CurrentableTime::CurrentTime
 		/// [request]: crate::message::Request
 		pub time: CurrentableTime,
@@ -1594,7 +1598,7 @@ derive_xrb! {
 		/// The [time] at which this conversion is recorded as having taken
 		/// place.
 		///
-		/// [time]: CurrentableTime
+		/// [time]: crate::Timestamp
 		pub time: CurrentableTime,
 	}
 }
@@ -1687,7 +1691,7 @@ request_error! {
 }
 
 derive_xrb! {
-	/// A [request] to actively grab control of the cursor.
+	/// A [request] that actively grabs control of the cursor.
 	///
 	/// This [request] generates [`EnterWindow`] and [`LeaveWindow`] events.
 	///
@@ -1809,7 +1813,7 @@ derive_xrb! {
 
 		/// The [time] at which this grab is recorded as having been initiated.
 		///
-		/// [time]: CurrentableTime
+		/// [time]: crate::Timestamp
 		pub time: CurrentableTime,
 	}
 
@@ -1829,7 +1833,7 @@ derive_xrb! {
 	pub struct UngrabCursor: Request(27) {
 		/// The [time] at which the grab is recorded as having been released.
 		///
-		/// [time]: CurrentableTime
+		/// [time]: crate::Timestamp
 		pub time: CurrentableTime,
 	}
 }
@@ -2002,8 +2006,8 @@ request_error! {
 }
 
 derive_xrb! {
-	/// A [request] which releases a [passive button grab] by this client on the
-	/// specified `grab_window` if the grab was established by your client.
+	/// A [request] that releases a [passive button grab] on the specified
+	/// `grab_window` if the grab was established by your client.
 	///
 	/// # Errors
 	/// A [`Window` error] is generated if `grab_window` does not refer to a
@@ -2070,7 +2074,7 @@ request_error! {
 }
 
 derive_xrb! {
-	/// A [request] which modifies the `event_mask` or `cursor_appearance` of an
+	/// A [request] that modifies the `event_mask` or `cursor_appearance` of an
 	/// [active cursor grab].
 	///
 	/// # Errors
@@ -2110,7 +2114,7 @@ derive_xrb! {
 		/// This must be later than the [time] of the last cursor grab, and
 		/// equal to or earlier than the X server's [current time].
 		///
-		/// [time]: CurrentableTime
+		/// [time]: crate::Timestamp
 		/// [current time]: CurrentableTime::CurrentTime
 		pub time: CurrentableTime,
 
@@ -2131,7 +2135,7 @@ request_error! {
 }
 
 derive_xrb! {
-	/// A [request] to actively grab control of the keyboard.
+	/// A [request] that actively grabs control of the keyboard.
 	///
 	/// This [request] generates [`Focus`] and [`Unfocus`] events.
 	///
@@ -2179,7 +2183,7 @@ derive_xrb! {
 
 		/// The [time] at which this grab is recorded as having been initiated.
 		///
-		/// [time]: CurrentableTime
+		/// [time]: crate::Timestamp
 		pub time: CurrentableTime,
 
 		/// The [freeze mode] applied to the cursor.
@@ -2234,7 +2238,7 @@ derive_xrb! {
 	pub struct UngrabKeyboard: Request(32) {
 		/// The [time] at which the grab is recorded as having been released.
 		///
-		/// [time]: CurrentableTime
+		/// [time]: crate::Timestamp
 		pub time: CurrentableTime,
 	}
 }
@@ -2369,7 +2373,7 @@ request_error! {
 }
 
 derive_xrb! {
-	/// A [request] which releases a [passive key grab] on the specified
+	/// A [request] that releases a [passive key grab] on the specified
 	/// `grab_window` if the grab was established by your client.
 	///
 	/// # Errors
@@ -2523,7 +2527,7 @@ derive_xrb! {
 		/// [current time].
 		///
 		/// [request]: crate::message::Request
-		/// [time]: CurrentableTime
+		/// [time]: crate::Timestamp
 		/// [current time]: CurrentableTime::CurrentTime
 		pub time: CurrentableTime,
 	}
@@ -2740,7 +2744,7 @@ derive_xrb! {
 		/// [window].
 		///
 		/// # Errors
-		/// A [`Window` error] is generated if this is [`SOme`] but does not
+		/// A [`Window` error] is generated if this is [`Some`] but does not
 		/// refer to a defined [window].
 		///
 		/// [window]: Window
@@ -2815,11 +2819,13 @@ pub enum RevertFocus {
 	CursorRoot,
 	/// Revert the focus to the parent of the [window] which the cursor is in at
 	/// the time.
+	///
+	/// [window]: Window
 	Parent,
 }
 
 derive_xrb! {
-	/// A [request] which changes the current focus.
+	/// A [request] that changes the current focus.
 	///
 	/// This [request] generates [`Focus`] and [`Unfocus`] events.
 	///
@@ -2861,6 +2867,8 @@ derive_xrb! {
 		pub new_focus: FocusWindow,
 
 		/// The [time] at which the focus is recorded as having changed.
+		///
+		/// [time]: crate::Timestamp
 		pub time: CurrentableTime,
 	}
 
@@ -3382,6 +3390,7 @@ derive_xrb! {
 	///
 	/// [`clip_mask`]: GraphicsOptions::clip_mask
 	/// [`dashes`]: GraphicsOptions::dashes
+	/// [`dash_offset`]: GraphicsOptions::dash_offset
 	///
 	/// [`SetClipRectangles` request]: SetClipRectangles
 	/// [`SetDashes` request]: SetDashes
@@ -3548,7 +3557,7 @@ derive_xrb! {
 }
 
 request_error! {
-	pub enum SetClipRectanglesError for SetClipMask {
+	pub enum SetClipRectanglesError for SetClipRectangles {
 		GraphicsContext,
 		Match,
 		Value,
@@ -3618,15 +3627,19 @@ pub enum ClipRectanglesOrdering {
 }
 
 derive_xrb! {
-	/// A [request] that sets the clip mask of a [`GraphicsContext`] based on
-	/// the provided list of [rectangles], as well as the [`clip_x`] and
-	/// [`clip_y`].
+	/// A [request] that configures the clip mask of a [`GraphicsContext`] using
+	/// a list of [rectangles].
+	///
+	/// This [request] also sets the [`clip_x`] and [`clip_y`] of the clip mask.
+	/// The coordinates used in the [rectangles] are relative to the [`clip_x`]
+	/// and [`clip_y`].
 	///
 	/// # Errors
 	/// A [`GraphicsContext` error] is generated if `target` does not refer to a
 	/// defined [`GraphicsContext`].
 	///
 	/// [rectangles]: Rectangle
+	/// [request]: crate::message::Request
 	///
 	/// [`clip_x`]: GraphicsOptions::clip_x
 	/// [`clip_y`]: GraphicsOptions::clip_y
@@ -3648,6 +3661,8 @@ derive_xrb! {
 		/// # Errors
 		/// A [`GraphicsContext` error] is generated if this does not refer to a
 		/// defined [`GraphicsContext`].
+		///
+		/// [request]: crate::message::Request
 		///
 		/// [`GraphicsContext` error]: error::GraphicsContext
 		pub target: GraphicsContext,
@@ -3705,6 +3720,8 @@ derive_xrb! {
 	/// A [`GraphicsContext` error] is generated if `target` does not refer to a
 	/// defined [`GraphicsContext`].
 	///
+	/// [request]: crate::message::Request
+	///
 	/// [`GraphicsContext` ID]: GraphicsContext
 	///
 	/// [`GraphicsContext` error]: error::GraphicsContext
@@ -3733,7 +3750,7 @@ request_error! {
 }
 
 derive_xrb! {
-	/// A [request] which clears a particular area of a [window].
+	/// A [request] that clears a particular area of a [window].
 	///
 	/// If the [window] has a defined background ([`background_pixmap`] or
 	/// [`background_color`], the `area` is replaced by that background.
