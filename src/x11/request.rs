@@ -4867,3 +4867,110 @@ derive_xrb! {
 		pub points: Vec<Coords>,
 	}
 }
+
+request_error! {
+	#[doc(alias("PolyFillRectangleError"))]
+	pub enum FillRectanglesError for FillRectangles {
+		Drawable,
+		GraphicsContext,
+		Match,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that fills the given `rectangles`.
+	///
+	/// This is effectively the same as if a [`FillPolygon` request] were sent
+	/// for each [rectangle] with the [rectangle]'s four points, starting with
+	/// the top-left corner and going clockwise.
+	///
+	/// # Graphics options used
+	/// This [request] uses the following [options] of the `graphics_context`:
+	/// - [`function`]
+	/// - [`plane_mask`]
+	/// - [`fill_style`]
+	/// - [`child_mode`]
+	/// - [`clip_x`]
+	/// - [`clip_y`]
+	/// - [`clip_mask`]
+	///
+	/// This [request] may also use these [options], depending on the
+	/// configuration of the `graphics_context`:
+	/// - [`foreground_color`]
+	/// - [`background_color`]
+	/// - [`tile`]
+	/// - [`stipple`]
+	/// - [`tile_stipple_x`]
+	/// - [`tile_stipple_y`]
+	///
+	/// # Errors
+	/// A [`Drawable` error] is generated if `target` does not refer to a
+	/// defined [window] nor [pixmap].
+	///
+	/// A [`GraphicsContext` error] is generated if `graphics_context` does not
+	/// refer to a defined [`GraphicsContext`].
+	///
+	/// [window]: Window
+	/// [pixmap]: Pixmap
+	/// [options]: GraphicsOptions
+	/// [rectangle]: Rectangle
+	/// [request]: crate::message::Request
+	///
+	/// [`function`]: GraphicsOptions::function
+	/// [`plane_mask`]: GraphicsOptions::plane_mask
+	/// [`fill_style`]: GraphicsOptions::fill_style
+	/// [`child_mode`]: GraphicsOptions::child_mode
+	/// [`clip_x`]: GraphicsOptions::clip_x
+	/// [`clip_y`]: GraphicsOptions::clip_y
+	/// [`clip_mask`]: GraphicsOptions::clip_mask
+	///
+	/// [`foreground_color`]: GraphicsOptions::foreground_color
+	/// [`background_color`]: GraphicsOptions::background_color
+	/// [`tile`]: GraphicsOptions::tile
+	/// [`stipple`]: GraphicsOptions::stipple
+	/// [`tile_stipple_x`]: GraphicsOptions::tile_stipple_x
+	/// [`tile_stipple_y`]: GraphicsOptions::tile_stipple_y
+	///
+	/// [`FillPolygon` request]: FillPolygon
+	///
+	/// [`Drawable` error]: error::Drawable
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	#[doc(alias("PolyFillRectangle"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct FillRectangles: Request(70, FillRectanglesError) {
+		/// The [drawable] on which the [rectangles] are filled.
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [pixmap].
+		///
+		/// [drawable]: Drawable
+		/// [window]: Window
+		/// [pixmap]: Pixmap
+		/// [rectangles]: Rectangle
+		///
+		/// [`Drawable` error]: error::Drawable
+		#[doc(alias("drawable"))]
+		pub target: Drawable,
+
+		/// The [`GraphicsContext`] used in this graphics operation.
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// [`GraphicsContext` error]: error::GraphicsContext
+		#[doc(alias("gc", "context", "gcontext"))]
+		pub graphics_context: GraphicsContext,
+
+		/// The [rectangles] which are to be filled.
+		///
+		/// The [rectangles] are filled in the order that they appear in this
+		/// list. For intersecting [rectangles], the intersecting pixels are
+		/// drawn multiple times.
+		///
+		/// [rectangles]: Rectangle
+		#[context(self::remaining => remaining / Rectangle::X11_SIZE)]
+		pub rectangles: Vec<Rectangle>,
+	}
+}
