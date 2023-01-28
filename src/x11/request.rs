@@ -4474,3 +4474,125 @@ derive_xrb! {
 		pub lines: Vec<Line>,
 	}
 }
+
+request_error! {
+	#[doc(alias("PolyRectangleError"))]
+	pub enum DrawRectanglesError for DrawRectangles {
+		Drawable,
+		GraphicsContext,
+		Match,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that draws the outlines of the given `rectangles`.
+	///
+	/// The outlines are drawn as [lines] connecting each corner of the
+	/// [rectangles], starting at the top-left corner and going clockwise, with
+	/// a join point at each corner - thus forming a closed path.
+	///
+	/// If any of the given `rectangles` intersect, the intersecting pixels are
+	/// drawn multiple times.
+	///
+	/// # Graphics options used
+	/// This [request] uses the following [options] of the `graphics_context`:
+	/// - [`function`]
+	/// - [`plane_mask`]
+	/// - [`line_width`]
+	/// - [`line_style`]
+	/// - [`cap_style`]
+	/// - [`join_style`]
+	/// - [`fill_style`]
+	/// - [`child_mode`]
+	/// - [`clip_x`]
+	/// - [`clip_y`]
+	/// - [`clip_mask`]
+	///
+	/// This [request] may also use these [options], depending on the
+	/// configuration of the `graphics_context`:
+	/// - [`foreground_color`]
+	/// - [`background_color`]
+	/// - [`tile`]
+	/// - [`stipple`]
+	/// - [`tile_stipple_x`]
+	/// - [`tile_stipple_y`]
+	/// - [`dash_offset`]
+	/// - [`dashes`]
+	///
+	/// # Errors
+	/// A [`Drawable` error] is generated if `target` does not refer to a
+	/// defined [window] nor [pixmap].
+	///
+	/// A [`GraphicsContext` error] is generated if `graphics_context` does not
+	/// refer to a defined [`GraphicsContext`].
+	///
+	/// [window]: Window
+	/// [pixmap]: Pixmap
+	/// [lines]: Line
+	/// [rectangles]: Rectangle
+	/// [request]: crate::message::Request
+	///
+	/// [`function`]: GraphicsOptions::function
+	/// [`plane_mask`]: GraphicsOptions::plane_mask
+	/// [`line_width`]: GraphicsOptions::line_width
+	/// [`line_style`]: GraphicsOptions::line_style
+	/// [`cap_style`]: GraphicsOptions::cap_style
+	/// [`join_style`]: GraphicsOptions::join_style
+	/// [`fill_style`]: GraphicsOptions::fill_style
+	/// [`child_mode`]: GraphicsOptions::child_mode
+	/// [`clip_x`]: GraphicsOptions::clip_x
+	/// [`clip_y`]: GraphicsOptions::clip_y
+	/// [`clip_mask`]: GraphicsOptions::clip_mask
+	///
+	/// [`foreground_color`]: GraphicsOptions::foreground_color
+	/// [`background_color`]: GraphicsOptions::background_color
+	/// [`tile`]: GraphicsOptions::tile
+	/// [`stipple`]: GraphicsOptions::stipple
+	/// [`tile_stipple_x`]: GraphicsOptions::tile_stipple_x
+	/// [`tile_stipple_y`]: GraphicsOptions::tile_stipple_y
+	/// [`dash_offset`]: GraphicsOptions::dash_offset
+	/// [`dashes`]: GraphicsOptions::dashes
+	///
+	/// [`Drawable` error]: error::Drawable
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	#[doc(alias("PolyRectangle"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct DrawRectangles: Request(67, DrawRectanglesError) {
+		/// The [drawable] on which the `rectangles`' outlines are drawn.
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [pixmap].
+		///
+		/// [drawable]: Drawable
+		/// [window]: Window
+		/// [pixmap]: Pixmap
+		///
+		/// [`Drawable` error]: error::Drawable
+		#[doc(alias("drawable"))]
+		pub target: Drawable,
+
+		/// The [`GraphicsContext`] used in this graphics operation.
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// [`GraphicsContext` error]: error::GraphicsContext
+		#[doc(alias("gc", "context", "gcontext"))]
+		pub graphics_context: GraphicsContext,
+
+		/// The [rectangles] which are to have their outlines drawn.
+		///
+		/// Their `x` and `y` coordinates are relative to the top-left corner of
+		/// the `target` [drawable].
+		///
+		/// The [rectangles] are drawn in the order that they appear in this
+		/// list.
+		///
+		/// [rectangles]: Rectangle
+		/// [drawable]: Drawable
+		#[context(self::remaining => remaining / Rectangle::X11_SIZE)]
+		pub rectangles: Vec<Rectangle>,
+	}
+}
