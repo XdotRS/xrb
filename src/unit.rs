@@ -5,7 +5,22 @@
 //! Types representing units like millimeters or hertz.
 
 use std::fmt::{Display, Formatter};
+
+use derive_more::{
+	Add,
+	AddAssign,
+	Div,
+	DivAssign,
+	Mul,
+	MulAssign,
+	Rem,
+	RemAssign,
+	Sub,
+	SubAssign,
+	Sum,
+};
 use thiserror::Error;
+
 use xrbk::{Buf, BufMut, ConstantX11Size, ReadResult, Readable, Writable, WriteResult, X11Size};
 
 /// An error generated when a value is outside of the required bounds.
@@ -62,7 +77,27 @@ macro_rules! impl_xrbk_traits {
 }
 
 /// A value measured in pixels.
-#[derive(Debug, Hash, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+	Debug,
+	Hash,
+	Copy,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Add,
+	AddAssign,
+	Sub,
+	SubAssign,
+	Mul,
+	MulAssign,
+	Div,
+	DivAssign,
+	Rem,
+	RemAssign,
+	Sum,
+)]
 pub struct Px<Num>(pub Num);
 
 impl<Num> Display for Px<Num>
@@ -77,7 +112,27 @@ where
 impl_xrbk_traits!(Px<Num>(Num));
 
 /// A value measured in millimeters.
-#[derive(Debug, Hash, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+	Debug,
+	Hash,
+	Copy,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Add,
+	AddAssign,
+	Sub,
+	SubAssign,
+	Mul,
+	MulAssign,
+	Div,
+	DivAssign,
+	Rem,
+	RemAssign,
+	Sum,
+)]
 pub struct Mm<Num>(pub Num);
 
 impl<Num> Display for Mm<Num>
@@ -92,7 +147,27 @@ where
 impl_xrbk_traits!(Mm<Num>(Num));
 
 /// A value measured in milliseconds.
-#[derive(Debug, Hash, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+	Debug,
+	Hash,
+	Copy,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Add,
+	AddAssign,
+	Sub,
+	SubAssign,
+	Mul,
+	MulAssign,
+	Div,
+	DivAssign,
+	Rem,
+	RemAssign,
+	Sum,
+)]
 pub struct Ms<Num>(pub Num);
 
 impl<Num> Display for Ms<Num>
@@ -107,7 +182,27 @@ where
 impl_xrbk_traits!(Ms<Num>(Num));
 
 /// A value measured in hertz.
-#[derive(Debug, Hash, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+	Debug,
+	Hash,
+	Copy,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Add,
+	AddAssign,
+	Sub,
+	SubAssign,
+	Mul,
+	MulAssign,
+	Div,
+	DivAssign,
+	Rem,
+	RemAssign,
+	Sum,
+)]
 pub struct Hz<Num>(pub Num);
 
 impl<Num> Display for Hz<Num>

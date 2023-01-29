@@ -2849,6 +2849,9 @@ impl Writable for Text16 {
 
 /// A [request] that draws the given [`String16`] text on the given [drawable].
 ///
+/// For [fonts][font] using linear indexing rather than two-byte matrix
+/// indexing, the X server will interpret each [`Char16`] as a `u16` index.
+///
 /// # Graphics options used
 /// This [request] uses the following [options] of the `graphics_context`:
 /// - [`function`]
@@ -2888,6 +2891,8 @@ impl Writable for Text16 {
 /// [text items]: TextItem16
 /// [options]: GraphicsOptions
 /// [request]: Request
+///
+/// [`Char16`]: crate::Char16
 ///
 /// [`function`]: GraphicsOptions::function
 /// [`plane_mask`]: GraphicsOptions::plane_mask
@@ -3052,5 +3057,277 @@ impl Writable for DrawText16 {
 		buf.put_bytes(0, pad(&self.text_items));
 
 		Ok(())
+	}
+}
+
+request_error! {
+	pub enum ImageText8Error for ImageText8 {
+		Drawable,
+		GraphicsContext,
+		Match,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that draws [`String8`] text on a rectangular background on
+	/// the given [drawable].
+	///
+	/// The text is filled with the `graphics_context`'s [`foreground_color`],
+	/// while the background is filled with the `graphics_context`'s
+	/// [`background_color`]
+	///
+	/// In relation to the text extents returned in the
+	/// [`QueryTextExtents` reply], the background [rectangle] is defined as:
+	/// ```
+	/// # use xrb::{Rectangle, Coords, unit::Px};
+	/// #
+	/// # fn main() -> Rectangle {
+	/// #     let coordinates = Coords { x: Px(0), y: Px(0) };
+	/// #
+	/// #     let (font_ascent, font_descent) = (Px(0), Px(0));
+	/// #     let overall_width = Px(1);
+	/// #
+	/// Rectangle {
+	///     x: coordinates.x,
+	///     y: coordinates.y - font_ascent,
+	///     width: overall_width,
+	///     height: Px(font_ascent.0.into() + font_descent.0.into()),
+	/// }
+	/// # }
+	/// ```
+	///
+	/// `graphics_context`'s [`function`] and [`fill_style`] are ignored in this
+	/// [request]. Effectively, [`Function::Copy`] and [`FillStyle::Solid`] are
+	/// used.
+	///
+	/// For [fonts] using two-byte indexing, each [`Char8`] `char` is
+	/// interpreted as <code>[Char16]::[new](0, char.[unwrap()])</code>.
+	///
+	/// [`Char8`]: crate::Char8
+	/// [unwrap()]: crate::Char8::unwrap
+	///
+	/// [Char16]: crate::Char16
+	/// [new]: crate::Char16::new
+	///
+	/// # Graphics options used
+	/// This [request] uses the following [options] of the `graphics_context`:
+	/// - [`plane_mask`]
+	/// - [`foreground_color`]
+	/// - [`background_color`]
+	/// - [`font`]
+	/// - [`child_mode`]
+	/// - [`clip_x`]
+	/// - [`clip_y`]
+	/// - [`clip_mask`]
+	///
+	/// # Errors
+	/// A [`Drawable` error] is generated if `target` does not refer to a
+	/// defined [window] nor [pixmap].
+	///
+	/// A [`GraphicsContext` error] is generated if `graphics_context` does not
+	/// refer to a defined [`GraphicsContext`].
+	///
+	/// [drawable]: Drawable
+	/// [window]: Window
+	/// [pixmap]: Pixmap
+	/// [fonts]: Font
+	/// [rectangle]: Rectangle
+	/// [options]: GraphicsOptions
+	/// [request]: Request
+	///
+	/// [`Function::Copy`]: crate::set::Function
+	/// [`FillStyle::Solid`]: crate::set::FillStyle::Solid
+	///
+	/// [`plane_mask`]: GraphicsOptions::plane_mask
+	/// [`foreground_color`]: GraphicsOptions::foreground_color
+	/// [`background_color`]: GraphicsOptions::background_color
+	/// [`font`]: GraphicsOptions::font
+	/// [`child_mode`]: GraphicsOptions::child_mode
+	/// [`clip_x`]: GraphicsOptions::clip_x
+	/// [`clip_y`]: GraphicsOptions::clip_y
+	/// [`clip_mask`]: GraphicsOptions::clip_mask
+	///
+	/// [`QueryTextExtents` reply]: reply::QueryTextExtents
+	///
+	/// [`Drawable` error]: error::Drawable
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ImageText8: Request(76, ImageText8Error) {
+		// The length of `string`.
+		#[metabyte]
+		#[allow(clippy::cast_possible_truncation)]
+		let string_len: u8 = string => string.len() as u8,
+
+		/// The [drawable] on which the text is drawn.
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [pixmap].
+		///
+		/// [drawable]: Drawable
+		/// [window]: Window
+		/// [pixmap]: Pixmap
+		///
+		/// [`Drawable` error]: error::Drawable
+		#[doc(alias("drawable"))]
+		pub target: Drawable,
+
+		/// The [`GraphicsContext`] used in this graphics operation.
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// [`GraphicsContext` error]: error::GraphicsContext
+		#[doc(alias("gc", "context", "gcontext"))]
+		pub graphics_context: GraphicsContext,
+
+		/// The coordinates of the background [rectangle] before the
+		/// `font_ascent` is subtracted[^subtracted].
+		///
+		/// [^subtracted]: See the [request docs].
+		///
+		/// [rectangle]: Rectangle
+		/// [request docs]: ImageText8
+		pub coordinates: Coords,
+
+		/// The text which is to be drawn.
+		#[context(string_len => usize::from(*string_len))]
+		pub string: String8,
+		[_; string => pad(string)],
+	}
+}
+
+request_error! {
+	pub enum ImageText16Error for ImageText16 {
+		Drawable,
+		GraphicsContext,
+		Match,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that draws [`String16`] text on a rectangular background on
+	/// the given [drawable].
+	///
+	/// The text is filled with the `graphics_context`'s [`foreground_color`],
+	/// while the background is filled with the `graphics_context`'s
+	/// [`background_color`]
+	///
+	/// In relation to the text extents returned in the
+	/// [`QueryTextExtents` reply], the background [rectangle] is defined as:
+	/// ```
+	/// # use xrb::{Rectangle, Coords, unit::Px};
+	/// #
+	/// # fn main() -> Rectangle {
+	/// #     let coordinates = Coords { x: Px(0), y: Px(0) };
+	/// #
+	/// #     let (font_ascent, font_descent) = (Px(0), Px(0));
+	/// #     let overall_width = Px(1);
+	/// #
+	/// Rectangle {
+	///     x: coordinates.x,
+	///     y: coordinates.y - font_ascent,
+	///     width: overall_width,
+	///     height: Px(font_ascent.0.into() + font_descent.0.into()),
+	/// }
+	/// # }
+	/// ```
+	///
+	/// `graphics_context`'s [`function`] and [`fill_style`] are ignored in this
+	/// [request]. Effectively, [`Function::Copy`] and [`FillStyle::Solid`] are
+	/// used.
+	///
+	/// For [fonts] using linear indexing, each [`Char16`] `char` is interpreted
+	/// as a big-endian `u16` value.
+	///
+	/// # Graphics options used
+	/// This [request] uses the following [options] of the `graphics_context`:
+	/// - [`plane_mask`]
+	/// - [`foreground_color`]
+	/// - [`background_color`]
+	/// - [`font`]
+	/// - [`child_mode`]
+	/// - [`clip_x`]
+	/// - [`clip_y`]
+	/// - [`clip_mask`]
+	///
+	/// # Errors
+	/// A [`Drawable` error] is generated if `target` does not refer to a
+	/// defined [window] nor [pixmap].
+	///
+	/// A [`GraphicsContext` error] is generated if `graphics_context` does not
+	/// refer to a defined [`GraphicsContext`].
+	///
+	/// [drawable]: Drawable
+	/// [window]: Window
+	/// [pixmap]: Pixmap
+	/// [fonts]: Font
+	/// [rectangle]: Rectangle
+	/// [options]: GraphicsOptions
+	/// [request]: Request
+	///
+	/// [`Char16`]: crate::Char16
+	///
+	/// [`Function::Copy`]: crate::set::Function
+	/// [`FillStyle::Solid`]: crate::set::FillStyle::Solid
+	///
+	/// [`plane_mask`]: GraphicsOptions::plane_mask
+	/// [`foreground_color`]: GraphicsOptions::foreground_color
+	/// [`background_color`]: GraphicsOptions::background_color
+	/// [`font`]: GraphicsOptions::font
+	/// [`child_mode`]: GraphicsOptions::child_mode
+	/// [`clip_x`]: GraphicsOptions::clip_x
+	/// [`clip_y`]: GraphicsOptions::clip_y
+	/// [`clip_mask`]: GraphicsOptions::clip_mask
+	///
+	/// [`QueryTextExtents` reply]: reply::QueryTextExtents
+	///
+	/// [`Drawable` error]: error::Drawable
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ImageText16: Request(77, ImageText16Error) {
+		// The length of `string`.
+		#[metabyte]
+		#[allow(clippy::cast_possible_truncation)]
+		let string_len: u8 = string => string.len() as u8,
+
+		/// The [drawable] on which the text is drawn.
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [pixmap].
+		///
+		/// [drawable]: Drawable
+		/// [window]: Window
+		/// [pixmap]: Pixmap
+		///
+		/// [`Drawable` error]: error::Drawable
+		#[doc(alias("drawable"))]
+		pub target: Drawable,
+
+		/// The [`GraphicsContext`] used in this graphics operation.
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// [`GraphicsContext` error]: error::GraphicsContext
+		#[doc(alias("gc", "context", "gcontext"))]
+		pub graphics_context: GraphicsContext,
+
+		/// The coordinates of the background [rectangle] before the
+		/// `font_ascent` is subtracted[^subtracted].
+		///
+		/// [^subtracted]: See the [request docs].
+		///
+		/// [rectangle]: Rectangle
+		/// [request docs]: ImageText16
+		pub coordinates: Coords,
+
+		/// The text which is to be drawn.
+		#[context(string_len => usize::from(*string_len))]
+		pub string: String16,
+		[_; string => pad(string)],
 	}
 }
