@@ -102,7 +102,7 @@ pub trait Request: X11Size + Writable {
 	///
 	/// ```
 	/// use xrbk_macro::derive_xrb;
-	/// use xrb::{ColorChannelMask, Colormap, visual::ColorId, String8};
+	/// use xrb::{ColorChannelMask, Colormap, visual::ColorId, message::Request, String8};
 	///
 	/// derive_xrb! {
 	///     #[derive(Debug, Hash, PartialEq, Eq, Readable, Writable, X11Size)]
