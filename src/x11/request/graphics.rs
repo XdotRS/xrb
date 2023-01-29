@@ -3081,11 +3081,10 @@ derive_xrb! {
 	/// ```
 	/// # use xrb::{Rectangle, Coords, unit::Px};
 	/// #
-	/// # fn main() -> Rectangle {
-	/// #     let coordinates = Coords { x: Px(0), y: Px(0) };
+	/// # let coordinates = Coords { x: Px(0), y: Px(0) };
 	/// #
-	/// #     let (font_ascent, font_descent) = (Px(0), Px(0));
-	/// #     let overall_width = Px(1);
+	/// # let (font_ascent, font_descent) = (Px(0), Px(0));
+	/// # let overall_width = Px(1);
 	/// #
 	/// Rectangle {
 	///     x: coordinates.x,
@@ -3093,7 +3092,7 @@ derive_xrb! {
 	///     width: overall_width,
 	///     height: Px(font_ascent.0.into() + font_descent.0.into()),
 	/// }
-	/// # }
+	/// # ;
 	/// ```
 	///
 	/// `graphics_context`'s [`function`] and [`fill_style`] are ignored in this
@@ -3219,11 +3218,10 @@ derive_xrb! {
 	/// ```
 	/// # use xrb::{Rectangle, Coords, unit::Px};
 	/// #
-	/// # fn main() -> Rectangle {
-	/// #     let coordinates = Coords { x: Px(0), y: Px(0) };
+	/// # let coordinates = Coords { x: Px(0), y: Px(0) };
 	/// #
-	/// #     let (font_ascent, font_descent) = (Px(0), Px(0));
-	/// #     let overall_width = Px(1);
+	/// # let (font_ascent, font_descent) = (Px(0), Px(0));
+	/// # let overall_width = Px(1);
 	/// #
 	/// Rectangle {
 	///     x: coordinates.x,
@@ -3231,7 +3229,7 @@ derive_xrb! {
 	///     width: overall_width,
 	///     height: Px(font_ascent.0.into() + font_descent.0.into()),
 	/// }
-	/// # }
+	/// # ;
 	/// ```
 	///
 	/// `graphics_context`'s [`function`] and [`fill_style`] are ignored in this
