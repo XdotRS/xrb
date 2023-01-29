@@ -20,7 +20,12 @@ use derivative::Derivative;
 
 use xrbk_macro::derive_xrb;
 
-use crate::{message::Reply, x11::request, Colormap};
+use crate::{
+	message::Reply,
+	visual::{ColorId, RgbColor},
+	x11::request,
+	Colormap,
+};
 
 derive_xrb! {
 	/// The [reply] to a [`ListInstalledColormaps` request].
@@ -61,5 +66,39 @@ derive_xrb! {
 		/// [screen]: crate::visual::Screen
 		#[context(colormaps_len => usize::from(*colormaps_len))]
 		pub colormaps: Vec<Colormap>,
+	}
+
+	/// The [reply] to an [`AllocateColor` request].
+	///
+	/// [reply]: Reply
+	///
+	/// [`AllocateColor` request]: request::AllocateColor
+	#[doc(alias("AllocColor"))]
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct AllocateColor: Reply for request::AllocateColor {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: Reply
+		///
+		/// [`Reply::sequence`]: Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		/// The actual RGB values that were allocated.
+		///
+		/// These are the closest RGB values to those requested that the display
+		/// could provide.
+		pub actual_color: RgbColor,
+		[_; 2],
+
+		/// The [`ColorId`] referring to the `actual_color`.
+		pub color_id: ColorId,
+		[_; ..],
 	}
 }

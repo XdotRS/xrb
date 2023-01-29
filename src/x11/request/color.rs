@@ -15,7 +15,7 @@ use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use crate::{
 	message::Request,
-	visual::VisualId,
+	visual::{RgbColor, VisualId},
 	x11::{error, reply},
 	Colormap,
 	Window,
@@ -446,5 +446,50 @@ derive_xrb! {
 		///
 		/// [`Window` error]: error::Window
 		pub target: Window,
+	}
+
+	/// A [request] that allocates a read-only [colormap] entry for the given
+	/// color on the given [colormap].
+	///
+	/// The closest [RGB values] provided by the display are chosen.
+	///
+	/// Multiple clients may be assigned the same read-only [colormap] entry if
+	/// they request the same closest [RGB values].
+	///
+	/// The [`ColorId`] and [RGB values] that were actually used are returned.
+	///
+	/// # Replies
+	/// This [request] generates an [`AllocateColor` reply].
+	///
+	/// # Errors
+	/// A [`Colormap` error] is generated if `target` does not refer to a
+	/// defined [colormap].
+	///
+	/// [RGB values]: RgbColor
+	/// [colormap]: Colormap
+	/// [request]: Request
+	///
+	/// [`ColorId`]: crate::visual::ColorId
+	///
+	/// [`AllocateColor` reply]: reply::AllocateColor
+	///
+	/// [`Colormap` error]: error::Colormap
+	#[doc(alias("AllocColor"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct AllocateColor: Request(84, error::Colormap) -> reply::AllocateColor {
+		/// The [colormap] for which the [colormap] entry is allocated.
+		///
+		/// # Errors
+		/// A [`Colormap` error] is generated if this does not refer to a
+		/// defined [colormap].
+		///
+		/// [colormap]: Colormap
+		///
+		/// [`Colormap` error]: error::Colormap
+		pub target: Colormap,
+
+		/// The color which is to be allocated.
+		pub color: RgbColor,
+		[_; 2],
 	}
 }
