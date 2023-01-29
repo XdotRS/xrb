@@ -3081,18 +3081,22 @@ derive_xrb! {
 	/// ```
 	/// # use xrb::{Rectangle, Coords, unit::Px};
 	/// #
-	/// # let coordinates = Coords { x: Px(0), y: Px(0) };
+	/// # fn main() -> Result<(), <u16 as TryFrom<i16>>::Error> {
+	/// #     let coordinates = Coords { x: Px(0), y: Px(0) };
 	/// #
-	/// # let (font_ascent, font_descent) = (Px(0), Px(0));
-	/// # let overall_width = Px(1);
+	/// #     let (font_ascent, font_descent) = (Px(0), Px(0));
+	/// #     let overall_width = Px(1);
 	/// #
 	/// Rectangle {
 	///     x: coordinates.x,
 	///     y: coordinates.y - font_ascent,
 	///     width: overall_width,
-	///     height: Px(u16::from(font_ascent.0) + u16::from(font_descent.0)),
+	///     height: Px(u16::try_from(font_ascent.0 + font_descent.0)?),
 	/// }
-	/// # ;
+	/// #     ;
+	/// #
+	/// #     Ok(())
+	/// # }
 	/// ```
 	///
 	/// `graphics_context`'s [`function`] and [`fill_style`] are ignored in this
@@ -3218,18 +3222,22 @@ derive_xrb! {
 	/// ```
 	/// # use xrb::{Rectangle, Coords, unit::Px};
 	/// #
-	/// # let coordinates = Coords { x: Px(0), y: Px(0) };
+	/// # fn main() -> Result<(), <u16 as TryFrom<i16>>::Error> {
+	/// #     let coordinates = Coords { x: Px(0), y: Px(0) };
 	/// #
-	/// # let (font_ascent, font_descent) = (Px(0), Px(0));
-	/// # let overall_width = Px(1);
+	/// #     let (font_ascent, font_descent) = (Px(0), Px(0));
+	/// #     let overall_width = Px(1);
 	/// #
 	/// Rectangle {
 	///     x: coordinates.x,
 	///     y: coordinates.y - font_ascent,
 	///     width: overall_width,
-	///     height: Px(font_ascent.0.into() + font_descent.0.into()),
+	///     height: Px(u16::try_from(font_ascent.0 + font_descent.0)?),
 	/// }
-	/// # ;
+	/// #     ;
+	/// #
+	/// #     Ok(())
+	/// # }
 	/// ```
 	///
 	/// `graphics_context`'s [`function`] and [`fill_style`] are ignored in this

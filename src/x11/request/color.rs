@@ -117,6 +117,7 @@ derive_xrb! {
 	/// [`VisualClass::TrueColor`] and `alloc` is not
 	/// [`InitialColormapAllocation::None`].
 	///
+	/// [colormap]: Colormap
 	/// [window]: Window
 	/// [screen]: crate::visual::Screen
 	/// [visual type]: crate::visual::VisualType
@@ -177,6 +178,7 @@ derive_xrb! {
 		/// [`StaticColor`], or [`TrueColor`] but `alloc` is not
 		/// [`InitialColormapAllocation::None`].
 		///
+		/// [colormap]: Colormap
 		/// [window]: Window
 		/// [screen]: crate::visual::Screen
 		/// [visual type]: crate::visual::VisualType
@@ -188,5 +190,47 @@ derive_xrb! {
 		///
 		/// [`Match` error]: error::Match
 		pub visual: VisualId,
+	}
+
+	/// A [request] that deletes the given [colormap].
+	///
+	/// The association between the [`Colormap` ID] and the [colormap] itself is
+	/// removed in the process.
+	///
+	/// If the [colormap] is installed on a [screen], it is [uninstalled]. If
+	/// the [colormap] is a [window]'s [`colormap` attribute], the
+	/// [`colormap` attribute] is set to [`None`] and a [`Colormap` event] is
+	/// generated.
+	///
+	/// # Errors
+	/// A [`Colormap` error] is generated if `target` does not refer to a
+	/// defined [colormap].
+	///
+	/// [colormap]: Colormap
+	/// [window]: Window
+	/// [screen]: crate::visual::Screen
+	/// [request]: Request
+	///
+	/// [uninstalled]: UninstallColormap
+	///
+	/// [`Colormap` ID]: Colormap
+	/// [`colormap` attribute]: crate::set::Attributes::colormap
+	///
+	/// [`Colormap` event]: crate::x11::event::Colormap
+	///
+	/// [`Colormap` error]: error::Colormap
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct DestroyColormap: Request(79) {
+		/// The [colormap] which is to be deleted.
+		///
+		/// # Errors
+		/// A [`Colormap` error] is generated if this does not refer to a
+		/// defined [colormap].
+		///
+		/// [colormap]: Colormap
+		///
+		/// [`Colormap` error]: error::Colormap
+		#[doc(alias("colormap", "cmap", "map"))]
+		pub target: Colormap,
 	}
 }
