@@ -288,4 +288,59 @@ derive_xrb! {
 		/// [`Colormap` error]: error::Colormap
 		pub source: Colormap,
 	}
+
+	/// A [request] that installs the given [colormap] on its [screen].
+	///
+	/// All [windows] associated with the given [colormap] will immediately
+	/// switch to their true colors.
+	///
+	/// As a side effect of this [request], additional [colormaps][colormap] may
+	/// be implicitly installed or [uninstalled](UninstallColormap) by the X
+	/// server.
+	///
+	/// If the given `target` [colormap] was not already installed,
+	/// a [`Colormap` event] is generated for every [window] which specifies the
+	/// [colormap] in its [`colormap` attribute].
+	///
+	/// ## Required colormaps list
+	/// When a [colormap] is explicitly installed (that is, it is installed with
+	/// this [request]), it is added as the head of the [screen]'s required
+	/// [colormaps][colormap] list.
+	///
+	/// The length of the required [colormaps][colormap] list no more than the
+	/// [screen]'s [`min_installed_colormaps`]: if installing this [colormap]
+	/// causes the list to exceed that limit, the list is truncated at the tail
+	/// to make room.
+	///
+	/// [Explicitly uninstalling](UninstallColormap) a [colormap] will also
+	/// remove that [colormap] from the required list.
+	///
+	/// # Errors
+	/// A [`Colormap` error] is generated if `target` does not refer to a
+	/// defined [colormap].
+	///
+	/// [colormap]: Colormap
+	/// [windows]: Window
+	/// [screen]: crate::visual::Screen
+	/// [request]: Request
+	///
+	/// [`colormap` attribute]: crate::set::Attributes::colormap
+	/// [`min_installed_colormaps`]: crate::visual::Screen::min_installed_colormaps
+	///
+	/// [`Colormap` event]: crate::x11::event::Colormap
+	///
+	/// [`Colormap` error]: error::Colormap
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct InstallColormap: Request(81, error::Colormap) {
+		/// The [colormap] that is to be installed.
+		///
+		/// # Errors
+		/// A [`Colormap` error] is generated if this does not refer to a
+		/// defined [colormap].
+		///
+		/// [colormap]: Colormap
+		///
+		/// [`Colormap` error]: error::Colormap
+		pub target: Colormap,
+	}
 }
