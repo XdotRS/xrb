@@ -291,16 +291,18 @@ derive_xrb! {
 
 	/// A [request] that installs the given [colormap] on its [screen].
 	///
-	/// All [windows] associated with the given [colormap] will immediately
-	/// switch to their true colors.
-	///
-	/// As a side effect of this [request], additional [colormaps][colormap] may
-	/// be implicitly installed or [uninstalled](UninstallColormap) by the X
-	/// server.
+	/// All [windows][window] associated with the given [colormap] will
+	/// immediately switch to their true colors.
 	///
 	/// If the given `target` [colormap] was not already installed,
 	/// a [`Colormap` event] is generated for every [window] which specifies the
 	/// [colormap] in its [`colormap` attribute].
+	///
+	/// As a side effect of this [request], additional [colormaps][colormap] may
+	/// be implicitly installed or uninstalled by the X server. For each
+	/// [colormap] that is implicitly installed or uninstalled as a result of
+	/// this [request], a [`Colormap` event] is generated for every [window]
+	/// which specifies that [colormap] in its [`colormap` attribute].
 	///
 	/// ## Required colormaps list
 	/// When a [colormap] is explicitly installed (that is, it is installed with
@@ -312,15 +314,19 @@ derive_xrb! {
 	/// causes the list to exceed that limit, the list is truncated at the tail
 	/// to make room.
 	///
-	/// [Explicitly uninstalling](UninstallColormap) a [colormap] will also
-	/// remove that [colormap] from the required list.
+	/// [Explicitly uninstalling](UninstallColormap) a [colormap] means to
+	/// remove it from the list of required [colormaps][colormap]. It may or may
+	/// not actually be uninstalled as a result.
+	///
+	/// The X server may implicitly uninstall any [colormap] _not_ in the list
+	/// of required [colormaps][colormap] at any time.
 	///
 	/// # Errors
 	/// A [`Colormap` error] is generated if `target` does not refer to a
 	/// defined [colormap].
 	///
 	/// [colormap]: Colormap
-	/// [windows]: Window
+	/// [window]: Window
 	/// [screen]: crate::visual::Screen
 	/// [request]: Request
 	///
@@ -333,6 +339,63 @@ derive_xrb! {
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct InstallColormap: Request(81, error::Colormap) {
 		/// The [colormap] that is to be installed.
+		///
+		/// # Errors
+		/// A [`Colormap` error] is generated if this does not refer to a
+		/// defined [colormap].
+		///
+		/// [colormap]: Colormap
+		///
+		/// [`Colormap` error]: error::Colormap
+		pub target: Colormap,
+	}
+
+	/// A [request] that removes the given [colormap] from the
+	/// list of required colormaps for its [screen].
+	///
+	/// If the given [colormap] is uninstalled as a result of this [request], a
+	/// [`Colormap` event] is generated for every [window] which specifies the
+	/// [colormap] in its [`colormap` attribute].
+	///
+	/// As a side effect of this [request], additional [colormaps][colormap] may
+	/// be implicitly installed or uninstalled by the X server. For each
+	/// [colormap] that is implicitly installed or uninstalled as a result of
+	/// this [request], a [`Colormap` event] is generated for every [window]
+	/// which specifies that [colormap] in its [`colormap` attribute].
+	///
+	/// ## Required colormaps list
+	/// When a [colormap] is [explicitly installed](InstallColormap), it is
+	/// added as the head of the [screen]'s required [colormaps][colormap] list.
+	///
+	/// The length of the required [colormaps][colormap] list is no more than
+	/// the [screen]'s [`min_installed_colormaps`].
+	///
+	/// Explicitly uninstalling a [colormap] (that is, it is uninstalled with
+	/// this [request]) actually removes that [colormap] from the [screen]'s
+	/// list of required [colormaps][colormap]. As a result, it may or may not
+	/// be uninstalled by the X server.
+	///
+	/// The X server may implicitly uninstall any [colormap] _not_ in the list
+	/// of required [colormaps][colormap] at any time.
+	///
+	/// # Errors
+	/// A [`Colormap` error] is generated if `target` does not refer to a
+	/// defined [colormap].
+	///
+	/// [colormap]: Colormap
+	/// [window]: Window
+	/// [screen]: crate::visual::Screen
+	/// [request]: Request
+	///
+	/// [`colormap` attribute]: crate::set::Attributes::colormap
+	/// [`min_installed_colormaps`]: crate::visual::Screen::min_installed_colormaps
+	///
+	/// [`Colormap` event]: crate::x11::event::Colormap
+	///
+	/// [`Colormap` error]: error::Colormap
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct UninstallColormap: Request(82, error::Colormap) {
+		/// The [colormap] that is to be uninstalled.
 		///
 		/// # Errors
 		/// A [`Colormap` error] is generated if this does not refer to a
