@@ -638,8 +638,8 @@ derive_xrb! {
 	/// [`GraphicsContext` ID]: GraphicsContext
 	///
 	/// [`GraphicsContext` error]: error::GraphicsContext
-	#[doc(alias("FreeGc", "FreeGC", "FreeGcontext", "FreeGraphicsContext"))]
-	#[doc(alias("DestroyGc", "DestroyGC", "DestroyGcontext"))]
+	#[doc(alias("FreeGc", "FreeGcontext", "FreeGraphicsContext"))]
+	#[doc(alias("DestroyGc", "DestroyGcontext"))]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct DestroyGraphicsContext: Request(60, error::GraphicsContext) {
 		/// The [`GraphicsContext`] which is to be deleted.

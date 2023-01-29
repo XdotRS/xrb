@@ -219,8 +219,9 @@ derive_xrb! {
 	/// [`Colormap` event]: crate::x11::event::Colormap
 	///
 	/// [`Colormap` error]: error::Colormap
+	#[doc(alias("FreeColormap"))]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
-	pub struct DestroyColormap: Request(79) {
+	pub struct DestroyColormap: Request(79, error::Colormap) {
 		/// The [colormap] which is to be deleted.
 		///
 		/// # Errors
@@ -232,5 +233,59 @@ derive_xrb! {
 		/// [`Colormap` error]: error::Colormap
 		#[doc(alias("colormap", "cmap", "map"))]
 		pub target: Colormap,
+	}
+}
+
+request_error! {
+	#[doc(alias("CopyColormapAndFreeError"))]
+	pub enum MoveColormapError for MoveColormap {
+		Colormap,
+		ResourceIdChoice,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that moves all of the values of a `source` [colormap] into a
+	/// new [colormap], then destroys the `source` [colormap].
+	///
+	/// # Errors
+	/// A [`ResourceIdChoice` error] is generated if `colormap_id` is already in
+	/// use or if it is not allocated to your client.
+	///
+	/// A [`Colormap` error] is generated if `source` does not refer to a
+	/// defined [colormap].
+	///
+	/// [colormap]: Colormap
+	/// [request]: Request
+	///
+	/// [`ResourceIdChoice` error]: error::ResourceIdChoice
+	/// [`Colormap` error]: error::Colormap
+	#[doc(alias("CopyColormapAndFree"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
+	pub struct MoveColormap: Request(80, MoveColormapError) {
+		/// The [`Colormap` ID] that will be associated with the new [colormap].
+		///
+		/// # Errors
+		/// A [`ResourceIdChoice` error] is generated if this [`Colormap` ID] is
+		/// already in use or if it is not allocated to your client.
+		///
+		/// [colormap]: Colormap
+		///
+		/// [`Colormap` ID]: Colormap
+		///
+		/// [`ResourceIdChoice` error]: error::ResourceIdChoice
+		pub colormap_id: Colormap,
+
+		/// The [colormap] which is copied to create the new [colormap], then
+		/// destroyed.
+		///
+		/// # Errors
+		/// A [`Colormap` error] is generated if this does not refer to a
+		/// defined [colormap].
+		///
+		/// [colormap]: Colormap
+		///
+		/// [`Colormap` error]: error::Colormap
+		pub source: Colormap,
 	}
 }
