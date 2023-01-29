@@ -13,7 +13,13 @@ extern crate self as xrb;
 
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
-use crate::{message::Request, visual::VisualId, x11::error, Colormap, Window};
+use crate::{
+	message::Request,
+	visual::VisualId,
+	x11::{error, reply},
+	Colormap,
+	Window,
+};
 
 macro_rules! request_error {
 	(
@@ -405,5 +411,40 @@ derive_xrb! {
 		///
 		/// [`Colormap` error]: error::Colormap
 		pub target: Colormap,
+	}
+
+	/// A [request] that returns a list of the given [window]'s [screen]'s
+	/// currently installed [colormaps].
+	///
+	/// # Replies
+	/// This [request] generates a [`ListInstalledColormaps` reply].
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if `target` does not refer to a defined
+	/// [window].
+	///
+	/// [colormaps]: Colormap
+	/// [window]: Window
+	/// [screen]: crate::visual::Screen
+	/// [request]: Request
+	///
+	/// [`ListInstalledColormaps` reply]: reply::ListInstalledColormaps
+	///
+	/// [`Window` error]: error::Window
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ListInstalledColormaps: Request(83, error::Window) -> reply::ListInstalledColormaps {
+		/// The [window] for which this [request] returns its installed
+		/// [colormaps].
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [colormaps]: Colormap
+		/// [window]: Window
+		/// [request]: Request
+		///
+		/// [`Window` error]: error::Window
+		pub target: Window,
 	}
 }
