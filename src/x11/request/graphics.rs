@@ -41,6 +41,7 @@ use crate::{
 	GraphicsContext,
 	Pixmap,
 	Rectangle,
+	String16,
 	String8,
 	Window,
 };
@@ -2386,8 +2387,8 @@ impl Writable for TextItem8 {
 	}
 }
 
-/// A [text item] that specifies text to be drawn using the `graphics_context`'s
-/// current [`font`].
+/// A [text item] that specifies [`String8`] text to be drawn using the
+/// `graphics_context`'s current [`font`].
 ///
 /// This is used in the [`DrawText8` request].
 ///
@@ -2483,7 +2484,7 @@ impl Writable for Text8 {
 	}
 }
 
-/// A [request] that draws the given text on the given [drawable].
+/// A [request] that draws the given [`String8`] text on the given [drawable].
 ///
 /// # Graphics options used
 /// This [request] uses the following [options] of the `graphics_context`:
@@ -2671,6 +2672,369 @@ impl Readable for DrawText8 {
 }
 
 impl Writable for DrawText8 {
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		let buf = &mut buf.limit(self.x11_size());
+
+		buf.put_u8(Self::MAJOR_OPCODE);
+		// Unused metabyte position.
+		buf.put_u8(0);
+		buf.put_u16(self.length());
+
+		self.target.write_to(buf)?;
+		self.graphics_context.write_to(buf)?;
+		self.coordinates.write_to(buf)?;
+		self.text_items.write_to(buf)?;
+
+		// Unused padding bytes at the end.
+		buf.put_bytes(0, pad(&self.text_items));
+
+		Ok(())
+	}
+}
+
+request_error! {
+	#[doc(alias("PolyText16Error"))]
+	pub enum DrawText16Error for DrawText16 {
+		Drawable,
+		Font,
+		GraphicsContext,
+		Match,
+	}
+}
+
+/// A 'text item' specified in a [`DrawText16` request].
+///
+/// [`DrawText16` request]: DrawText16
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub enum TextItem16 {
+	/// Specifies text that is to be drawn with the `graphics_context`'s current
+	/// [font].
+	///
+	/// [font]: Font
+	Text(Box<Text16>),
+
+	/// Changes the `graphics_context`'s current [font].
+	///
+	/// This new [font] will be used for subsequent text items.
+	///
+	/// [font]: Font
+	// Font must always be big-endian
+	Font(Font),
+}
+
+impl X11Size for TextItem16 {
+	fn x11_size(&self) -> usize {
+		match self {
+			Self::Text(text) => text.x11_size(),
+			Self::Font(font) => font.x11_size() + u8::X11_SIZE,
+		}
+	}
+}
+
+impl Readable for TextItem16 {
+	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		Ok(match buf.get_u8() {
+			font_shift if font_shift == 255 => Self::Font(Font::new(buf.get_u32())),
+			string_len => Self::Text(Box::new(Text16::read_with(buf, &string_len)?)),
+		})
+	}
+}
+
+impl Writable for TextItem16 {
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		match self {
+			Self::Text(text) => text.write_to(buf)?,
+
+			Self::Font(font) => {
+				// Font-shift indicator
+				buf.put_u8(255);
+
+				font.write_to(buf)?;
+			},
+		}
+
+		Ok(())
+	}
+}
+
+/// A [text item] that specifies [`String16`] text to be drawn using the
+/// `graphics_context`'s current [`font`].
+///
+/// This is used in the [`DrawText16` request].
+///
+/// [text item]: TextItem16
+/// [`font`]: GraphicsOptions::font
+///
+/// [`DrawText16` request]: DrawText16
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub struct Text16 {
+	horizontal_offset: Px<i8>,
+	string: String16,
+}
+
+impl Text16 {
+	/// Creates a new `Text16` with the given `horizontal_offset` and `string`.
+	///
+	/// `horizontal_offset` specifies the offset that is applied to the start of
+	/// the `string`.
+	///
+	/// # Errors
+	/// A [`TextTooLong`] error is returned if `string.len() > 255`.
+	pub fn new(horizontal_offset: Px<i8>, string: String16) -> Result<Self, TextTooLong> {
+		if string.len() > 255 {
+			Err(TextTooLong {
+				max: 255,
+				found: string.len(),
+			})
+		} else {
+			Ok(Self {
+				horizontal_offset,
+				string,
+			})
+		}
+	}
+
+	/// The horizontal offset applied to the start of the [`string`].
+	///
+	/// [`string`]: Text16::string
+	#[must_use]
+	pub const fn horizontal_offset(&self) -> Px<i8> {
+		self.horizontal_offset
+	}
+
+	/// The text which is to be drawn.
+	#[must_use]
+	pub const fn string(&self) -> &String16 {
+		&self.string
+	}
+
+	/// Unwraps this `Text16`, returning the `horizontal_offset` and `string`.
+	#[must_use]
+	#[allow(clippy::missing_const_for_fn, reason = "false positive")]
+	pub fn unwrap(self) -> (Px<i8>, String16) {
+		(self.horizontal_offset, self.string)
+	}
+}
+
+impl X11Size for Text16 {
+	fn x11_size(&self) -> usize {
+		u8::X11_SIZE + i8::X11_SIZE + self.string.x11_size()
+	}
+}
+
+impl ReadableWithContext for Text16 {
+	type Context = u8;
+
+	fn read_with(buf: &mut impl Buf, string_len: &u8) -> ReadResult<Self> {
+		Ok(Self {
+			horizontal_offset: Px(i8::read_from(buf)?),
+			string: String16::read_with(buf, &usize::from(*string_len))?,
+		})
+	}
+}
+
+impl Writable for Text16 {
+	#[allow(clippy::cast_possible_truncation)]
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		buf.put_u8(self.string.len() as u8);
+		self.horizontal_offset.write_to(buf)?;
+		self.string.write_to(buf)?;
+
+		Ok(())
+	}
+}
+
+/// A [request] that draws the given [`String16`] text on the given [drawable].
+///
+/// # Graphics options used
+/// This [request] uses the following [options] of the `graphics_context`:
+/// - [`function`]
+/// - [`plane_mask`]
+/// - [`fill_style`]
+/// - [`font`]
+/// - [`child_mode`]
+/// - [`clip_x`]
+/// - [`clip_y`]
+/// - [`clip_mask`]
+///
+/// This [request] may also use these [options], depending on the configuration
+/// of the `graphics_context`:
+/// - [`foreground_color`]
+/// - [`background_color`]
+/// - [`tile`]
+/// - [`stipple`]
+/// - [`tile_stipple_x`]
+/// - [`tile_stipple_y`]
+///
+/// # Errors
+/// A [`Drawable` error] is generated if `target` does not refer to a defined
+/// [window] nor [pixmap].
+///
+/// A [`GraphicsContext` error] is generated if `graphics_context` does not
+/// refer to a defined [`GraphicsContext`].
+///
+/// A [`Font` error] is generated if a [font item] given in `text_items` does
+/// not refer to a defined [font]. Previous [text items] may have already been
+/// drawn.
+///
+/// [drawable]: Drawable
+/// [window]: Window
+/// [pixmap]: Pixmap
+/// [font]: Font
+/// [font item]: TextItem16::Font
+/// [text items]: TextItem16
+/// [options]: GraphicsOptions
+/// [request]: Request
+///
+/// [`function`]: GraphicsOptions::function
+/// [`plane_mask`]: GraphicsOptions::plane_mask
+/// [`fill_style`]: GraphicsOptions::fill_style
+/// [`font`]: GraphicsOptions::font
+/// [`child_mode`]: GraphicsOptions::child_mode
+/// [`clip_x`]: GraphicsOptions::clip_x
+/// [`clip_y`]: GraphicsOptions::clip_y
+/// [`clip_mask`]: GraphicsOptions::clip_mask
+///
+/// [`foreground_color`]: GraphicsOptions::foreground_color
+/// [`background_color`]: GraphicsOptions::background_color
+/// [`tile`]: GraphicsOptions::tile
+/// [`stipple`]: GraphicsOptions::stipple
+/// [`tile_stipple_x`]: GraphicsOptions::tile_stipple_x
+/// [`tile_stipple_y`]: GraphicsOptions::tile_stipple_y
+///
+/// [`Drawable` error]: error::Drawable
+/// [`GraphicsContext` error]: error::GraphicsContext
+/// [`Font` error]: error::Font
+#[doc(alias("PolyText16"))]
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub struct DrawText16 {
+	/// The [drawable] on which the text is drawn.
+	///
+	/// # Errors
+	/// A [`Drawable` error] is generated if this does not refer to a
+	/// defined [window] nor [pixmap].
+	///
+	/// [drawable]: Drawable
+	/// [window]: Window
+	/// [pixmap]: Pixmap
+	///
+	/// [`Drawable` error]: error::Drawable
+	#[doc(alias("drawable"))]
+	pub target: Drawable,
+
+	/// The [`GraphicsContext`] used in this graphics operation.
+	///
+	/// # Errors
+	/// A [`GraphicsContext` error] is generated if this does not refer to a
+	/// defined [`GraphicsContext`].
+	///
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	#[doc(alias("gc", "context", "gcontext"))]
+	pub graphics_context: GraphicsContext,
+
+	/// The starting position of the first character of text.
+	///
+	/// These coordinates are relative to the top-left corner of the `target`
+	/// [drawable].
+	///
+	/// [drawable]: Drawable
+	#[doc(alias("x", "y"))]
+	pub coordinates: Coords,
+
+	/// The [text items] which control the drawing of the text.
+	///
+	/// Each item can either [specify text], in which case that text is drawn
+	/// (with the provided [`horizontal_offset`] applied), or a [font item], in
+	/// which case that [font] is stored in the `graphics_context` and used for
+	/// subsequent text.
+	///
+	/// # Errors
+	/// A [`Font` error] is generated if a [font item] does not refer to a
+	/// defined [font]. Previous [text items] may have already been drawn.
+	///
+	/// [specify text]: TextItem16::Text
+	/// [font item]: TextItem16::Font
+	/// [`horizontal_offset`]: Text16::horizontal_offset
+	/// [text items]: TextItem16
+	///
+	/// [font]: Font
+	#[doc(alias("items"))]
+	pub text_items: Vec<TextItem16>,
+}
+
+impl Request for DrawText16 {
+	type OtherErrors = DrawText8Error;
+	type Reply = ();
+
+	const MAJOR_OPCODE: u8 = 75;
+	const MINOR_OPCODE: Option<u16> = None;
+}
+
+impl X11Size for DrawText16 {
+	fn x11_size(&self) -> usize {
+		const HEADER: usize = 4;
+
+		const CONSTANT_SIZES: usize = {
+			HEADER
+				+ Drawable::X11_SIZE // `target`
+				+ GraphicsContext::X11_SIZE // `graphics_context`
+				+ Coords::X11_SIZE // `coordinates`
+		};
+
+		CONSTANT_SIZES + self.text_items.x11_size() + pad(&self.text_items)
+	}
+}
+
+impl Readable for DrawText16 {
+	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		/// The maximum number of padding bytes that there could be at the end.
+		///
+		/// As long as there are more than this many bytes remaining, we know
+		/// that there are still text items left to read.
+		const MAX_PADDING: usize = 1;
+
+		// major opcode is already read
+
+		// Metabyte position is unused.
+		buf.advance(1);
+
+		// Read the length and bound buf to not read more than it.
+		let length = (usize::from(buf.get_u16()) * 4) - 2;
+		let buf = &mut buf.take(length);
+
+		let target = Drawable::read_from(buf)?;
+		let graphics_context = GraphicsContext::read_from(buf)?;
+		let coordinates = Coords::read_from(buf)?;
+
+		let text_items = {
+			let mut text_items = Vec::new();
+
+			while buf.remaining() > MAX_PADDING {
+				text_items.push(TextItem16::read_from(buf)?);
+			}
+
+			text_items
+		};
+
+		// Advance the padding bytes at the end.
+		buf.advance(pad(&text_items));
+
+		Ok(Self {
+			target,
+			graphics_context,
+			coordinates,
+			text_items,
+		})
+	}
+}
+
+impl Writable for DrawText16 {
 	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
 		let buf = &mut buf.limit(self.x11_size());
 
