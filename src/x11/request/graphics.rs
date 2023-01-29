@@ -18,7 +18,7 @@ use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
 use crate::{
 	set::{GraphicsOptions, GraphicsOptionsMask},
 	unit::Px,
-	x11::error,
+	x11::{error, reply},
 	Arc,
 	Coords,
 	Dimensions,
@@ -2181,5 +2181,123 @@ derive_xrb! {
 		#[context(self::remaining => remaining)]
 		pub data: Vec<u8>,
 		[_; data => pad(data)],
+	}
+}
+
+request_error! {
+	#[doc(alias("GetImageError"))]
+	pub enum CaptureImageError for CaptureImage {
+		Drawable,
+		Match,
+		Value,
+	}
+}
+
+/// The format of the image returned in a [`CaptureImage` reply].
+///
+/// This is used in the [`CaptureImage` request].
+///
+/// [`CaptureImage` request]: CaptureImage
+/// [`CaptureImage` reply]: reply::CaptureImage
+#[doc(alias("GetImageFormat"))]
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub enum CaptureImageFormat {
+	/// The image is returned in XY format.
+	XyPixmap,
+
+	/// The image is returned in Z format.
+	Zpixmap,
+}
+
+derive_xrb! {
+	/// A [request] that returns the contents of the given `area` of the given
+	/// [drawable] as an image.
+	///
+	/// If the `target` is a [window], the [window]'s border may be included in
+	/// the image.
+	///
+	/// If the `target` is a [window], its contents are [maintained], and it is
+	/// obscured by a [window] which is not one of its descendents, the
+	/// [maintained] contents will be returned for those obscured regions.
+	/// Otherwise, if the contents are not [maintained], or the [window] is
+	/// obscured by one of its descendents, the contents of those obscured
+	/// regions in the returned image are undefined. The contents of visible
+	/// regions of descendents with a different depth than the `target` are also
+	/// undefined.
+	///
+	/// The cursor is never included in the returned image.
+	///
+	/// # Replies
+	/// This [request] generates a [`CaptureImage` reply].
+	///
+	/// # Errors
+	/// A [`Drawable` error] is generated if `target` does not refer to a
+	/// defined [window] nor [pixmap].
+	///
+	/// A [`Match` error] is generated if the given area is not fully contained
+	/// within the `target` [drawable].
+	///
+	/// A [`Match` error] is generated if the `target` is a [window] and the
+	/// [window] is not viewable.
+	///
+	/// A [`Match` error] is generated if the `target` is a [window] and the
+	/// [window] is not fully contained within the [screen].
+	///
+	/// [drawable]: Drawable
+	/// [window]: Window
+	/// [pixmap]: Pixmap
+	/// [screen]: crate::visual::Screen
+	/// [request]: crate::message::Request
+	///
+	/// [maintained]: crate::MaintainContents
+	///
+	/// [`CaptureImage` reply]: reply::CaptureImage
+	///
+	/// [`Drawable` error]: error::Drawable
+	/// [`Match` error]: error::Match
+	#[doc(alias("GetImage"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct CaptureImage: Request(73, CaptureImageError) -> reply::CaptureImage {
+		/// The [image format] of the image that is returned in the
+		/// [`CaptureImage` reply].
+		///
+		/// [image format]: CaptureImageFormat
+		/// [`CaptureImage` reply]: reply::CaptureImage
+		#[metabyte]
+		pub format: CaptureImageFormat,
+
+		/// The [drawable] for which this [request] captures an image from the
+		/// given `area`.
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [pixmap].
+		///
+		/// [drawable]: Drawable
+		/// [window]: Window
+		/// [pixmap]: Pixmap
+		/// [request]: crate::message::Request
+		///
+		/// [`Drawable` error]: error::Drawable
+		#[doc(alias("drawable"))]
+		pub target: Drawable,
+
+		/// The area of the `target` [drawable] which this [request] captures an
+		/// image of.
+		///
+		/// [drawable]: Drawable
+		/// [request]: crate::message::Request
+		#[doc(alias("x", "y", "width", "height"))]
+		pub area: Rectangle,
+
+		/// A mask applied to the returned image's bit planes.
+		///
+		/// If the given `format` is [`CaptureImageFormat::XyPixmap`], only the
+		/// bit planes specified in this mask are transmitted, and they are
+		/// transmitted from most significant to least significant in bit order.
+		///
+		/// If the given `format` is [`CaptureImageFormat::Zpixmap`], all bits
+		/// in planes not specified by this mask are zero.
+		pub plane_mask: u32,
 	}
 }
