@@ -8,7 +8,7 @@
 //! [Replies] are messages sent from the X server to an X client in response to
 //! a [request].
 //!
-//! [Replies]: crate::message::Reply
+//! [Replies]: Reply
 //! [request]: crate::message::Request
 //! [core X11 protocol]: crate::x11
 //!
@@ -17,9 +17,11 @@
 extern crate self as xrb;
 
 use derivative::Derivative;
+
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use crate::{
+	message::Reply,
 	unit::Px,
 	visual::{ColorId, VisualId},
 	x11::request,
@@ -58,7 +60,7 @@ pub enum MapState {
 derive_xrb! {
 	/// The [reply] to a [`GetWindowAttributes` request].
 	///
-	/// [reply]: crate::message::Reply
+	/// [reply]: Reply
 	///
 	/// [`GetWindowAttributes` request]: request::GetWindowAttributes
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
@@ -70,9 +72,9 @@ derive_xrb! {
 		/// See [`Reply::sequence`] for more information.
 		///
 		/// [request]: crate::message::Request
-		/// [reply]: crate::message::Reply
+		/// [reply]: Reply
 		///
-		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		/// [`Reply::sequence`]: Reply::sequence
 		#[sequence]
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
@@ -235,7 +237,7 @@ derive_xrb! {
 
 	/// The [reply] to a [`GetGeometry` request].
 	///
-	/// [reply]: crate::message::Reply
+	/// [reply]: Reply
 	///
 	/// [`GetGeometry` request]: request::GetGeometry
 	#[doc(alias("GetX", "GetY", "GetWidth", "GetHeight", "GetBorderWidth"))]
@@ -248,9 +250,9 @@ derive_xrb! {
 		/// See [`Reply::sequence`] for more information.
 		///
 		/// [request]: crate::message::Request
-		/// [reply]: crate::message::Reply
+		/// [reply]: Reply
 		///
-		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		/// [`Reply::sequence`]: Reply::sequence
 		#[sequence]
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
@@ -291,7 +293,7 @@ derive_xrb! {
 
 	/// The [reply] to a [`QueryWindowTree` request].
 	///
-	/// [reply]: crate::message::Reply
+	/// [reply]: Reply
 	///
 	/// [`QueryWindowTree` request]: request::QueryWindowTree
 	#[doc(alias("QueryTree", "GetTree", "GetWindowTree"))]
@@ -306,9 +308,9 @@ derive_xrb! {
 		/// See [`Reply::sequence`] for more information.
 		///
 		/// [request]: crate::message::Request
-		/// [reply]: crate::message::Reply
+		/// [reply]: Reply
 		///
-		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		/// [`Reply::sequence`]: Reply::sequence
 		#[sequence]
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,

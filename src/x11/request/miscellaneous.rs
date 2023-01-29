@@ -9,7 +9,7 @@
 //!
 //! [atoms]: Atom
 //! [events]: Event
-//! [Requests]: crate::message::Request
+//! [Requests]: Request
 //! [core X11 protocol]: crate::x11
 
 extern crate self as xrb;
@@ -31,7 +31,7 @@ use xrbk::{
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use crate::{
-	message::Event,
+	message::{Event, Request},
 	x11::{error, reply},
 	Any,
 	Atom,
@@ -85,7 +85,7 @@ derive_xrb! {
 	/// This [request] generates a [`GetAtom` reply].
 	///
 	/// [atom]: Atom
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`GetAtom` reply]: reply::GetAtom
 	#[doc(alias("InternAtom", "CreateAtom"))]
@@ -133,7 +133,7 @@ derive_xrb! {
 	/// defined [atom].
 	///
 	/// [atom]: Atom
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`GetAtomName` reply]: reply::GetAtomName
 	///
@@ -147,7 +147,7 @@ derive_xrb! {
 		/// [atom].
 		///
 		/// [atom]: Atom
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [`Atom` error]: error::Atom
 		#[doc(alias = "atom")]
@@ -323,7 +323,7 @@ derive_xrb! {
 	/// [`Match` error] is generated.
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`Prepend`]: ModifyPropertyMode::Prepend
 	/// [`Append`]: ModifyPropertyMode::Append
@@ -442,7 +442,7 @@ derive_xrb! {
 	///
 	/// [window]: Window
 	/// [atom]: Atom
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`Property` event]: crate::x11::event::Property
 	///
@@ -457,7 +457,7 @@ derive_xrb! {
 		/// [window].
 		///
 		/// [window]: Window
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [`Window` error]: error::Window
 		#[doc(alias = "window")]
@@ -500,7 +500,7 @@ derive_xrb! {
 	/// refer to defined [atoms].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	/// [atoms]: Atom
 	///
 	/// [`GetProperty` reply]: reply::GetProperty
@@ -540,7 +540,7 @@ derive_xrb! {
 		/// [atom].
 		///
 		/// [atom]: Atom
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		pub property: Atom,
 		/// The property type to filter the [window]'s properties by.
 		///
@@ -580,7 +580,7 @@ derive_xrb! {
 	/// [window].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`ListProperties` reply]: reply::ListProperties
 	///
@@ -594,7 +594,7 @@ derive_xrb! {
 		/// [window].
 		///
 		/// [window]: Window
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [`Window` error]: error::Window
 		#[doc(alias = "window")]
@@ -630,7 +630,7 @@ derive_xrb! {
 	/// [window]: Window
 	/// [atom]: Atom
 	/// [time]: crate::Timestamp
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [current time]: CurrentableTime::CurrentTime
 	///
@@ -660,7 +660,7 @@ derive_xrb! {
 		/// [atom].
 		///
 		/// [atom]: Atom
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [`Atom` error]: error::Atom
 		pub selection: Atom,
@@ -673,7 +673,7 @@ derive_xrb! {
 		///
 		/// [time]: crate::Timestamp
 		/// [current time]: CurrentableTime::CurrentTime
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		pub time: CurrentableTime,
 	}
 
@@ -687,7 +687,7 @@ derive_xrb! {
 	/// [atom].
 	///
 	/// [atom]: Atom
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`GetSelectionOwner` reply]: reply::GetSelectionOwner
 	///
@@ -701,7 +701,7 @@ derive_xrb! {
 		/// [atom].
 		///
 		/// [atom]: Atom
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [`Atom` error]: error::Atom
 		pub target: Atom,
@@ -728,7 +728,7 @@ derive_xrb! {
 	///
 	/// [window]: Window
 	/// [atoms]: Atom
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`Window` error]: error::Window
 	/// [`Atom` error]: error::Atom
@@ -752,7 +752,7 @@ derive_xrb! {
 		/// [atom].
 		///
 		/// [atom]: Atom
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [`Atom` error]: error::Atom
 		pub selection: Atom,
@@ -812,7 +812,7 @@ derive_xrb! {
 	///
 	/// [window]: Window
 	/// [event]: Event
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`do_not_propagate_mask`]: crate::set::Attributes::do_not_propagate_mask
 	///

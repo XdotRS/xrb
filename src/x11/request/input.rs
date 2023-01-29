@@ -7,7 +7,7 @@
 //!
 //! [Requests] are messages sent from an X client to the X server.
 //!
-//! [Requests]: crate::message::Request
+//! [Requests]: Request
 //! [core X11 protocol]: crate::x11
 
 extern crate self as xrb;
@@ -16,6 +16,7 @@ use xrbk::{Buf, BufMut, ConstantX11Size, ReadResult, Readable, Writable, WriteRe
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use crate::{
+	message::Request,
 	x11::{error, reply},
 	Any,
 	AnyModifierKeyMask,
@@ -86,7 +87,7 @@ derive_xrb! {
 	///
 	/// [cursor appearance]: CursorAppearance
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`EnterWindow`]: crate::x11::event::EnterWindow
 	/// [`LeaveWindow`]: crate::x11::event::LeaveWindow
@@ -202,7 +203,7 @@ derive_xrb! {
 	///
 	/// This [request] generates [`EnterWindow`] and [`LeaveWindow`] events.
 	///
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	/// [events]: crate::message::Event
 	///
 	/// [`EnterWindow`]: crate::x11::event::EnterWindow
@@ -252,7 +253,7 @@ derive_xrb! {
 	///
 	/// [cursor appearance]: CursorAppearance
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`GrabCursor` request]: GrabCursor
 	///
@@ -393,7 +394,7 @@ derive_xrb! {
 	/// defined [window].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [passive button grab]: GrabButton
 	///
@@ -407,7 +408,7 @@ derive_xrb! {
 		/// possible [buttons][button].
 		///
 		/// [button]: Button
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [passive button grab]: GrabButton
 		///
@@ -435,7 +436,7 @@ derive_xrb! {
 		/// sending this `UngrabButton` [request] for all possible `modifiers`
 		/// combinations.
 		///
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [passive button grab]: GrabButton
 		///
@@ -461,7 +462,7 @@ derive_xrb! {
 	/// not refer to a defined [cursor appearance].
 	///
 	/// [cursor appearance]: CursorAppearance
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [active cursor grab]: GrabCursor
 	///
@@ -526,7 +527,7 @@ derive_xrb! {
 	/// defined [window].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`Focus`]: crate::x11::event::Focus
 	/// [`Unfocus`]: crate::x11::event::Unfocus
@@ -608,7 +609,7 @@ derive_xrb! {
 	///
 	/// This [request] generates [`Focus`] and [`Unfocus`] events.
 	///
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	/// [events]: crate::message::Event
 	///
 	/// [`Focus`]: crate::x11::event::Focus
@@ -654,7 +655,7 @@ derive_xrb! {
 	/// the same `grab_window`.
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`GrabKeyboard` request]: GrabKeyboard
 	///
@@ -760,7 +761,7 @@ derive_xrb! {
 	/// defined [window].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [passive key grab]: GrabKey
 	///
@@ -773,7 +774,7 @@ derive_xrb! {
 		/// It is equivalent to sending this `UngrabKey` [request] for all
 		/// possible keys.
 		///
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [passive key grab]: GrabKey
 		///
@@ -801,7 +802,7 @@ derive_xrb! {
 		/// sending this `UngrabKey` [request] for all possible `modifiers`
 		/// combinations.
 		///
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [passive key grab]: GrabKey
 		///
@@ -889,7 +890,7 @@ derive_xrb! {
 	/// device to be [frozen].
 	///
 	/// [frozen]: FreezeMode::Frozen
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct AllowEvents: Request(35, error::Value) {
 		/// The conditions under which the queued [events] are released.
@@ -905,7 +906,7 @@ derive_xrb! {
 		/// of your most recent active grab or later than the X server's
 		/// [current time].
 		///
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		/// [time]: crate::Timestamp
 		/// [current time]: CurrentableTime::CurrentTime
 		pub time: CurrentableTime,
@@ -914,14 +915,14 @@ derive_xrb! {
 	/// A [request] that freezes processing of [requests][request] and
 	/// connection closes on all other clients' connections.
 	///
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GrabServer: Request(36);
 
 	/// A [request] that unfreezes processing of [requests][request] and
 	/// connection closes on all other clients' connections.
 	///
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct UngrabServer: Request(37);
 
@@ -932,7 +933,7 @@ derive_xrb! {
 	/// defined [window].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`Window` error]: error::Window
 	#[doc(alias("QueryPointer, QueryCursor, GetCursorPos, GetCursorLocation"))]
@@ -962,7 +963,7 @@ derive_xrb! {
 	/// [window].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`Window` error]: error::Window
 	#[doc(alias = "GetMotionEvents")]
@@ -999,7 +1000,7 @@ derive_xrb! {
 	/// refer to defined [windows][window].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`Window` error]: error::Window
 	#[doc(alias = "TranslateCoordinates")]
@@ -1101,7 +1102,7 @@ derive_xrb! {
 	/// do not refer to defined [windows].
 	///
 	/// [windows]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`Window` error]: error::Window
 	#[doc(alias = "WarpPointer")]
@@ -1218,7 +1219,7 @@ derive_xrb! {
 	/// and does not refer to a defined [window].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`Focus`]: crate::x11::event::Focus
 	/// [`Unfocus`]: crate::x11::event::Unfocus
@@ -1255,7 +1256,7 @@ derive_xrb! {
 
 	/// A [request] that returns the current focus.
 	///
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	#[doc(alias = "GetInputFocus")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GetFocus: Request(43) -> reply::GetFocus;
@@ -1263,7 +1264,7 @@ derive_xrb! {
 	/// A [request] that returns a bit vector of the currently held keys on the
 	/// keyboard.
 	///
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	#[doc(alias = "QueryKeymap")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct QueryKeyboard: Request(44) -> reply::QueryKeyboard;

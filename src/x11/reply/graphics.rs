@@ -8,7 +8,7 @@
 //! [Replies] are messages sent from the X server to an X client in response to
 //! a [request].
 //!
-//! [Replies]: crate::message::Reply
+//! [Replies]: Reply
 //! [request]: crate::message::Request
 //! [core X11 protocol]: crate::x11
 //!
@@ -21,12 +21,12 @@ use derivative::Derivative;
 use xrbk::pad;
 use xrbk_macro::derive_xrb;
 
-use crate::{visual::VisualId, x11::request};
+use crate::{message::Reply, visual::VisualId, x11::request};
 
 derive_xrb! {
 	/// The [reply] to a [`CaptureImage` request].
 	///
-	/// [reply]: crate::message::Reply
+	/// [reply]: Reply
 	///
 	/// [`CaptureImage` request]: request::CaptureImage
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
@@ -38,9 +38,9 @@ derive_xrb! {
 		/// See [`Reply::sequence`] for more information.
 		///
 		/// [request]: crate::message::Request
-		/// [reply]: crate::message::Reply
+		/// [reply]: Reply
 		///
-		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		/// [`Reply::sequence`]: Reply::sequence
 		#[sequence]
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,

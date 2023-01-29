@@ -6,7 +6,7 @@
 //!
 //! [Requests] are messages sent from an X client to the X server.
 //!
-//! [Requests]: crate::message::Request
+//! [Requests]: Request
 //! [core X11 protocol]: crate::x11
 
 extern crate self as xrb;
@@ -15,6 +15,7 @@ use xrbk::{pad, ConstantX11Size};
 use xrbk_macro::derive_xrb;
 
 use crate::{
+	message::Request,
 	x11::{error, reply},
 	Char16,
 	Font,
@@ -66,7 +67,7 @@ derive_xrb! {
 	/// A [request] that associates the font by the given `name` with the given
 	/// `font_id`.
 	///
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	#[doc(alias("OpenFont", "CreateFont", "LoadFont", "AddFont"))]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct AssignFont: Request(45, AssignFontError) {
@@ -95,7 +96,7 @@ derive_xrb! {
 	/// A [request] that removes the association between a given [`Font` ID] and
 	/// the font it is associated with.
 	///
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	/// [`Font` ID]: Font
 	#[doc(alias("CloseFont", "DeleteFont", "UnloadFont", "RemoveFont"))]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
@@ -116,7 +117,7 @@ derive_xrb! {
 	/// A [`Font` error] is generated if the `target` does not refer to a
 	/// defined [`Font`] nor [`GraphicsContext`].
 	///
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`GraphicsContext`]: crate::GraphicsContext
 	///
@@ -131,7 +132,7 @@ derive_xrb! {
 		/// A [`Font` error] is generated if this does not refer to a defined
 		/// [`Font`] nor [`GraphicsContext`].
 		///
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [`GraphicsContext`]: crate::GraphicsContext
 		///
@@ -165,7 +166,7 @@ derive_xrb! {
 	/// A [`Font` error] is generated if `font` does not refer to a defined
 	/// [`Font`] nor [`GraphicsContext`].
 	///
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`GraphicsContext`]: crate::GraphicsContext
 	///
@@ -193,7 +194,7 @@ derive_xrb! {
 		/// The text for which this [request] gets the extents when displayed
 		/// with `font`.
 		///
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		#[context(self::remaining, odd_length => {
 			// We remove the padding at the end, which can be determined from `odd_length`.
 			let remaining = remaining - query_text_extents_padding(*odd_length);
@@ -212,7 +213,7 @@ derive_xrb! {
 	/// # Replies
 	/// This [request] generates a [`ListFonts` reply].
 	///
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [font search path]: SetFontSearchDirectories
 	///
@@ -250,7 +251,7 @@ derive_xrb! {
 	/// # Replies
 	/// This [request] generates [`ListFontsWithInfo` replies].
 	///
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [font search path]: SetFontSearchDirectories
 	///
@@ -288,7 +289,7 @@ derive_xrb! {
 	/// A [`Value` error] is generated if the operating system rejects the given
 	/// paths for whatever reason.
 	///
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`Value` error]: error::Value
 	#[doc(alias = "SetFontPath")]
@@ -314,7 +315,7 @@ derive_xrb! {
 	///
 	/// See also: [`SetFontSearchDirectories`].
 	///
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GetFontSearchDirectories: Request(52) -> reply::GetFontSearchDirectories;
 }

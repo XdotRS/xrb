@@ -8,7 +8,7 @@
 //! [Requests] are messages sent from an X client to the X server.
 //!
 //! [windows]: Window
-//! [Requests]: crate::message::Request
+//! [Requests]: Request
 //! [core X11 protocol]: crate::x11
 
 extern crate self as xrb;
@@ -16,6 +16,7 @@ extern crate self as xrb;
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use crate::{
+	message::Request,
 	set::{Attributes, WindowConfig},
 	unit::Px,
 	visual::VisualId,
@@ -75,7 +76,7 @@ derive_xrb! {
 	/// A [request] that creates a new unmapped [window] and assigns the
 	/// provided [`Window` ID][window] to it.
 	///
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	/// [window]: Window
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct CreateWindow: Request(1, CreateWindowError) {
@@ -202,7 +203,7 @@ derive_xrb! {
 	/// this: only one client at a time may select [`SUBSTRUCTURE_REDIRECT`],
 	/// [`RESIZE_REDIRECT`], or [`BUTTON_PRESS`] on the [window].
 	///
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	/// [window]: Window
 	/// [attributes]: Attributes
 	///
@@ -227,14 +228,14 @@ derive_xrb! {
 
 	/// A [request] that returns the current [attributes] of the [window].
 	///
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	/// [attributes]: Attributes
 	/// [window]: Window
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GetWindowAttributes: Request(3, error::Window) -> reply::GetWindowAttributes {
 		/// The [window] for which this [request] gets the [attributes].
 		///
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		/// [attributes]: Attributes
 		/// [window]: Window
 		#[doc(alias = "window")]
@@ -257,7 +258,7 @@ derive_xrb! {
 	/// defined [window].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [event]: crate::x11::event::Destroy
 	///
@@ -272,7 +273,7 @@ derive_xrb! {
 		/// [window].
 		///
 		/// [window]: Window
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [`Window` error]: error::Window
 		#[doc(alias = "window")]
@@ -289,7 +290,7 @@ derive_xrb! {
 	/// defined [window].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [destroys]: DestroyWindow
 	///
@@ -347,7 +348,7 @@ derive_xrb! {
 	/// have the same depth as the `target` [window].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	/// [screen]: crate::visual::Screen
 	///
 	/// [`UnmapWindow` request]: UnmapWindow
@@ -420,7 +421,7 @@ derive_xrb! {
 	/// defined [window].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`Map` event]: crate::x11::event::Map
 	/// [`MapWindowRequest` event]: crate::x11::event::MapWindowRequest
@@ -439,7 +440,7 @@ derive_xrb! {
 		/// [window].
 		///
 		/// [window]: Window
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [`Window` error]: error::Window
 		#[doc(alias = "window")]
@@ -456,7 +457,7 @@ derive_xrb! {
 	/// defined [window].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [maps]: MapWindow
 	///
@@ -492,7 +493,7 @@ derive_xrb! {
 	/// defined [window].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`Unmap` event]: crate::x11::event::Unmap
 	///
@@ -506,7 +507,7 @@ derive_xrb! {
 		/// [window].
 		///
 		/// [window]: Window
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [`Window` error]: error::Window
 		#[doc(alias = "window")]
@@ -523,7 +524,7 @@ derive_xrb! {
 	/// defined [window].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [unmaps]: UnmapWindow
 	///
@@ -577,7 +578,7 @@ derive_xrb! {
 	/// specified [window] is not actually a sibling of the `target` [window].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [configures]: WindowConfig
 	///
@@ -600,7 +601,7 @@ derive_xrb! {
 		/// [window].
 		///
 		/// [window]: Window
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [`Window` error]: error::Window
 		#[doc(alias = "window")]
@@ -629,7 +630,7 @@ derive_xrb! {
 		///
 		/// [configuration]: WindowConfig
 		/// [window]: Window
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [`width`]: WindowConfig::width
 		/// [`height`]: WindowConfig::height
@@ -684,7 +685,7 @@ derive_xrb! {
 	/// defined [window].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [circulates]: CirculateDirection
 	///
@@ -710,7 +711,7 @@ derive_xrb! {
 		/// [window].
 		///
 		/// [window]: Window
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [`Window error`]: error::Window
 		#[doc(alias = "window")]
@@ -733,7 +734,7 @@ derive_xrb! {
 	/// [window]: Window
 	/// [pixmap]: crate::Pixmap
 	/// [drawable]: Drawable
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`InputOnly`]: WindowClass::InputOnly
 	///
@@ -751,7 +752,7 @@ derive_xrb! {
 		/// [window]: Window
 		/// [pixmap]: crate::Pixmap
 		/// [drawable]: Drawable
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [`Drawable` error]: error::Drawable
 		#[doc(alias = "drawable")]
@@ -769,7 +770,7 @@ derive_xrb! {
 	/// [window].
 	///
 	/// [window]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [`QueryWindowTree` reply]: reply::QueryWindowTree
 	///
@@ -787,7 +788,7 @@ derive_xrb! {
 		/// [window].
 		///
 		/// [window]: Window
-		/// [request]: crate::message::Request
+		/// [request]: Request
 		///
 		/// [`Window` error]: error::Window
 		#[doc(alias = "window")]

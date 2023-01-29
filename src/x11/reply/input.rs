@@ -8,7 +8,7 @@
 //! [Replies] are messages sent from the X server to an X client in response to
 //! a [request].
 //!
-//! [Replies]: crate::message::Reply
+//! [Replies]: Reply
 //! [request]: crate::message::Request
 //! [core X11 protocol]: crate::x11
 //!
@@ -21,6 +21,7 @@ use derivative::Derivative;
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use crate::{
+	message::Reply,
 	x11::{request, request::RevertFocus},
 	Coords,
 	FocusWindow,
@@ -33,7 +34,7 @@ use crate::{
 derive_xrb! {
 	/// The [reply] to a [`GrabCursor` request].
 	///
-	/// [reply]: crate::message::Reply
+	/// [reply]: Reply
 	///
 	/// [`GrabCursor` request]: request::GrabCursor
 	#[doc(alias = "GrabPointer")]
@@ -46,9 +47,9 @@ derive_xrb! {
 		/// See [`Reply::sequence`] for more information.
 		///
 		/// [request]: crate::message::Request
-		/// [reply]: crate::message::Reply
+		/// [reply]: Reply
 		///
-		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		/// [`Reply::sequence`]: Reply::sequence
 		#[sequence]
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
@@ -65,7 +66,7 @@ derive_xrb! {
 
 	/// The [reply] to a [`GrabKeyboard` request].
 	///
-	/// [reply]: crate::message::Reply
+	/// [reply]: Reply
 	///
 	/// [`GrabKeyboard` request]: request::GrabKeyboard
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
@@ -77,9 +78,9 @@ derive_xrb! {
 		/// See [`Reply::sequence`] for more information.
 		///
 		/// [request]: crate::message::Request
-		/// [reply]: crate::message::Reply
+		/// [reply]: Reply
 		///
-		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		/// [`Reply::sequence`]: Reply::sequence
 		#[sequence]
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
@@ -97,7 +98,7 @@ derive_xrb! {
 
 	/// The [reply] to a [`QueryCursorLocation` request].
 	///
-	/// [reply]: crate::message::Reply
+	/// [reply]: Reply
 	///
 	/// [`QueryCursorLocation` request]: request::QueryCursorLocation
 	#[doc(alias("QueryPointer, QueryCursor, GetCursorPos, GetCursorLocation"))]
@@ -110,9 +111,9 @@ derive_xrb! {
 		/// See [`Reply::sequence`] for more information.
 		///
 		/// [request]: crate::message::Request
-		/// [reply]: crate::message::Reply
+		/// [reply]: Reply
 		///
-		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		/// [`Reply::sequence`]: Reply::sequence
 		#[sequence]
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
@@ -175,7 +176,7 @@ pub struct TimeCoords {
 derive_xrb! {
 	/// The [reply] to a [`GetMotionHistory` request].
 	///
-	/// [reply]: crate::message::Reply
+	/// [reply]: Reply
 	///
 	/// [`GetMotionHistory` request]: request::GetMotionHistory
 	#[doc(alias = "GetMotionEvents")]
@@ -188,9 +189,9 @@ derive_xrb! {
 		/// See [`Reply::sequence`] for more information.
 		///
 		/// [request]: crate::message::Request
-		/// [reply]: crate::message::Reply
+		/// [reply]: Reply
 		///
-		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		/// [`Reply::sequence`]: Reply::sequence
 		#[sequence]
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
@@ -210,7 +211,7 @@ derive_xrb! {
 
 	/// The [reply] to a [`ConvertCoordinates` request].
 	///
-	/// [reply]: crate::message::Reply
+	/// [reply]: Reply
 	///
 	/// [`ConvertCoordinates` request]: request::ConvertCoordinates
 	#[doc(alias = "TranslateCoordinates")]
@@ -223,9 +224,9 @@ derive_xrb! {
 		/// See [`Reply::sequence`] for more information.
 		///
 		/// [request]: crate::message::Request
-		/// [reply]: crate::message::Reply
+		/// [reply]: Reply
 		///
-		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		/// [`Reply::sequence`]: Reply::sequence
 		#[sequence]
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
@@ -262,7 +263,7 @@ derive_xrb! {
 
 	/// The [reply] to a [`GetFocus` request].
 	///
-	/// [reply]: crate::message::Reply
+	/// [reply]: Reply
 	///
 	/// [`GetFocus` request]: request::GetFocus
 	#[doc(alias = "GetInputFocus")]
@@ -275,9 +276,9 @@ derive_xrb! {
 		/// See [`Reply::sequence`] for more information.
 		///
 		/// [request]: crate::message::Request
-		/// [reply]: crate::message::Reply
+		/// [reply]: Reply
 		///
-		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		/// [`Reply::sequence`]: Reply::sequence
 		#[sequence]
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
@@ -296,7 +297,7 @@ derive_xrb! {
 
 	/// The [reply] to a [`QueryKeyboard` request].
 	///
-	/// [reply]: crate::message::Reply
+	/// [reply]: Reply
 	///
 	/// [`QueryKeyboard` request]: request::QueryKeyboard
 	#[doc(alias = "QueryKeymap")]
@@ -309,9 +310,9 @@ derive_xrb! {
 		/// See [`Reply::sequence`] for more information.
 		///
 		/// [request]: crate::message::Request
-		/// [reply]: crate::message::Reply
+		/// [reply]: Reply
 		///
-		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		/// [`Reply::sequence`]: Reply::sequence
 		#[sequence]
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,

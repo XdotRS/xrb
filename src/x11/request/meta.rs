@@ -7,14 +7,14 @@
 //!
 //! [Requests] are messages sent from an X client to the X server.
 //!
-//! [Requests]: crate::message::Request
+//! [Requests]: Request
 //! [core X11 protocol]: crate::x11
 
 extern crate self as xrb;
 
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
-use crate::{x11::error, Window};
+use crate::{message::Request, x11::error, Window};
 
 macro_rules! request_error {
 	(
@@ -84,7 +84,7 @@ derive_xrb! {
 	///
 	/// [window]: Window
 	/// [windows]: Window
-	/// [request]: crate::message::Request
+	/// [request]: Request
 	///
 	/// [adds]: AddOrRemove::Add
 	/// [removes]: AddOrRemove::Remove

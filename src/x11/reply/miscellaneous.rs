@@ -8,7 +8,7 @@
 //! [Replies] are messages sent from the X server to an X client in response to
 //! a [request].
 //!
-//! [Replies]: crate::message::Reply
+//! [Replies]: Reply
 //! [request]: crate::message::Request
 //! [core X11 protocol]: crate::x11
 //!
@@ -22,6 +22,7 @@ use xrbk::pad;
 use xrbk_macro::derive_xrb;
 
 use crate::{
+	message::Reply,
 	x11::request::{self, DataFormat, DataList},
 	Atom,
 	String8,
@@ -31,7 +32,7 @@ use crate::{
 derive_xrb! {
 	/// The [reply] to a [`GetAtom` request].
 	///
-	/// [reply]: crate::message::Reply
+	/// [reply]: Reply
 	///
 	/// [`GetAtom` request]: request::GetAtom
 	#[doc(alias("InternAtom", "CreateAtom"))]
@@ -44,9 +45,9 @@ derive_xrb! {
 		/// See [`Reply::sequence`] for more information.
 		///
 		/// [request]: crate::message::Request
-		/// [reply]: crate::message::Reply
+		/// [reply]: Reply
 		///
-		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		/// [`Reply::sequence`]: Reply::sequence
 		#[sequence]
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
@@ -75,9 +76,9 @@ derive_xrb! {
 		/// See [`Reply::sequence`] for more information.
 		///
 		/// [request]: crate::message::Request
-		/// [reply]: crate::message::Reply
+		/// [reply]: Reply
 		///
-		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		/// [`Reply::sequence`]: Reply::sequence
 		#[sequence]
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
@@ -97,7 +98,7 @@ derive_xrb! {
 
 	/// The [reply] to a [`GetProperty` request].
 	///
-	/// [reply]: crate::message::Reply
+	/// [reply]: Reply
 	///
 	/// [`GetProperty` request]: request::GetProperty
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
@@ -109,9 +110,9 @@ derive_xrb! {
 		/// See [`Reply::sequence`] for more information.
 		///
 		/// [request]: crate::message::Request
-		/// [reply]: crate::message::Reply
+		/// [reply]: Reply
 		///
-		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		/// [`Reply::sequence`]: Reply::sequence
 		#[sequence]
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
@@ -157,7 +158,7 @@ derive_xrb! {
 
 	/// The [reply] for a [`ListProperties` request].
 	///
-	/// [reply]: crate::message::Reply
+	/// [reply]: Reply
 	///
 	/// [`ListProperties` request]: request::ListProperties
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
@@ -169,9 +170,9 @@ derive_xrb! {
 		/// See [`Reply::sequence`] for more information.
 		///
 		/// [request]: crate::message::Request
-		/// [reply]: crate::message::Reply
+		/// [reply]: Reply
 		///
-		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		/// [`Reply::sequence`]: Reply::sequence
 		#[sequence]
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
@@ -191,7 +192,7 @@ derive_xrb! {
 
 	/// The [reply] to a [`GetSelectionOwner` request].
 	///
-	/// [reply]: crate::message::Reply
+	/// [reply]: Reply
 	///
 	/// [`GetSelectionOwner` request]: request::GetSelectionOwner
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
@@ -203,9 +204,9 @@ derive_xrb! {
 		/// See [`Reply::sequence`] for more information.
 		///
 		/// [request]: crate::message::Request
-		/// [reply]: crate::message::Reply
+		/// [reply]: Reply
 		///
-		/// [`Reply::sequence`]: crate::message::Reply::sequence
+		/// [`Reply::sequence`]: Reply::sequence
 		#[sequence]
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,

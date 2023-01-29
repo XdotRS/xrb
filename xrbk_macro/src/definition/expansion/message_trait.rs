@@ -38,10 +38,12 @@ impl Request {
 			quote!(::std::convert::Infallible)
 		};
 
+		let request_token = &self.request_token;
+
 		tokens.append_tokens({
 			quote_spanned!(self.request_token.span()=>
 				#[automatically_derived]
-				impl #impl_generics xrb::message::Request for #name #type_generics #where_clause {
+				impl #impl_generics #request_token for #name #type_generics #where_clause {
 					type Reply = #reply;
 					type OtherErrors = #other_errors;
 
@@ -89,10 +91,12 @@ impl Reply {
 			_ => panic!("replies must have a sequence field of type `u32`"),
 		};
 
+		let reply_token = &self.reply_token;
+
 		tokens.append_tokens({
 			quote_spanned!(self.reply_token.span()=>
 				#[automatically_derived]
-				impl #impl_generics xrb::message::Reply for #name #type_generics #where_clause {
+				impl #impl_generics #reply_token for #name #type_generics #where_clause {
 					type Request = #request;
 
 					#[allow(clippy::cast_possible_truncation)]
@@ -141,10 +145,12 @@ impl Event {
 			_ => quote!(None),
 		};
 
+		let event_token = &self.event_token;
+
 		tokens.append_tokens({
 			quote_spanned!(self.event_token.span()=>
 				#[automatically_derived]
-				impl #impl_generics xrb::message::Event for #name #type_generics #where_clause {
+				impl #impl_generics #event_token for #name #type_generics #where_clause {
 					const CODE: u8 = {
 						#code
 					};
