@@ -69,7 +69,7 @@ pub type ColormapAttribute = CopyableFromParent<Colormap>;
 /// not explicitly initialized in the [`CreateWindow` request], and the
 /// [window classes] that it can be set with.
 ///
-/// [window]: Window
+/// [window]: crate::Window
 /// [`CreateWindow` request]: crate::x11::request::CreateWindow
 /// [window classes]: crate::WindowClass
 ///
@@ -116,8 +116,6 @@ pub type ColormapAttribute = CopyableFromParent<Colormap>;
 ///
 /// [`InputOutput`]: crate::WindowClass::InputOutput
 /// [`InputOnly`]: crate::WindowClass::InputOnly
-///
-/// [window]: Window
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Attributes {
 	/// Total [`X11Size`] of these `Attributes`.
@@ -209,7 +207,7 @@ impl AttributesBuilder {
 	/// methods on this builder. When the builder is configured, [`build()`] can
 	/// be used to build the resulting [`Attributes`].
 	///
-	/// [`build()`]: build
+	/// [`build()`]: AttributesBuilder::build
 	#[must_use]
 	pub const fn new() -> Self {
 		Self {
