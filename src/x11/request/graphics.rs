@@ -18,7 +18,7 @@ use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
 use crate::{
 	set::{GraphicsOptions, GraphicsOptionsMask},
 	unit::Px,
-	x11::{error, reply},
+	x11::{error},
 	Arc,
 	Coords,
 	Dimensions,
