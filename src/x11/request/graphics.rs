@@ -3090,7 +3090,7 @@ derive_xrb! {
 	///     x: coordinates.x,
 	///     y: coordinates.y - font_ascent,
 	///     width: overall_width,
-	///     height: Px(font_ascent.0.into() + font_descent.0.into()),
+	///     height: Px(u16::from(font_ascent.0) + u16::from(font_descent.0)),
 	/// }
 	/// # ;
 	/// ```

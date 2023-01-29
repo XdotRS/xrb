@@ -73,8 +73,7 @@ request_error! {
 }
 
 derive_xrb! {
-	/// A [request] that creates a new unmapped [window] and assigns the
-	/// provided [`Window` ID][window] to it.
+	/// A [request] that creates a new [window].
 	///
 	/// [request]: Request
 	/// [window]: Window
