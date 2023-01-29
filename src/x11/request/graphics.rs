@@ -1996,3 +1996,190 @@ derive_xrb! {
 		pub arcs: Vec<Arc>,
 	}
 }
+
+request_error! {
+	#[doc(alias("PutImageError"))]
+	pub enum PlaceImageError for PlaceImage {
+		Drawable,
+		GraphicsContext,
+		Match,
+		Value,
+	}
+}
+
+/// The format of an image sent in a [`PlaceImage` request].
+///
+/// [`PlaceImage` request]: PlaceImage
+#[doc(alias("PutImageFormat"))]
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub enum PlaceImageFormat {
+	/// The image must be in XY format.
+	///
+	/// The `graphics_context`'s [`foreground_color`] is used where the image
+	/// has bits set to `1`, while the [`background_color`] is used where the
+	/// image has bits set to `0`.
+	///
+	/// [`foreground_color`]: GraphicsOptions::foreground_color
+	/// [`background_color`]: GraphicsOptions::background_color
+	Bitmap,
+
+	/// The image must be in XY format.
+	XyPixmap,
+
+	/// The image must be in Z format.
+	Zpixmap,
+}
+
+derive_xrb! {
+	/// A [request] that places the given image on the given [drawable].
+	///
+	/// # Graphics options used
+	/// This [request] uses the following [options] of the `graphics_context`:
+	/// - [`function`]
+	/// - [`plane_mask`]
+	/// - [`child_mode`]
+	/// - [`clip_x`]
+	/// - [`clip_y`]
+	/// - [`clip_mask`]
+	///
+	/// This [request] may also use these [options], depending on the
+	/// provided `format`:
+	/// - [`foreground_color`]
+	/// - [`background_color`]
+	///
+	/// # Errors
+	/// A [`Drawable` error] is generated if `target` does not refer to a
+	/// defined [window] nor [pixmap].
+	///
+	/// A [`GraphicsContext` error] is generated if `graphics_context` does not
+	/// refer to a defined [`GraphicsContext`].
+	///
+	/// A [`Match` error] is generated if [`PlaceImageFormat::XyPixmap`] or
+	/// [`PlaceImageFormat::Zpixmap`] is used and `depth` does not match the
+	/// depth of the `target` [drawable].
+	///
+	/// A [`Match` error] is generated if [`PlaceImageFormat::Bitmap`] is used
+	/// and `depth` is not `1`.
+	///
+	/// A [`Match` error] is generated if [`PlaceImageFormat::Bitmap`] or
+	/// [`PlaceImageFormat::XyPixmap`] is used and `left_padding` is not less
+	/// than `bitmap_scanline_padding` (given in
+	/// [`connection::ConnectionSuccess`]).
+	///
+	/// A [`Match` error] is generated if [`PlaceImageFormat::Zpixmap`] is used
+	/// and `left_padding` is not `0`.
+	///
+	/// [drawable]: Drawable
+	/// [window]: Window
+	/// [pixmap]: Pixmap
+	/// [options]: GraphicsOptions
+	/// [request]: crate::message::Request
+	///
+	/// [`function`]: GraphicsOptions::function
+	/// [`plane_mask`]: GraphicsOptions::plane_mask
+	/// [`child_mode`]: GraphicsOptions::child_mode
+	/// [`clip_x`]: GraphicsOptions::clip_x
+	/// [`clip_y`]: GraphicsOptions::clip_y
+	/// [`clip_mask`]: GraphicsOptions::clip_mask
+	///
+	/// [`foreground_color`]: GraphicsOptions::foreground_color
+	/// [`background_color`]: GraphicsOptions::background_color
+	///
+	/// [`connection::ConnectionSuccess`]: crate::connection::ConnectionSuccess
+	///
+	/// [`Drawable` error]: error::Drawable
+	/// [`GraphicsContext` error]: error::GraphicsContext
+	/// [`Match` error]: error::Match
+	#[doc(alias("PutImage"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct PlaceImage: Request(72, PlaceImageError) {
+		/// The [image format] used.
+		///
+		/// [image format]: PlaceImageFormat
+		#[metabyte]
+		pub format: PlaceImageFormat,
+
+		/// The [drawable] on which the image is placed.
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [pixmap].
+		///
+		/// [drawable]: Drawable
+		/// [window]: Window
+		/// [pixmap]: Pixmap
+		///
+		/// [`Drawable` error]: error::Drawable
+		#[doc(alias("drawable"))]
+		pub target: Drawable,
+
+		/// The [`GraphicsContext`] used in this graphics operation.
+		///
+		/// # Errors
+		/// A [`GraphicsContext` error] is generated if this does not refer to a
+		/// defined [`GraphicsContext`].
+		///
+		/// [`GraphicsContext` error]: error::GraphicsContext
+		#[doc(alias("gc", "context", "gcontext"))]
+		pub graphics_context: GraphicsContext,
+
+		/// The image's width and height.
+		pub dimensions: Dimensions,
+		/// The [coordinates] at which the image will be placed on the `target`
+		/// [drawable].
+		///
+		/// These coordinates are relative to the top-left corner of the
+		/// [drawable].
+		///
+		/// [drawable]: Drawable
+		/// [coordinates]: Coords
+		pub coordinates: Coords,
+
+		/// The number of bits in each scanline of the image which are to be
+		/// ignored by the X server.
+		///
+		/// The actual image begins this many bits into the scanline.
+		///
+		/// This is only used for [`PlaceImageFormat::Bitmap`] and
+		/// [`PlaceImageFormat::XyPixmap`]. It must be `0` for
+		/// [`PlaceImageFormat::Zpixmap`].
+		///
+		/// # Errors
+		/// A [`Match` error] is generated if `format` is
+		/// [`PlaceImageFormat::Bitmap`] or [`PlaceImageFormat::XyPixmap`] and
+		/// this is not less than `bitmap_scanline_padding` (given in
+		/// [`connection::ConnectionSuccess`]).
+		///
+		/// A [`Match` error] is generated if `format` is
+		/// [`PlaceImageFormat::Zpixmap`] and this is not `0`.
+		///
+		/// [`connection::ConnectionSuccess`]: crate::connection::ConnectionSuccess
+		///
+		/// [`Match` error]: error::Match
+		pub left_padding: u8,
+
+		/// The depth of the image.
+		///
+		/// If `format` is [`PlaceImageFormat::Bitmap`], this must be `1`.
+		///
+		/// # Errors
+		/// A [`Match` error] is generated if `format` is
+		/// [`PlaceImageFormat::XyPixmap`] or [`PlaceImageFormat::Zpixmap`]
+		/// and this does not match the depth of the `target` [drawable].
+		///
+		/// A [`Match` error] is generated if `format` is
+		/// [`PlaceImageFormat::Bitmap`] and this is not `1`.
+		///
+		/// [drawable]: Drawable
+		///
+		/// [`Match` error]: error::Match
+		pub depth: u8,
+		[_; 2],
+
+		// FIXME: how do we know what is padding and what is data??????
+		/// The image's data.
+		#[context(self::remaining => remaining)]
+		pub data: Vec<u8>,
+		[_; data => pad(data)],
+	}
+}

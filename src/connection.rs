@@ -149,7 +149,7 @@ derive_xrb! {
 		pub image_byte_order: ImageEndianness,
 		pub bitmap_format_bit_order: ImageEndianness,
 		pub bitmap_format_scanline_unit: u8,
-		pub bitmap_format_scanline_pad: u8,
+		pub bitmap_format_scanline_padding: u8,
 
 		pub min_keycode: Keycode,
 		pub max_keycode: Keycode,
