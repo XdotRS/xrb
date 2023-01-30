@@ -27,12 +27,12 @@ impl Request {
 		};
 
 		let major_opcode = &self.major_opcode;
-		let minor_opcode = if let Some((_, minor_opcode)) = &self.minor_opcode {
+		let minor_opcode = if let Some(minor_opcode) = &self.minor_opcode {
 			quote!(Some(#minor_opcode))
 		} else {
 			quote!(None)
 		};
-		let other_errors = if let Some((_, other_errors)) = &self.other_errors {
+		let other_errors = if let Some(other_errors) = &self.other_errors {
 			other_errors.to_token_stream()
 		} else {
 			quote!(::std::convert::Infallible)
