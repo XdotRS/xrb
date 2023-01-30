@@ -100,6 +100,19 @@ macro_rules! impl_xrbk_traits {
 )]
 pub struct Px<Num>(pub Num);
 
+impl<Num> Px<Num> {
+	/// Maps a `Px<Num>` to `Px<Output>` by applying the provided closure to the
+	/// contained value.
+	pub fn map<Output>(self, map: impl FnOnce(Num) -> Output) -> Px<Output> {
+		Px(map(self.0))
+	}
+
+	/// Calls the provided closure with a reference to the contained value.
+	pub fn inspect(&self, inspect: impl FnOnce(&Num)) {
+		inspect(&self.0);
+	}
+}
+
 impl<Num> Display for Px<Num>
 where
 	Num: Display,
@@ -134,6 +147,19 @@ impl_xrbk_traits!(Px<Num>(Num));
 	Sum,
 )]
 pub struct Mm<Num>(pub Num);
+
+impl<Num> Mm<Num> {
+	/// Maps a `Mm<Num>` to `Mm<Output>` by applying the provided closure to the
+	/// contained value.
+	pub fn map<Output>(self, map: impl FnOnce(Num) -> Output) -> Mm<Output> {
+		Mm(map(self.0))
+	}
+
+	/// Calls the provided closure with a reference to the contained value.
+	pub fn inspect(&self, inspect: impl FnOnce(&Num)) {
+		inspect(&self.0);
+	}
+}
 
 impl<Num> Display for Mm<Num>
 where
@@ -170,6 +196,19 @@ impl_xrbk_traits!(Mm<Num>(Num));
 )]
 pub struct Ms<Num>(pub Num);
 
+impl<Num> Ms<Num> {
+	/// Maps a `Ms<Num>` to `Ms<Output>` by applying the provided closure to the
+	/// contained value.
+	pub fn map<Output>(self, map: impl FnOnce(Num) -> Output) -> Ms<Output> {
+		Ms(map(self.0))
+	}
+
+	/// Calls the provided closure with a reference to the contained value.
+	pub fn inspect(&self, inspect: impl FnOnce(&Num)) {
+		inspect(&self.0);
+	}
+}
+
 impl<Num> Display for Ms<Num>
 where
 	Num: Display,
@@ -205,6 +244,19 @@ impl_xrbk_traits!(Ms<Num>(Num));
 )]
 pub struct Hz<Num>(pub Num);
 
+impl<Num> Hz<Num> {
+	/// Maps a `Hz<Num>` to `Hz<Output>` by applying the provided closure to the
+	/// contained value.
+	pub fn map<Output>(self, map: impl FnOnce(Num) -> Output) -> Hz<Output> {
+		Hz(map(self.0))
+	}
+
+	/// Calls the provided closure with a reference to the contained value.
+	pub fn inspect(&self, inspect: impl FnOnce(&Num)) {
+		inspect(&self.0);
+	}
+}
+
 impl<Num> Display for Hz<Num>
 where
 	Num: Display,
@@ -219,6 +271,13 @@ impl_xrbk_traits!(Hz<Num>(Num));
 /// A value measured as a percentage from 0% to 100%.
 #[derive(Debug, Hash, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Percentage(u8);
+
+impl Percentage {
+	/// Calls the provided closure with a reference to the contained value.
+	pub fn inspect(&self, inspect: impl FnOnce(u8)) {
+		inspect(self.0);
+	}
+}
 
 impl Display for Percentage {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

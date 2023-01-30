@@ -3082,7 +3082,7 @@ derive_xrb! {
 	/// # use xrb::{Rectangle, Coords, unit::Px};
 	/// #
 	/// # fn main() -> Result<(), <u16 as TryFrom<i16>>::Error> {
-	/// #     let coordinates = Coords { x: Px(0), y: Px(0) };
+	/// #     let coordinates = Coords::new(Px(0), Px(0));
 	/// #
 	/// #     let (font_ascent, font_descent) = (Px(0), Px(0));
 	/// #     let overall_width = Px(1);
@@ -3091,7 +3091,7 @@ derive_xrb! {
 	///     x: coordinates.x,
 	///     y: coordinates.y - font_ascent,
 	///     width: overall_width,
-	///     height: Px(u16::try_from(font_ascent.0 + font_descent.0)?),
+	///     height: (font_ascent + font_descent).map(|height| height as u16),
 	/// }
 	/// #     ;
 	/// #
@@ -3223,7 +3223,7 @@ derive_xrb! {
 	/// # use xrb::{Rectangle, Coords, unit::Px};
 	/// #
 	/// # fn main() -> Result<(), <u16 as TryFrom<i16>>::Error> {
-	/// #     let coordinates = Coords { x: Px(0), y: Px(0) };
+	/// #     let coordinates = Coords::new(Px(0), Px(0));
 	/// #
 	/// #     let (font_ascent, font_descent) = (Px(0), Px(0));
 	/// #     let overall_width = Px(1);
@@ -3232,7 +3232,7 @@ derive_xrb! {
 	///     x: coordinates.x,
 	///     y: coordinates.y - font_ascent,
 	///     width: overall_width,
-	///     height: Px(u16::try_from(font_ascent.0 + font_descent.0)?),
+	///     height: (font_ascent + font_descent).map(|height| height as u16),
 	/// }
 	/// #     ;
 	/// #
