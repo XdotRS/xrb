@@ -102,6 +102,11 @@ derive_xrb! {
 		[_; ..],
 	}
 
+	/// The [reply] to an [`AllocateNamedColor` request].
+	///
+	/// [reply]: Reply
+	///
+	/// [`AllocateNamedColor` request]: request::AllocateNamedColor
 	#[doc(alias("AllocNamedColor"))]
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
 	#[derivative(Hash, PartialEq, Eq)]
@@ -119,8 +124,65 @@ derive_xrb! {
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
 
+		/// The ideal or 'true' color which the name represents.
 		pub ideal_color: RgbColor,
+		/// The closest color that the display was able to provide.
 		pub actual_color: RgbColor,
 		[_; ..],
+	}
+
+	/// The [reply] to an [`AllocateColorCells` request].
+	///
+	/// [reply]: Reply
+	///
+	/// [`AllocateColorCells` request]: request::AllocateColorCells
+	#[doc(alias("AllocColorCells"))]
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct AllocateColorCells: Reply for request::AllocateColorCells {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: Reply
+		///
+		/// [`Reply::sequence`]: Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		// The length of `colors`.
+		#[allow(clippy::cast_possible_truncation)]
+		let colors_len: u16 = colors => colors.len() as u16,
+		// The length of `plane_masks`.
+		#[allow(clippy::cast_possible_truncation)]
+		let plane_masks_len: u16 = plane_masks => plane_masks.len() as u16,
+		[_; 20],
+
+		/// The colors that were used for the allocated [colormap] entries.
+		///
+		/// [colormap]: Colormap
+		#[context(colors_len => usize::from(*colors_len))]
+		pub colors: Vec<ColorId>,
+		/// The bit plane masks that were used for the allocated [colormap]
+		/// entries.
+		///
+		/// For [`VisualClass::GrayScale`] or [`VisualClass::PseudoColor`], each
+		/// plane mask will have one bit set to `1` (because there is only one
+		/// color channel).
+		///
+		/// For [`VisualClass::DirectColor`], each plane mask will have 3 bits
+		/// sets to `1` (because there are three color channels: red, green, and
+		/// blue).
+		///
+		/// [colormap]: Colormap
+		///
+		/// [`VisualClass::GrayScale`]: crate::visual::VisualClass::GrayScale
+		/// [`VisualClass::PseudoColor`]: crate::visual::VisualClass::PseudoColor
+		/// [`VisualClass::DirectColor`]: crate::visual::VisualClass::DirectColor
+		#[context(plane_masks_len => usize::from(*plane_masks_len))]
+		pub plane_masks: Vec<u32>,
 	}
 }

@@ -317,10 +317,10 @@ derive_xrb! {
 	/// this [request]), it is added as the head of the [screen]'s required
 	/// [colormaps][colormap] list.
 	///
-	/// The length of the required [colormaps][colormap] list no more than the
-	/// [screen]'s [`min_installed_colormaps`]: if installing this [colormap]
-	/// causes the list to exceed that limit, the list is truncated at the tail
-	/// to make room.
+	/// The length of the required [colormaps][colormap] list is no more than
+	/// the [screen]'s [`min_installed_colormaps`]: if installing this
+	/// [colormap] causes the list to exceed that limit, the list is truncated
+	/// at the tail to make room.
 	///
 	/// [Explicitly uninstalling](UninstallColormap) a [colormap] means to
 	/// remove it from the list of required [colormaps][colormap]. It may or may
@@ -557,5 +557,83 @@ derive_xrb! {
 		#[context(name_len => usize::from(*name_len))]
 		pub name: String8,
 		[_; name => pad(name)],
+	}
+}
+
+request_error! {
+	#[doc(alias("AllocColorCellsError"))]
+	pub enum AllocateColorCellsError for AllocateColorCells {
+		Colormap,
+		Value,
+	}
+}
+
+derive_xrb! {
+	// TODO: improve docs
+	/// A [request] that allocates a [colormap] entry for every color and plane
+	/// mask combination up to the given `color_count` and `plane_mask_count`.
+	///
+	/// By applying each plane mask to each color,
+	/// <code>color_count * 2<sup>plane_count</sup></code> distinct [colormap]
+	/// entries are allocated.
+	///
+	/// Each [colormap] entry is allocated as writable.
+	///
+	/// # Errors
+	/// A [`Colormap` error] is generated if `target` does not refer to a
+	/// defined [colormap].
+	///
+	/// A [`Value` error] is generated if `color_count` is not greater than
+	/// zero.
+	///
+	/// [colormap]: Colormap
+	/// [request]: Request
+	///
+	/// [`Colormap` error]: error::Colormap
+	/// [`Value` error]: error::Value
+	#[doc(alias("AllocColorCells"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct AllocateColorCells: Request(
+		86,
+		AllocateColorCellsError,
+	) -> reply::AllocateColorCells {
+		/// Whether the plane masks should be combined (i.e. bitwise OR) to form
+		/// a contiguous set of bits for each color channel.
+		///
+		/// For [`VisualClass::GrayScale`] or [`VisualClass::PseudoColor`], one
+		/// contiguous set of bits are formed by bitwise OR-ing all of the plane
+		/// masks.
+		///
+		/// For [`VisualClass::DirectColor`], three (one for each color channel:
+		/// red, green, and blue) contiguous sets of bits are formed by bitwise
+		/// OR-ing all of the plane masks.
+		///
+		/// [`VisualClass::GrayScale`]: crate::visual::VisualClass::GrayScale
+		/// [`VisualClass::PseudoColor`]: crate::visual::VisualClass::PseudoColor
+		/// [`VisualClass::DirectColor`]: crate::visual::VisualClass::DirectColor
+		#[metabyte]
+		pub contiguous: bool,
+
+		/// The [colormap] for which a [colormap] entry for the color by the
+		/// given `name` is allocated.
+		///
+		/// # Errors
+		/// A [`Colormap` error] is generated if this does not refer to a
+		/// defined [colormap].
+		///
+		/// [colormap]: Colormap
+		///
+		/// [`Colormap` error]: error::Colormap
+		pub target: Colormap,
+
+		/// The number of colors that are to be allocated.
+		///
+		/// # Errors
+		/// A [`Value` error] is generated if this is not greater than zero.
+		///
+		/// [`Value` error]: error::Value
+		pub color_count: u16,
+		/// The number of bit plane masks that are to be allocated.
+		pub plane_count: u16,
 	}
 }
