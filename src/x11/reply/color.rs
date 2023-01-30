@@ -101,4 +101,26 @@ derive_xrb! {
 		pub color_id: ColorId,
 		[_; ..],
 	}
+
+	#[doc(alias("AllocNamedColor"))]
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct AllocateNamedColor: Reply for request::AllocateNamedColor {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: Reply
+		///
+		/// [`Reply::sequence`]: Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		pub ideal_color: RgbColor,
+		pub actual_color: RgbColor,
+		[_; ..],
+	}
 }

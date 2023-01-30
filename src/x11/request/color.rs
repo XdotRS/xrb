@@ -11,6 +11,7 @@
 
 extern crate self as xrb;
 
+use xrbk::pad;
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use crate::{
@@ -18,6 +19,7 @@ use crate::{
 	visual::{RgbColor, VisualId},
 	x11::{error, reply},
 	Colormap,
+	String8,
 	Window,
 };
 
@@ -491,5 +493,69 @@ derive_xrb! {
 		/// The color which is to be allocated.
 		pub color: RgbColor,
 		[_; 2],
+	}
+}
+
+request_error! {
+	#[doc(alias("AllocNamedColor"))]
+	pub enum AllocateNamedColorError for AllocateNamedColor {
+		Colormap,
+		Name,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that allocates a read-only [colormap] entry on the given
+	/// [colormap] for the color by the given `name`.
+	///
+	/// The `name` is looked up on the [screen] associated with the [colormap].
+	///
+	/// # Errors
+	/// A [`Colormap` error] is generated if `target` does not refer to a
+	/// defined [colormap].
+	///
+	/// A [`Name` error] is generated if no color by the given `name` exists for
+	/// the [screen] associated with the `target` [colormap].
+	///
+	/// [colormap]: Colormap
+	/// [screen]: crate::visual::Screen
+	/// [request]: Request
+	///
+	/// [`Colormap` error]: error::Colormap
+	/// [`Name` error]: error::Name
+	#[doc(alias("AllocNamedColor"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct AllocateNamedColor: Request(
+		85,
+		AllocateNamedColorError,
+	) -> reply::AllocateNamedColor {
+		/// The [colormap] for which a [colormap] entry for the color by the
+		/// given `name` is allocated.
+		///
+		/// # Errors
+		/// A [`Colormap` error] is generated if this does not refer to a
+		/// defined [colormap].
+		///
+		/// [colormap]: Colormap
+		///
+		/// [`Colormap` error]: error::Colormap
+		pub target: Colormap,
+
+		// The length of `name`.
+		#[allow(clippy::cast_possible_truncation)]
+		let name_len: u16 = name => name.len() as u16,
+		[_; 2],
+
+		/// The name of the color that is looked up on the [screen] associated
+		/// with the [colormap].
+		///
+		/// The name should be specified in ISO Latin-1 encoding. Which case (e.g.
+		/// uppercase, lowercase) the name is specified in does not matter.
+		///
+		/// [colormap]: Colormap
+		/// [screen]: crate::visual::Screen
+		#[context(name_len => usize::from(*name_len))]
+		pub name: String8,
+		[_; name => pad(name)],
 	}
 }
