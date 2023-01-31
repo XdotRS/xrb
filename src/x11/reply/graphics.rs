@@ -14,6 +14,9 @@
 //!
 //! [requests that relate to graphics operations]: request::graphics
 
+mod config;
+pub use config::*;
+
 extern crate self as xrb;
 
 use derivative::Derivative;

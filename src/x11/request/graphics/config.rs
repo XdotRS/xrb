@@ -20,8 +20,9 @@ use crate::{
 	set::{GraphicsOptions, GraphicsOptionsMask},
 	unit::Px,
 	visual::RgbColor,
-	x11::error,
+	x11::{error, reply},
 	CursorAppearance,
+	Dimensions,
 	Drawable,
 	Font,
 	GraphicsContext,
@@ -696,7 +697,7 @@ derive_xrb! {
 	/// [`Match` error]: error::Match
 	/// [`Pixmap` error]: error::Pixmap
 	#[doc(alias("CreateCursor"))]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct CreateCursorAppearance: Request(93, CreateCursorAppearanceError) {
 		/// The [`CursorAppearance` ID] which is to be assigned to the
 		/// [`CursorAppearance`].
@@ -871,7 +872,7 @@ derive_xrb! {
 	/// [`Font` error]: error::Font
 	/// [`Value` error]: error::Value
 	#[doc(alias("CreateGlyphCursor"))]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct CreateGlyphCursorAppearance: Request(94, CreateGlyphCursorAppearanceError) {
 		/// The [`CursorAppearance` ID] which is to be assigned to the
 		/// [`CursorAppearance`].
@@ -1002,7 +1003,7 @@ derive_xrb! {
 	/// [`CursorAppearance` ID]: CursorAppearance
 	///
 	/// [`CursorAppearance` error]: error::CursorAppearance
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct DestroyCursorAppearance: Request(95, error::CursorAppearance) {
 		/// The [`CursorAppearance`] that is to be deleted.
 		///
@@ -1028,7 +1029,7 @@ derive_xrb! {
 	/// [request]: Request
 	///
 	/// [`CursorAppearance` error]: error::CursorAppearance
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct RecolorCursorAppearance: Request(96, error::CursorAppearance) {
 		/// The [`CursorAppearance`] which is to be recolored.
 		///
@@ -1061,5 +1062,124 @@ derive_xrb! {
 		///
 		/// [pixmap]: Pixmap
 		pub background_color: RgbColor,
+	}
+}
+
+request_error! {
+	#[doc(alias("QueryBestSizeError"))]
+	pub enum QueryIdealDimensionsError for QueryIdealDimensions {
+		Drawable,
+		Match,
+		Value,
+	}
+}
+
+/// Specifies how the ideal [dimensions] should be chosen in a
+/// [`QueryIdealDimensions` request].
+///
+/// [dimensions]: Dimensions
+///
+/// [`QueryIdealDimension` request]: QueryIdealDimensions
+#[doc(alias("QueryBestSizeClass", "QueryIdealDimensionsClass"))]
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub enum DimensionClass {
+	/// The largest [`CursorAppearance`] [dimensions] that can be fully
+	/// displayed are returned.
+	///
+	/// [dimensions]: Dimensions
+	CursorAppearance,
+
+	/// The [dimensions] which can be tiled fastest are returned.
+	///
+	/// See [`GraphicsOptions::tile`] for more information on tiling.
+	///
+	/// [dimensions]: Dimensions
+	Tile,
+	/// The [dimensions] which can be stippled fastest are returned.
+	///
+	/// See [`GraphicsOptions::stipple`] for more information on stippling.
+	///
+	/// [dimensions]: Dimensions
+	Stipple,
+}
+
+derive_xrb! {
+	/// A [request] that returns the ideal [dimensions] for the given
+	/// [`DimensionClass`] and baseline [dimensions].
+	///
+	/// For [`DimensionClass::CursorAppearance`], the largest
+	/// [`CursorAppearance`] [dimensions] that can be fully displayed are
+	/// returned.
+	///
+	/// For [`DimensionClass::Tile`], the [dimensions] that can be tiled
+	/// fastest are returned.
+	///
+	/// For [`DimensionClass::Stipple`], the [dimensions] that can be stippled
+	/// fastest are returned.
+	///
+	/// # Errors
+	/// A [`Drawable` error] is generated if `drawable` does not refer to a
+	/// defined [window] nor [pixmap].
+	///
+	/// A [`Match` error] is generated if `class` is [`Tile`] or [`Stipple`] and
+	/// `drawable` is an [`InputOnly`] [window].
+	///
+	/// [window]: crate::Window
+	/// [pixmap]: Pixmap
+	/// [dimensions]: Dimensions
+	/// [request]: Request
+	///
+	/// [`Tile`]: DimensionClass::Tile
+	/// [`Stipple`]: DimensionClass::Stipple
+	///
+	/// [`InputOnly`]: crate::WindowClass::InputOnly
+	///
+	/// [`Drawable` error]: error::Drawable
+	/// [`Match` error]: error::Match
+	#[doc(alias("QueryBestSize"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct QueryIdealDimensions: Request(
+		97,
+		QueryIdealDimensionsError,
+	) -> reply::QueryIdealDimensions {
+		/// The [class] of ideal [dimensions] requested.
+		///
+		/// [class]: DimensionClass
+		/// [dimensions]: Dimensions
+		#[metabyte]
+		pub class: DimensionClass,
+
+		/// Indicates the desired [screen] and possibly the depth as well.
+		///
+		/// For [`DimensionClass::CursorAppearance`], this only indicates the
+		/// desired [screen].
+		///
+		/// For [`DimensionClass::Tile`] or [`DimensionClass::Stipple`], this
+		/// possibly indicates the depth as well.
+		///
+		/// # Errors
+		/// A [`Drawable` error] is generated if this does not refer to a
+		/// defined [window] nor [pixmap].
+		///
+		/// A [`Match` error] is generated if an [`InputOnly`] [window] is used
+		/// for [`DimensionClass::Tile`] or [`DimensionClass::Stipple`].
+		///
+		/// [window]: crate::Window
+		/// [pixmap]: Pixmap
+		/// [screen]: crate::visual::Screen
+		///
+		/// [window class]: crate::WindowClass
+		/// [`InputOnly`]: crate::WindowClass::InputOnly
+		///
+		/// [`Drawable` error]: error::Drawable
+		/// [`Match` error]: error::Match
+		pub drawable: Drawable,
+
+		/// The [dimensions] which the returned ideal [dimensions] are closest
+		/// to.
+		///
+		/// [dimensions]: Dimensions
+		#[doc(alias("width", "height"))]
+		pub dimensions: Dimensions,
 	}
 }
