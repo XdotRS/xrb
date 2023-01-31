@@ -1459,8 +1459,27 @@ impl<const KEYSYMS_PER_KEYCODE: usize> Writable for ChangeKeyboardMapping<KEYSYM
 /// A [`Value` error] is generated if the last [keycode] specified in `range`
 /// is greater than the [`max_keycode`] returned during [connection setup].
 ///
+/// # Examples
+/// This would return the [keysym] mapping for all [keycodes] using the
+/// [`min_keycode`] and [`max_keycode`] returned during [connection setup] (if
+/// it were sent):
+/// ```
+/// use xrb::x11::request;
+///
+/// # let min_keycode = xrb::Keycode::new(8);
+/// # let max_keycode = xrb::Keycode::new(10);
+/// #
+/// let _ = request::GetKeyboardMapping {
+///     range: min_keycode..=max_keycode,
+/// };
+/// ```
+///
+/// [keycodes]: Keycode
 /// [keycode]: Keycode
+///
 /// [keysyms]: Keysym
+/// [keysym]: Keysym
+///
 /// [request]: Request
 /// [connection setup]: crate::connection::InitConnection
 ///
