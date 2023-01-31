@@ -1077,11 +1077,11 @@ derive_xrb! {
 	///
 	/// # Replies
 	/// This [request] generates a [`GetNamedColor` reply].
-	/// 
+	///
 	/// # Errors
 	/// A [`Colormap` error] is generated if `target` does not refer to a
 	/// defined [colormap].
-	/// 
+	///
 	/// A [`Name` error] is generated if `name` does not refer to a defined
 	/// color for the given `target` [colormap]'s [screen].
 	///
@@ -1098,14 +1098,14 @@ derive_xrb! {
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct GetNamedColor: Request(92, GetNamedColorError) -> reply::GetNamedColor {
 		/// The [colormap] whose [screen] defines the requested color.
-		/// 
+		///
 		/// # Errors
 		/// A [`Colormap` error] is generated if this does not refer to a
 		/// defined [colormap].
-		/// 
+		///
 		/// [colormap]: Colormap
 		/// [screen]: crate::visual::Screen
-		/// 
+		///
 		/// [`Colormap` error]: error::Colormap
 		#[doc(alias("colormap"))]
 		pub target: Colormap,
@@ -1116,14 +1116,14 @@ derive_xrb! {
 		[_; 22],
 
 		/// The name of the color which this [request] gets the [RGB values] of.
-		/// 
+		///
 		/// This name should use ISO Latin-1 encoding. The case of the name is
 		/// ignored: whether it is uppercase or lowercase does not matter.
-		/// 
+		///
 		/// # Errors
 		/// A [`Name` error] is generated if this does not refer to a color
 		/// defined for the `target` [colormap]'s [screen].
-		/// 
+		///
 		/// [RGB values]: RgbColor
 		/// [colormap]: Colormap
 		/// [screen]: crate::visual::Screen
