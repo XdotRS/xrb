@@ -23,6 +23,7 @@ use crate::{
 	x11::error,
 	CursorAppearance,
 	Drawable,
+	Font,
 	GraphicsContext,
 	Pixmap,
 	Rectangle,
@@ -660,7 +661,7 @@ derive_xrb! {
 	/// [pixmaps][pixmap].
 	///
 	/// # Errors
-	/// An [`Alloc` error] is generated if the X server failed to allocate the
+	/// An [`Alloc` error] is generated if the X server fails to allocate the
 	/// [`CursorAppearance`].
 	///
 	/// A [`ResourceIdChoice` error] is generated if `cursor_appearance_id`
@@ -811,5 +812,174 @@ derive_xrb! {
 		/// [`Match` error]: error::Match
 		#[doc(alias("y"))]
 		pub hotspot_y: Px<u16>,
+	}
+}
+
+request_error! {
+	#[doc(alias("CreateGlyphCursorError"))]
+	pub enum CreateGlyphCursorAppearanceError for CreateGlyphCursorAppearance {
+		Font,
+		ResourceIdChoice,
+		Value,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that creates a new [`CursorAppearance`] using the specified
+	/// glyphs.
+	///
+	/// The given `cursor_appearance_id` is assigned to the
+	/// [`CursorAppearance`] that is created.
+	///
+	/// The options provided in this [request] may be arbitrarily transformed by
+	/// the X server to meet display limitations.
+	///
+	/// # Errors
+	/// An [`Alloc` error] is generated if the X server fails to allocate the
+	/// [`CursorAppearance`]; see [`RequestError::Alloc`].
+	///
+	/// A [`ResourceIdChoice` error] is generated if `cursor_appearance_id`
+	/// specifies an ID already used for another resource, or an ID not
+	/// allocated to your client.
+	///
+	/// A [`Font` error] is generated if `source_font` does not refer to a
+	/// defined [font].
+	///
+	/// A [`Font` error] is generated if `mask_font` is [`Some`] and `mask_font`
+	/// does not refer to a defined [font].
+	///
+	/// A [`Value` error] is generated if `source_char` does not refer to a
+	/// glyph defined in the [font] specified by `source_font`.
+	///
+	/// A [`Value` error] is generated if `mask_font` is [`Some`] but
+	/// `mask_char` is [`None`].
+	///
+	/// A [`Value` error] is generated if both `mask_font` and `mask_char` are
+	/// [`Some`] but `mask_char` does not refer to a glyph defined in the font
+	/// specified by `mask_font`.
+	///
+	/// [font]: Font
+	/// [request]: Request
+	///
+	/// [`RequestError::Alloc`]: crate::message::RequestError::Alloc
+	/// [`Alloc` error]: error::Alloc
+	/// [`ResourceIdChoice` error]: error::ResourceIdChoice
+	/// [`Font` error]: error::Font
+	/// [`Value` error]: error::Value
+	#[doc(alias("CreateGlyphCursor"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
+	pub struct CreateGlyphCursorAppearance: Request(94, CreateGlyphCursorAppearanceError) {
+		/// The [`CursorAppearance` ID] which is to be assigned to the
+		/// [`CursorAppearance`].
+		///
+		/// # Errors
+		/// A [`ResourceIdChoice` error] is generated if this resource ID is
+		/// already used or if it isn't allocated to your client.
+		///
+		/// [`CursorAppearance` ID]: CursorAppearance
+		///
+		/// [`ResourceIdChoice` error]: error::ResourceIdChoice
+		#[doc(alias("cid", "cursor_id", "caid"))]
+		pub cursor_appearance_id: CursorAppearance,
+
+		/// The [font] that is used for the [`source_char`].
+		///
+		/// # Errors
+		/// A [`Font` error] is generated if this does not refer to a defined
+		/// [font].
+		///
+		/// [`source_char`]: CreateGlyphCursorAppearance::source_char
+		///
+		/// [font]: Font
+		///
+		/// [`Font` error]: error::Font
+		pub source_font: Font,
+		/// The [font] that is used for the [`mask_char`].
+		///
+		/// If this is specified (is [`Some`]), the [`mask_char`] must be
+		/// specified too.
+		///
+		/// # Errors
+		/// A [`Font` error] is generated if this is [`Some`] but does not refer
+		/// to a defined [font].
+		///
+		/// [`mask_char`]: CreateGlyphCursorAppearance::mask_char
+		///
+		/// [font]: Font
+		///
+		/// [`Font` error]: error::Font
+		pub mask_font: Option<Font>,
+
+		/// The character used as the appearance of the cursor.
+		///
+		/// This character is displayed in the [font] specified by
+		/// [`source_font`].
+		///
+		/// For [fonts][font] that use two-byte matrix indexing, this value
+		/// should be specified like so:
+		/// ```
+		/// use xrb::Char16;
+		///
+		/// # let (byte1, byte2) = (0, 0);
+		/// #
+		/// let char = Char16::new(byte1, byte2);
+		///
+		/// let source_char = u16::from(char);
+		/// ```
+		///
+		/// # Errors
+		/// A [`Value` error] is generated if this does not refer to a glyph
+		/// defined in the [font] specified by [`source_font`].
+		///
+		/// [`source_font`]: CreateGlyphCursorAppearance::source_font
+		///
+		/// [font]: Font
+		///
+		/// [`Value` error]: error::Value
+		pub source_char: u16,
+		/// An optional character which masks the appearance of the cursor.
+		///
+		/// If this is [`Some`], it masks the character specified by
+		/// [`source_char`].
+		///
+		/// For [fonts][font] that use two-byte matrix indexing, this value
+		/// should be specified like so:
+		/// ```
+		/// use xrb::Char16;
+		///
+		/// # let (byte1, byte2) = (0, 0);
+		/// #
+		/// let char = Char16::new(byte1, byte2);
+		///
+		/// let mask_char = Some(u16::from(char));
+		/// ```
+		///
+		/// # Errors
+		/// A [`Value` error] is generated if [`mask_font`] is [`Some`] but this
+		/// is [`None`].
+		///
+		/// A [`Value` error] is generated if this does not refer to a glyph
+		/// defined in the [font] specified by [`mask_font`].
+		///
+		/// [`mask_font`]: CreateGlyphCursorAppearance::mask_font
+		///
+		/// [font]: Font
+		///
+		/// [`Value` error]: error::Value
+		pub mask_char: Option<u16>,
+
+		/// The foreground color used for the cursor's visual appearance.
+		///
+		/// This foreground color is used for the [`source_char`].
+		///
+		/// [`source_char`]: CreateGlyphCursorAppearance::source_char
+		pub foreground_color: RgbColor,
+		/// The background color used for the cursor's visual appearance.
+		///
+		/// This background color is used for areas of the cursor's visual
+		/// appearance which are not the [`source_char`].
+		///
+		/// [`source_char`]: CreateGlyphCursorAppearance::source_char
+		pub background_color: RgbColor,
 	}
 }
