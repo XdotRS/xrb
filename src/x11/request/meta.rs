@@ -132,7 +132,7 @@ derive_xrb! {
 	/// [request]: Request
 	///
 	/// [`QueryExtension` reply]: reply::QueryExtension
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct QueryExtension: Request(98) -> reply::QueryExtension {
 		// Length of `name`.
 		#[allow(clippy::cast_possible_truncation)]
@@ -147,4 +147,15 @@ derive_xrb! {
 		pub name: String8,
 		[_; name => pad(name)],
 	}
+
+	/// A [request] that returns the names of all extensions supported by the X server.
+	///
+	/// # Replies
+	/// This [request] generates a [`ListExtensions` reply].
+	///
+	/// [request]: Request
+	///
+	/// [`ListExtensions` reply]: reply::ListExtensions
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
+	pub struct ListExtensions: Request(99) -> reply::ListExtensions;
 }

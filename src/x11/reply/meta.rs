@@ -17,9 +17,10 @@
 extern crate self as xrb;
 
 use derivative::Derivative;
+use xrbk::pad;
 use xrbk_macro::derive_xrb;
 
-use crate::{message::Reply, x11::request};
+use crate::{message::Reply, x11::request, LengthString8};
 
 derive_xrb! {
 	/// The [reply] to a [`QueryExtension` request].
@@ -63,5 +64,39 @@ derive_xrb! {
 		/// [errors]: crate::message::Error
 		/// [event code]: crate::message::Event::CODE
 		pub first_error_code: Option<u8>,
+	}
+
+	/// The [reply] to a [`ListExtensions` request].
+	///
+	/// [reply]: Reply
+	///
+	/// [`ListExtensions` request]: request::ListExtensions
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct ListExtensions: Reply for request::ListExtensions {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: Reply
+		///
+		/// [`Reply::sequence`]: Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		// The length of `names`.
+		#[metabyte]
+		#[allow(clippy::cast_possible_truncation)]
+		let names_len: u8 = names => names.len() as u8,
+
+		[_; 24],
+
+		/// The names of all extensions supported by the X server.
+		#[context(names_len => usize::from(*names_len))]
+		pub names: Vec<LengthString8>,
+		[_; names => pad(names)],
 	}
 }
