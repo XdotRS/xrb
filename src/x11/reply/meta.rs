@@ -8,8 +8,60 @@
 //! [Replies] are messages sent from the X server to an X client in response to
 //! a [request].
 //!
-//! [Replies]: crate::message::Reply
+//! [Replies]: Reply
 //! [request]: crate::message::Request
 //! [core X11 protocol]: crate::x11
 //!
-//! [requests that relate to an X client or the X server]: crate::x11::request::meta
+//! [requests that relate to an X client or the X server]: request::meta
+
+extern crate self as xrb;
+
+use derivative::Derivative;
+use xrbk_macro::derive_xrb;
+
+use crate::{message::Reply, x11::request};
+
+derive_xrb! {
+	/// The [reply] to a [`QueryExtension` request].
+	///
+	/// [reply]: Reply
+	///
+	/// [`QueryExtension` request]: request::QueryExtension
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct QueryExtension: Reply for request::QueryExtension {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: Reply
+		///
+		/// [`Reply::sequence`]: Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		/// Whether the specified extension is present.
+		pub present: bool,
+
+		/// The [major opcode] of the specified extension if the extension is
+		/// present and it has has a [major opcode].
+		///
+		/// [major opcode]: crate::message::Request::MAJOR_OPCODE
+		pub major_opcode: Option<u8>,
+		/// The first [event code] defined by the specified extension if the
+		/// extension is present and it defines any [events].
+		///
+		/// [events]: crate::message::Event
+		/// [event code]: crate::message::Event::CODE
+		pub first_event_code: Option<u8>,
+		/// The first [error code] defined by the specified extension if the
+		/// extension is present and it defines any [errors].
+		///
+		/// [errors]: crate::message::Error
+		/// [event code]: crate::message::Event::CODE
+		pub first_error_code: Option<u8>,
+	}
+}

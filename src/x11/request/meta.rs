@@ -12,9 +12,15 @@
 
 extern crate self as xrb;
 
+use xrbk::pad;
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
-use crate::{message::Request, x11::error, Window};
+use crate::{
+	message::Request,
+	x11::{error, reply},
+	String8,
+	Window,
+};
 
 macro_rules! request_error {
 	(
@@ -115,5 +121,30 @@ derive_xrb! {
 		/// [`Match` error]: error::Match
 		/// [`Window` error]: error::Window
 		pub window: Window,
+	}
+
+	/// A [request] that returns whether the specified extension is present and
+	/// the message codes associated with it if it is.
+	///
+	/// # Replies
+	/// This [request] generates a [`QueryExtension` reply].
+	///
+	/// [request]: Request
+	///
+	/// [`QueryExtension` reply]: reply::QueryExtension
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
+	pub struct QueryExtension: Request(98) -> reply::QueryExtension {
+		// Length of `name`.
+		#[allow(clippy::cast_possible_truncation)]
+		let name_len: u16 = name => name.len() as u16,
+		[_; 2],
+
+		/// The name of the extension which is to be queried.
+		///
+		/// This name should use ISO Latin-1 encoding. Uppercase and lowercase
+		/// matter.
+		#[context(name_len => usize::from(*name_len))]
+		pub name: String8,
+		[_; name => pad(name)],
 	}
 }
