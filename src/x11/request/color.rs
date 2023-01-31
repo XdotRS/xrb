@@ -825,8 +825,7 @@ derive_xrb! {
 }
 
 request_error! {
-	#[doc(alias("StoreColorsError"))]
-	pub enum ChangeColormapEntriesError for ChangeColormapEntries {
+	pub enum StoreColorsError for StoreColors {
 		Access,
 		Colormap,
 		Value,
@@ -834,12 +833,11 @@ request_error! {
 }
 
 derive_xrb! {
-	/// A change to a [colormap] entry made in a
-	/// [`ChangeColormapEntries` request].
+	/// A change to a [colormap] entry made in a [`StoreColors` request].
 	///
 	/// [colormap]: Colormap
 	///
-	/// [`ChangeColormapEntries` request]: ChangeColormapEntries
+	/// [`StoreColors` request]: StoreColors
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct ColormapEntryChange {
 		/// The [`ColorId`] of the changed [colormap] entry.
@@ -849,7 +847,10 @@ derive_xrb! {
 
 		/// The new color.
 		pub color: RgbColor,
-		/// A mask for which color channels are changed.
+		/// The mask for which of the [colormap] entry's color channels are
+		/// changed.
+		///
+		/// [colormap]: Colormap
 		pub mask: ColorChannelMask,
 		_,
 	}
@@ -865,6 +866,8 @@ derive_xrb! {
 
 	/// A [request] that changes the [RGB values] of the given [colormap]
 	/// entries.
+	///
+	/// See also: [`StoreNamedColor`].
 	///
 	/// # Errors
 	/// A [`Colormap` error] is generated if `target` does not refer to a
@@ -883,9 +886,8 @@ derive_xrb! {
 	/// [`Access` error]: error::Access
 	/// [`Colormap` error]: error::Colormap
 	/// [`Value` error]: error::Value
-	#[doc(alias("StoreColors"))]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
-	pub struct ChangeColormapEntries: Request(89, ChangeColormapEntriesError) {
+	pub struct StoreColors: Request(89, StoreColorsError) {
 		/// The [colormap] for which the [colormap] entries are changed.
 		///
 		/// # Errors
@@ -914,5 +916,88 @@ derive_xrb! {
 		#[doc(alias("items"))]
 		#[context(self::remaining => remaining / ColormapEntryChange::X11_SIZE)]
 		pub changes: Vec<ColormapEntryChange>,
+	}
+}
+
+request_error! {
+	pub enum StoreNamedColorError for StoreNamedColor {
+		Access,
+		Colormap,
+		Name,
+		Value,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that changes the [RGB values] of the given [colormap] entry
+	/// to the color of the given `name` in the given [colormap]'s [screen].
+	///
+	/// See also: [`StoreColors`], [`ColormapEntryChange`].
+	///
+	/// # Errors
+	/// A [`Colormap` error] is generated if `target` does not refer to a
+	/// defined [colormap].
+	///
+	/// A [`Name` error] is generated if `name` does not refer to a defined
+	/// color in the `target` [colormap]'s [screen].
+	///
+	/// An [`Access` error] is generated if the requested [colormap] entry is
+	/// read-only or it is not allocated.
+	///
+	/// A [`Value` error] is generated if the requested [`ColorId`] is not a
+	/// valid into into the `target` [colormap].
+	///
+	/// [RGB values]: RgbColor
+	/// [colormap]: Colormap
+	/// [screen]: crate::visual::Screen
+	/// [request]: Request
+	///
+	/// [`Access` error]: error::Access
+	/// [`Colormap` error]: error::Colormap
+	/// [`Value` error]: error::Value
+	/// [`Name` error]: error::Name
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct StoreNamedColor: Request(90, StoreNamedColorError) {
+		/// The mask for which of the [colormap] entry's color channels are
+		/// changed.
+		///
+		/// [colormap]: Colormap
+		pub mask: ColorChannelMask,
+
+		/// The [colormap] for which the [colormap] entry is changed.
+		///
+		/// # Errors
+		/// A [`Colormap` error] is generated if this does not refer to a
+		/// defined [colormap].
+		///
+		/// [colormap]: Colormap
+		///
+		/// [`Colormap` error]: error::Colormap
+		#[doc(alias("colormap"))]
+		pub target: Colormap,
+		/// The [`ColorId`] of the [colormap] entry which is to be changed.
+		///
+		/// [colormap]: Colormap
+		pub id: ColorId,
+
+		// The length of `name`.
+		#[allow(clippy::cast_possible_truncation)]
+		let name_len: u16 = name => name.len() as u16,
+		[_; 2],
+
+		/// The name of the color in the `target`'s [screen] which the requested
+		/// [colormap] entry is changed to.
+		///
+		/// # Errors
+		/// A [`Name` error] is generated if this does not refer to a defined
+		/// color in the `target` [colormap]'s [screen].
+		///
+		/// [colormap]: Colormap
+		/// [screen]: crate::visual::Screen
+		///
+		/// [`Name` error]: error::Name
+		#[context(name_len => usize::from(*name_len))]
+		pub name: String8,
+		[_; name => pad(name)],
 	}
 }
