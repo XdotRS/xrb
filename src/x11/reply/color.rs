@@ -17,6 +17,7 @@
 extern crate self as xrb;
 
 use derivative::Derivative;
+use xrbk::{Buf, BufMut, ConstantX11Size, ReadResult, Readable, Writable, WriteResult, X11Size};
 
 use xrbk_macro::derive_xrb;
 
@@ -239,5 +240,99 @@ derive_xrb! {
 		/// [colormap]: Colormap
 		#[context(colors_len => usize::from(*colors_len))]
 		pub colors: Vec<ColorId>,
+	}
+}
+
+/// The [reply] to a [`QueryColors` request].
+///
+/// [reply]: Reply
+///
+/// [`QueryColors` request]: request::QueryColors
+#[derive(Derivative, Debug)]
+#[derivative(Hash, PartialEq, Eq)]
+pub struct QueryColors {
+	/// The sequence number identifying the [request] that generated this
+	/// [reply].
+	///
+	/// See [`Reply::sequence`] for more information.
+	///
+	/// [request]: crate::message::Request
+	/// [reply]: Reply
+	///
+	/// [`Reply::sequence`]: Reply::sequence
+	#[derivative(Hash = "ignore", PartialEq = "ignore")]
+	pub sequence: u16,
+
+	/// The [RGB values] of the requested [colormap] entries.
+	///
+	/// The [RGB values] returned for unallocated [colormap] entries is
+	/// undefined.
+	///
+	/// [RGB values]: RgbColor
+	/// [colormap]: Colormap
+	pub colors: Vec<RgbColor>,
+}
+
+impl Reply for QueryColors {
+	type Request = request::QueryColors;
+
+	fn sequence(&self) -> u16 {
+		self.sequence
+	}
+}
+
+impl X11Size for QueryColors {
+	fn x11_size(&self) -> usize {
+		const HEADER: usize = 8;
+
+		HEADER + u16::X11_SIZE + 22 + self.colors.x11_size()
+	}
+}
+
+impl Readable for QueryColors {
+	fn read_from(buf: &mut impl Buf) -> ReadResult<Self> {
+		buf.advance(1);
+		let sequence = buf.get_u16();
+
+		let length = (buf.get_u32() as usize) * 4;
+		let buf = &mut buf.take(length - 8);
+
+		let colors_len = buf.get_u16();
+		buf.advance(22);
+
+		let colors = {
+			let mut colors = vec![];
+
+			for _ in 0..colors_len {
+				colors.push(RgbColor::read_from(buf)?);
+				buf.advance(2);
+			}
+
+			colors
+		};
+
+		Ok(Self { sequence, colors })
+	}
+}
+
+impl Writable for QueryColors {
+	#[allow(clippy::cast_possible_truncation)]
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		let buf = &mut buf.limit((self.length() as usize) * 4);
+
+		buf.put_u8(1);
+		buf.put_u8(0);
+		self.sequence.write_to(buf)?;
+		buf.put_u32(self.length());
+
+		buf.put_u16(self.colors.len() as u16);
+		buf.put_bytes(0, 22);
+
+		for color in &self.colors {
+			color.write_to(buf)?;
+			buf.put_bytes(0, 2);
+		}
+
+		Ok(())
 	}
 }

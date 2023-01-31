@@ -472,7 +472,7 @@ derive_xrb! {
 	/// [colormap]: Colormap
 	/// [request]: Request
 	///
-	/// [`ColorId`]: crate::visual::ColorId
+	/// [`ColorId`]: ColorId
 	///
 	/// [`AllocateColor` reply]: reply::AllocateColor
 	///
@@ -999,5 +999,66 @@ derive_xrb! {
 		#[context(name_len => usize::from(*name_len))]
 		pub name: String8,
 		[_; name => pad(name)],
+	}
+}
+
+request_error! {
+	pub enum QueryColorsError for QueryColors {
+		Colormap,
+		Value,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that returns the [RGB values] stored for the given
+	/// [colormap] entries in the given [colormap].
+	///
+	/// # Replies
+	/// This [request] generates a [`QueryColors` reply].
+	///
+	/// # Errors
+	/// A [`Colormap` error] is generated if `target` does not refer to a
+	/// defined [colormap].
+	///
+	/// A [`Value` error] is generated if a given [`ColorId`] is not a valid
+	/// index into the `target` [colormap].
+	///
+	/// [RGB values]: RgbColor
+	/// [colormap]: Colormap
+	/// [request]: Request
+	///
+	/// [`QueryColors` reply]: reply::QueryColors
+	///
+	/// [`Colormap` error]: error::Colormap
+	/// [`Value` error]: error::Value
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct QueryColors: Request(91, QueryColorsError) -> reply::QueryColors {
+		/// The [colormap] on which the [RGB values] of the given [colormap]
+		/// entries are queried.
+		///
+		/// # Errors
+		/// A [`Colormap` error] is generated if this does not refer to a
+		/// defined [colormap].
+		///
+		/// [RGB values]: RgbColor
+		/// [colormap]: Colormap
+		///
+		/// [`Colormap` error]: error::Colormap
+		#[doc(alias("colormap"))]
+		pub target: Colormap,
+
+		/// The [`ColorId`s] of the requested [colormap] entries.
+		///
+		/// # Errors
+		/// A [`Value` error] is generated if a given [`ColorId`] is not a valid
+		/// index into the given `target` [colormap].
+		///
+		/// [colormap]: Colormap
+		///
+		/// [`ColorId`s]: ColorId
+		///
+		/// [`Value` error]: error::Value
+		#[context(self::remaining => remaining / ColorId::X11_SIZE)]
+		pub colors: Vec<ColorId>,
 	}
 }
