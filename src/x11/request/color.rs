@@ -11,13 +11,14 @@
 
 extern crate self as xrb;
 
-use xrbk::pad;
+use xrbk::{pad, ConstantX11Size};
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use crate::{
 	message::Request,
-	visual::{RgbColor, VisualId},
+	visual::{ColorId, RgbColor, VisualId},
 	x11::{error, reply},
+	ColorChannelMask,
 	Colormap,
 	String8,
 	Window,
@@ -733,5 +734,92 @@ derive_xrb! {
 		pub green_plane_count: u16,
 		/// The number of bits set in the returned `blue_plane_mask`.
 		pub blue_plane_count: u16,
+	}
+}
+
+request_error! {
+	#[doc(alias("FreeColorsError"))]
+	pub enum DestroyColormapEntriesError for DestroyColormapEntries {
+		Access,
+		Colormap,
+		Value,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that deletes every requested [colormap] entry that was
+	/// allocated by your client in the given [colormap].
+	///
+	/// The [colormap] entries to be deleted are found by applying every subset
+	/// of the given `plane_mask` with each of the given `colors` - the entries
+	/// which were allocated by your client are deleted.
+	///
+	/// The requested [colormap] entries are only actually deleted under the
+	/// following conditions:
+	/// - If you have allocated a particular [colormap] entry multiple times,
+	///   you must send a `DestroyColormapEntries` [request] for each time you
+	///   allocated it before it is actually deleted.
+	/// - A read-only [colormap] entry is not actually deleted until all clients
+	///   have deleted it.
+	///
+	/// A particular [`ColorId`] allocated by an [`AllocateColorPlanes` request]
+	/// may not be reused until all of its related [`ColorId`s] have been
+	/// deleted too.
+	///
+	/// Even if an [error] is generated because of one of the requested
+	/// [colormap] entries, all other [colormap] entries which do not generate
+	/// [errors][error] will still be deleted.
+	///
+	/// # Errors
+	/// A [`Colormap` error] is generated if `target` does not refer to a
+	/// defined [colormap].
+	///
+	/// An [`Access` error] is generated if a requested [colormap] entry is not
+	/// actually allocated, or it is not allocated by your client.
+	///
+	/// A [`Value` error] is generated if a requested [`ColorId`] is not a valid
+	/// index into the `target` [colormap].
+	///
+	/// [colormap]: Colormap
+	/// [colors]: ColorId
+	/// [request]: Request
+	/// [error]: crate::message::Error
+	///
+	/// [`ColorId`s]: ColorId
+	///
+	/// [`AllocateColorPlanes` request]: AllocateColorPlanes
+	///
+	/// [`Access` error]: error::Access
+	/// [`Colormap` error]: error::Colormap
+	/// [`Value` error]: error::Value
+	// TODO: rename all Destroy* requests to Delete*
+	#[doc(alias("FreeColors"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct DestroyColormapEntries: Request(88, DestroyColormapEntriesError) {
+		/// The [colormap] for which the [colormap] entries are deleted.
+		///
+		/// # Errors
+		/// A [`Colormap` error] is generated if this does not refer to a
+		/// defined [colormap].
+		///
+		/// [colormap]: Colormap
+		///
+		/// [`Colormap` error]: error::Colormap
+		#[doc(alias("colormap"))]
+		pub target: Colormap,
+
+		/// The bit plane mask every subset of which is combined with each
+		/// [`ColorId`] in `colors` to produce the requested [colormap] entries.
+		///
+		/// [colormap]: Colormap
+		pub plane_mask: u32,
+		/// The [`ColorId`s] which are combined with every subset of the
+		/// `plane_mask` to produce the requested [colormap] entries.
+		///
+		/// [colormap]: Colormap
+		///
+		/// [`ColorId`s]: ColorId
+		#[context(self::remaining => remaining / ColorId::X11_SIZE)]
+		pub colors: Vec<ColorId>,
 	}
 }
