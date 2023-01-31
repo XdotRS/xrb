@@ -336,3 +336,39 @@ impl Writable for QueryColors {
 		Ok(())
 	}
 }
+
+derive_xrb! {
+	/// The [reply] to a [`GetNamedColor` request].
+	///
+	/// [reply]: Reply
+	///
+	/// [`GetNamedColor` request]: request::GetNamedColor
+	#[doc(alias("LookupColor"))]
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct GetNamedColor: Reply for request::GetNamedColor {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: Reply
+		///
+		/// [`Reply::sequence`]: Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		/// The ideal [RGB values] of the color.
+		///
+		/// [RGB values]: RgbColor
+		pub ideal_color: RgbColor,
+		/// The closest [RGB values] to the `ideal_color` that the display could
+		/// provide.
+		///
+		/// [RGB values]: RgbColor
+		pub actual_color: RgbColor,
+		[_; ..],
+	}
+}

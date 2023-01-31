@@ -1062,3 +1062,74 @@ derive_xrb! {
 		pub colors: Vec<ColorId>,
 	}
 }
+
+request_error! {
+	#[doc(alias("LookupColorError"))]
+	pub enum GetNamedColorError for GetNamedColor {
+		Colormap,
+		Name,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that returns the [RGB values] for the color by the given
+	/// `name` in the given [colormap]'s [screen].
+	///
+	/// # Replies
+	/// This [request] generates a [`GetNamedColor` reply].
+	/// 
+	/// # Errors
+	/// A [`Colormap` error] is generated if `target` does not refer to a
+	/// defined [colormap].
+	/// 
+	/// A [`Name` error] is generated if `name` does not refer to a defined
+	/// color for the given `target` [colormap]'s [screen].
+	///
+	/// [RGB values]: RgbColor
+	/// [colormap]: Colormap
+	/// [screen]: crate::visual::Screen
+	/// [request]: Request
+	///
+	/// [`GetNamedColor` reply]: reply::GetNamedColor
+	///
+	/// [`Colormap` error]: error::Colormap
+	/// [`Name` error]: error::Name
+	#[doc(alias("LookupColor"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GetNamedColor: Request(92, GetNamedColorError) -> reply::GetNamedColor {
+		/// The [colormap] whose [screen] defines the requested color.
+		/// 
+		/// # Errors
+		/// A [`Colormap` error] is generated if this does not refer to a
+		/// defined [colormap].
+		/// 
+		/// [colormap]: Colormap
+		/// [screen]: crate::visual::Screen
+		/// 
+		/// [`Colormap` error]: error::Colormap
+		#[doc(alias("colormap"))]
+		pub target: Colormap,
+
+		// The length of `name`.
+		#[allow(clippy::cast_possible_truncation)]
+		let name_len: u16 = name => name.len() as u16,
+		[_; 22],
+
+		/// The name of the color which this [request] gets the [RGB values] of.
+		/// 
+		/// This name should use ISO Latin-1 encoding. The case of the name is
+		/// ignored: whether it is uppercase or lowercase does not matter.
+		/// 
+		/// # Errors
+		/// A [`Name` error] is generated if this does not refer to a color
+		/// defined for the `target` [colormap]'s [screen].
+		/// 
+		/// [RGB values]: RgbColor
+		/// [colormap]: Colormap
+		/// [screen]: crate::visual::Screen
+		/// [request]: Request
+		#[context(name_len => usize::from(*name_len))]
+		pub name: String8,
+		[_; name => pad(name)],
+	}
+}
