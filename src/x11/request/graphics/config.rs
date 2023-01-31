@@ -831,6 +831,10 @@ derive_xrb! {
 	/// The given `cursor_appearance_id` is assigned to the
 	/// [`CursorAppearance`] that is created.
 	///
+	/// The hotspot (that is, the point that is aligned to the exact coordinates
+	/// of the cursor: for a typical arrow cursor, that's the tip of the arrow)
+	/// is the top-left corner of the `source_char`.
+	///
 	/// The options provided in this [request] may be arbitrarily transformed by
 	/// the X server to meet display limitations.
 	///
@@ -981,5 +985,33 @@ derive_xrb! {
 		///
 		/// [`source_char`]: CreateGlyphCursorAppearance::source_char
 		pub background_color: RgbColor,
+	}
+
+	/// A [request] that deletes the association between the given
+	/// [`CursorAppearance` ID] and the [`CursorAppearance`] it refers to.
+	///
+	/// The [`CursorAppearance`] will be deleted once no resources reference it
+	/// any longer.
+	///
+	/// # Errors
+	/// A [`CursorAppearance` error] is generated if `target` does not refer to
+	/// a defined [`CursorAppearance`].
+	///
+	/// [request]: Request
+	///
+	/// [`CursorAppearance` ID]: CursorAppearance
+	///
+	/// [`CursorAppearance` error]: error::CursorAppearance
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
+	pub struct DestroyCursorAppearance: Request(95, error::CursorAppearance) {
+		/// The [`CursorAppearance`] that is to be deleted.
+		///
+		/// # Errors
+		/// A [`CursorAppearance` error] is generated if this does not refer to
+		/// a defined [`CursorAppearance`].
+		///
+		/// [`CursorAppearance` error]: error::CursorAppearance
+		#[doc(alias("cursor", "cursor_appearance"))]
+		pub target: CursorAppearance,
 	}
 }
