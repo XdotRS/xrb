@@ -18,7 +18,6 @@ use crate::{
 	message::Request,
 	visual::{ColorId, RgbColor, VisualId},
 	x11::{error, reply},
-	ColorChannelMask,
 	Colormap,
 	String8,
 	Window,
