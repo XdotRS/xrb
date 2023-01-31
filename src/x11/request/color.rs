@@ -12,12 +12,13 @@
 extern crate self as xrb;
 
 use xrbk::{pad, ConstantX11Size};
-use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
+use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
 
 use crate::{
 	message::Request,
 	visual::{ColorId, RgbColor, VisualId},
 	x11::{error, reply},
+	ColorChannelMask,
 	Colormap,
 	String8,
 	Window,
@@ -820,5 +821,98 @@ derive_xrb! {
 		/// [`ColorId`s]: ColorId
 		#[context(self::remaining => remaining / ColorId::X11_SIZE)]
 		pub colors: Vec<ColorId>,
+	}
+}
+
+request_error! {
+	#[doc(alias("StoreColorsError"))]
+	pub enum ChangeColormapEntriesError for ChangeColormapEntries {
+		Access,
+		Colormap,
+		Value,
+	}
+}
+
+derive_xrb! {
+	/// A change to a [colormap] entry made in a
+	/// [`ChangeColormapEntries` request].
+	///
+	/// [colormap]: Colormap
+	///
+	/// [`ChangeColormapEntries` request]: ChangeColormapEntries
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ColormapEntryChange {
+		/// The [`ColorId`] of the changed [colormap] entry.
+		///
+		/// [colormap]: Colormap
+		pub id: ColorId,
+
+		/// The new color.
+		pub color: RgbColor,
+		/// A mask for which color channels are changed.
+		pub mask: ColorChannelMask,
+		_,
+	}
+
+	impl ConstantX11Size for ColormapEntryChange {
+		const X11_SIZE: usize = {
+			ColorId::X11_SIZE
+			+ RgbColor::X11_SIZE
+			+ ColorChannelMask::X11_SIZE
+			+ 1
+		};
+	}
+
+	/// A [request] that changes the [RGB values] of the given [colormap]
+	/// entries.
+	///
+	/// # Errors
+	/// A [`Colormap` error] is generated if `target` does not refer to a
+	/// defined [colormap].
+	///
+	/// An [`Access` error] is generated if a requested [colormap] entry is
+	/// read-only or it is not allocated.
+	///
+	/// A [`Value` error] is generated if a requested [`ColorId`] is not a valid
+	/// index into the `target` [colormap].
+	///
+	/// [RGB values]: RgbColor
+	/// [colormap]: Colormap
+	/// [request]: Request
+	///
+	/// [`Access` error]: error::Access
+	/// [`Colormap` error]: error::Colormap
+	/// [`Value` error]: error::Value
+	#[doc(alias("StoreColors"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ChangeColormapEntries: Request(89, ChangeColormapEntriesError) {
+		/// The [colormap] for which the [colormap] entries are changed.
+		///
+		/// # Errors
+		/// A [`Colormap` error] is generated if this does not refer to a
+		/// defined [colormap].
+		///
+		/// [colormap]: Colormap
+		///
+		/// [`Colormap` error]: error::Colormap
+		#[doc(alias("colormap"))]
+		pub target: Colormap,
+
+		/// The requested [colormap] entry changes.
+		///
+		/// # Errors
+		/// An [`Access` error] is generated if a requested [colormap] entry is
+		/// read-only or it is not allocated.
+		///
+		/// A [`Value` error] is generated if a requested [`ColorId`] is not a
+		/// valid index into the `target` [colormap].
+		///
+		/// [colormap]: Colormap
+		///
+		/// [`Access` error]: error::Access
+		/// [`Value` error]: error::Value
+		#[doc(alias("items"))]
+		#[context(self::remaining => remaining / ColormapEntryChange::X11_SIZE)]
+		pub changes: Vec<ColormapEntryChange>,
 	}
 }
