@@ -28,6 +28,7 @@ use crate::{
 	FocusWindow,
 	FreezeMode,
 	Keycode,
+	Keysym,
 	Window,
 };
 
@@ -1256,7 +1257,12 @@ derive_xrb! {
 
 	/// A [request] that returns the current focus.
 	///
+	/// # Replies
+	/// This [request] generates a [`GetFocus` reply].
+	///
 	/// [request]: Request
+	///
+	/// [`GetFocus` reply]: reply::GetFocus
 	#[doc(alias = "GetInputFocus")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GetFocus: Request(43) -> reply::GetFocus;
@@ -1264,8 +1270,174 @@ derive_xrb! {
 	/// A [request] that returns a bit vector of the currently held keys on the
 	/// keyboard.
 	///
+	/// # Replies
+	/// This [request] generates a [`QueryKeyboard` reply].
+	///
 	/// [request]: Request
+	///
+	/// [`QueryKeyboard` reply]: reply::QueryKeyboard
 	#[doc(alias = "QueryKeymap")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct QueryKeyboard: Request(44) -> reply::QueryKeyboard;
+}
+
+// Issue with macro syntax for this was that it didn't support using the
+// message's generics in sources.
+
+/// A [request] that changes the mapping of [keycodes] to [keysyms] for the
+/// specified range of [keycodes].
+///
+/// You may arbitrarily choose the `KEYSYMS_PER_KEYCODE` to be a value large
+/// enough to contain all the desired [keysym] mappings.
+///
+/// # Events generated
+/// This [request] generates a [`MappingChange` event].
+///
+/// # Errors
+/// A [`Value` error] is generated if `first_keycode` is less than the
+/// [`min_keycode`] returned during [connection setup].
+///
+/// A [`Value` error] is generated if the last [keycode] in the given
+/// range is greater than the [`max_keycode`] returned during
+/// [connection setup]. That last [keycode] is given by:
+/// ```
+/// # use xrb::Keycode;
+/// #
+/// # fn main() -> Result<(), <u8 as TryFrom<usize>>::Error> {
+/// #     let first_keycode = Keycode::new(0);
+/// #     let mappings: Vec<[xrb::Keysym; 10]> = vec![[xrb::Keysym::NO_SYMBOL; 10]];
+/// #
+/// #     let _ =
+/// Keycode::new(first_keycode.unwrap() + u8::try_from(mappings.len())? - 1)
+/// #     ;
+/// #
+/// #     Ok(())
+/// # }
+/// ```
+///
+/// [keycodes]: Keycode
+/// [keycode]: Keycode
+///
+/// [keysyms]: Keysym
+/// [keysym]: Keysym
+///
+/// [request]: Request
+/// [connection setup]: crate::connection::InitConnection
+///
+/// [`min_keycode`]: crate::connection::ConnectionSuccess::min_keycode
+/// [`max_keycode`]: crate::connection::ConnectionSuccess::max_keycode
+///
+/// [`MappingChange` event]: crate::x11::event::MappingChange
+///
+/// [`Value` error]: error::Value
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub struct ChangeKeyboardMapping<const KEYSYMS_PER_KEYCODE: usize> {
+	/// The first [keycode] in the range of [keycodes] that are to have their
+	/// mappings to [keysyms] changed.
+	///
+	/// # Errors
+	/// A [`Value` error] is generated if this is less than the [`min_keycode`]
+	/// returned during [connection setup].
+	///
+	/// [keycode]: Keycode
+	/// [keycodes]: Keycode
+	///
+	/// [keysyms]: Keysym
+	///
+	/// [connection setup]: crate::connection::InitConnection
+	///
+	/// [`min_keycode`]: crate::connection::ConnectionSuccess::min_keycode
+	///
+	/// [`Value` error]: error::Value
+	pub first_keycode: Keycode,
+
+	/// The changed mappings from [keycodes] to [keysyms].
+	///
+	/// Each array in this list represents the [keysyms] mapped to a particular
+	/// [keycode]. The first array is the mapping for the [`first_keycode`],
+	/// while the each array after that is the mapping for the [keycode] one
+	/// greater than the one before it:
+	/// ```
+	/// # use xrb::Keycode;
+	/// #
+	/// # let previous_keycode = Keycode::new(0);
+	/// #
+	/// # let _ =
+	/// Keycode::new(previous_keycode.unwrap() + 1)
+	/// # ;
+	/// ```
+	/// Each array (after the first one) is the mapping for the [keycode] one
+	/// greater than the [keycode] of the array before it.
+	///
+	/// [`Keysym::NO_SYMBOL`] should be used to fill in unused [keysym]
+	/// mappings. [`Keysym::NO_SYMBOL`] may appear anywhere in the mappings -
+	/// i.e., not just at the end of an array.
+	///
+	/// # Errors
+	/// A [`Value` error] is generated if the last array is for a [keycode]
+	/// greater than the [`max_keycode`] returned during [connection setup].
+	///
+	/// [`first_keycode`]: ChangeKeyboardMapping::first_keycode
+	///
+	/// [keycode]: Keycode
+	/// [keycodes]: Keycode
+	///
+	/// [keysym]: Keysym
+	/// [keysyms]: Keysym
+	///
+	/// [connection setup]: crate::connection::InitConnection
+	///
+	/// [`max_keycode`]: crate::connection::ConnectionSuccess::max_keycode
+	pub mappings: Vec<[Keysym; KEYSYMS_PER_KEYCODE]>,
+}
+
+impl<const KEYSYMS_PER_KEYCODE: usize> Request for ChangeKeyboardMapping<KEYSYMS_PER_KEYCODE> {
+	type OtherErrors = error::Value;
+	type Reply = ();
+
+	const MAJOR_OPCODE: u8 = 100;
+	const MINOR_OPCODE: Option<u16> = None;
+}
+
+impl<const KEYSYMS_PER_KEYCODE: usize> X11Size for ChangeKeyboardMapping<KEYSYMS_PER_KEYCODE> {
+	fn x11_size(&self) -> usize {
+		const HEADER: usize = 4;
+		const CONSTANT_SIZES: usize = HEADER + Keycode::X11_SIZE + u8::X11_SIZE + 2;
+
+		CONSTANT_SIZES + self.mappings.x11_size()
+	}
+}
+
+// Unfortunately `Readable` can't be implemented because the type signature
+// requires specifying the `KEYSYMS_PER_KEYCODE`, which would only be able to be
+// found out after reading that data.
+//
+// The way around that would be to use `Vec`s instead of arrays in `mappings`,
+// but considering that this is a library focused on the client side of the X11
+// protocol, not being able to read the request is a better compromise than not
+// ensuring that each inner list is of an equal length to every other one at
+// compile time.
+
+impl<const KEYSYMS_PER_KEYCODE: usize> Writable for ChangeKeyboardMapping<KEYSYMS_PER_KEYCODE> {
+	#[allow(clippy::cast_possible_truncation)]
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		// Limit `buf` by the length (converted to bytes).
+		let buf = &mut buf.limit(usize::from(self.length()) * 4);
+
+		// The major opcode.
+		Self::MAJOR_OPCODE.write_to(buf)?;
+		// Length of `mappings`.
+		(self.mappings.len() as u8).write_to(buf)?;
+		// The length of the message.
+		self.length().write_to(buf)?;
+
+		self.first_keycode.write_to(buf)?;
+		(KEYSYMS_PER_KEYCODE as u8).write_to(buf)?;
+		// 2 unused bytes.
+		buf.put_bytes(0, 2);
+
+		self.mappings.write_to(buf)?;
+
+		Ok(())
+	}
 }

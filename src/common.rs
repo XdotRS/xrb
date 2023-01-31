@@ -239,6 +239,11 @@ pub enum StackMode {
 )]
 pub struct Keysym(pub(crate) u32);
 
+impl Keysym {
+	pub const NO_SYMBOL: Self = Self::new(0x0000_0000);
+	pub const VOID_SYMBOL: Self = Self::new(0x00ff_ffff);
+}
+
 #[derive(
 	Copy,
 	Clone,
