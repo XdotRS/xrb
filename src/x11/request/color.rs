@@ -579,6 +579,12 @@ derive_xrb! {
 	///
 	/// Each [colormap] entry is allocated as writable.
 	///
+	/// The initial RGB values of the allocated [colormap] entries are
+	/// undefined.
+	///
+	/// # Replies
+	/// This [request] generates an [`AllocateColorCells` reply].
+	///
 	/// # Errors
 	/// A [`Colormap` error] is generated if `target` does not refer to a
 	/// defined [colormap].
@@ -588,6 +594,8 @@ derive_xrb! {
 	///
 	/// [colormap]: Colormap
 	/// [request]: Request
+	///
+	/// [`AllocateColorCells` reply]: reply::AllocateColorCells
 	///
 	/// [`Colormap` error]: error::Colormap
 	/// [`Value` error]: error::Value
@@ -614,8 +622,7 @@ derive_xrb! {
 		#[metabyte]
 		pub contiguous: bool,
 
-		/// The [colormap] for which a [colormap] entry for the color by the
-		/// given `name` is allocated.
+		/// The [colormap] for which the [colormap] entries are allocated.
 		///
 		/// # Errors
 		/// A [`Colormap` error] is generated if this does not refer to a
@@ -624,6 +631,7 @@ derive_xrb! {
 		/// [colormap]: Colormap
 		///
 		/// [`Colormap` error]: error::Colormap
+		#[doc(alias("colormap"))]
 		pub target: Colormap,
 
 		/// The number of colors that are to be allocated.
@@ -635,5 +643,95 @@ derive_xrb! {
 		pub color_count: u16,
 		/// The number of bit plane masks that are to be allocated.
 		pub plane_count: u16,
+	}
+}
+
+request_error! {
+	#[doc(alias("AllocColorPlanesError"))]
+	pub enum AllocateColorPlanesError for AllocateColorPlanes {
+		Colormap,
+		Value,
+	}
+}
+
+derive_xrb! {
+	// TODO: improve docs
+	/// A [request] that allocates a [colormap] entry for every color and bit
+	/// plane combination up to the given `color_count` and plane counts.
+	///
+	/// By combining subsets of plane masks with colors, a total of
+	/// <code>color_count * 2<sup>plane_count</sup></code> (where `plane_count`
+	/// represents `red_plane_count + green_plane_count + blue_plane_count`)
+	/// [colormap] entries are allocated:
+	/// <code>color_count * 2<sup>red_plane_count</sup></code> independent red
+	/// entries, <code>color_count * 2<sup>green_plane_count</sup></code>
+	/// independent green entries, and
+	/// <code>color_count * 2<sup>blue_plane_count</sup></code> independent blue
+	/// entries.
+	///
+	/// Each [colormap] entry is allocated as writable.
+	///
+	/// The initial RGB values of the allocated [colormap] entries are
+	/// undefined.
+	///
+	/// # Replies
+	/// This [request] generates an [`AllocateColorPlanes` reply].
+	///
+	/// # Errors
+	/// A [`Colormap` error] is generated if `target` does not refer to a
+	/// defined [colormap].
+	///
+	/// A [`Value` error] is generated if `color_count` is not greater than
+	/// zero.
+	///
+	/// An [`Alloc` error] is generated if the X server failed to allocate the
+	/// requested [colormap] entries; see [`RequestError::Alloc`].
+	///
+	/// [colormap]: Colormap
+	/// [request]: Request
+	///
+	/// [`AllocateColorPlanes` reply]: reply::AllocateColorPlanes
+	///
+	/// [`Colormap` error]: error::Colormap
+	/// [`Value` error]: error::Value
+	/// [`Alloc` error]: error::Alloc
+	///
+	/// [`RequestError::Alloc`]: crate::message::RequestError::Alloc
+	#[doc(alias("AllocColorPlanes"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct AllocateColorPlanes: Request(
+		87,
+		AllocateColorPlanesError,
+	) -> reply::AllocateColorPlanes {
+		/// Whether the returned plane masks will have a contiguous set of bits.
+		#[metabyte]
+		pub contiguous: bool,
+
+		/// The [colormap] for which the [colormap] entries are allocated.
+		///
+		/// # Errors
+		/// A [`Colormap` error] is generated if this does not refer to a
+		/// defined [colormap].
+		///
+		/// [colormap]: Colormap
+		///
+		/// [`Colormap` error]: error::Colormap
+		#[doc(alias("colormap"))]
+		pub target: Colormap,
+
+		/// The number of colors that will be returned.
+		///
+		/// # Errors
+		/// A [`Value` error] is generated if this is not greater than zero.
+		///
+		/// [`Value` error]: error::Value
+		pub color_count: u16,
+
+		/// The number of bits set in the returned `red_plane_mask`.
+		pub red_plane_count: u16,
+		/// The number of bits set in the returned `green_plane_mask`.
+		pub green_plane_count: u16,
+		/// The number of bits set in the returned `blue_plane_mask`.
+		pub blue_plane_count: u16,
 	}
 }

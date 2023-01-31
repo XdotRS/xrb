@@ -177,6 +177,9 @@ derive_xrb! {
 		/// sets to `1` (because there are three color channels: red, green, and
 		/// blue).
 		///
+		/// No plane mask will have bits in common with any other plane mask,
+		/// nor with any of the `colors`.
+		///
 		/// [colormap]: Colormap
 		///
 		/// [`VisualClass::GrayScale`]: crate::visual::VisualClass::GrayScale
@@ -184,5 +187,57 @@ derive_xrb! {
 		/// [`VisualClass::DirectColor`]: crate::visual::VisualClass::DirectColor
 		#[context(plane_masks_len => usize::from(*plane_masks_len))]
 		pub plane_masks: Vec<u32>,
+	}
+
+	/// The [reply] to an [`AllocateColorPlanes` request].
+	///
+	/// [reply]: Reply
+	///
+	/// [`AllocateColorPlanes` request]: request::AllocateColorPlanes
+	#[doc(alias("AllocColorPlanes"))]
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct AllocateColorPlanes: Reply for request::AllocateColorPlanes {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: Reply
+		///
+		/// [`Reply::sequence`]: Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		// The length of `colors`.
+		#[allow(clippy::cast_possible_truncation)]
+		let colors_len: u16 = colors => colors.len() as u16,
+		[_; 2],
+
+		/// The union of all the red bit plane masks which were applied to the
+		/// `colors` to produce the [colormap] entries which were allocated.
+		///
+		/// [colormap]: Colormap
+		pub red_plane_mask: u32,
+		/// The union of all the green bit plane masks which were applied to the
+		/// `colors` to produce the [colormap] entries which were allocated.
+		///
+		/// [colormap]: Colormap
+		pub green_plane_mask: u32,
+		/// The union of all the blue bit plane masks which were applied to the
+		/// `colors` to produce the [colormap] entries which were allocated.
+		///
+		/// [colormap]: Colormap
+		pub blue_plane_mask: u32,
+		[_; 8],
+
+		/// The colors that were combined with the plane masks to produce the
+		/// [colormap] entries which were allocated.
+		///
+		/// [colormap]: Colormap
+		#[context(colors_len => usize::from(*colors_len))]
+		pub colors: Vec<ColorId>,
 	}
 }
