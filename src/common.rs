@@ -374,7 +374,7 @@ pub struct Char16(pub(crate) u8, pub(crate) u8);
 impl From<u16> for Char16 {
 	fn from(value: u16) -> Self {
 		let [byte1, byte2] = value.to_be_bytes();
-		
+
 		Self::new(byte1, byte2)
 	}
 }
@@ -382,7 +382,7 @@ impl From<u16> for Char16 {
 impl From<Char16> for u16 {
 	fn from(char: Char16) -> Self {
 		let (byte1, byte2) = char.unwrap();
-		
+
 		Self::from_be_bytes([byte1, byte2])
 	}
 }

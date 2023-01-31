@@ -78,9 +78,9 @@ pub enum WriteError {
 }
 
 mod readable;
+mod wrap;
 mod writable;
 mod x11_size;
-mod wrap;
 
 /// Gives the type size in bytes.
 /// The size can vary depending on the quantity of data it contains
