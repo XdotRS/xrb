@@ -1014,4 +1014,52 @@ derive_xrb! {
 		#[doc(alias("cursor", "cursor_appearance"))]
 		pub target: CursorAppearance,
 	}
+
+	/// A [request] that changes the foreground and background colors of a
+	/// [`CursorAppearance`].
+	///
+	/// If the [`CursorAppearance`] is currently being displayed, this change
+	/// will be immediately visible.
+	///
+	/// # Errors
+	/// A [`CursorAppearance` error] is generated if `target` does not refer to
+	/// a defined [`CursorAppearance`].
+	///
+	/// [request]: Request
+	///
+	/// [`CursorAppearance` error]: error::CursorAppearance
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
+	pub struct RecolorCursorAppearance: Request(96, error::CursorAppearance) {
+		/// The [`CursorAppearance`] which is to be recolored.
+		///
+		/// # Errors
+		/// A [`CursorAppearance` error] is generated if this does not refer to
+		/// a defined [`CursorAppearance`].
+		///
+		/// [`CursorAppearance` error]: error::CursorAppearance
+		#[doc(alias("cursor", "cursor_appearance"))]
+		pub target: CursorAppearance,
+
+		/// The new foreground color for the [`CursorAppearance`].
+		///
+		/// This foreground color is used for each bit set to `1` in the
+		/// `target` [`CursorAppearance`]'s `source` [pixmap].
+		///
+		/// If the `target`'s `source` is a character, then this foreground
+		/// color is used for that character.
+		///
+		/// [pixmap]: Pixmap
+		pub foreground_color: RgbColor,
+		/// The new background color for the [`CursorAppearance`].
+		///
+		/// This background color is used for each bit set to `0` in the
+		/// `target` [`CursorAppearance`]'s `source` [pixmap].
+		///
+		/// If the `target`'s `source` is a character, then this background
+		/// color is used for the parts of the `target`'s `source` which is not
+		/// the character.
+		///
+		/// [pixmap]: Pixmap
+		pub background_color: RgbColor,
+	}
 }
