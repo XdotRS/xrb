@@ -17,6 +17,7 @@
 extern crate self as xrb;
 
 use derivative::Derivative;
+use xrbk::{Buf, BufMut, ConstantX11Size, ReadResult, Readable, Writable, WriteResult, X11Size};
 
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
@@ -26,6 +27,7 @@ use crate::{
 	Coords,
 	FocusWindow,
 	GrabStatus,
+	Keysym,
 	ModifierMask,
 	Timestamp,
 	Window,
@@ -323,5 +325,134 @@ derive_xrb! {
 		/// `N`, starting at `0`, contains the bits for keys `8N` to `8N + 7`.
 		/// The least significant bit in the byte represents key `8N`.
 		pub keys: [u8; 32],
+	}
+}
+
+/// The [keysyms] mapped to a particular [keycode].
+///
+/// [keysyms]: Keysym
+/// [keycode]: crate::Keycode
+pub type KeyMapping = Vec<Keysym>;
+
+/// The [reply] to a [`GetKeyboardMapping` request].
+///
+/// [reply]: Reply
+///
+/// [`GetKeyboardMapping` request]: request::GetKeyboardMapping
+#[derive(Derivative, Debug)]
+#[derivative(Hash, PartialEq, Eq)]
+pub struct GetKeyboardMapping {
+	/// The sequence number identifying the [request] that generated this
+	/// [reply].
+	///
+	/// See [`Reply::sequence`] for more information.
+	///
+	/// [request]: crate::message::Request
+	/// [reply]: Reply
+	///
+	/// [`Reply::sequence`]: Reply::sequence
+	#[derivative(Hash = "ignore", PartialEq = "ignore")]
+	pub sequence: u16,
+
+	/// The mapping of [keysyms] for each [keycode] in the specified `range`.
+	///
+	/// [keycode]: crate::Keycode
+	/// [keysyms]: Keysym
+	pub mappings: Vec<KeyMapping>,
+}
+
+impl Reply for GetKeyboardMapping {
+	type Request = request::GetKeyboardMapping;
+
+	fn sequence(&self) -> u16 {
+		self.sequence
+	}
+}
+
+impl X11Size for GetKeyboardMapping {
+	fn x11_size(&self) -> usize {
+		const HEADER: usize = 8;
+		const CONSTANT_SIZES: usize = HEADER + 24;
+
+		CONSTANT_SIZES + self.mappings.x11_size()
+	}
+}
+
+impl Readable for GetKeyboardMapping {
+	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		const HEADER: usize = 8;
+
+		// Header {{{
+
+		// FIXME: actually, replies need to have their first 4 bytes read before
+		//        the type of reply can be determined, so `keysyms_per_keycode`
+		//        and `sequence` should be context for `ReadableWithContext`.
+		//
+		// FIXME: This is a change that needs to be done for all replies...
+		buf.advance(1);
+		let keysyms_per_keycode = buf.get_u8();
+		let sequence = buf.get_u16();
+
+		let length = (buf.get_u32() as usize) * 4;
+		let buf = &mut buf.take(length - HEADER);
+
+		// }}}
+
+		// 24 unused bytes.
+		buf.advance(24);
+
+		let mappings = {
+			let mapping_size = usize::from(keysyms_per_keycode) * Keysym::X11_SIZE;
+			let mappings_len = buf.remaining() / mapping_size;
+
+			let mut mappings = vec![];
+
+			for _ in 0..mappings_len {
+				let mut keysyms = vec![];
+
+				for _ in 0..keysyms_per_keycode {
+					keysyms.push(Keysym::read_from(buf)?);
+				}
+
+				mappings.push(keysyms);
+			}
+
+			mappings
+		};
+
+		Ok(Self { sequence, mappings })
+	}
+}
+
+impl Writable for GetKeyboardMapping {
+	#[allow(clippy::cast_possible_truncation)]
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		let buf = &mut buf.limit(self.x11_size());
+
+		// Header {{{
+
+		// Indicates that this is a reply.
+		buf.put_u8(1);
+		// The number of keysyms in each mapping.
+		let mapping_size = self.mappings.x11_size() / self.mappings.len();
+		let keysyms_per_keycode = (mapping_size / Keysym::X11_SIZE) as u8;
+		keysyms_per_keycode.write_to(buf)?;
+		// The sequence number.
+		self.sequence.write_to(buf)?;
+
+		// The message length.
+		self.length().write_to(buf)?;
+
+		// }}}
+
+		// 24 unused bytes.
+		buf.put_bytes(0, 24);
+
+		self.mappings.write_to(buf)?;
+
+		Ok(())
 	}
 }

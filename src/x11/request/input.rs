@@ -15,6 +15,8 @@ extern crate self as xrb;
 use xrbk::{Buf, BufMut, ConstantX11Size, ReadResult, Readable, Writable, WriteResult, X11Size};
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
+use std::ops::RangeInclusive;
+
 use crate::{
 	message::Request,
 	x11::{error, reply},
@@ -1388,6 +1390,8 @@ pub struct ChangeKeyboardMapping<const KEYSYMS_PER_KEYCODE: usize> {
 	/// [connection setup]: crate::connection::InitConnection
 	///
 	/// [`max_keycode`]: crate::connection::ConnectionSuccess::max_keycode
+	///
+	/// [`Value` error]: error::Value
 	pub mappings: Vec<[Keysym; KEYSYMS_PER_KEYCODE]>,
 }
 
@@ -1437,6 +1441,131 @@ impl<const KEYSYMS_PER_KEYCODE: usize> Writable for ChangeKeyboardMapping<KEYSYM
 		buf.put_bytes(0, 2);
 
 		self.mappings.write_to(buf)?;
+
+		Ok(())
+	}
+}
+
+/// A [request] that returns the mapped [keysyms] for each [keycode] in the
+/// given `range`.
+///
+/// # Replies
+/// This [request] generates a [`GetKeyboardMapping` reply].
+///
+/// # Errors
+/// A [`Value` error] is generated if the first [keycode] specified in `range`
+/// is less than the [`min_keycode`] returned during [connection setup].
+///
+/// A [`Value` error] is generated if the last [keycode] specified in `range`
+/// is greater than the [`max_keycode`] returned during [connection setup].
+///
+/// [keycode]: Keycode
+/// [keysyms]: Keysym
+/// [request]: Request
+/// [connection setup]: crate::connection::InitConnection
+///
+/// [`min_keycode`]: crate::connection::ConnectionSuccess::min_keycode
+/// [`max_keycode`]: crate::connection::ConnectionSuccess::max_keycode
+///
+/// [`GetKeyboardMapping` reply]: reply::GetKeyboardMapping
+///
+/// [`Value` error]: error::Value
+pub struct GetKeyboardMapping {
+	/// The range of [keycodes] for which this [request] returns their mapped
+	/// [keysyms].
+	///
+	/// # Errors
+	/// A [`Value` error] is generated if the first [keycode] is less than the
+	/// [`min_keycode`] returned during [connection setup].
+	///
+	/// A [`Value` error] is generated if the last [keycode] is greater than the
+	/// [`max_keycode`] returned during [connection setup].
+	///
+	/// [keycodes]: Keycode
+	/// [keysyms]: Keysym
+	/// [request]: Request
+	/// [connection setup]: crate::connection::InitConnection
+	///
+	/// [`min_keycode`]: crate::connection::ConnectionSuccess::min_keycode
+	/// [`max_keycode`]: crate::connection::ConnectionSuccess::max_keycode
+	///
+	/// [`Value` error]: error::Value
+	// This is effectively:
+	// ```
+	// pub first_keycode: Keycode,
+	// pub count: u8,
+	// ```
+	// where `count` is given by:
+	// ```
+	// let count = keycodes.end().unwrap() - first_keycode.unwrap();
+	// ```
+	pub range: RangeInclusive<Keycode>,
+}
+
+impl Request for GetKeyboardMapping {
+	type OtherErrors = error::Value;
+	type Reply = reply::GetKeyboardMapping;
+
+	const MAJOR_OPCODE: u8 = 101;
+	const MINOR_OPCODE: Option<u16> = None;
+}
+
+impl ConstantX11Size for GetKeyboardMapping {
+	const X11_SIZE: usize = {
+		const HEADER: usize = 4;
+
+		HEADER + Keycode::X11_SIZE + u8::X11_SIZE + 2
+	};
+}
+
+impl X11Size for GetKeyboardMapping {
+	fn x11_size(&self) -> usize {
+		Self::X11_SIZE
+	}
+}
+
+impl Readable for GetKeyboardMapping {
+	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		const HEADER: usize = 4;
+
+		// Unused metabyte.
+		buf.advance(1);
+
+		// The message length.
+		let length = usize::from(buf.get_u16()) * 4;
+		let buf = &mut buf.take(length - HEADER);
+
+		let first_keycode = Keycode::read_from(buf)?;
+		let keycode_count = buf.get_u8();
+		buf.advance(2);
+
+		Ok(Self {
+			range: RangeInclusive::new(
+				first_keycode,
+				Keycode::new(first_keycode.unwrap() + keycode_count - 1),
+			),
+		})
+	}
+}
+
+impl Writable for GetKeyboardMapping {
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		Self::MAJOR_OPCODE.write_to(buf)?;
+		// Unused metabyte.
+		buf.put_u8(0);
+		// Message length.
+		self.length().write_to(buf)?;
+
+		// First keycode.
+		self.range.start().write_to(buf)?;
+		// Number of keycodes.
+		let keycode_count = self.range.end().unwrap() - self.range.start().unwrap() + 1;
+		keycode_count.write_to(buf)?;
+		// 2 unused bytes.
+		buf.put_bytes(0, 2);
 
 		Ok(())
 	}

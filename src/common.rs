@@ -227,9 +227,8 @@ pub enum StackMode {
 	Debug,
 	From,
 	Into,
-	// `new` and `unwrap` const fns
+	// `new` const fn
 	new,
-	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -242,6 +241,12 @@ pub struct Keysym(pub(crate) u32);
 impl Keysym {
 	pub const NO_SYMBOL: Self = Self::new(0x0000_0000);
 	pub const VOID_SYMBOL: Self = Self::new(0x00ff_ffff);
+
+	/// Returns the raw contained keysym value.
+	#[must_use]
+	pub const fn unwrap(&self) -> u32 {
+		self.0
+	}
 }
 
 #[derive(
@@ -253,9 +258,8 @@ impl Keysym {
 	Debug,
 	From,
 	Into,
-	// `new` and `unwrap` const fns
+	// `new` const fn
 	new,
-	unwrap,
 	// XRBK traits
 	X11Size,
 	ConstantX11Size,
@@ -263,7 +267,15 @@ impl Keysym {
 	Writable,
 	Wrap,
 )]
-pub struct Keycode(pub u8);
+pub struct Keycode(pub(crate) u8);
+
+impl Keycode {
+	/// Returns the contained `u8` keycode.
+	#[must_use]
+	pub const fn unwrap(&self) -> u8 {
+		self.0
+	}
+}
 
 #[derive(
 	Copy,
