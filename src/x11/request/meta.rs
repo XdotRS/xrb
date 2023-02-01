@@ -12,6 +12,7 @@
 
 extern crate self as xrb;
 
+use std::convert::Infallible;
 use xrbk::{
 	pad,
 	Buf,
@@ -491,44 +492,72 @@ derive_xrb! {
 	}
 }
 
-// #[derive(Debug, Hash, PartialEq, Eq)]
-// pub struct NoOp<const UNUSED_UNITS: usize>;
-//
-// impl<const UNUSED_UNITS: usize> Request for NoOp<UNUSED_UNITS> {
-// 	type OtherErrors = Infallible;
-// 	type Reply = ();
-//
-// 	const MAJOR_OPCODE: u8 = 127;
-// 	const MINOR_OPCODE: Option<u16> = None;
-// }
-//
-// impl<const UNUSED_UNITS: usize> ConstantX11Size for NoOp<UNUSED_UNITS> {
-// 	const X11_SIZE: usize = {
-// 		const HEADER: usize = 4;
-//
-// 		HEADER + (UNUSED_UNITS * 4)
-// 	};
-// }
-//
-// impl<const UNUSED_UNITS: usize> X11Size for NoOp<UNUSED_UNITS> {
-// 	fn x11_size(&self) -> usize {
-// 		Self::X11_SIZE
-// 	}
-// }
-//
-// impl<const UNUSED_UNITS: usize> Writable for NoOp<UNUSED_UNITS> {
-// 	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
-// 		let buf = &mut buf.limit(self.x11_size());
-//
-// 		Self::MAJOR_OPCODE.write_to(buf)?;
-// 		// Unused metabyte.
-// 		buf.put_u8(0);
-// 		// Message length.
-// 		self.length().write_to(buf)?;
-//
-// 		// Unused bytes.
-// 		buf.put_bytes(0, UNUSED_UNITS * 4);
-//
-// 		Ok(())
-// 	}
-// }
+/// A [request] that has no effect.
+///
+/// The use of this [request] comes with padding: `4 + (4 * UNUSED_UNITS)` bytes
+/// are sent.
+///
+/// This can be used by X libraries which find it convenient to force
+/// [requests][request] to be aligned to 8 bytes.
+///
+/// [request]: Request
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub struct NoOp {
+	/// The number of unused 4-byte units to add to the [request] after the
+	/// initial 4-byte header.
+	pub unused_units: u16,
+}
+
+impl Request for NoOp {
+	type OtherErrors = Infallible;
+	type Reply = ();
+
+	const MAJOR_OPCODE: u8 = 127;
+	const MINOR_OPCODE: Option<u16> = None;
+}
+
+impl X11Size for NoOp {
+	fn x11_size(&self) -> usize {
+		const HEADER: usize = 4;
+		const ALIGNMENT: usize = 4;
+
+		HEADER + (usize::from(self.unused_units) * ALIGNMENT)
+	}
+}
+
+impl Readable for NoOp {
+	fn read_from(buf: &mut impl Buf) -> ReadResult<Self> {
+		const ALIGNMENT: usize = 4;
+
+		// Unused metabyte.
+		buf.advance(1);
+
+		// One unit is subtracted for the header.
+		let unused_units = buf.get_u16() - 1;
+
+		let buf = &mut buf.take(usize::from(unused_units) * ALIGNMENT);
+		// Unused bytes.
+		buf.advance(buf.remaining());
+
+		Ok(Self { unused_units })
+	}
+}
+
+impl Writable for NoOp {
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		const ALIGNMENT: usize = 4;
+
+		let buf = &mut buf.limit(self.x11_size());
+
+		Self::MAJOR_OPCODE.write_to(buf)?;
+		// Unused metabyte.
+		buf.put_u8(0);
+		// Message length.
+		self.length().write_to(buf)?;
+
+		// Unused bytes.
+		buf.put_bytes(0, usize::from(self.unused_units) * ALIGNMENT);
+
+		Ok(())
+	}
+}
