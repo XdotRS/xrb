@@ -25,7 +25,7 @@ use xrbk::{
 	WriteResult,
 	X11Size,
 };
-use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
+use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use crate::{
 	message::Request,
