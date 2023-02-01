@@ -12,7 +12,6 @@
 
 extern crate self as xrb;
 
-
 use xrbk::{
 	pad,
 	Buf,
