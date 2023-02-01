@@ -1381,8 +1381,6 @@ pub struct ChangeKeyboardMapping<const KEYSYMS_PER_KEYCODE: usize> {
 	/// Keycode::new(previous_keycode.unwrap() + 1)
 	/// # ;
 	/// ```
-	/// Each array (after the first one) is the mapping for the [keycode] one
-	/// greater than the [keycode] of the array before it.
 	///
 	/// [`Keysym::NO_SYMBOL`] should be used to fill in unused [keysym]
 	/// mappings. [`Keysym::NO_SYMBOL`] may appear anywhere in the mappings -
