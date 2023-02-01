@@ -30,7 +30,9 @@ use crate::{
 	message::Request,
 	unit::Sec,
 	x11::{error, reply},
+	Host,
 	String8,
+	Toggle,
 	ToggleOrDefault,
 	Window,
 };
@@ -297,4 +299,107 @@ derive_xrb! {
 	/// [`GetScreenSaver` reply]: reply::GetScreenSaver
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct GetScreenSaver: Request(108) -> reply::GetScreenSaver;
+}
+
+request_error! {
+	pub enum ChangeHostsError for ChangeHosts {
+		Access,
+		Value,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that [adds] or [removes] the specified host from the access
+	/// control list.
+	///
+	/// ***Note: the use of the access control list is deprecated: more secure
+	/// forms of authentication, such as those based on shared secrets or public
+	/// key encryption are recommended.***
+	///
+	/// When access control is enabled and a client attempts to establish a
+	/// connection to the X server, the client's host must be in the access
+	/// control list - if it is not, and the client has not been granted
+	/// permission by some other server-specific functionality, the connection
+	/// is refused.
+	///
+	/// To send this [request], your client must be on the same host as the X
+	/// server, or have been granted permission by some other server-specific
+	/// functionality.
+	///
+	/// # Errors
+	/// An [`Access` error] is generated if your client is not on the same host
+	/// as the X server and has not been granted permission to send this
+	/// [request] in some other server-specific way.
+	///
+	/// [request]: Request
+	///
+	/// [adds]: AddOrRemove::Add
+	/// [removes]: AddOrRemove::Remove
+	///
+	/// [`Access` error]: error::Access
+	#[deprecated(note = "more secure forms of authentication are preferred.")]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ChangeHosts: Request(109, ChangeHostsError) {
+		/// Whether the `host` is to be [added] to or [removed] from the access
+		/// control list.
+		///
+		/// [added]: AddOrRemove::Add
+		/// [removed]: AddOrRemove::Remove
+		#[metabyte]
+		pub mode: AddOrRemove,
+
+		/// The [host] which is to be [added] to or [removed] from the access
+		/// control list.
+		///
+		/// [host]: Host
+		///
+		/// [added]: AddOrRemove::Add
+		/// [removed]: AddOrRemove::Remove
+		pub host: Host,
+	}
+
+	/// A [request] that returns whether access control is [enabled] and the
+	/// [hosts] on the access control list.
+	///
+	/// ***Note: the use of the access control list is deprecated: more secure
+	/// forms of authentication, such as those based on shared secrets or public
+	/// key encryption are recommended.***
+	///
+	/// # Replies
+	/// This [request] generates a [`ListHosts` reply].
+	///
+	/// [hosts]: Host
+	/// [enabled]: Toggle::Enabled
+	/// [request]: Request
+	///
+	/// [`ListHosts` reply]: reply::ListHosts
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ListHosts: Request(110) -> reply::ListHosts;
+}
+
+request_error! {
+	pub enum SetAccessControlError for SetAccessControl {
+		Access,
+		Value,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that sets access control to either [enabled] or [disabled].
+	///
+	/// ***Note: the use of the access control list is deprecated: more secure
+	/// forms of authentication, such as those based on shared secrets or public
+	/// key encryption are recommended.***
+	///
+	/// [enabled]: Toggle::Enabled
+	/// [disabled]: Toggle::Disabled
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct SetAccessControl: Request(111, SetAccessControlError) {
+		/// Whether access control is [enabled] or [disabled].
+		///
+		/// [enabled]: Toggle::Enabled
+		/// [disabled]: Toggle::Disabled
+		#[metabyte]
+		pub mode: Toggle,
+	}
 }

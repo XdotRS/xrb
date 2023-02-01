@@ -1111,7 +1111,7 @@ impl GraphicsOptions {
 		self.dashes.as_ref().map(|__u8(dashes)| dashes)
 	}
 
-	/// Specified the mode with which [arcs] are drawn in
+	/// Specifies the mode with which [arcs] are drawn in
 	/// [`PolyFillArc` requests].
 	///
 	/// See [`ArcMode`] for more information.

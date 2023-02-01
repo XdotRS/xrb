@@ -20,7 +20,7 @@ use derivative::Derivative;
 use xrbk::pad;
 use xrbk_macro::derive_xrb;
 
-use crate::{message::Reply, unit::Sec, x11::request, LengthString8, Toggle};
+use crate::{message::Reply, unit::Sec, x11::request, Host, LengthString8, Toggle};
 
 derive_xrb! {
 	/// The [reply] to a [`QueryExtension` request].
@@ -158,5 +158,46 @@ derive_xrb! {
 		/// [`Expose` events]: crate::x11::event::Expose
 		pub allow_expose_events: Toggle,
 		[_; ..],
+	}
+
+	/// The [reply] to a [`ListHosts` request].
+	///
+	/// [reply]: Reply
+	///
+	/// [`ListHosts` request]: request::ListHosts
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct ListHosts: Reply for request::ListHosts {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: Reply
+		///
+		/// [`Reply::sequence`]: Reply
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		/// Whether access control is [enabled].
+		///
+		/// [enabled]: Toggle::Enabled
+		#[metabyte]
+		pub access_control: Toggle,
+
+		// The length of `hosts`.
+		#[allow(clippy::cast_possible_truncation)]
+		let hosts_len: u16 = hosts => hosts.len() as u16,
+		[_; 22],
+
+		/// The [hosts] that are on the access control list.
+		///
+		/// [hosts]: Host
+		#[context(hosts_len => usize::from(*hosts_len))]
+		pub hosts: Vec<Host>,
+		// Since `Host`s already contain padding, no extra padding needs to be
+		// added at the end here.
 	}
 }

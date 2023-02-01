@@ -4,13 +4,29 @@
 
 extern crate self as xrb;
 
+use array_init::array_init;
 use derive_more::{From, Into};
+use thiserror::Error;
 
 pub use atom::Atom;
 pub use mask::*;
 pub use res_id::*;
 pub use wrapper::*;
-use xrbk::{pad, Buf, ConstantX11Size, ReadError, ReadResult, ReadableWithContext, Wrap};
+
+use xrbk::{
+	pad,
+	Buf,
+	BufMut,
+	ConstantX11Size,
+	ReadError,
+	ReadError::FailedConversion,
+	ReadResult,
+	ReadableWithContext,
+	Wrap,
+	Writable,
+	WriteResult,
+	X11Size,
+};
 use xrbk_macro::{derive_xrb, new, unwrap, ConstantX11Size, Readable, Wrap, Writable, X11Size};
 
 use crate::unit::Px;
@@ -552,26 +568,251 @@ pub struct Arc {
 	pub end_angle: i16,
 }
 
+/// The address family of a host.
+///
+/// This is used in [`Host`].
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, X11Size, Readable, Writable)]
 pub enum HostFamily {
-	Internet,
-	Decnet,
+	/// An IPv4 address.
+	///
+	/// See [`HostAddress::Ipv4`] for more information.
+	Ipv4,
+	/// A DECnet address.
+	///
+	/// See [`HostAddress::DecNet`] for more information.
+	DecNet,
+	/// A chaos address.
+	///
+	/// See [`HostAddress::Chaos`] for more information.
 	Chaos,
+	/// A server-specific address interpreted by the X server.
+	///
+	/// See [`HostAddress::ServerInterpreted`] for more information.
 	ServerInterpreted = 5,
-	InternetV6,
+	/// An IPv6 address.
+	///
+	/// See [`HostAddress::Ipv6`] for more information.
+	Ipv6,
+}
+
+/// The string used to create an [`AsciiString`] was not encoded as ASCII.
+#[derive(Error, Debug)]
+#[error("the provided string was not encoded correctly in ASCII format")]
+pub struct NonAsciiEncoding;
+
+/// A string comprised entirely of ASCII bytes.
+///
+/// This is used for [`HostAddress::ServerInterpreted`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq, X11Size, Writable)]
+pub struct AsciiString(Vec<u8>);
+
+impl AsciiString {
+	/// Creates a new `AsciiString` with the given ASCII-encoded bytes.
+	///
+	/// # Errors
+	/// Returns [`NonAsciiEncoding`] if the given `string` is not encoded
+	/// correctly as ASCII.
+	pub fn new(string: Vec<u8>) -> Result<Self, NonAsciiEncoding> {
+		if string.is_ascii() {
+			Ok(Self(string))
+		} else {
+			Err(NonAsciiEncoding)
+		}
+	}
+
+	/// Returns a slice of the string as bytes.
+	#[must_use]
+	pub fn as_bytes(&self) -> &[u8] {
+		&self.0
+	}
+
+	/// Returns the length of the string.
+	#[must_use]
+	pub fn len(&self) -> usize {
+		self.0.len()
+	}
+
+	/// Returns whether the string is empty.
+	#[must_use]
+	pub fn is_empty(&self) -> bool {
+		self.0.is_empty()
+	}
+}
+
+impl ReadableWithContext for AsciiString {
+	type Context = usize;
+
+	fn read_with(buf: &mut impl Buf, length: &usize) -> ReadResult<Self> {
+		Ok(Self(<Vec<u8>>::read_with(buf, length)?))
+	}
+}
+
+/// The address used in a [host].
+///
+/// [host]: Host
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub enum HostAddress {
+	/// An IPv4 address.
+	Ipv4([u8; 4]),
+	/// A DECnet address.
+	///
+	/// The first byte contains the least significant 8 bits of the node number.
+	///
+	/// The second byte contains the most significant 2 bits of the node number
+	/// in its least significant 2 bits, and the area in the most significant 6
+	/// bits of the byte.
+	DecNet([u8; 2]),
+	/// A chaos address.
+	///
+	/// The first byte is the host number.
+	///
+	/// The second byte is the subnet number.
+	Chaos([u8; 2]),
+	/// An address type interpreted by the X server.
+	ServerInterpreted {
+		/// The type of address.
+		///
+		/// Address types and the syntax for their values are defined elsewhere.
+		address_type: AsciiString,
+		/// The value of the address.
+		///
+		/// Address types and the syntax for their values are defined elsewhere.
+		address_value: AsciiString,
+	},
+	/// An IPv6 address.
+	Ipv6([u8; 16]),
+}
+
+impl HostAddress {
+	/// The [`HostFamily`] associated with this address.
+	#[must_use]
+	pub const fn family(&self) -> HostFamily {
+		match self {
+			Self::Ipv4(..) => HostFamily::Ipv4,
+			Self::DecNet(..) => HostFamily::DecNet,
+			Self::Chaos(..) => HostFamily::Chaos,
+			Self::ServerInterpreted { .. } => HostFamily::ServerInterpreted,
+			Self::Ipv6(..) => HostFamily::Ipv6,
+		}
+	}
+}
+
+impl X11Size for HostAddress {
+	fn x11_size(&self) -> usize {
+		match self {
+			Self::Ipv4(address) => address.x11_size(),
+			Self::DecNet(address) | Self::Chaos(address) => address.x11_size(),
+
+			Self::ServerInterpreted {
+				address_type,
+				address_value,
+			} => {
+				if address_value.is_empty() {
+					address_type.x11_size()
+				} else {
+					address_type.x11_size() + 1 + address_value.x11_size()
+				}
+			},
+
+			Self::Ipv6(address) => address.x11_size(),
+		}
+	}
+}
+
+impl ReadableWithContext for HostAddress {
+	type Context = (HostFamily, usize);
+
+	fn read_with(buf: &mut impl Buf, (family, length): &(HostFamily, usize)) -> ReadResult<Self> {
+		let buf = &mut buf.take(*length);
+
+		match family {
+			HostFamily::Ipv4 => Ok(Self::Ipv4([
+				buf.get_u8(),
+				buf.get_u8(),
+				buf.get_u8(),
+				buf.get_u8(),
+			])),
+			HostFamily::DecNet => Ok(Self::DecNet([buf.get_u8(), buf.get_u8()])),
+			HostFamily::Chaos => Ok(Self::Chaos([buf.get_u8(), buf.get_u8()])),
+
+			HostFamily::ServerInterpreted => {
+				let mut address_type = vec![];
+				let mut address_value = vec![];
+
+				while buf.has_remaining() {
+					match buf.get_u8() {
+						0 => {
+							buf.advance(1);
+							address_value = <Vec<u8>>::read_with(buf, &buf.remaining())?;
+
+							break;
+						},
+
+						byte => address_type.push(byte),
+					}
+				}
+
+				match (
+					AsciiString::new(address_type),
+					AsciiString::new(address_value),
+				) {
+					(Ok(address_type), Ok(address_value)) => Ok(Self::ServerInterpreted {
+						address_type,
+						address_value,
+					}),
+
+					(Err(error), _) | (_, Err(error)) => Err(FailedConversion(Box::new(error))),
+				}
+			},
+
+			HostFamily::Ipv6 => Ok(Self::Ipv6(array_init(|_| buf.get_u8()))),
+		}
+	}
+}
+
+impl Writable for HostAddress {
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		match self {
+			Self::Ipv4(address) => address.write_to(buf)?,
+			Self::DecNet(address) | Self::Chaos(address) => address.write_to(buf)?,
+
+			Self::ServerInterpreted {
+				address_type,
+				address_value,
+			} => {
+				address_type.write_to(buf)?;
+
+				if !address_value.is_empty() {
+					buf.put_u8(0);
+					address_value.write_to(buf)?;
+				}
+			},
+
+			Self::Ipv6(address) => address.write_to(buf)?,
+		}
+
+		Ok(())
+	}
 }
 
 derive_xrb! {
+	/// A host, as provided in a [`ChangeHosts` request].
+	///
+	/// [`ChangeHosts` request]: crate::x11::request::ChangeHosts
 	#[derive(Clone, Eq, PartialEq, Hash, Debug, new, X11Size, Readable, Writable)]
 	pub struct Host {
-		pub family: HostFamily,
+		// The `address`' family.
+		let family: HostFamily = address => address.family(),
 		_,
 
+		// The size of `address` in bytes.
 		#[allow(clippy::cast_possible_truncation)]
-		let address_len: u16 = address => address.len() as u16,
-
-		#[context(address_len => *address_len as usize)]
-		pub address: Vec<u8>,
+		let address_size: u16 = address => address.x11_size() as u16,
+		/// The host's address.
+		///
+		/// See [`HostAddress`] for more information.
+		#[context(family, address_size => (*family, *address_size as usize))]
+		pub address: HostAddress,
 		[_; address => pad(address)],
 	}
 }
