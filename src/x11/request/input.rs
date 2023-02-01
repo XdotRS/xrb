@@ -1619,15 +1619,15 @@ derive_xrb! {
 		#[doc(alias("keyboard_options"))]
 		pub changed_options: KeyboardOptions,
 	}
-	
+
 	/// A [request] that returns the current [keyboard options].
-	/// 
+	///
 	/// # Replies
 	/// This [request] generates a [`GetKeyboardOptions` reply].
-	/// 
+	///
 	/// [keyboard options]: KeyboardOptions
 	/// [request]: Request
-	/// 
+	///
 	/// [`GetKeyboardOptions` reply]: reply::GetKeyboardOptions
 	#[doc(alias("GetKeyboardControl"))]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
