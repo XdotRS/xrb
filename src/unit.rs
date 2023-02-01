@@ -4,7 +4,10 @@
 
 //! Types representing units like millimeters or hertz.
 
-use std::fmt::{Display, Formatter};
+use std::{
+	cmp::Ordering,
+	fmt::{Display, Formatter},
+};
 
 use derive_more::{
 	Add,
@@ -289,7 +292,7 @@ impl Percentage {
 	/// Creates a new percentage.
 	///
 	/// # Errors
-	/// Return a [`ValueOutOfBounds`] error if the `percentage > 100`.
+	/// Returns a [`ValueOutOfBounds`] error if the `percentage > 100`.
 	pub const fn new(percentage: u8) -> Result<Self, ValueOutOfBounds<u8>> {
 		match percentage {
 			percentage if percentage <= 100 => Ok(Self(percentage)),
@@ -315,9 +318,113 @@ impl Percentage {
 
 	/// Returns the wrapped percentage value.
 	#[must_use]
-	pub const fn unwrap(self) -> u8 {
+	pub const fn unwrap(&self) -> u8 {
 		self.0
 	}
 }
 
+impl PartialEq<u8> for Percentage {
+	fn eq(&self, other: &u8) -> bool {
+		self.0 == *other
+	}
+}
+
+impl PartialEq<Percentage> for u8 {
+	fn eq(&self, other: &Percentage) -> bool {
+		*self == other.0
+	}
+}
+
+impl PartialOrd<u8> for Percentage {
+	fn partial_cmp(&self, other: &u8) -> Option<Ordering> {
+		self.0.partial_cmp(other)
+	}
+}
+
+impl PartialOrd<Percentage> for u8 {
+	fn partial_cmp(&self, other: &Percentage) -> Option<Ordering> {
+		self.partial_cmp(&other.0)
+	}
+}
+
 impl_xrbk_traits!(Percentage(u8));
+
+/// A value measured as a percentage from -100% to 100%.
+#[derive(Debug, Hash, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SignedPercentage(i8);
+
+impl SignedPercentage {
+	/// Calls the provided closure with a reference to the contained value.
+	pub fn inspect(&self, inspect: impl FnOnce(i8)) {
+		inspect(self.0);
+	}
+}
+
+impl Display for SignedPercentage {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{}%", self.0)
+	}
+}
+
+impl SignedPercentage {
+	/// Creates a new signed percentage.
+	///
+	/// # Errors
+	/// Returns a [`ValueOutOfBounds`] error if `percentage < -100` or
+	/// `percentage > 100`.
+	pub const fn new(percentage: i8) -> Result<Self, ValueOutOfBounds<i8>> {
+		match percentage {
+			percentage if percentage >= -100 && percentage <= 100 => Ok(Self(percentage)),
+
+			other => Err(ValueOutOfBounds {
+				min: -100,
+				max: 100,
+				found: other,
+			}),
+		}
+	}
+
+	/// Creates a new signed percentage without ensuring it has the right
+	/// bounds.
+	///
+	/// # Safety
+	/// Callers of this function must ensure that the given percentage satisfies
+	/// the bounds `-100 <= percentage <= 100`. Creating a [`SignedPercentage`]
+	/// with a value less than -100 or greater than 100 is Undefined Behavior.
+	#[must_use]
+	pub const unsafe fn new_unchecked(percentage: i8) -> Self {
+		Self(percentage)
+	}
+
+	/// Returns the wrapped percentage value.
+	#[must_use]
+	pub const fn unwrap(&self) -> i8 {
+		self.0
+	}
+}
+
+impl PartialEq<i8> for SignedPercentage {
+	fn eq(&self, other: &i8) -> bool {
+		self.0 == *other
+	}
+}
+
+impl PartialEq<SignedPercentage> for i8 {
+	fn eq(&self, other: &SignedPercentage) -> bool {
+		*self == other.0
+	}
+}
+
+impl PartialOrd<i8> for SignedPercentage {
+	fn partial_cmp(&self, other: &i8) -> Option<Ordering> {
+		self.0.partial_cmp(other)
+	}
+}
+
+impl PartialOrd<SignedPercentage> for i8 {
+	fn partial_cmp(&self, other: &SignedPercentage) -> Option<Ordering> {
+		self.partial_cmp(&other.0)
+	}
+}
+
+impl_xrbk_traits!(SignedPercentage(i8));

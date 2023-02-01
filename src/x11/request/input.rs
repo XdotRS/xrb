@@ -20,6 +20,7 @@ use std::ops::RangeInclusive;
 use crate::{
 	message::Request,
 	set::KeyboardOptions,
+	unit::SignedPercentage,
 	x11::{error, reply},
 	Any,
 	AnyModifierKeyMask,
@@ -1632,4 +1633,48 @@ derive_xrb! {
 	#[doc(alias("GetKeyboardControl"))]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct GetKeyboardOptions: Request(103) -> reply::GetKeyboardOptions;
+
+	/// A [request] that rings the bell on the keyboard at the given volume.
+	///
+	/// The given volume is relative to the base [`bell_volume`] of the
+	/// keyboard.
+	///
+	/// The volume at which the bell is rung is decided by (where `base_volume`
+	/// is the configured [`bell_volume`], and `volume` is the volume specified
+	/// in this [request]):
+	/// ```
+	/// # use xrb::unit::SignedPercentage;
+	/// #
+	/// # fn main() -> Result<(), xrb::unit::ValueOutOfBounds<i8>> {
+	/// #     let base_volume = SignedPercentage::new(100)?;
+	/// #     let volume = SignedPercentage::new(50)?;
+	/// #
+	/// let delta =
+	///     ((isize::from(base_volume.unwrap()) * isize::from(volume.unwrap())) / 100) as i8;
+	///
+	/// #     let _ =
+	/// if volume >= 0 {
+	///     SignedPercentage::new(base_volume.unwrap() - delta + volume.unwrap())?
+	/// } else {
+	///     SignedPercentage::new(base_volume.unwrap() + delta)?
+	/// }
+	/// #     ;
+	/// #
+	/// #     Ok(())
+	/// # }
+	/// ```
+	///
+	/// [request]: Request
+	///
+	/// [`bell_volume`]: KeyboardOptions::bell_volume
+	#[doc(alias("Bell"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct RingBell: Request(104, error::Value) {
+		/// The volume at which the bell is rung relative to the base
+		/// [`bell_volume`].
+		///
+		/// [`bell_volume`]: KeyboardOptions::bell_volume
+		#[doc(alias("percent"))]
+		pub volume: SignedPercentage,
+	}
 }
