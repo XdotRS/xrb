@@ -23,8 +23,11 @@ use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use crate::{
 	message::Reply,
-	unit::{Hz, Ms, Percentage},
-	x11::{request, request::RevertFocus},
+	unit::{Hz, Ms, Percentage, Px},
+	x11::{
+		request,
+		request::{Fraction, RevertFocus},
+	},
 	Coords,
 	FocusWindow,
 	GrabStatus,
@@ -545,5 +548,40 @@ derive_xrb! {
 		/// [`KeyboardOptions::auto_repeat_mode`]: crate::set::KeyboardOptions::auto_repeat_mode
 		#[doc(alias("auto_repeats"))]
 		pub auto_repeat_modes: [u8; 32],
+	}
+
+	/// The [reply] to a [`GetCursorOptions` request].
+	///
+	/// [reply]: Reply
+	///
+	/// [`GetCursorOptions` request]: request::GetCursorOptions
+	#[doc(alias("GetPointerControl", "GetPointerOptions", "GetCursorControl"))]
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct GetCursorOptions: Reply for request::GetCursorOptions {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: Reply
+		///
+		/// [`Reply::sequence`]: Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		/// The multiplier applied to the acceleration of the cursor when the
+		/// [`threshold`] is exceeded.
+		///
+		/// [`threshold`]: GetCursorOptions::threshold
+		pub acceleration: Fraction<Px<u16>>,
+		/// The threshold speed which the cursor must exceed for the
+		/// [`acceleration`] multiplier to be applied.
+		///
+		/// [`acceleration`]: GetCursorOptions::acceleration
+		pub threshold: Px<u16>,
+		[_; ..],
 	}
 }

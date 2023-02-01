@@ -12,15 +12,26 @@
 
 extern crate self as xrb;
 
-use xrbk::{Buf, BufMut, ConstantX11Size, ReadResult, Readable, Writable, WriteResult, X11Size};
+use xrbk::{
+	Buf,
+	BufMut,
+	ConstantX11Size,
+	ReadError,
+	ReadResult,
+	Readable,
+	Writable,
+	WriteResult,
+	X11Size,
+};
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use std::ops::RangeInclusive;
+use thiserror::Error;
 
 use crate::{
 	message::Request,
 	set::KeyboardOptions,
-	unit::SignedPercentage,
+	unit::{Px, SignedPercentage},
 	x11::{error, reply},
 	Any,
 	AnyModifierKeyMask,
@@ -1677,4 +1688,148 @@ derive_xrb! {
 		#[doc(alias("percent"))]
 		pub volume: SignedPercentage,
 	}
+}
+
+/// Represents a type that may be chosen as its default value.
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub enum OrDefault<T> {
+	/// The default value is chosen.
+	Default,
+	/// The default value is not chosen.
+	Other(T),
+}
+
+impl ConstantX11Size for OrDefault<Px<u8>> {
+	const X11_SIZE: usize = <Px<i16>>::X11_SIZE;
+}
+
+impl X11Size for OrDefault<Px<u8>> {
+	fn x11_size(&self) -> usize {
+		Self::X11_SIZE
+	}
+}
+
+impl Readable for OrDefault<Px<u8>> {
+	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		match buf.get_i16() {
+			default if default == -1 => Ok(Self::Default),
+
+			other => match u8::try_from(other) {
+				Ok(value) => Ok(Self::Other(Px(value))),
+				Err(error) => Err(ReadError::FailedConversion(Box::new(error))),
+			},
+		}
+	}
+}
+
+impl Writable for OrDefault<Px<u8>> {
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		match self {
+			Self::Default => buf.put_i16(-1),
+			Self::Other(Px(value)) => i16::from(*value).write_to(buf)?,
+		}
+
+		Ok(())
+	}
+}
+
+/// A fraction with a numerator and a denominator.
+///
+/// The denominator may not be zero.
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub struct Fraction<T: X11Size + Readable + Writable>(T, T);
+
+impl<T: X11Size + Readable + Writable> Fraction<T> {
+	/// Returns the fraction's numerator.
+	#[must_use]
+	pub const fn numerator(&self) -> &T {
+		&self.0
+	}
+
+	/// Returns the fraction's denominator.
+	#[must_use]
+	pub const fn denominator(&self) -> &T {
+		&self.1
+	}
+
+	/// Returns a pair of the fraction's numerator (first) and denominator
+	/// (second).
+	#[must_use]
+	pub const fn pair(&self) -> (&T, &T) {
+		(&self.0, &self.1)
+	}
+}
+
+/// A denominator of zero was provided to a [`Fraction`].
+#[derive(Error, Debug)]
+#[error("denominator was specified as 0; cannot divide by zero")]
+pub struct DivideByZero;
+
+impl Fraction<OrDefault<Px<u8>>> {
+	/// Creates a new [`Fraction`] with the given `numerator` and `denominator`.
+	///
+	/// # Errors
+	/// A [`DivideByZero`] error is returned if the denominator is zero.
+	pub const fn new(
+		numerator: OrDefault<Px<u8>>, denominator: OrDefault<Px<u8>>,
+	) -> Result<Self, DivideByZero> {
+		match denominator {
+			OrDefault::Other(Px(0)) => Err(DivideByZero),
+			denominator => Ok(Self(numerator, denominator)),
+		}
+	}
+}
+
+impl Fraction<Px<u16>> {
+	/// Creates a new [`Fraction`] with the given `numerator` and `denominator`.
+	///
+	/// # Errors
+	/// A [`DivideByZero`] error is returned if the denominator is zero.
+	pub const fn new(numerator: Px<u16>, denominator: Px<u16>) -> Result<Self, DivideByZero> {
+		match denominator {
+			Px(0) => Err(DivideByZero),
+			denominator => Ok(Self(numerator, denominator)),
+		}
+	}
+}
+
+derive_xrb! {
+	/// A [request] that changes the options configured for the cursor.
+	///
+	/// See also: [`GetCursorOptions`], [`ChangeKeyboardOptions`].
+	///
+	/// [request]: Request
+	#[doc(alias("ChangePointerControl", "ChangePointerOptions", "ChangeCursorControl"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ChangeCursorOptions: Request(105, error::Value) {
+		/// A multiplier applied to the acceleration of the cursor when the
+		/// [`threshold`] is exceeded.
+		///
+		/// [`threshold`]: ChangeCursorOptions::threshold
+		#[doc(alias("acceleration_numerator", "acceleration_denominator"))]
+		pub acceleration: Fraction<OrDefault<Px<u8>>>,
+		/// The threshold speed which the cursor must exceed for the
+		/// [`acceleration`] multiplier to be applied.
+		///
+		/// [`acceleration`]: ChangeCursorOptions::acceleration
+		pub threshold: OrDefault<Px<u8>>,
+
+		// TODO: undocumented in the core protocol
+		pub do_acceleration: bool,
+		// TODO: undocumented in the core protocol
+		pub do_threshold: bool,
+	}
+
+	/// A [request] that gets the current [cursor options].
+	///
+	/// See also: [`ChangeCursorOptions`].
+	///
+	/// [cursor options]: ChangeCursorOptions
+	/// [request]: Request
+	#[doc(alias("GetPointerControl", "GetPointerOptions", "GetCursorControl"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GetCursorOptions: Request(106) -> reply::GetCursorOptions;
 }
