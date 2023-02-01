@@ -160,14 +160,15 @@ derive_xrb! {
 		[_; ..],
 	}
 
-	/// The [reply] to a [`ListHosts` request].
+	/// The [reply] to a [`QueryAccessControl` request].
 	///
 	/// [reply]: Reply
 	///
-	/// [`ListHosts` request]: request::ListHosts
+	/// [`QueryAccessControl` request]: request::QueryAccessControl
+	#[doc(alias("ListHosts"))]
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
 	#[derivative(Hash, PartialEq, Eq)]
-	pub struct ListHosts: Reply for request::ListHosts {
+	pub struct QueryAccessControl: Reply for request::QueryAccessControl {
 		/// The sequence number identifying the [request] that generated this
 		/// [reply].
 		///

@@ -368,15 +368,17 @@ derive_xrb! {
 	/// key encryption are recommended.***
 	///
 	/// # Replies
-	/// This [request] generates a [`ListHosts` reply].
+	/// This [request] generates a [`QueryAccessControl` reply].
 	///
 	/// [hosts]: Host
 	/// [enabled]: Toggle::Enabled
 	/// [request]: Request
 	///
-	/// [`ListHosts` reply]: reply::ListHosts
+	/// [`QueryAccessControl` reply]: reply::QueryAccessControl
+	#[doc(alias("ListHosts"))]
+	#[deprecated(note = "more secure forms of authentication are preferred.")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
-	pub struct ListHosts: Request(110) -> reply::ListHosts;
+	pub struct QueryAccessControl: Request(110) -> reply::QueryAccessControl;
 }
 
 request_error! {
@@ -393,8 +395,11 @@ derive_xrb! {
 	/// forms of authentication, such as those based on shared secrets or public
 	/// key encryption are recommended.***
 	///
+	/// [request]: Request
+	///
 	/// [enabled]: Toggle::Enabled
 	/// [disabled]: Toggle::Disabled
+	#[deprecated(note = "more secure forms of authentication are preferred.")]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct SetAccessControl: Request(111, SetAccessControlError) {
 		/// Whether access control is [enabled] or [disabled].
