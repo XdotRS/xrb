@@ -31,6 +31,7 @@ use crate::{
 	unit::Sec,
 	x11::{error, reply},
 	Host,
+	KillClientTarget,
 	String8,
 	Toggle,
 	ToggleOrDefault,
@@ -403,3 +404,131 @@ derive_xrb! {
 		pub mode: Toggle,
 	}
 }
+
+/// Defines what happens to a client's resources when its connection ends.
+///
+/// The default mode (i.e. the mode set when a connection is first set up)
+/// is [`Destroy`].
+///
+/// [`Destroy`]: RetainResourcesMode::Destroy
+#[doc(alias("CloseDownMode"))]
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub enum RetainResourcesMode {
+	/// All of the client's resources are destroyed immediately.
+	///
+	/// Descendents of [windows] created by the client that are
+	/// [chosen to be saved] are reparented as described in the
+	/// [`ChangeSavedWindows` request].
+	///
+	/// Ending a connection with [`RetainResourcesMode::Destroy`] will, if it is
+	/// the only remaining connection to the X server, cause a server reset: the
+	/// X server's state is reset as if it had just been started. That includes
+	/// destroying remaining resources retained due to the end of
+	/// [`RetainResourcesMode::RetainPermanently`] or
+	/// [`RetainResourcesMode::RetainTemporarily`] connections.
+	///
+	/// [windows]: Window
+	/// [chosen to be saved]: ChangeSavedWindows
+	///
+	/// [`ChangeSavedWindows` request]: ChangeSavedWindows
+	Destroy,
+
+	/// All of the client's resources are marked as permanently retained.
+	///
+	/// Ending a connection with [`RetainResourcesMode::RetainPermanently`] will
+	/// not cause the X server to reset.
+	#[doc(alias("RetainPermanent"))]
+	RetainPermanently,
+	/// All of the client's resources are marked as temporarily retained.
+	///
+	/// Ending a connection with [`RetainResourcesMode::RetainPermanently`] will
+	/// not cause the X server to reset.
+	#[doc(alias("RetainTemporary"))]
+	RetainTemporarily,
+}
+
+derive_xrb! {
+	/// A [request] that changes your client's [`RetainResourcesMode`].
+	///
+	/// The default mode (i.e. the mode set when a connection is first set up)
+	/// is [`RetainResourcesMode::Destroy`].
+	///
+	/// See [`RetainResourcesMode`] for more information.
+	///
+	/// [request]: Request
+	#[doc(alias("SetCloseDownMode"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct SetRetainResourcesMode: Request(112, error::Value) {
+		/// The [`RetainResourcesMode`] set for your client.
+		///
+		/// See [`RetainResourcesMode`] for more information.
+		#[metabyte]
+		pub mode: RetainResourcesMode,
+	}
+
+	/// A [request] that either kills the `target` client or deletes retained
+	/// resources.
+	///
+	/// If [`KillClientTarget::KillClient`] is specified, the client which
+	/// created the given resource is killed if it still has an active
+	/// connection. If its connection has already ended, all resources retained
+	/// by that client (whether with [`RetainResourcesMode::RetainTemporarily`]
+	/// or with [`RetainResourcesMode::RetainPermanently`]) are destroyed.
+	///
+	/// If [`KillClientTarget::DestroyTemporarilyRetainedResources`] is
+	/// specified, all resources of all clients whose connections have ended
+	/// with [`RetainResourcesMode::RetainTemporarily`] are destroyed.
+	///
+	/// [request]: Request
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct KillClient: Request(113, error::Value) {
+		/// The target of this `KillClient` [request].
+		///
+		/// See [`KillClient`] and [`KillClientTarget`] for more information.
+		///
+		/// [request]: Request
+		pub target: KillClientTarget,
+	}
+}
+
+// #[derive(Debug, Hash, PartialEq, Eq)]
+// pub struct NoOp<const UNUSED_UNITS: usize>;
+//
+// impl<const UNUSED_UNITS: usize> Request for NoOp<UNUSED_UNITS> {
+// 	type OtherErrors = Infallible;
+// 	type Reply = ();
+//
+// 	const MAJOR_OPCODE: u8 = 127;
+// 	const MINOR_OPCODE: Option<u16> = None;
+// }
+//
+// impl<const UNUSED_UNITS: usize> ConstantX11Size for NoOp<UNUSED_UNITS> {
+// 	const X11_SIZE: usize = {
+// 		const HEADER: usize = 4;
+//
+// 		HEADER + (UNUSED_UNITS * 4)
+// 	};
+// }
+//
+// impl<const UNUSED_UNITS: usize> X11Size for NoOp<UNUSED_UNITS> {
+// 	fn x11_size(&self) -> usize {
+// 		Self::X11_SIZE
+// 	}
+// }
+//
+// impl<const UNUSED_UNITS: usize> Writable for NoOp<UNUSED_UNITS> {
+// 	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+// 		let buf = &mut buf.limit(self.x11_size());
+//
+// 		Self::MAJOR_OPCODE.write_to(buf)?;
+// 		// Unused metabyte.
+// 		buf.put_u8(0);
+// 		// Message length.
+// 		self.length().write_to(buf)?;
+//
+// 		// Unused bytes.
+// 		buf.put_bytes(0, UNUSED_UNITS * 4);
+//
+// 		Ok(())
+// 	}
+// }
