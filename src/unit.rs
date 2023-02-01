@@ -24,7 +24,17 @@ use derive_more::{
 };
 use thiserror::Error;
 
-use xrbk::{Buf, BufMut, ConstantX11Size, ReadResult, Readable, Writable, WriteResult, X11Size};
+use xrbk::{
+	Buf,
+	BufMut,
+	ConstantX11Size,
+	ReadResult,
+	Readable,
+	Wrap,
+	Writable,
+	WriteResult,
+	X11Size,
+};
 
 /// An error generated when a value is outside of the required bounds.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Error)]
@@ -222,6 +232,75 @@ where
 }
 
 impl_xrbk_traits!(Ms<Num>(Num));
+
+/// A value measured in seconds.
+#[derive(
+	Debug,
+	Hash,
+	Copy,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Add,
+	AddAssign,
+	Sub,
+	SubAssign,
+	Mul,
+	MulAssign,
+	Div,
+	DivAssign,
+	Rem,
+	RemAssign,
+	Sum,
+)]
+pub struct Sec<Num>(pub Num);
+
+impl<Num> Sec<Num> {
+	/// Maps a `Sec<Num>` to `Sec<Output>` by applying the provided closure to
+	/// the contained value.
+	pub fn map<Output>(self, map: impl FnOnce(Num) -> Output) -> Sec<Output> {
+		Sec(map(self.0))
+	}
+
+	/// Calls the provided closure with a reference to the contained value.
+	pub fn inspect(&self, inspect: impl FnOnce(&Num)) {
+		inspect(&self.0);
+	}
+}
+
+impl<Num> Display for Sec<Num>
+where
+	Num: Display,
+{
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{} s", self.0)
+	}
+}
+
+impl<Num> Wrap for Sec<Num>
+where
+	Num: Copy + Clone + Readable + Writable + ConstantX11Size + From<Self> + TryFrom<u64>,
+	Self: TryFrom<Num>,
+	u64: From<Num>,
+{
+	type Integer = Num;
+}
+
+impl<Num> From<Num> for Sec<Num> {
+	fn from(num: Num) -> Self {
+		Self(num)
+	}
+}
+
+impl From<Sec<u16>> for u16 {
+	fn from(Sec(num): Sec<u16>) -> Self {
+		num
+	}
+}
+
+impl_xrbk_traits!(Sec<Num>(Num));
 
 /// A value measured in hertz.
 #[derive(

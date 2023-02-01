@@ -20,7 +20,7 @@ use derivative::Derivative;
 use xrbk::pad;
 use xrbk_macro::derive_xrb;
 
-use crate::{message::Reply, x11::request, LengthString8};
+use crate::{message::Reply, unit::Sec, x11::request, LengthString8, Toggle};
 
 derive_xrb! {
 	/// The [reply] to a [`QueryExtension` request].
@@ -98,5 +98,65 @@ derive_xrb! {
 		#[context(names_len => usize::from(*names_len))]
 		pub names: Vec<LengthString8>,
 		[_; names => pad(names)],
+	}
+
+	/// The [reply] to a [`GetScreenSaver` request].
+	///
+	/// [reply]: Reply
+	///
+	/// [`GetScreenSaver` request]: request::GetScreenSaver
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct GetScreenSaver: Reply for request::GetScreenSaver {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: Reply
+		///
+		/// [`Reply::sequence`]: Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		/// Whether the screensaver is enabled and, if so, how long without
+		/// input before it is activated.
+		///
+		/// This is [`Some`] if the screensaver is enabled, and [`None`] if it
+		/// is not.
+		///
+		/// See [`SetScreenSaver::timeout`] for more information.
+		///
+		/// [`SetScreenSaver::timeout`]: request::SetScreenSaver::timeout
+		pub timeout: Option<Sec<u16>>,
+		/// A hint for screensavers with periodic changes as to the interval
+		/// between those changes.
+		///
+		/// If this is [`None`], this hints that no periodic change should be
+		/// made.
+		///
+		/// See [`SetScreenSaver::interval`] for more information.
+		///
+		/// [`SetScreenSaver::interval`]: request::SetScreenSaver::interval
+		pub interval: Option<Sec<u16>>,
+
+		/// Whether it is preferred that displays that support blanking go blank
+		/// when the screensaver is activated.
+		///
+		/// See [`SetScreenSaver::prefer_blanking`] for more information.
+		///
+		/// [`SetScreenSaver::prefer_blanking`]: request::SetScreenSaver::prefer_blanking
+		pub prefer_blanking: Toggle,
+		/// Whether screensavers which generate [`Expose` events] are allowed.
+		///
+		/// See [`SetScreenSaver::allow_expose_events`] for more information.
+		///
+		/// [`SetScreenSaver::allow_expose_events`]: request::SetScreenSaver::allow_expose_events
+		///
+		/// [`Expose` events]: crate::x11::event::Expose
+		pub allow_expose_events: Toggle,
+		[_; ..],
 	}
 }
