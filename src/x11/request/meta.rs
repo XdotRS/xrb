@@ -25,7 +25,7 @@ use xrbk::{
 	WriteResult,
 	X11Size,
 };
-use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
+use xrbk_macro::{derive_xrb, ConstantX11Size, Readable, Writable, X11Size};
 
 use crate::{
 	message::Request,
@@ -375,7 +375,7 @@ derive_xrb! {
 	/// [request]: Request
 	///
 	/// [`ListHosts` reply]: reply::ListHosts
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct ListHosts: Request(110) -> reply::ListHosts;
 }
 
@@ -395,7 +395,7 @@ derive_xrb! {
 	///
 	/// [enabled]: Toggle::Enabled
 	/// [disabled]: Toggle::Disabled
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct SetAccessControl: Request(111, SetAccessControlError) {
 		/// Whether access control is [enabled] or [disabled].
 		///
@@ -458,7 +458,7 @@ derive_xrb! {
 	///
 	/// [request]: Request
 	#[doc(alias("SetCloseDownMode"))]
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct SetRetainResourcesMode: Request(112, error::Value) {
 		/// The [`RetainResourcesMode`] set for your client.
 		///
@@ -481,7 +481,7 @@ derive_xrb! {
 	/// with [`RetainResourcesMode::RetainTemporarily`] are destroyed.
 	///
 	/// [request]: Request
-	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
 	pub struct KillClient: Request(113, error::Value) {
 		/// The target of this `KillClient` [request].
 		///
@@ -489,6 +489,54 @@ derive_xrb! {
 		///
 		/// [request]: Request
 		pub target: KillClientTarget,
+	}
+}
+
+/// Whether a [`ForceScreenSaver` request] [resets the activation timer] or
+/// [activates the screensaver]
+///
+/// [resets the activation timer]: ForceScreenSaverMode::Reset
+/// [activates the screensaver]: ForceScreenSaverMode::Activate
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub enum ForceScreenSaverMode {
+	/// If the screensaver is currently [enabled], the activation timer (i.e.
+	/// the time left before its activation) is reset and, if the screensaver is
+	/// active, the screensaver is deactivated.
+	///
+	/// [enabled]: ToggleOrDefault::Enabled
+	Reset,
+
+	/// If the screensaver is not currently active, it is forcibly activated.
+	///
+	/// The screensaver is activated even if [`timeout`] is [`Disabled`].
+	///
+	/// [`timeout`]: SetScreenSaver::timeout
+	/// [`Disabled`]: ToggleOrDefault::Disabled
+	Activate,
+}
+
+derive_xrb! {
+	/// A [request] that either
+	/// [resets the timer until the screensaver is activated][reset], or
+	/// [forcibly activates the screensaver][activate].
+	///
+	/// See [`ForceScreenSaverMode`] for more information.
+	///
+	/// [request]: Request
+	///
+	/// [reset]: ForceScreenSaverMode::Reset
+	/// [activate]: ForceScreenSaverMode::Activate
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ForceScreenSaver: Request(115, error::Value) {
+		/// Whether the screensaver's [activation timer is reset] or the
+		/// screensaver is [forcibly activated].
+		///
+		/// See [`ForceScreenSaverMode`] for more information.
+		///
+		/// [activation timer is reset]: ForceScreenSaverMode::Reset
+		/// [forcibly activated]: ForceScreenSaverMode::Activate
+		#[metabyte]
+		pub mode: ForceScreenSaverMode,
 	}
 }
 
