@@ -23,6 +23,7 @@ use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
 use crate::{
 	message::Reply,
+	unit::{Hz, Ms, Percentage},
 	x11::{request, request::RevertFocus},
 	Coords,
 	FocusWindow,
@@ -30,6 +31,7 @@ use crate::{
 	Keysym,
 	ModifierMask,
 	Timestamp,
+	Toggle,
 	Window,
 };
 
@@ -454,5 +456,94 @@ impl Writable for GetKeyboardMapping {
 		self.mappings.write_to(buf)?;
 
 		Ok(())
+	}
+}
+
+derive_xrb! {
+	/// The [reply] to a [`GetKeyboardOptions` request].
+	///
+	/// [reply]: Reply
+	///
+	/// [`GetKeyboardOptions` request]: request::GetKeyboardOptions
+	#[doc(alias("GetKeyboardControl"))]
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct GetKeyboardOptions: Reply for request::GetKeyboardOptions {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: Reply
+		///
+		/// [`Reply::sequence`]: Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		/// Whether the global [auto repeat mode] is enabled.
+		///
+		/// If the global auto repeat mode is disabled, no keys can have auto
+		/// repeat applied. If the global auto repeat mode is enabled, keys
+		/// which have their own auto repeat enabled will be repeated.
+		///
+		/// [auto repeat mode]: crate::set::KeyboardOptions::auto_repeat_mode
+		#[doc(alias("global_auto_repeat"))]
+		#[metabyte]
+		pub global_auto_repeat_mode: Toggle,
+
+		/// A bitmask representing whether each [LED] is lit.
+		///
+		/// The least significant bit represents the state of [LED] 1. The most
+		/// significant bit represents the state of [LED] 32.
+		///
+		/// [LED]: crate::set::Led
+		pub led_mask: u32,
+
+		/// The volume of key clicks.
+		///
+		/// See [`KeyboardOptions::key_click_volume`] for more information.
+		///
+		/// [`KeyboardOptions::key_click_volume`]: crate::set::KeyboardOptions::key_click_volume
+		#[doc(alias("key_click_percent"))]
+		pub key_click_volume: Percentage,
+
+		/// The volume of the bell.
+		///
+		/// See [`KeyboardOptions::bell_volume`] for more information.
+		///
+		/// [`KeyboardOptions::bell_volume`]: crate::set::KeyboardOptions::bell_volume
+		#[doc(alias("bell_percent"))]
+		pub bell_volume: Percentage,
+		/// The pitch of the bell.
+		///
+		/// See [`KeyboardOptions::bell_pitch`] for more information.
+		///
+		/// [`KeyboardOptions::bell_pitch`]: crate::set::KeyboardOptions::bell_pitch
+		pub bell_pitch: Hz<u16>,
+		/// The duration for which the bell rings.
+		///
+		/// See [`KeyboardOptions::bell_duration`] for more information.
+		///
+		/// [`KeyboardOptions::bell_duration`]: crate::set::KeyboardOptions::bell_duration
+		pub bell_duration: Ms<u16>,
+		[_; 2],
+
+		/// A bit vector representing whether each key has [auto repeat mode]
+		/// enabled.
+		///
+		/// Byte `N`, starting at `0`, contains the bits for [keycodes] `8N` to
+		/// `8N + 7`. The least significant bit in each byte represents key
+		/// `8N`.
+		///
+		/// See [`KeyboardOptions::auto_repeat_mode`] for more information.
+		///
+		/// [keycodes]: crate::Keycode
+		/// [auto repeat mode]: crate::set::KeyboardOptions::auto_repeat_mode
+		///
+		/// [`KeyboardOptions::auto_repeat_mode`]: crate::set::KeyboardOptions::auto_repeat_mode
+		#[doc(alias("auto_repeats"))]
+		pub auto_repeat_modes: [u8; 32],
 	}
 }

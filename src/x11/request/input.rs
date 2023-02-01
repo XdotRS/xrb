@@ -19,6 +19,7 @@ use std::ops::RangeInclusive;
 
 use crate::{
 	message::Request,
+	set::KeyboardOptions,
 	x11::{error, reply},
 	Any,
 	AnyModifierKeyMask,
@@ -1489,6 +1490,7 @@ impl<const KEYSYMS_PER_KEYCODE: usize> Writable for ChangeKeyboardMapping<KEYSYM
 /// [`GetKeyboardMapping` reply]: reply::GetKeyboardMapping
 ///
 /// [`Value` error]: error::Value
+#[derive(Debug, Hash, PartialEq, Eq)]
 pub struct GetKeyboardMapping {
 	/// The range of [keycodes] for which this [request] returns their mapped
 	/// [keysyms].
@@ -1588,4 +1590,46 @@ impl Writable for GetKeyboardMapping {
 
 		Ok(())
 	}
+}
+
+request_error! {
+	#[doc(alias("ChangeKeyboardControlError"))]
+	pub enum ChangeKeyboardOptionsError for ChangeKeyboardOptions {
+		Match,
+		Value,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that changes the
+	/// [options configured for the keyboard][options].
+	///
+	/// See [`KeyboardOptions`] for more information.
+	///
+	/// [options]: KeyboardOptions
+	#[doc(alias("ChangeKeyboardControl"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct ChangeKeyboardOptions: Request(102, ChangeKeyboardOptionsError) {
+		/// The changes that are made to the [keyboard options].
+		///
+		/// [keyboard options]: KeyboardOptions
+		#[doc(alias("values", "value_mask", "value_list"))]
+		#[doc(alias("options", "option_mask", "option_list"))]
+		#[doc(alias("keyboard_option_mask", "keyboard_option_list"))]
+		#[doc(alias("keyboard_options"))]
+		pub changed_options: KeyboardOptions,
+	}
+	
+	/// A [request] that returns the current [keyboard options].
+	/// 
+	/// # Replies
+	/// This [request] generates a [`GetKeyboardOptions` reply].
+	/// 
+	/// [keyboard options]: KeyboardOptions
+	/// [request]: Request
+	/// 
+	/// [`GetKeyboardOptions` reply]: reply::GetKeyboardOptions
+	#[doc(alias("GetKeyboardControl"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GetKeyboardOptions: Request(103) -> reply::GetKeyboardOptions;
 }
