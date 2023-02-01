@@ -294,8 +294,8 @@ impl<Num> From<Num> for Sec<Num> {
 	}
 }
 
-impl From<Sec<u16>> for u16 {
-	fn from(Sec(num): Sec<u16>) -> Self {
+impl From<Sec<Self>> for u16 {
+	fn from(Sec(num): Sec<Self>) -> Self {
 		num
 	}
 }

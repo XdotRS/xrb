@@ -12,13 +12,12 @@
 
 extern crate self as xrb;
 
-use std::convert::Infallible;
+
 use xrbk::{
 	pad,
 	Buf,
 	BufMut,
 	ConstantX11Size,
-	ReadError,
 	ReadError::FailedConversion,
 	ReadResult,
 	Readable,
@@ -32,9 +31,7 @@ use crate::{
 	message::Request,
 	unit::Sec,
 	x11::{error, reply},
-	KillClientTarget,
 	String8,
-	Toggle,
 	ToggleOrDefault,
 	Window,
 };
