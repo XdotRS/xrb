@@ -585,3 +585,58 @@ derive_xrb! {
 		[_; ..],
 	}
 }
+
+/// Whether a [`SetButtonMapping` request] was successful.
+///
+/// This is used in the [`SetButtonMapping` reply].
+///
+/// [`SetButtonMapping` request]: request::SetButtonMapping
+/// [`SetButtonMapping` reply]: SetButtonMapping
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub enum SetButtonMappingStatus {
+	/// The [`SetButtonMapping` request] was successful.
+	///
+	/// [`SetButtonMapping` request]: request::SetButtonMapping
+	Success,
+
+	/// The [`SetButtonMapping` request] was unsuccessful because it specified
+	/// buttons which are currently held.
+	///
+	/// The mapping of mouse buttons cannot be changed while they are held.
+	///
+	/// [`SetButtonMapping` request]: request::SetButtonMapping
+	Busy,
+}
+
+derive_xrb! {
+	/// The [reply] to a [`SetButtonMapping` request].
+	///
+	/// [reply]: Reply
+	///
+	/// [`SetButtonMapping` request]: request::SetButtonMapping
+	#[doc(alias("SetPointerMapping", "SetCursorMapping"))]
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct SetButtonMapping: Reply for request::SetButtonMapping {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: Reply
+		///
+		/// [`Reply::sequence`]: Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		/// Whether the [`SetButtonMapping` request] was successful.
+		///
+		/// See [`SetButtonMappingStatus`] for more information.
+		///
+		/// [`SetButtonMapping` request]: request::SetButtonMapping
+		pub status: SetButtonMappingStatus,
+		[_; ..],
+	}
+}

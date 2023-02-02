@@ -13,6 +13,7 @@
 extern crate self as xrb;
 
 use xrbk::{
+	pad,
 	Buf,
 	BufMut,
 	ConstantX11Size,
@@ -1830,4 +1831,56 @@ derive_xrb! {
 	#[doc(alias("GetPointerControl", "GetPointerOptions", "GetCursorControl"))]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct GetCursorOptions: Request(106) -> reply::GetCursorOptions;
+
+	/// A [request] that changes the mapping of the [mouse buttons].
+	///
+	/// # Events generated
+	/// A [`MappingChange` event] is generated if the change in button mapping
+	/// is [successful].
+	///
+	/// # Replies
+	/// This [request] generates a [`SetButtonMapping` reply].
+	///
+	/// # Errors
+	/// A [`Value` error] is generated if the length of `map` is not the same as
+	/// the length returned in a [`GetButtonMapping` reply].
+	///
+	/// [mouse buttons]: Button
+	/// [request]: Request
+	///
+	/// [successful]: reply::SetButtonMappingStatus::Success
+	///
+	/// [`SetButtonMapping` reply]: reply::SetButtonMapping
+	/// [`GetButtonMapping` reply]: reply::GetButtonMapping
+	///
+	/// [`MappingChange` event]: crate::x11::event::MappingChange
+	///
+	/// [`Value` error]: error::Value
+	#[doc(alias("SetPointerMapping", "SetCursorMapping"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct SetButtonMapping: Request(116, error::Value) -> reply::SetButtonMapping {
+		#[metabyte]
+		#[allow(clippy::cast_possible_truncation)]
+		let map_len: u8 = map => map.len() as u8,
+
+		/// The mapping of the [mouse buttons].
+		///
+		/// [`None`] means the mouse button at that particular index, counting
+		/// from 1, is disabled. [`Some`] means it is remapped to the given
+		/// other [button].
+		///
+		/// [mouse buttons]: Button
+		/// [button]: Button
+		///
+		/// # Errors
+		/// A [`Value` error] is generated if this is not the same length as the
+		/// [button] mapping returned in the [`GetButtonMapping` reply].
+		///
+		/// [`GetButtonMapping` reply]: reply::GetButtonMapping
+		///
+		/// [`Value` error]: error::Value
+		#[context(map_len => usize::from(*map_len))]
+		pub map: Vec<Option<Button>>,
+		[_; map => pad(map)],
+	}
 }

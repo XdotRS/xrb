@@ -2428,7 +2428,7 @@ derive_xrb! {
 	/// [event]: Event
 	/// [`SetModifierMapping`]: super::request::SetModifierMapping
 	/// [`ChangeKeyboardMapping`]: super::request::ChangeKeyboardMapping
-	/// [`SetCursorMapping`]: super::request::SetCursorMapping
+	/// [`SetCursorMapping`]: super::request::SetButtonMapping
 	#[derive(Debug, Derivative, X11Size, Readable, Writable)]
 	#[derivative(Hash, PartialEq, Eq)]
 	pub struct MappingChange: Event(34) {
