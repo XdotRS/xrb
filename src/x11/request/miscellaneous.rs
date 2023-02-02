@@ -855,3 +855,108 @@ derive_xrb! {
 		pub event: E,
 	}
 }
+
+request_error! {
+	pub enum RotatePropertiesError for RotateProperties {
+		Atom,
+		Match,
+		Window,
+	}
+}
+
+derive_xrb! {
+	/// A [request] that rotates the given `properties` within a [window]'s list
+	/// of properties.
+	///
+	/// The given properties are swapped with one another within the list of the
+	/// [window]'s properties by the given `shift`. Properties moved beyond the
+	/// start or end of the list wrap around to the beginning, as if the list of
+	/// properties were a ring.
+	///
+	/// To put it another way, the property at index `i` in the given
+	/// `properties` is moved to the position (within the `target` [window]'s
+	/// list of properties) of the property at index
+	/// `(i + shift) % properties.len()` in the given `properties` list.
+	///
+	/// Note that properties of the `target` [window] not listed in `properties`
+	/// are not affected.
+	///
+	/// No properties are affected if a [`Window`], [`Atom`], or [`Match`] error
+	/// is generated as a result of this [request].
+	///
+	/// # Events generated
+	/// If the properties are actually rotated (that is, if
+	/// `shift % properties.len() != 0`), a [`Property` event] is generated for
+	/// each property in `properties`.
+	///
+	/// # Errors
+	/// A [`Window` error] is generated if `target` does not refer to a defined
+	/// [window].
+	///
+	/// An [`Atom` error] is generated if any properties in the given
+	/// `properties` do not refer to defined [atoms].
+	///
+	/// A [`Match` error] is generated if a property occurs more than once in
+	/// `properties`.
+	///
+	/// A [`Match` error] is generated if no property by a name given in
+	/// `properties` exists on the `target` [window].
+	///
+	/// [window]: Window
+	/// [atoms]: Atom
+	/// [request]: Request
+	///
+	/// [`Property` event]: crate::x11::event::Property
+	///
+	/// [`Window`]: error::Window
+	/// [`Atom`]: error::Atom
+	/// [`Match`]: error::Match
+	/// [`Window` error]: error::Window
+	/// [`Atom` error]: error::Atom
+	/// [`Match` error]: error::Match
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable, ConstantX11Size)]
+	pub struct RotateProperties: Request(114, RotatePropertiesError) {
+		/// The [window] for which the given `properties` are rotated.
+		///
+		/// # Errors
+		/// A [`Window` error] is generated if this does not refer to a defined
+		/// [window].
+		///
+		/// [window]: Window
+		///
+		/// [`Window` error]: error::Window
+		#[doc(alias("window"))]
+		pub target: Window,
+
+		// The length of `properties`.
+		#[allow(clippy::cast_possible_truncation)]
+		let properties_len: u16 = properties => properties.len() as u16,
+
+		/// The offset which is applied to the index of each property in
+		/// `properties` to determine where it should be moved.
+		///
+		/// See [`RotateProperties`] for more information.
+		#[doc(alias("delta"))]
+		pub shift: i16,
+
+		/// The properties which are to be rotated.
+		///
+		/// # Errors
+		/// An [`Atom` error] is generated if a property in this list does not
+		/// refer to a defined [atom].
+		///
+		/// A [`Match` error] is generated if a property occurs multiple times
+		/// in this list.
+		///
+		/// A [`Match` error] is generated if a property in this list does not
+		/// exist on the `target` [window].
+		///
+		/// [window]: Window
+		/// [atom]: Atom
+		///
+		/// [`Atom` error]: error::Atom
+		/// [`Match` error]: error::Match
+		#[context(properties_len => usize::from(*properties_len))]
+		pub properties: Vec<Atom>,
+	}
+}
