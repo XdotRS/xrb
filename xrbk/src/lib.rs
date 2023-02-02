@@ -34,6 +34,7 @@ use std::{
 };
 
 pub use bytes::{Buf, BufMut};
+
 use thiserror::Error;
 
 /// Determines the number of unused bytes required to be inserted after the
