@@ -1834,6 +1834,11 @@ derive_xrb! {
 
 	/// A [request] that changes the mapping of the [mouse buttons].
 	///
+	/// This request changes the mapping from the physical [mouse buttons] to
+	/// virtual [mouse buttons]. For example, [mouse buttons] 1 and 3 could be
+	/// swapped by specifying a [button] of value `3` in [button] 1's position
+	/// and a [button] of value `1` in [button] 3's position.
+	///
 	/// # Events generated
 	/// A [`MappingChange` event] is generated if the change in button mapping
 	/// is [successful].
@@ -1842,8 +1847,12 @@ derive_xrb! {
 	/// This [request] generates a [`SetButtonMapping` reply].
 	///
 	/// # Errors
-	/// A [`Value` error] is generated if the length of `map` is not the same as
-	/// the length returned in a [`GetButtonMapping` reply].
+	/// A [`Value` error] is generated if the length of `mappings` is not the
+	/// same as the length returned in a [`GetButtonMapping` reply].
+	///
+	/// A [`Value` error] is generated if multiple physical mouse buttons are
+	/// mapped to the same virtual mouse button; that is, if the same [button]
+	/// occurs multiple times in the `mappings`.
 	///
 	/// [mouse buttons]: Button
 	/// [request]: Request
@@ -1859,28 +1868,49 @@ derive_xrb! {
 	#[doc(alias("SetPointerMapping", "SetCursorMapping"))]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct SetButtonMapping: Request(116, error::Value) -> reply::SetButtonMapping {
+		// The length of `mappings`.
 		#[metabyte]
 		#[allow(clippy::cast_possible_truncation)]
-		let map_len: u8 = map => map.len() as u8,
+		let mappings_len: u8 = mappings => mappings.len() as u8,
 
 		/// The mapping of the [mouse buttons].
 		///
-		/// [`None`] means the mouse button at that particular index, counting
-		/// from 1, is disabled. [`Some`] means it is remapped to the given
-		/// other [button].
-		///
-		/// [mouse buttons]: Button
-		/// [button]: Button
+		/// [`None`] means the [mouse button] at that particular position,
+		/// starting at 1, is disabled. [`Some`] means it is remapped to the
+		/// given other [button].
 		///
 		/// # Errors
 		/// A [`Value` error] is generated if this is not the same length as the
-		/// [button] mapping returned in the [`GetButtonMapping` reply].
+		/// [button] mappings returned in the [`GetButtonMapping` reply].
+		///
+		/// A [`Value` error] is generated if multiple physical [mouse buttons]
+		/// are mapped to the same virtual mouse button; that is, if the same
+		/// [button] is specified multiple times.
+		///
+		/// [mouse button]: Button
+		/// [mouse buttons]: Button
+		/// [button]: Button
 		///
 		/// [`GetButtonMapping` reply]: reply::GetButtonMapping
 		///
 		/// [`Value` error]: error::Value
-		#[context(map_len => usize::from(*map_len))]
-		pub map: Vec<Option<Button>>,
-		[_; map => pad(map)],
+		#[context(mappings_len => usize::from(*mappings_len))]
+		pub mappings: Vec<Option<Button>>,
+		[_; mappings => pad(mappings)],
 	}
+
+	/// A [request] that gets the current mapping of the [mouse buttons].
+	///
+	/// See also: [`SetButtonMapping`].
+	///
+	/// # Replies
+	/// This [request] generates a [`GetButtonMapping` reply].
+	///
+	/// [mouse buttons]: Button
+	/// [request]: Request
+	///
+	/// [`GetButtonMapping` reply]: reply::GetButtonMapping
+	#[doc(alias("GetPointerMapping", "GetCursorMapping"))]
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GetButtonMapping: Request(117) -> reply::GetButtonMapping;
 }

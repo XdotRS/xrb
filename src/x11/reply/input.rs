@@ -28,6 +28,7 @@ use crate::{
 		request,
 		request::{Fraction, RevertFocus},
 	},
+	Button,
 	Coords,
 	FocusWindow,
 	GrabStatus,
@@ -638,5 +639,46 @@ derive_xrb! {
 		/// [`SetButtonMapping` request]: request::SetButtonMapping
 		pub status: SetButtonMappingStatus,
 		[_; ..],
+	}
+
+	/// The [reply] to a [`GetButtonMapping` request].
+	///
+	/// [reply]: Reply
+	///
+	/// [`GetButtonMapping` request]: request::GetButtonMapping
+	#[doc(alias("GetPointerMapping", "GetCursorMapping"))]
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct GetButtonMapping: Reply for request::GetButtonMapping {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: Reply
+		///
+		/// [`Reply::sequence`]: Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		// The length of `mappings`.
+		#[metabyte]
+		#[allow(clippy::cast_possible_truncation)]
+		let mappings_len: u8 = mappings => mappings.len() as u8,
+		[_; 24],
+
+		/// The mapping of the [mouse buttons].
+		///
+		/// [`None`] means the [mouse button] at that particular position,
+		/// starting with position 1 (at index 0), is disabled. [`Some`] means
+		/// it is remapped to the given other [button].
+		///
+		/// [mouse buttons]: Button
+		/// [mouse button]: Button
+		/// [button]: Button
+		#[context(mappings_len => usize::from(*mappings_len))]
+		pub mappings: Vec<Option<Button>>,
 	}
 }

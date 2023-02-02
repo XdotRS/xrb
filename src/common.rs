@@ -314,6 +314,12 @@ impl Keycode {
 )]
 pub struct Button(pub(crate) u8);
 
+impl Button {
+	pub const PRIMARY: Self = Self::new(1);
+	pub const MIDDLE: Self = Self::new(2);
+	pub const SECONDARY: Self = Self::new(3);
+}
+
 #[derive(
 	Copy,
 	Clone,
