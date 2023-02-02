@@ -447,7 +447,7 @@ pub enum RetainResourcesMode {
 	RetainPermanently,
 	/// All of the client's resources are marked as temporarily retained.
 	///
-	/// Ending a connection with [`RetainResourcesMode::RetainPermanently`] will
+	/// Ending a connection with [`RetainResourcesMode::RetainTemporarily`] will
 	/// not cause the X server to reset.
 	#[doc(alias("RetainTemporary"))]
 	RetainTemporarily,
