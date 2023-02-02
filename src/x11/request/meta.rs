@@ -447,7 +447,7 @@ pub enum RetainResourcesMode {
 	RetainPermanently,
 	/// All of the client's resources are marked as temporarily retained.
 	///
-	/// Ending a connection with [`RetainResourcesMode::RetainPermanently`] will
+	/// Ending a connection with [`RetainResourcesMode::RetainTemporarily`] will
 	/// not cause the X server to reset.
 	#[doc(alias("RetainTemporary"))]
 	RetainTemporarily,
@@ -547,7 +547,7 @@ derive_xrb! {
 
 /// A [request] that has no effect.
 ///
-/// The use of this [request] comes with padding: `4 + (4 * UNUSED_UNITS)` bytes
+/// The use of this [request] comes with padding: `4 + (4 * unused_units)` bytes
 /// are sent.
 ///
 /// This can be used by X libraries which find it convenient to force
