@@ -16,6 +16,7 @@
 
 extern crate self as xrb;
 
+use array_init::array_init;
 use derivative::Derivative;
 use xrbk::{Buf, BufMut, ConstantX11Size, ReadResult, Readable, Writable, WriteResult, X11Size};
 
@@ -32,6 +33,7 @@ use crate::{
 	Coords,
 	FocusWindow,
 	GrabStatus,
+	Keycode,
 	Keysym,
 	ModifierMask,
 	Timestamp,
@@ -337,7 +339,7 @@ derive_xrb! {
 /// The [keysyms] mapped to a particular [keycode].
 ///
 /// [keysyms]: Keysym
-/// [keycode]: crate::Keycode
+/// [keycode]: Keycode
 pub type KeyMapping = Vec<Keysym>;
 
 /// The [reply] to a [`GetKeyboardMapping` request].
@@ -362,7 +364,7 @@ pub struct GetKeyboardMapping {
 
 	/// The mapping of [keysyms] for each [keycode] in the specified `range`.
 	///
-	/// [keycode]: crate::Keycode
+	/// [keycode]: Keycode
 	/// [keysyms]: Keysym
 	pub mappings: Vec<KeyMapping>,
 }
@@ -543,7 +545,7 @@ derive_xrb! {
 		///
 		/// See [`KeyboardOptions::auto_repeat_mode`] for more information.
 		///
-		/// [keycodes]: crate::Keycode
+		/// [keycodes]: Keycode
 		/// [auto repeat mode]: crate::set::KeyboardOptions::auto_repeat_mode
 		///
 		/// [`KeyboardOptions::auto_repeat_mode`]: crate::set::KeyboardOptions::auto_repeat_mode
@@ -680,5 +682,222 @@ derive_xrb! {
 		/// [button]: Button
 		#[context(mappings_len => usize::from(*mappings_len))]
 		pub mappings: Vec<Option<Button>>,
+	}
+}
+
+/// Whether a [`SetModifierMapping` request] was [successful].
+///
+/// This is used in the [`SetModifierMapping` reply].
+///
+/// [successful]: SetModifierMappingStatus::Success
+///
+/// [`SetModifierMapping` request]: request::SetModifierMapping
+/// [`SetModifierMapping` reply]: SetModifierMapping
+#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+pub enum SetModifierMappingStatus {
+	/// The [`SetModifierMapping` request] was successful.
+	///
+	/// [`SetModifierMapping` request]: request::SetModifierMapping
+	Success,
+
+	/// The [`SetModifierMapping` request] failed because either the currently
+	/// mapped modifier keys or specified new modifier keys are currently held.
+	///
+	/// A [`SetModifierMapping` request] cannot be applied unless both the
+	/// currently mapped modifier keys and the keys which are specified to be
+	/// the new modifier keys are not held.
+	///
+	/// [`SetModifierMapping` request]: request::SetModifierMapping
+	Busy,
+	/// The [`SetModifierMapping` request] failed because the X server rejected
+	/// it.
+	///
+	/// The X server rejects a [`SetModifierMapping` request] if it has placed
+	/// some additional bounds on the modifiers which it is enforcing. For
+	/// example, this could be because multiple keys per modifier are not
+	/// supported or because auto-repeat cannot be disabled for certain keys.
+	///
+	/// [`SetModifierMapping` request]: request::SetModifierMapping
+	Rejected,
+}
+
+derive_xrb! {
+	/// The [reply] to a [`SetModifierMapping` request].
+	///
+	/// [reply]: Reply
+	///
+	/// [`SetModifierMapping` request]: request::SetModifierMapping
+	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
+	#[derivative(Hash, PartialEq, Eq)]
+	pub struct SetModifierMapping: Reply for request::SetModifierMapping {
+		/// The sequence number identifying the [request] that generated this
+		/// [reply].
+		///
+		/// See [`Reply::sequence`] for more information.
+		///
+		/// [request]: crate::message::Request
+		/// [reply]: Reply
+		///
+		/// [`Reply::sequence`]: Reply::sequence
+		#[sequence]
+		#[derivative(Hash = "ignore", PartialEq = "ignore")]
+		pub sequence: u16,
+
+		/// Whether the [`SetModifierMapping` request] was [successful].
+		///
+		/// See [`SetModifierMappingStatus`] for more information.
+		///
+		/// [successful]: SetModifierMappingStatus::Success
+		///
+		/// [`SetModifierMapping` request]: request::SetModifierMapping
+		#[metabyte]
+		pub status: SetModifierMappingStatus,
+
+		[_; 24],
+	}
+}
+
+/// The [reply] to a [`GetModifierMapping` request].
+///
+/// [reply]: Reply
+///
+/// [`GetModifierMapping` request]: request::GetModifierMapping
+#[derive(Derivative, Debug)]
+#[derivative(Hash, PartialEq, Eq)]
+pub struct GetModifierMapping {
+	/// The sequence number identifying the [request] that generated this
+	/// [reply].
+	///
+	/// See [`Reply::sequence`] for more information.
+	///
+	/// [request]: crate::message::Request
+	/// [reply]: Reply
+	///
+	/// [`Reply::sequence`]: Reply::sequence
+	#[derivative(Hash = "ignore", PartialEq = "ignore")]
+	pub sequence: u16,
+
+	/// The [keycodes] mapped to the shift modifier.
+	///
+	/// [keycodes]: Keycode
+	pub shift_keycodes: Vec<Keycode>,
+	/// The [keycodes] mapped to the caps lock modifier.
+	///
+	/// [keycodes]: Keycode
+	pub capslock_keycodes: Vec<Keycode>,
+	/// The [keycodes] mapped to the control modifier.
+	///
+	/// [keycodes]: Keycode
+	pub ctrl_keycodes: Vec<Keycode>,
+
+	/// The [keycodes] mapped to the Mod1 modifier.
+	///
+	/// [keycodes]: Keycode
+	pub mod1_keycodes: Vec<Keycode>,
+	/// The [keycodes] mapped to the Mod2 modifier.
+	///
+	/// [keycodes]: Keycode
+	pub mod2_keycodes: Vec<Keycode>,
+	/// The [keycodes] mapped to the Mod3 modifier.
+	///
+	/// [keycodes]: Keycode
+	pub mod3_keycodes: Vec<Keycode>,
+	/// The [keycodes] mapped to the Mod4 modifier.
+	///
+	/// This is typically the key variously called 'super', 'meta', 'windows
+	/// key', 'cmd', etc.
+	///
+	/// [keycodes]: Keycode
+	pub mod4_keycodes: Vec<Keycode>,
+	/// The [keycodes] mapped to the Mod5 modifier.
+	///
+	/// [keycodes]: Keycode
+	pub mod5_keycodes: Vec<Keycode>,
+}
+
+impl GetModifierMapping {
+	fn max_keycodes_len(&self) -> usize {
+		[
+			&self.shift_keycodes,
+			&self.capslock_keycodes,
+			&self.ctrl_keycodes,
+			&self.mod1_keycodes,
+			&self.mod2_keycodes,
+			&self.mod3_keycodes,
+			&self.mod4_keycodes,
+			&self.mod5_keycodes,
+		]
+		.into_iter()
+		.map(Vec::len)
+		.max()
+		.expect("there's definitely more than one element")
+	}
+}
+
+impl Reply for GetModifierMapping {
+	type Request = request::GetModifierMapping;
+
+	fn sequence(&self) -> u16 {
+		self.sequence
+	}
+}
+
+impl X11Size for GetModifierMapping {
+	fn x11_size(&self) -> usize {
+		const HEADER: usize = 8;
+		const CONSTANT_SIZES: usize = HEADER + 24;
+
+		let keycodes_size = self.max_keycodes_len() * Keycode::X11_SIZE;
+
+		CONSTANT_SIZES + (8 * keycodes_size)
+	}
+}
+
+impl Readable for GetModifierMapping {
+	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		const HEADER: usize = 8;
+		const ALIGNMENT: usize = 4;
+
+		// FIXME: the first 4 bytes of the header should be read separately, with the
+		// metabyte        position and sequence being given as context. That applies to
+		// all replies.
+		buf.advance(1);
+
+		let keycodes_per_modifier = buf.get_u8();
+		let sequence = buf.get_u16();
+
+		let total_size = ((buf.get_u32() as usize) * ALIGNMENT) - HEADER;
+		let buf = &mut buf.take(total_size);
+
+		let [shift_keycodes, capslock_keycodes, ctrl_keycodes, mod1_keycodes, mod2_keycodes, mod3_keycodes, mod4_keycodes, mod5_keycodes] =
+			array_init(|_| {
+				let mut keycodes = vec![];
+
+				for _ in 0..keycodes_per_modifier {
+					match buf.get_u8() {
+						0 => {},
+						code => keycodes.push(Keycode(code)),
+					}
+				}
+
+				keycodes
+			});
+
+		Ok(Self {
+			sequence,
+
+			shift_keycodes,
+			capslock_keycodes,
+			ctrl_keycodes,
+
+			mod1_keycodes,
+			mod2_keycodes,
+			mod3_keycodes,
+			mod4_keycodes,
+			mod5_keycodes,
+		})
 	}
 }

@@ -26,6 +26,7 @@ use xrbk::{
 };
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
+use array_init::array_init;
 use std::ops::RangeInclusive;
 use thiserror::Error;
 
@@ -1913,4 +1914,220 @@ derive_xrb! {
 	#[doc(alias("GetPointerMapping", "GetCursorMapping"))]
 	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
 	pub struct GetButtonMapping: Request(117) -> reply::GetButtonMapping;
+}
+
+/// A [request] that sets the mapping of [keycodes] for each modifier.
+///
+/// Each modifier has zero or more [keycodes] mapped to it. For example, the
+/// shift modifier typically has both <kbd>⇧ Left Shift</kbd> and
+/// <kbd>⇧ Right Shift</kbd> keycodes mapped to it, while the caps lock modifier
+/// only has one <kbd>Caps Lock</kbd> key mapped to it.
+///
+/// If no [keycodes] are mapped to a modifier, that modifier is disabled.
+///
+/// See also: [`GetModifierMapping`].
+///
+/// # Events generated
+/// A [`MappingChange` event] is generated if this [request] is [successful] in
+/// changing the modifier mapping.
+///
+/// # Replies
+/// This [request] generates a [`SetModifierMapping` reply].
+///
+/// # Errors
+/// A [`Value` error] is generated if any of the specified [keycodes] are either
+/// less than the [`min_keycode`] or greater than the [`max_keycode`] returned
+/// during [connection setup].
+///
+/// [keycodes]: Keycode
+/// [request]: Request
+/// [connection setup]: crate::connection::InitConnection
+///
+/// [successful]: reply::SetModifierMappingStatus::Success
+///
+/// [`min_keycode`]: crate::connection::ConnectionSuccess::min_keycode
+/// [`max_keycode`]: crate::connection::ConnectionSuccess::max_keycode
+///
+/// [`SetModifierMapping` request]: SetModifierMapping
+/// [`SetModifierMapping` reply]: reply::SetModifierMapping
+///
+/// [`MappingChange` event]: crate::x11::event::MappingChange
+///
+/// [`Value` error]: error::Value
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub struct SetModifierMapping {
+	/// The [keycodes] mapped to the shift modifier.
+	///
+	/// [keycodes]: Keycode
+	pub shift_keycodes: Vec<Keycode>,
+	/// The [keycodes] mapped to the caps lock modifier.
+	///
+	/// [keycodes]: Keycode
+	pub capslock_keycodes: Vec<Keycode>,
+	/// The [keycodes] mapped to the control modifier.
+	///
+	/// [keycodes]: Keycode
+	pub ctrl_keycodes: Vec<Keycode>,
+
+	/// The [keycodes] mapped to the Mod1 modifier.
+	///
+	/// [keycodes]: Keycode
+	pub mod1_keycodes: Vec<Keycode>,
+	/// The [keycodes] mapped to the Mod2 modifier.
+	///
+	/// [keycodes]: Keycode
+	pub mod2_keycodes: Vec<Keycode>,
+	/// The [keycodes] mapped to the Mod3 modifier.
+	///
+	/// [keycodes]: Keycode
+	pub mod3_keycodes: Vec<Keycode>,
+	/// The [keycodes] mapped to the Mod4 modifier.
+	///
+	/// This is typically the key variously called 'super', 'meta', 'windows
+	/// key', 'cmd', etc.
+	/// 
+	/// [keycodes]: Keycode
+	pub mod4_keycodes: Vec<Keycode>,
+	/// The [keycodes] mapped to the Mod5 modifier.
+	///
+	/// [keycodes]: Keycode
+	pub mod5_keycodes: Vec<Keycode>,
+}
+
+impl SetModifierMapping {
+	fn max_keycodes_len(&self) -> usize {
+		[
+			&self.shift_keycodes,
+			&self.capslock_keycodes,
+			&self.ctrl_keycodes,
+			&self.mod1_keycodes,
+			&self.mod2_keycodes,
+			&self.mod3_keycodes,
+			&self.mod4_keycodes,
+			&self.mod5_keycodes,
+		]
+		.into_iter()
+		.map(Vec::len)
+		.max()
+		.expect("there's definitely more than one element")
+	}
+}
+
+impl Request for SetModifierMapping {
+	type OtherErrors = error::Value;
+	type Reply = reply::SetModifierMapping;
+
+	const MAJOR_OPCODE: u8 = 118;
+	const MINOR_OPCODE: Option<u16> = None;
+}
+
+impl X11Size for SetModifierMapping {
+	fn x11_size(&self) -> usize {
+		const HEADER: usize = 4;
+
+		let keycodes_size = self.max_keycodes_len() * Keycode::X11_SIZE;
+
+		HEADER + (8 * keycodes_size)
+	}
+}
+
+impl Readable for SetModifierMapping {
+	fn read_from(buf: &mut impl Buf) -> ReadResult<Self>
+	where
+		Self: Sized,
+	{
+		const ALIGNMENT: usize = 4;
+
+		let keycodes_per_modifier = buf.get_u8();
+
+		let total_size = usize::from(buf.get_u16()) * ALIGNMENT;
+		let buf = &mut buf.take(total_size);
+
+		let [shift_keycodes, capslock_keycodes, ctrl_keycodes, mod1_keycodes, mod2_keycodes, mod3_keycodes, mod4_keycodes, mod5_keycodes] =
+			array_init(|_| {
+				let mut keycodes = vec![];
+
+				for _ in 0..keycodes_per_modifier {
+					match buf.get_u8() {
+						0 => {},
+						code => keycodes.push(Keycode(code)),
+					}
+				}
+
+				keycodes
+			});
+
+		Ok(Self {
+			shift_keycodes,
+			capslock_keycodes,
+			ctrl_keycodes,
+
+			mod1_keycodes,
+			mod2_keycodes,
+			mod3_keycodes,
+			mod4_keycodes,
+			mod5_keycodes,
+		})
+	}
+}
+
+impl Writable for SetModifierMapping {
+	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
+		const HEADER: usize = 4;
+
+		let max_keycodes_len = self.max_keycodes_len();
+		let keycodes_size = max_keycodes_len * Keycode::X11_SIZE;
+
+		let buf = &mut buf.limit(HEADER + (8 * keycodes_size));
+
+		// For each keycodes field, we want to make sure that they are written
+		// as the same length as the longest list. Fortunately, that is easy to
+		// do, because (a) the order of each list does not matter, and (b) a `0`
+		// means that position is simply ignored, so we can just fill the
+		// remaining positions with `0`s.
+
+		for field in [
+			&self.shift_keycodes,
+			&self.capslock_keycodes,
+			&self.ctrl_keycodes,
+			&self.mod1_keycodes,
+			&self.mod2_keycodes,
+			&self.mod3_keycodes,
+			&self.mod4_keycodes,
+			&self.mod5_keycodes,
+		] {
+			for index in 0..max_keycodes_len {
+				match field.get(index) {
+					Some(Keycode(code)) => buf.put_u8(*code),
+					None => buf.put_u8(0),
+				}
+			}
+		}
+
+		Ok(())
+	}
+}
+
+derive_xrb! {
+	/// A [request] that returns the [keycodes] currently mapped to each
+	/// modifier.
+	///
+	/// Each modifier has zero or more [keycodes] mapped to it. For example, the
+	/// shift modifier typically has both <kbd>⇧ Left Shift</kbd> and
+	/// <kbd>⇧ Right Shift</kbd> keycodes mapped to it, while the caps lock
+	/// modifier only has one <kbd>Caps Lock</kbd> key mapped to it.
+	///
+	/// If no [keycodes] are mapped to a modifier, that modifier is disabled.
+	///
+	/// See also: [`SetModifierMapping`].
+	///
+	/// # Replies
+	/// This [request] generates a [`GetModifierMapping` reply].
+	///
+	/// [keycodes]: Keycode
+	/// [request]: Request
+	///
+	/// [`GetModifierMapping` reply]: reply::GetModifierMapping
+	#[derive(Debug, Hash, PartialEq, Eq, X11Size, Readable, Writable)]
+	pub struct GetModifierMapping: Request(119) -> reply::GetModifierMapping;
 }
