@@ -1985,7 +1985,7 @@ pub struct SetModifierMapping {
 	///
 	/// This is typically the key variously called 'super', 'meta', 'windows
 	/// key', 'cmd', etc.
-	/// 
+	///
 	/// [keycodes]: Keycode
 	pub mod4_keycodes: Vec<Keycode>,
 	/// The [keycodes] mapped to the Mod5 modifier.
