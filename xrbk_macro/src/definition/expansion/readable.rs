@@ -2,25 +2,24 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use super::*;
-use crate::{element::Element, TsExt};
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote_spanned};
 use syn::Path;
+
+use crate::{element::Element, TsExt};
+
+use super::*;
 
 impl Struct {
 	pub fn impl_readable(&self, tokens: &mut TokenStream2, trait_path: &Path) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
-
-		// Expand the tokens to declare the x11_size variable if there is an
-		// UnusedContent::Infer unused bytes element to use it.
-		let declare_x11_size = if self.content.contains_infer() {
-			Some(quote_spanned!(trait_path.span()=> let mut size: usize = 0;))
-		} else {
-			None
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
 		};
 
 		// Expand the tokens to call Self's constructor.
@@ -33,9 +32,9 @@ impl Struct {
 			for element in &self.content {
 				element.read_tokens(tokens, DefinitionType::Basic);
 
-				if self.content.contains_infer() {
-					element.add_x11_size_tokens(tokens);
-				}
+				// if self.content.contains_infer() {
+				element.add_x11_size_tokens(tokens);
+				// }
 			}
 		});
 
@@ -47,13 +46,14 @@ impl Struct {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn read_from(
 					buf: &mut impl ::xrbk::Buf,
 				) -> Result<Self, ::xrbk::ReadError> {
 					// Declare a x11_size variable if it is going to be
 					// used in an infer unused bytes element.
-					#declare_x11_size
+					let mut size: usize = 0;
 
 					// Read each element.
 					#reads
@@ -71,14 +71,11 @@ impl Request {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
-
-		let declare_x11_size = if self.content.contains_infer() {
-			// The x11_size starts at `4` to account for the size of a request's header
-			// being 4 bytes.
-			Some(quote_spanned!(trait_path.span()=> let mut size: usize = 4;))
-		} else {
-			None
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
 		};
 
 		let cons = TokenStream2::with_tokens(|tokens| {
@@ -90,9 +87,9 @@ impl Request {
 				if !element.is_metabyte() && !element.is_sequence() {
 					element.read_tokens(tokens, DefinitionType::Request);
 
-					if self.content.contains_infer() {
-						element.add_x11_size_tokens(tokens);
-					}
+					// if self.content.contains_infer() {
+					element.add_x11_size_tokens(tokens);
+					// }
 				}
 			}
 		});
@@ -107,7 +104,7 @@ impl Request {
 				element.read_tokens(tokens, DefinitionType::Request);
 			}))
 		} else {
-			Some(quote_spanned!(trait_path.span()=> buf.advance(1);))
+			Some(quote_spanned!(trait_path.span()=> <_ as ::xrbk::Buf>::advance(buf, 1);))
 		};
 
 		tokens.append_tokens(quote_spanned!(trait_path.span()=>
@@ -118,11 +115,12 @@ impl Request {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn read_from(
 					buf: &mut impl ::xrbk::Buf,
 				) -> Result<Self, ::xrbk::ReadError> {
-					#declare_x11_size
+					let mut size: usize = 4;
 
 					// If there is a metabyte element, read it, if not and
 					// there is no minor opcode, skip one byte. If there
@@ -130,7 +128,11 @@ impl Request {
 					// read.
 					#metabyte
 					// Read the request's length.
-					let length = buf.get_u16();
+					let length = <_ as ::xrbk::Buf>::get_u16(buf);
+					let buf = &mut <_ as ::xrbk::Buf>::take(
+						buf,
+						((length - 1) as usize) * 4,
+					);
 
 					// Read other elements.
 					#reads
@@ -148,12 +150,11 @@ impl Reply {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
-
-		let declare_x11_size = if self.content.contains_infer() {
-			Some(quote_spanned!(trait_path.span()=> let mut size: usize = 8;))
-		} else {
-			None
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
 		};
 
 		let cons = TokenStream2::with_tokens(|tokens| {
@@ -165,9 +166,9 @@ impl Reply {
 				if !element.is_metabyte() && !element.is_sequence() {
 					element.read_tokens(tokens, DefinitionType::Reply);
 
-					if self.content.contains_infer() {
-						element.add_x11_size_tokens(tokens);
-					}
+					// if self.content.contains_infer() {
+					element.add_x11_size_tokens(tokens);
+					// }
 				}
 			}
 		});
@@ -177,7 +178,7 @@ impl Reply {
 				element.read_tokens(tokens, DefinitionType::Reply);
 			})
 		} else {
-			quote_spanned!(trait_path.span()=> buf.advance(1);)
+			quote_spanned!(trait_path.span()=> <_ as ::xrbk::Buf>::advance(buf, 1);)
 		};
 
 		let sequence = match self.content.sequence_element() {
@@ -193,18 +194,23 @@ impl Reply {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn read_from(
 					buf: &mut impl ::xrbk::Buf,
 				) -> Result<Self, ::xrbk::ReadError> {
-					#declare_x11_size
+					let mut size: usize = 8;
 
 					// Metabyte position
 					#metabyte
 					// Sequence field
-					let #sequence = buf.get_u16();
+					let #sequence = <_ as ::xrbk::Buf>::get_u16(buf);
 					// Length
-					let length = buf.get_u32();
+					let length = <_ as ::xrbk::Buf>::get_u32(buf);
+					let buf = &mut <_ as ::xrbk::Buf>::take(
+						buf,
+						(((length) as usize) * 4) + (32 - 8),
+					);
 
 					// Other elements
 					#reads
@@ -222,18 +228,17 @@ impl Event {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
-		let declare_x11_size = if self.content.contains_infer() {
-			let size: usize = if self.content.sequence_element().is_some() {
-				4
-			} else {
-				1
-			};
-
-			Some(quote_spanned!(trait_path.span()=> let mut size: usize = #size;))
+		let x11_size: usize = if self.content.sequence_element().is_some() {
+			4
 		} else {
-			None
+			1
 		};
 
 		let cons = TokenStream2::with_tokens(|tokens| {
@@ -245,9 +250,9 @@ impl Event {
 				if !element.is_metabyte() && !element.is_sequence() {
 					element.read_tokens(tokens, DefinitionType::Event);
 
-					if self.content.contains_infer() {
-						element.add_x11_size_tokens(tokens);
-					}
+					// if self.content.contains_infer() {
+					element.add_x11_size_tokens(tokens);
+					// }
 				}
 			}
 		});
@@ -260,14 +265,16 @@ impl Event {
 			}))
 		} else {
 			Some(quote_spanned!(trait_path.span()=>
-				buf.advance(1);
+				<_ as ::xrbk::Buf>::advance(buf, 1);
 			))
 		};
 
 		let sequence = if let Some(Element::Field(field)) = self.content.sequence_element() {
 			let formatted = &field.formatted;
 
-			Some(quote_spanned!(trait_path.span()=> let #formatted = buf.get_u16();))
+			Some(quote_spanned!(trait_path.span()=>
+				let #formatted = <_ as ::xrbk::Buf>::get_u16(buf);
+			))
 		} else {
 			None
 		};
@@ -280,11 +287,12 @@ impl Event {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn read_from(
 					buf: &mut impl ::xrbk::Buf,
 				) -> Result<Self, ::xrbk::ReadError> {
-					#declare_x11_size
+					let mut size: usize = #x11_size;
 
 					// Metabyte position
 					#metabyte
@@ -306,19 +314,11 @@ impl Error {
 	pub fn impl_readable(&self, tokens: &mut TokenStream2, trait_path: &Path) {
 		let ident = &self.ident;
 
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
-
-		let declare_x11_size = if self.content.contains_infer() {
-			// 11 bytes includes:
-			// - 1 byte to say it's an error
-			// - 1 byte for its code
-			// - 2 bytes for its sequence number
-			// - 4 bytes for its (optional) error data
-			// - 2 bytes for the request's minor opcode
-			// - 1 byte for the request's major opcode
-			Some(quote_spanned!(trait_path.span()=> let mut size: usize = 11;))
-		} else {
-			None
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
 		};
 
 		let cons = TokenStream2::with_tokens(|tokens| {
@@ -330,9 +330,9 @@ impl Error {
 				if element.is_normal() {
 					element.read_tokens(tokens, DefinitionType::Error);
 
-					if self.content.contains_infer() {
-						element.add_x11_size_tokens(tokens);
-					}
+					// if self.content.contains_infer() {
+					element.add_x11_size_tokens(tokens);
+					// }
 				}
 			}
 		});
@@ -341,7 +341,9 @@ impl Error {
 			Some(Element::Field(field)) => {
 				let formatted = &field.formatted;
 
-				quote_spanned!(trait_path.span()=> let #formatted = buf.get_u16();)
+				quote_spanned!(trait_path.span()=>
+					let #formatted = <_ as ::xrbk::Buf>::get_u16(buf);
+				)
 			},
 
 			_ => panic!("errors must have sequence fields"),
@@ -351,7 +353,9 @@ impl Error {
 			Some(Element::Field(field)) => {
 				let formatted = &field.formatted;
 
-				quote_spanned!(trait_path.span()=> let #formatted = buf.get_u16();)
+				quote_spanned!(trait_path.span()=>
+					let #formatted = <_ as ::xrbk::Buf>::get_u16(buf);
+				)
 			},
 
 			_ => panic!("errors must have minor opcode fields"),
@@ -361,7 +365,9 @@ impl Error {
 			Some(Element::Field(field)) => {
 				let formatted = &field.formatted;
 
-				quote_spanned!(trait_path.span()=> let #formatted = buf.get_u8();)
+				quote_spanned!(trait_path.span()=>
+					let #formatted = <_ as ::xrbk::Buf>::get_u8(buf);
+				)
 			},
 
 			_ => panic!("errors must have major opcode fields"),
@@ -372,7 +378,7 @@ impl Error {
 				TokenStream2::with_tokens(|tokens| field.read_tokens(tokens))
 			},
 
-			_ => quote_spanned!(trait_path.span()=> buf.advance(4);),
+			_ => quote_spanned!(trait_path.span()=> <_ as ::xrbk::Buf>::advance(buf, 4);),
 		};
 
 		tokens.append_tokens(quote_spanned!(trait_path.span()=>
@@ -383,11 +389,19 @@ impl Error {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn read_from(
 					buf: &mut impl ::xrbk::Buf,
 				) -> Result<Self, ::xrbk::ReadError> {
-					#declare_x11_size
+					// 11 bytes includes:
+					// - 1 byte to say it's an error
+					// - 1 byte for its code
+					// - 2 bytes for its sequence number
+					// - 4 bytes for its (optional) error data
+					// - 2 bytes for the request's minor opcode
+					// - 1 byte for the request's major opcode
+					let mut size: usize = 11;
 
 					#sequence
 					#error_data
@@ -412,7 +426,8 @@ impl Enum {
 		);
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = &self.where_clause;
 
 		let discriminants = TokenStream2::with_tokens(|tokens| {
 			for variant in &self.variants {
@@ -444,16 +459,14 @@ impl Enum {
 			for variant in &self.variants {
 				let ident = &variant.ident;
 
-				let declare_x11_size = if variant.content.contains_infer() {
+				let declare_x11_size = {
 					let discrim_type = quote_spanned!(discrim_type.span()=>
 						<#discrim_type as ::xrbk::ConstantX11Size>
 					);
 
-					Some(quote_spanned!(trait_path.span()=>
+					quote_spanned!(trait_path.span()=>
 						let mut size: usize = #discrim_type::X11_SIZE;
-					))
-				} else {
-					None
+					)
 				};
 
 				if variant.discriminant.is_some() {
@@ -470,9 +483,9 @@ impl Enum {
 					for element in &variant.content {
 						element.read_tokens(tokens, DefinitionType::Basic);
 
-						if variant.content.contains_infer() {
-							element.add_x11_size_tokens(tokens);
-						}
+						// if variant.content.contains_infer() {
+						element.add_x11_size_tokens(tokens);
+						// }
 					}
 				});
 
@@ -503,6 +516,7 @@ impl Enum {
 					clippy::needless_borrow,
 					clippy::identity_op,
 					clippy::unnecessary_cast,
+					unused_mut,
 				)]
 				fn read_from(
 					buf: &mut impl ::xrbk::Buf,

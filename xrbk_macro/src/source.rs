@@ -5,13 +5,14 @@
 mod expansion;
 mod parsing;
 
+use crate::definition::DefinitionType;
 use std::collections::HashMap;
 use syn::{punctuated::Punctuated, Expr, Ident, Pat, Token, Type};
 
 pub type IdentMap<'a> = &'a HashMap<String, Type>;
 pub type IdentMapMut<'a> = &'a mut HashMap<String, Type>;
 
-/// A non-[SourceLengthArg] argument for a [`Source`].
+/// A non-[SourceRemainingArg] argument for a [`Source`].
 ///
 /// > **<sup>Syntax</sup>**\
 /// > _SourceArg_ :\
@@ -40,10 +41,10 @@ pub struct SourceArg {
 ///
 /// [`Request`]: crate::definition::Request
 /// [`Reply`]: crate::definition::Reply
-pub struct SourceLengthArg {
+pub struct SourceRemainingArg {
 	pub self_token: Token![self],
 	pub double_colon_token: Token![::],
-	pub length_token: Ident,
+	pub remaining_token: Ident,
 }
 
 /// Arguments for a [`Source`].
@@ -53,18 +54,18 @@ pub struct SourceLengthArg {
 /// > &nbsp;&nbsp; _Arg_ ( `,` _Arg_ )<sup>\*</sup> `,`<sup>?</sup>
 /// >
 /// > _Arg_ :\
-/// > &nbsp;&nbsp; [_SourceArg_] | [_SourceLengthArg_][^usage]
+/// > &nbsp;&nbsp; [_SourceArg_] | [_SourceRemainingArg_][^usage]
 /// >
-/// > [^usage]: [_SourceLengthArg_]s may only be used within [`Request`]s and
+/// > [^usage]: [_SourceRemainingArg_]s may only be used within [`Request`]s and
 /// > [`Reply`]s, and they may be used no more than once per _SourceArgs_.
 ///
 /// [_SourceArg_]: SourceArg
-/// [_SourceLengthArg_]: SourceLengthArg
+/// [_SourceLengthArg_]: SourceRemainingArg
 /// [`Request`]: crate::definition::Request
 /// [`Reply`]: crate::definition::Reply
 pub struct SourceArgs {
 	pub args: Punctuated<SourceArg, Token![,]>,
-	pub length_arg: Option<(SourceLengthArg, Type)>,
+	pub remaining_arg: Option<(SourceRemainingArg, DefinitionType)>,
 }
 
 /// An inline function.
@@ -77,18 +78,18 @@ pub struct SourceArgs {
 /// > &nbsp;&nbsp; [_Arg_] ( `,` [_Arg_] )<sup>\*</sup> `,`<sup>?</sup>
 /// >
 /// > [_Arg_] :\
-/// > &nbsp;&nbsp; [_SourceArg_] | [_SourceLengthArg_]
+/// > &nbsp;&nbsp; [_SourceArg_] | [_SourceRemainingArg_]
 /// >
 /// > [_SourceArg_] :\
 /// > &nbsp;&nbsp; [IDENTIFIER] ( `:` [_Pattern_] )<sup>?</sup>
 /// >
-/// > [_SourceLengthArg_] :\
-/// > &nbsp;&nbsp; `self` `::` `length`
+/// > [_SourceRemainingArg_] :\
+/// > &nbsp;&nbsp; `self` `::` `remaining`
 /// >
 /// > [_SourceArgs_]: SourceArgs
 /// > [_Arg_]: SourceArgs
 /// > [_SourceArg_]: SourceArg
-/// > [_SourceLengthArg_]: SourceLengthArg
+/// > [_SourceRemainingArg_]: SourceRemainingArg
 /// >
 /// > [_Expression_]: https://doc.rust-lang.org/reference/expressions.html
 /// > [IDENTIFIER]: https://doc.rust-lang.org/reference/identifiers.html
@@ -174,12 +175,11 @@ pub struct SourceArgs {
 /// [^pattern-use-name]: Unless that pattern simply repeats the same name, like
 /// `shape: shape`.
 ///
-/// # Length arguments
+/// # Remaining bytes arguments
 /// Additionally, in a [`Request`] or a [`Reply`], a special argument referring
-/// to the length of the message (in units of 4 bytes, as defined in the X11
-/// protocol, and offset by 8 units in the case of replies) may be used:
-/// `self::length`. This special syntax may be used in any `Source` within that
-/// [`Request`] or [`Reply`].
+/// to the remaining bytes in the message may be used: `self::remaining`. This
+/// special syntax may be used in any `Source` within that [`Request`] or
+/// [`Reply`].
 ///
 /// # Examples
 /// ```ignore
@@ -234,7 +234,7 @@ pub struct SourceArgs {
 /// `[_; ..]` syntax is a special syntax for [`ArrayUnused`] bytes elements to
 /// infer the number of unused bytes. It generates no function.
 ///
-/// ## Length arguments
+/// ## Remaining bytes arguments
 /// ```ignore
 /// # extern crate xrbk;
 /// # extern crate xrb;
@@ -257,18 +257,7 @@ pub struct SourceArgs {
 ///         pub context: GraphicsContext,
 ///         pub clip_origin: Point,
 ///
-///         #[context(self::length => {
-///             (
-///                 // Each length unit is four bytes.
-///                 (length * 4)
-///                 // The request header is four bytes.
-///                 - 4
-///                 // The elements before the `rectangles` field are eight bytes.
-///                 - 8
-///             )
-///             // Each rectangle is eight bytes.
-///             / 8
-///         })]
+///         #[context(self::remaining => remaining / Rectangle::X11_SIZE)]
 ///         pub rectangles: Vec<Rectangle>,
 ///     }
 /// }

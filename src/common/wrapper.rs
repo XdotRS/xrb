@@ -168,6 +168,26 @@ impl_writable!(CopyableFromParent<Colormap>: &self, buf {
 	}
 
 	Ok(())
+});
+
+impl_constant_x11_size!(CopyableFromParent<u8> {
+	u8::X11_SIZE
+});
+
+impl_readable!(CopyableFromParent<u8>: buf {
+	Ok(match buf.get_u8() {
+		discrim if discrim == 0 => Self::CopyFromParent,
+		val => Self::Other(val),
+	})
+});
+
+impl_writable!(CopyableFromParent<u8>: &self, buf {
+	match self {
+		Self::CopyFromParent => buf.put_u32(0),
+		Self::Other(val) => val.write_to(buf)?,
+	}
+
+	Ok(())
 }); // }}}
 
 /// Values which may be the same as the 'parent' as long as the parent has the
@@ -405,20 +425,28 @@ impl_writable!(FocusWindow: &self, buf {
 	Ok(())
 }); // }}}
 
-/// The target client(s) of a [`KillClient` request].
+/// The target of a [`KillClient` request].
 ///
-/// [`KillClient` request]: crate::request::KillClient
+/// [`KillClient` request]: crate::x11::request::KillClient
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub enum KillClientTarget {
-	/// Kill all clients with [`CloseDownMode::RetainTemporary`].
+	/// Destroy all remaining resources retained from connections that ended
+	/// with [`RetainResourcesMode::RetainTemporarily`].
 	///
-	/// [`CloseDownMode::RetainTemporary`]: crate::CloseDownMode::RetainTemporary
-	// FIXME: correct CloseDownMode link
-	AllTemporarilyRetainedClients,
+	/// [`RetainResourcesMode::RetainTemporarily`]: crate::x11::request::RetainResourcesMode::RetainTemporarily
+	DestroyTemporarilyRetainedResources,
 
-	/// Kill the client which created the resource specified by this resource
-	/// ID.
-	Other(u32),
+	/// Kill the client which created the specified `resource`.
+	///
+	/// If the client's connection has already ended, all remaining retained
+	/// resources created by that client are destroyed (even if the client used
+	/// [`RetainResourcesMode::RetainPermanently`]).
+	///
+	/// [`RetainResourcesMode::RetainPermanently`]: crate::x11::request::RetainResourcesMode::RetainPermanently
+	KillClient {
+		/// The resource whose client is to be killed.
+		resource: u32,
+	},
 }
 
 impl_constant_x11_size!(KillClientTarget { // {{{
@@ -427,16 +455,15 @@ impl_constant_x11_size!(KillClientTarget { // {{{
 
 impl_readable!(KillClientTarget: buf {
 	Ok(match buf.get_u32() {
-		discrim if discrim == 0 => Self::AllTemporarilyRetainedClients,
-
-		val => Self::Other(val),
+		0 => Self::DestroyTemporarilyRetainedResources,
+		resource => Self::KillClient { resource },
 	})
 });
 
 impl_writable!(KillClientTarget: &self, buf {
 	match self {
-		Self::AllTemporarilyRetainedClients => buf.put_u32(0),
-		Self::Other(val) => buf.put_u32(*val),
+		Self::DestroyTemporarilyRetainedResources => buf.put_u32(0),
+		Self::KillClient { resource } => buf.put_u32(*resource),
 	}
 
 	Ok(())

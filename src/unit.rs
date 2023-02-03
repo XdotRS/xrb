@@ -4,9 +4,37 @@
 
 //! Types representing units like millimeters or hertz.
 
-use std::fmt::{Display, Formatter};
+use std::{
+	cmp::Ordering,
+	fmt::{Display, Formatter},
+};
+
+use derive_more::{
+	Add,
+	AddAssign,
+	Div,
+	DivAssign,
+	Mul,
+	MulAssign,
+	Rem,
+	RemAssign,
+	Sub,
+	SubAssign,
+	Sum,
+};
 use thiserror::Error;
-use xrbk::{Buf, BufMut, ConstantX11Size, ReadResult, Readable, Writable, WriteResult, X11Size};
+
+use xrbk::{
+	Buf,
+	BufMut,
+	ConstantX11Size,
+	ReadResult,
+	Readable,
+	Wrap,
+	Writable,
+	WriteResult,
+	X11Size,
+};
 
 /// An error generated when a value is outside of the required bounds.
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Error)]
@@ -62,8 +90,41 @@ macro_rules! impl_xrbk_traits {
 }
 
 /// A value measured in pixels.
-#[derive(Debug, Hash, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+	Debug,
+	Hash,
+	Copy,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Add,
+	AddAssign,
+	Sub,
+	SubAssign,
+	Mul,
+	MulAssign,
+	Div,
+	DivAssign,
+	Rem,
+	RemAssign,
+	Sum,
+)]
 pub struct Px<Num>(pub Num);
+
+impl<Num> Px<Num> {
+	/// Maps a `Px<Num>` to `Px<Output>` by applying the provided closure to the
+	/// contained value.
+	pub fn map<Output>(self, map: impl FnOnce(Num) -> Output) -> Px<Output> {
+		Px(map(self.0))
+	}
+
+	/// Calls the provided closure with a reference to the contained value.
+	pub fn inspect(&self, inspect: impl FnOnce(&Num)) {
+		inspect(&self.0);
+	}
+}
 
 impl<Num> Display for Px<Num>
 where
@@ -77,8 +138,41 @@ where
 impl_xrbk_traits!(Px<Num>(Num));
 
 /// A value measured in millimeters.
-#[derive(Debug, Hash, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+	Debug,
+	Hash,
+	Copy,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Add,
+	AddAssign,
+	Sub,
+	SubAssign,
+	Mul,
+	MulAssign,
+	Div,
+	DivAssign,
+	Rem,
+	RemAssign,
+	Sum,
+)]
 pub struct Mm<Num>(pub Num);
+
+impl<Num> Mm<Num> {
+	/// Maps a `Mm<Num>` to `Mm<Output>` by applying the provided closure to the
+	/// contained value.
+	pub fn map<Output>(self, map: impl FnOnce(Num) -> Output) -> Mm<Output> {
+		Mm(map(self.0))
+	}
+
+	/// Calls the provided closure with a reference to the contained value.
+	pub fn inspect(&self, inspect: impl FnOnce(&Num)) {
+		inspect(&self.0);
+	}
+}
 
 impl<Num> Display for Mm<Num>
 where
@@ -92,8 +186,41 @@ where
 impl_xrbk_traits!(Mm<Num>(Num));
 
 /// A value measured in milliseconds.
-#[derive(Debug, Hash, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+	Debug,
+	Hash,
+	Copy,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Add,
+	AddAssign,
+	Sub,
+	SubAssign,
+	Mul,
+	MulAssign,
+	Div,
+	DivAssign,
+	Rem,
+	RemAssign,
+	Sum,
+)]
 pub struct Ms<Num>(pub Num);
+
+impl<Num> Ms<Num> {
+	/// Maps a `Ms<Num>` to `Ms<Output>` by applying the provided closure to the
+	/// contained value.
+	pub fn map<Output>(self, map: impl FnOnce(Num) -> Output) -> Ms<Output> {
+		Ms(map(self.0))
+	}
+
+	/// Calls the provided closure with a reference to the contained value.
+	pub fn inspect(&self, inspect: impl FnOnce(&Num)) {
+		inspect(&self.0);
+	}
+}
 
 impl<Num> Display for Ms<Num>
 where
@@ -106,9 +233,111 @@ where
 
 impl_xrbk_traits!(Ms<Num>(Num));
 
+/// A value measured in seconds.
+#[derive(
+	Debug,
+	Hash,
+	Copy,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Add,
+	AddAssign,
+	Sub,
+	SubAssign,
+	Mul,
+	MulAssign,
+	Div,
+	DivAssign,
+	Rem,
+	RemAssign,
+	Sum,
+)]
+pub struct Sec<Num>(pub Num);
+
+impl<Num> Sec<Num> {
+	/// Maps a `Sec<Num>` to `Sec<Output>` by applying the provided closure to
+	/// the contained value.
+	pub fn map<Output>(self, map: impl FnOnce(Num) -> Output) -> Sec<Output> {
+		Sec(map(self.0))
+	}
+
+	/// Calls the provided closure with a reference to the contained value.
+	pub fn inspect(&self, inspect: impl FnOnce(&Num)) {
+		inspect(&self.0);
+	}
+}
+
+impl<Num> Display for Sec<Num>
+where
+	Num: Display,
+{
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{} s", self.0)
+	}
+}
+
+impl<Num> Wrap for Sec<Num>
+where
+	Num: Copy + Clone + Readable + Writable + ConstantX11Size + From<Self> + TryFrom<u64>,
+	Self: TryFrom<Num>,
+	u64: From<Num>,
+{
+	type Integer = Num;
+}
+
+impl<Num> From<Num> for Sec<Num> {
+	fn from(num: Num) -> Self {
+		Self(num)
+	}
+}
+
+impl From<Sec<Self>> for u16 {
+	fn from(Sec(num): Sec<Self>) -> Self {
+		num
+	}
+}
+
+impl_xrbk_traits!(Sec<Num>(Num));
+
 /// A value measured in hertz.
-#[derive(Debug, Hash, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+	Debug,
+	Hash,
+	Copy,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Add,
+	AddAssign,
+	Sub,
+	SubAssign,
+	Mul,
+	MulAssign,
+	Div,
+	DivAssign,
+	Rem,
+	RemAssign,
+	Sum,
+)]
 pub struct Hz<Num>(pub Num);
+
+impl<Num> Hz<Num> {
+	/// Maps a `Hz<Num>` to `Hz<Output>` by applying the provided closure to the
+	/// contained value.
+	pub fn map<Output>(self, map: impl FnOnce(Num) -> Output) -> Hz<Output> {
+		Hz(map(self.0))
+	}
+
+	/// Calls the provided closure with a reference to the contained value.
+	pub fn inspect(&self, inspect: impl FnOnce(&Num)) {
+		inspect(&self.0);
+	}
+}
 
 impl<Num> Display for Hz<Num>
 where
@@ -125,6 +354,13 @@ impl_xrbk_traits!(Hz<Num>(Num));
 #[derive(Debug, Hash, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Percentage(u8);
 
+impl Percentage {
+	/// Calls the provided closure with a reference to the contained value.
+	pub fn inspect(&self, inspect: impl FnOnce(u8)) {
+		inspect(self.0);
+	}
+}
+
 impl Display for Percentage {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		write!(f, "{}%", self.0)
@@ -135,7 +371,7 @@ impl Percentage {
 	/// Creates a new percentage.
 	///
 	/// # Errors
-	/// Return a [`ValueOutOfBounds`] error if the `percentage > 100`.
+	/// Returns a [`ValueOutOfBounds`] error if the `percentage > 100`.
 	pub const fn new(percentage: u8) -> Result<Self, ValueOutOfBounds<u8>> {
 		match percentage {
 			percentage if percentage <= 100 => Ok(Self(percentage)),
@@ -161,9 +397,113 @@ impl Percentage {
 
 	/// Returns the wrapped percentage value.
 	#[must_use]
-	pub const fn unwrap(self) -> u8 {
+	pub const fn unwrap(&self) -> u8 {
 		self.0
 	}
 }
 
+impl PartialEq<u8> for Percentage {
+	fn eq(&self, other: &u8) -> bool {
+		self.0 == *other
+	}
+}
+
+impl PartialEq<Percentage> for u8 {
+	fn eq(&self, other: &Percentage) -> bool {
+		*self == other.0
+	}
+}
+
+impl PartialOrd<u8> for Percentage {
+	fn partial_cmp(&self, other: &u8) -> Option<Ordering> {
+		self.0.partial_cmp(other)
+	}
+}
+
+impl PartialOrd<Percentage> for u8 {
+	fn partial_cmp(&self, other: &Percentage) -> Option<Ordering> {
+		self.partial_cmp(&other.0)
+	}
+}
+
 impl_xrbk_traits!(Percentage(u8));
+
+/// A value measured as a percentage from -100% to 100%.
+#[derive(Debug, Hash, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SignedPercentage(i8);
+
+impl SignedPercentage {
+	/// Calls the provided closure with a reference to the contained value.
+	pub fn inspect(&self, inspect: impl FnOnce(i8)) {
+		inspect(self.0);
+	}
+}
+
+impl Display for SignedPercentage {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{}%", self.0)
+	}
+}
+
+impl SignedPercentage {
+	/// Creates a new signed percentage.
+	///
+	/// # Errors
+	/// Returns a [`ValueOutOfBounds`] error if `percentage < -100` or
+	/// `percentage > 100`.
+	pub const fn new(percentage: i8) -> Result<Self, ValueOutOfBounds<i8>> {
+		match percentage {
+			percentage if percentage >= -100 && percentage <= 100 => Ok(Self(percentage)),
+
+			other => Err(ValueOutOfBounds {
+				min: -100,
+				max: 100,
+				found: other,
+			}),
+		}
+	}
+
+	/// Creates a new signed percentage without ensuring it has the right
+	/// bounds.
+	///
+	/// # Safety
+	/// Callers of this function must ensure that the given percentage satisfies
+	/// the bounds `-100 <= percentage <= 100`. Creating a [`SignedPercentage`]
+	/// with a value less than -100 or greater than 100 is Undefined Behavior.
+	#[must_use]
+	pub const unsafe fn new_unchecked(percentage: i8) -> Self {
+		Self(percentage)
+	}
+
+	/// Returns the wrapped percentage value.
+	#[must_use]
+	pub const fn unwrap(&self) -> i8 {
+		self.0
+	}
+}
+
+impl PartialEq<i8> for SignedPercentage {
+	fn eq(&self, other: &i8) -> bool {
+		self.0 == *other
+	}
+}
+
+impl PartialEq<SignedPercentage> for i8 {
+	fn eq(&self, other: &SignedPercentage) -> bool {
+		*self == other.0
+	}
+}
+
+impl PartialOrd<i8> for SignedPercentage {
+	fn partial_cmp(&self, other: &i8) -> Option<Ordering> {
+		self.0.partial_cmp(other)
+	}
+}
+
+impl PartialOrd<SignedPercentage> for i8 {
+	fn partial_cmp(&self, other: &SignedPercentage) -> Option<Ordering> {
+		self.partial_cmp(&other.0)
+	}
+}
+
+impl_xrbk_traits!(SignedPercentage(i8));

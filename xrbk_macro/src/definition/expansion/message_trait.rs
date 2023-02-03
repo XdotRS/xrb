@@ -12,7 +12,13 @@ use crate::TsExt;
 impl Request {
 	pub fn impl_trait(&self, tokens: &mut TokenStream2) {
 		let name = &self.ident;
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let reply = if let Some((_, r#type)) = &self.reply {
 			quote!(#r#type)
@@ -21,21 +27,23 @@ impl Request {
 		};
 
 		let major_opcode = &self.major_opcode;
-		let minor_opcode = if let Some((_, minor_opcode)) = &self.minor_opcode {
+		let minor_opcode = if let Some(minor_opcode) = &self.minor_opcode {
 			quote!(Some(#minor_opcode))
 		} else {
 			quote!(None)
 		};
-		let other_errors = if let Some((_, other_errors)) = &self.other_errors {
+		let other_errors = if let Some(other_errors) = &self.other_errors {
 			other_errors.to_token_stream()
 		} else {
 			quote!(::std::convert::Infallible)
 		};
 
+		let request_token = &self.request_token;
+
 		tokens.append_tokens({
 			quote_spanned!(self.request_token.span()=>
 				#[automatically_derived]
-				impl #impl_generics xrb::message::Request for #name #type_generics #where_clause {
+				impl #impl_generics #request_token for #name #type_generics #where_clause {
 					type Reply = #reply;
 					type OtherErrors = #other_errors;
 
@@ -60,7 +68,13 @@ impl Request {
 impl Reply {
 	pub fn impl_trait(&self, tokens: &mut TokenStream2) {
 		let name = &self.ident;
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let request = &self.request;
 		let sequence = match &self.content {
@@ -77,15 +91,17 @@ impl Reply {
 			_ => panic!("replies must have a sequence field of type `u32`"),
 		};
 
+		let reply_token = &self.reply_token;
+
 		tokens.append_tokens({
 			quote_spanned!(self.reply_token.span()=>
 				#[automatically_derived]
-				impl #impl_generics xrb::message::Reply for #name #type_generics #where_clause {
+				impl #impl_generics #reply_token for #name #type_generics #where_clause {
 					type Request = #request;
 
 					#[allow(clippy::cast_possible_truncation)]
 					fn length(&self) -> u32 {
-						((<Self as ::xrbk::X11Size>::x11_size(&self) / 4) - 8) as u32
+						((<Self as ::xrbk::X11Size>::x11_size(self) / 4) - 8) as u32
 					}
 
 					fn sequence(&self) -> u16 {
@@ -100,7 +116,13 @@ impl Reply {
 impl Event {
 	pub fn impl_trait(&self, tokens: &mut TokenStream2) {
 		let name = &self.ident;
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let code = &self.event_code;
 		let sequence = match &self.content {
@@ -123,10 +145,12 @@ impl Event {
 			_ => quote!(None),
 		};
 
+		let event_token = &self.event_token;
+
 		tokens.append_tokens({
 			quote_spanned!(self.event_token.span()=>
 				#[automatically_derived]
-				impl #impl_generics xrb::message::Event for #name #type_generics #where_clause {
+				impl #impl_generics #event_token for #name #type_generics #where_clause {
 					const CODE: u8 = {
 						#code
 					};
@@ -143,7 +167,13 @@ impl Event {
 impl Error {
 	pub fn impl_trait(&self, tokens: &mut TokenStream2) {
 		let name = &self.ident;
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let error_path = &self.error_token;
 		let error_code = &self.error_code;

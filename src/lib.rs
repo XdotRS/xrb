@@ -33,7 +33,9 @@
 #![warn(clippy::complexity)]
 #![warn(clippy::cargo)]
 #![warn(clippy::missing_const_for_fn)]
+// Warn for these doc lints.
 #![warn(missing_docs)]
+#![warn(rustdoc::broken_intra_doc_links)]
 // Allow these lints.
 #![allow(clippy::doc_markdown)]
 #![allow(clippy::wildcard_imports)]
@@ -65,6 +67,8 @@
 //! [X11]: https://x.org/releases/X11R7.7/doc/x11protocol.html
 //! [X.RS]: https://github.com/XdotRS/xrs/
 
+pub use common::*;
+
 /// The major version of the X protocol used in XRB.
 ///
 /// The X protocol major version may increment if breaking changes are
@@ -83,5 +87,3 @@ pub mod connection;
 pub mod message;
 pub mod unit;
 pub mod x11;
-
-pub use common::*;

@@ -2,19 +2,25 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use super::*;
-use crate::TsExt;
-
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote_spanned;
 use syn::Path;
+
+use crate::{element::Element, TsExt};
+
+use super::*;
 
 impl Struct {
 	pub fn impl_x11_size(&self, tokens: &mut TokenStream2, trait_path: &Path) {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let pat = TokenStream2::with_tokens(|tokens| {
 			self.content.pat_cons_to_tokens(tokens);
@@ -34,6 +40,7 @@ impl Struct {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn x11_size(&self) -> usize {
 					let mut size: usize = 0;
@@ -56,7 +63,12 @@ impl Request {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let pat = TokenStream2::with_tokens(|tokens| {
 			self.content.pat_cons_to_tokens(tokens);
@@ -64,8 +76,10 @@ impl Request {
 
 		let sizes = TokenStream2::with_tokens(|tokens| {
 			for element in &self.content {
-				if !element.is_metabyte() && !element.is_sequence() {
+				if element.is_normal() {
 					element.x11_size_tokens(tokens, DefinitionType::Request);
+				} else if let Element::Let(r#let) = element && element.is_metabyte() {
+					r#let.function_call_tokens(tokens);
 				}
 			}
 		});
@@ -78,6 +92,7 @@ impl Request {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn x11_size(&self) -> usize {
 					// The size starts at `4` to account for the size
@@ -102,7 +117,12 @@ impl Reply {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let pat = TokenStream2::with_tokens(|tokens| {
 			self.content.pat_cons_to_tokens(tokens);
@@ -110,8 +130,10 @@ impl Reply {
 
 		let sizes = TokenStream2::with_tokens(|tokens| {
 			for element in &self.content {
-				if !element.is_metabyte() && !element.is_sequence() {
+				if element.is_normal() {
 					element.x11_size_tokens(tokens, DefinitionType::Reply);
+				} else if let Element::Let(r#let) = element && element.is_metabyte() {
+					r#let.function_call_tokens(tokens);
 				}
 			}
 		});
@@ -124,6 +146,7 @@ impl Reply {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn x11_size(&self) -> usize {
 					// The size starts at `8` to account for the size
@@ -148,7 +171,12 @@ impl Event {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let size: usize = if self.content.sequence_element().is_some() {
 			4
@@ -164,6 +192,8 @@ impl Event {
 			for element in &self.content {
 				if element.is_normal() {
 					element.x11_size_tokens(tokens, DefinitionType::Event);
+				} else if let Element::Let(r#let) = element && element.is_metabyte() {
+					r#let.function_call_tokens(tokens);
 				}
 			}
 		});
@@ -176,6 +206,7 @@ impl Event {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn x11_size(&self) -> usize {
 					// The size starts at either `4` or `1`, depending
@@ -202,7 +233,12 @@ impl Error {
 		let ident = &self.ident;
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = match &self.content {
+			StructlikeContent::Regular { where_clause, .. } => where_clause,
+			StructlikeContent::Tuple { where_clause, .. } => where_clause,
+			StructlikeContent::Unit { where_clause, .. } => where_clause,
+		};
 
 		let pat = TokenStream2::with_tokens(|tokens| {
 			self.content.pat_cons_to_tokens(tokens);
@@ -212,6 +248,8 @@ impl Error {
 			for element in &self.content {
 				if element.is_normal() {
 					element.x11_size_tokens(tokens, DefinitionType::Error);
+				} else if let Element::Let(r#let) = element && element.is_metabyte() {
+					r#let.function_call_tokens(tokens);
 				}
 			}
 		});
@@ -224,6 +262,7 @@ impl Error {
 					clippy::trivially_copy_pass_by_ref,
 					clippy::needless_borrow,
 					clippy::identity_op,
+					unused_mut,
 				)]
 				fn x11_size(&self) -> usize {
 					// At least 11 bytes including all the required fields.
@@ -249,7 +288,8 @@ impl Enum {
 		);
 
 		// TODO: add generic bounds
-		let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+		let (impl_generics, type_generics, _) = self.generics.split_for_impl();
+		let where_clause = &self.where_clause;
 
 		let arms = TokenStream2::with_tokens(|tokens| {
 			for variant in &self.variants {

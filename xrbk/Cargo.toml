@@ -4,7 +4,7 @@
 
 [package]
 name = "xrbk"
-version = "0.0.1"
+version = "0.0.2"
 readme = false
 repository = "https://github.com/XdotRS/xrb/tree/main/xrbk"
 documentation = "https://docs.aquariwm.org/doc/xrbk"

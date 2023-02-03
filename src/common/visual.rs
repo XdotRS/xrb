@@ -344,8 +344,8 @@ derive_xrb! {
 		pub width_mm: Mm<u16>,
 		pub height_mm: Mm<u16>,
 
-		pub min_installed_maps: u16,
-		pub max_installed_maps: u16,
+		pub min_installed_colormaps: u16,
+		pub max_installed_colormaps: u16,
 
 		pub root_visual: VisualId,
 		pub maintain_contents_mode: MaintainContents,

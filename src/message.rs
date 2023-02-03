@@ -102,7 +102,7 @@ pub trait Request: X11Size + Writable {
 	///
 	/// ```
 	/// use xrbk_macro::derive_xrb;
-	/// use xrb::{ColorChannelMask, Colormap, visual::ColorId, String8};
+	/// use xrb::{ColorChannelMask, Colormap, visual::ColorId, message::Request, String8};
 	///
 	/// derive_xrb! {
 	///     #[derive(Debug, Hash, PartialEq, Eq, Readable, Writable, X11Size)]
@@ -158,7 +158,7 @@ pub enum RequestError<OtherErrors> {
 	/// An X server may generate an [`Alloc`] event if it runs out of allocation
 	/// space to allocate a requested resource.
 	///
-	/// An X server running out of allocation space is undefined behavior, but
+	/// An X server running out of allocation space is unspecified behavior, but
 	/// it is nonetheless mentioned in the X11 protocol that a server may
 	/// generate an [`Alloc`] error for any [request] for this reason.
 	///

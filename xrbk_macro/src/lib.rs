@@ -6,14 +6,8 @@
 #![feature(if_let_guard)]
 #![allow(rustdoc::private_intra_doc_links)]
 
-mod attribute;
-mod definition;
-mod derive;
-mod element;
-mod ext;
-mod source;
-
 use proc_macro::TokenStream;
+
 use quote::{quote, ToTokens};
 use syn::{parse_macro_input, Data, DeriveInput, Fields, FieldsNamed, FieldsUnnamed};
 
@@ -21,6 +15,13 @@ pub(crate) use definition::*;
 use derive::*;
 pub(crate) use ext::*;
 pub(crate) use source::*;
+
+mod attribute;
+mod definition;
+mod derive;
+mod element;
+mod ext;
+mod source;
 
 #[proc_macro_derive(new)]
 pub fn derive_new(item: TokenStream) -> TokenStream {
