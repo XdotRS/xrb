@@ -19,9 +19,7 @@ categories = [ "data-structures", "api-bindings", "encoding" ]
 try = []
 
 [workspace]
-# XRB is defined as a workspace that automatically includes all its path
-# dependencies. Currently, that means `xrb-proc-macros` and `cornflakes`.
-members = [ "xrbk", "xrbk_macro" ]
+members = [ "xrbk", "xrbk_macro", "xrbk_macro_impl" ]
 
 [dependencies]
 xrbk = { path = "./xrbk" } # (de)serialization
