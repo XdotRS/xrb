@@ -18,5 +18,5 @@ categories = [ "parser-implementations" ]
 
 [dependencies]
 chumsky = "0.8.0"
-proc-macro2 = "1.0.50"
+proc-macro2 = { version = "1.0.50", features = ["span-locations"] }
 quote = "1.0.23"

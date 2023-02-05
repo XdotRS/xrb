@@ -2,7 +2,47 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-pub struct OuterAttribute;
+use chumsky::prelude::*;
+use proc_macro2::{TokenStream, TokenTree};
+
+use crate::{
+	error::ExpectedButFound,
+	path::SimplePath,
+	token::delimiter::{SquareBrackets, SquareBracketsGroup},
+	Punct,
+};
+
+pub struct OuterAttribute {
+	pub hash_token: Punct![#],
+	pub square_brackets: SquareBrackets,
+	pub path: SimplePath,
+	pub content: TokenStream,
+}
+
+impl OuterAttribute {
+	pub fn parser() -> impl Parser<TokenTree, OuterAttribute, Error = ExpectedButFound<TokenTree>> {
+		<Punct![#]>::parser()
+			.then(SquareBracketsGroup::parser())
+			.map(|(hash, group)| {
+				let hash_token = hash;
+				let square_brackets = SquareBrackets {
+					open_span: group.open_span,
+					span: group.tokens_span,
+					close_span: group.close_span,
+				};
+				let (path, content) = SimplePath::parser()
+					.then(any().repeated().collect::<Vec<_>>())
+					.parse(group.tokens.into_iter().collect::<Vec<_>>());
+
+				OuterAttribute {
+					hash_token,
+					square_brackets,
+					path,
+					content,
+				}
+			})
+	}
+}
 
 pub enum Visibility {
 	Public(PubVisibility),
@@ -75,3 +115,5 @@ pub enum MacroItem {
 /// `[...]` delimiters have semicolons following them.
 pub struct OuterMacroInvocation;
 pub struct MacroRulesDefinition;
+
+pub fn parser() -> impl Parser<TokenTree, AttributesItem, Error = Simple<TokenTree>> {}

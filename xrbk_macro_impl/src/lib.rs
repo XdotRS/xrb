@@ -26,4 +26,15 @@
 #![allow(clippy::wildcard_imports)]
 #![allow(clippy::module_name_repetitions)]
 
-pub mod definition;
+use crate::item::AttributesItem;
+use chumsky::prelude::*;
+use proc_macro2::TokenTree;
+
+pub mod error;
+pub mod item;
+pub mod path;
+pub mod token;
+
+pub fn parser() -> impl Parser<TokenTree, Vec<AttributesItem>, Error = Simple<TokenTree>> {
+	item::parser().repeated().collect::<Vec<AttributesItem>>()
+}
