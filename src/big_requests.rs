@@ -4,5 +4,5 @@
 
 //! Request to enable extended length field in the protocol.
 
-pub mod request;
 pub mod reply;
+pub mod request;

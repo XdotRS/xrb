@@ -21,8 +21,9 @@ use xrbk::{
 	ReadResult,
 	Readable,
 	Writable,
+	WriteError,
 	WriteResult,
-	X11Size, WriteError,
+	X11Size,
 };
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 

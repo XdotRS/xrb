@@ -4,12 +4,11 @@
 
 extern crate self as xrb;
 
+use crate::{big_requests::reply, message::Request};
 use derivative::Derivative;
 use xrbk_macro::derive_xrb;
-use crate::message::Request;
-use crate::big_requests::reply;
 
-derive_xrb!{
+derive_xrb! {
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
 	#[derivative(Hash, PartialEq, Eq)]
 	pub struct BigRequestsEnable: Request(0) -> reply::BigRequestsEnable {}
