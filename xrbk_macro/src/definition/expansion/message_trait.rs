@@ -55,9 +55,16 @@ impl Request {
 						#minor_opcode
 					};
 
+					#[cfg(not(feature = "big-requests"))]
 					#[allow(clippy::cast_possible_truncation)]
 					fn length(&self) -> u16 {
 						(<Self as ::xrbk::X11Size>::x11_size(self) / 4) as u16
+					}
+
+					#[cfg(feature = "big-requests")]
+					#[allow(clippy::cast_possible_truncation)]
+					fn length(&self) -> u32 {
+						(<Self as ::xrbk::X11Size>::x11_size(self) / 4) as u32
 					}
 				}
 			)

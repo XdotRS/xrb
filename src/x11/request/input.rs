@@ -22,7 +22,7 @@ use xrbk::{
 	Readable,
 	Writable,
 	WriteResult,
-	X11Size,
+	X11Size, WriteError,
 };
 use xrbk_macro::{derive_xrb, Readable, Writable, X11Size};
 
@@ -1439,7 +1439,15 @@ impl<const KEYSYMS_PER_KEYCODE: usize> Writable for ChangeKeyboardMapping<KEYSYM
 	#[allow(clippy::cast_possible_truncation)]
 	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
 		// Limit `buf` by the length (converted to bytes).
+		#[cfg(not(feature = "big-requests"))]
 		let buf = &mut buf.limit(usize::from(self.length()) * 4);
+		#[cfg(feature = "big-requests")]
+		let buf = &mut buf.limit({
+			let Ok(size) = (self.length() * 4).try_into() else {
+				return Err(WriteError::Other(Box::new("Unable to allocate buffer")));
+			};
+			size
+		});
 
 		// The major opcode.
 		Self::MAJOR_OPCODE.write_to(buf)?;

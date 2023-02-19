@@ -2102,7 +2102,18 @@ impl Writable for DrawText8 {
 		buf.put_u8(Self::MAJOR_OPCODE);
 		// Unused metabyte position.
 		buf.put_u8(0);
+		#[cfg(not(feature = "big-requests"))]
 		buf.put_u16(self.length());
+		#[cfg(feature = "big-requests")]
+		{
+			let length = self.length();
+			if let Ok(length) = length.try_into() {
+				buf.put_u16(length);
+			} else {
+				buf.put_u16(0);
+				buf.put_u32(length);
+			}
+		}
 
 		self.target.write_to(buf)?;
 		self.graphics_context.write_to(buf)?;
@@ -2470,7 +2481,18 @@ impl Writable for DrawText16 {
 		buf.put_u8(Self::MAJOR_OPCODE);
 		// Unused metabyte position.
 		buf.put_u8(0);
+		#[cfg(not(feature = "big-requests"))]
 		buf.put_u16(self.length());
+		#[cfg(feature = "big-requests")]
+		{
+			let length = self.length();
+			if let Ok(length) = length.try_into() {
+				buf.put_u16(length);
+			} else {
+				buf.put_u16(0);
+				buf.put_u32(length);
+			}
+		}
 
 		self.target.write_to(buf)?;
 		self.graphics_context.write_to(buf)?;
