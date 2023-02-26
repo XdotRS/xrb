@@ -131,11 +131,10 @@ impl Request {
 					#[cfg(not(feature = "big-requests"))]
 					let length = <_ as ::xrbk::Buf>::get_u16(buf);
 					#[cfg(feature = "big-requests")]
-					let mut length = <_ as ::xrbk::Buf>::get_u16(buf) as u32;
-					#[cfg(feature = "big-requests")]
-					if length == 0 {
-						length = <_ as ::xrbk::Buf>::get_u32(buf);
-					}
+					let length = match <_ as ::xrbk::Buf>::get_u16(buf) as u32 {
+						0 => <_ as ::xrbk::Buf>::get_u32(buf),
+						length => length,
+					};
 
 					let buf = &mut <_ as ::xrbk::Buf>::take(
 						buf,

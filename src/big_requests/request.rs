@@ -11,5 +11,5 @@ use xrbk_macro::derive_xrb;
 derive_xrb! {
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
 	#[derivative(Hash, PartialEq, Eq)]
-	pub struct BigRequestsEnable: Request(0) -> reply::BigRequestsEnable {}
+	pub struct BigRequestsEnable: Request(todo!("extensions use dynamic major opcodes")) -> reply::BigRequestsEnable {}
 }
