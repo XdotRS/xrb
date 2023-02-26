@@ -145,21 +145,22 @@ impl Request {
 					#[cfg(feature = "big-requests")]
 					{
 						let length = <Self as xrb::message::Request>::length(&self);
-						// If it can fit into a u16, then we don't need the extended length field
-						if let Ok(length) = length.try_into() {
-							<_ as ::xrbk::BufMut>::put_u16(
+						match u16::try_from(length) {
+							Ok(length) => <_ as ::xrbk::BufMut>::put_u16(
 								buf,
-								length,
-							);
-						} else {
-							<_ as ::xrbk::BufMut>::put_u16(
-								buf,
-								0,
-							);
-							<_ as ::xrbk::BufMut>::put_u32(
-								buf,
-								length,
-							);
+								length
+							),
+							// length is too big for u16, using the extended length field
+							Err(_) => {
+								<_ as ::xrbk::BufMut>::put_u16(
+									buf,
+									0,
+								);
+								<_ as ::xrbk::BufMut>::put_u32(
+									buf,
+									length,
+								);
+							},
 						}
 					}
 

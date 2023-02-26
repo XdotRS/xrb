@@ -11,7 +11,7 @@ use xrbk_macro::derive_xrb;
 derive_xrb! {
 	#[derive(Derivative, Debug, X11Size, Readable, Writable)]
 	#[derivative(Hash, PartialEq, Eq)]
-	pub struct BigRequestsEnable: Reply for request::BigRequestsEnable {
+	pub struct EnableBigRequests: Reply for request::EnableBigRequests {
 		#[sequence]
 		#[derivative(Hash = "ignore", PartialEq = "ignore")]
 		pub sequence: u16,
