@@ -2,7 +2,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-//! Request to enable extended length field in the protocol.
+//! Messages defined in the [Big Requests extension].
+//!
+//! The [Big Requests extension] enables extended length field for large requests.
+//!
+//! [Requests]: crate::message::Request
+//! [Replies]: crate::message::Reply
+//! [Big Requests extension]: https://www.x.org/releases/X11R7.7/doc/bigreqsproto/bigreq.html
 
 pub mod reply;
 pub mod request;
