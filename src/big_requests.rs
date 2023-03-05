@@ -4,7 +4,8 @@
 
 //! Messages defined in the [Big Requests extension].
 //!
-//! The [Big Requests extension] enables extended length field for large requests.
+//! The [Big Requests extension] enables extended length field for large
+//! requests.
 //!
 //! [Requests]: crate::message::Request
 //! [Replies]: crate::message::Reply
