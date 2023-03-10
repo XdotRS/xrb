@@ -11,5 +11,9 @@
 //! [Replies]: crate::message::Reply
 //! [Big Requests extension]: https://www.x.org/releases/X11R7.7/doc/bigreqsproto/bigreq.html
 
+/// This extension's internal name.
+/// This is used to retrieve the major opcode for this extension.
+pub const EXTENSION_NAME: &'static str = "BIG-REQUESTS";
+
 pub mod reply;
 pub mod request;
