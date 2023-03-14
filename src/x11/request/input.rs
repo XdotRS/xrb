@@ -21,6 +21,7 @@ use xrbk::{
 	ReadResult,
 	Readable,
 	Writable,
+	WriteError,
 	WriteResult,
 	X11Size,
 };
@@ -1439,7 +1440,15 @@ impl<const KEYSYMS_PER_KEYCODE: usize> Writable for ChangeKeyboardMapping<KEYSYM
 	#[allow(clippy::cast_possible_truncation)]
 	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
 		// Limit `buf` by the length (converted to bytes).
+		#[cfg(not(feature = "big-requests"))]
 		let buf = &mut buf.limit(usize::from(self.length()) * 4);
+		#[cfg(feature = "big-requests")]
+		let size = match usize::try_from(self.length()) {
+			Ok(size) => size * 4,
+
+			Err(error) => return Err(WriteError::Other(Box::new(error))),
+		};
+		let buf = &mut buf.limit(size);
 
 		// The major opcode.
 		Self::MAJOR_OPCODE.write_to(buf)?;

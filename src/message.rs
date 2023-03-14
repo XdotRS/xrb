@@ -123,6 +123,7 @@ pub trait Request: X11Size + Writable {
 	///     }
 	/// }
 	/// ```
+	#[cfg(not(feature = "big-requests"))]
 	#[allow(clippy::cast_possible_truncation)]
 	fn length(&self) -> u16 {
 		let size = self.x11_size();
@@ -134,6 +135,20 @@ pub trait Request: X11Size + Writable {
 		);
 
 		(size / 4) as u16
+	}
+
+	#[cfg(feature = "big-requests")]
+	#[allow(clippy::cast_possible_truncation)]
+	fn length(&self) -> u32 {
+		let size = self.x11_size();
+
+		assert_eq!(
+			size % 4,
+			0,
+			"expected Request size to be a multiple of 4, found {size}"
+		);
+
+		(size / 4) as u32
 	}
 }
 

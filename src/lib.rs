@@ -87,3 +87,8 @@ pub mod connection;
 pub mod message;
 pub mod unit;
 pub mod x11;
+
+// Protocol Extensions
+
+#[cfg(feature = "big-requests")]
+pub mod big_requests;

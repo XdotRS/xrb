@@ -128,7 +128,14 @@ impl Request {
 					// read.
 					#metabyte
 					// Read the request's length.
+					#[cfg(not(feature = "big-requests"))]
 					let length = <_ as ::xrbk::Buf>::get_u16(buf);
+					#[cfg(feature = "big-requests")]
+					let length = match <_ as ::xrbk::Buf>::get_u16(buf) as u32 {
+						0 => <_ as ::xrbk::Buf>::get_u32(buf),
+						length => length,
+					};
+
 					let buf = &mut <_ as ::xrbk::Buf>::take(
 						buf,
 						((length - 1) as usize) * 4,

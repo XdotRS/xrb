@@ -16,7 +16,14 @@ keywords = [ "x11", "xorg", "xproto", "xrs", "window" ]
 categories = [ "data-structures", "api-bindings", "encoding" ]
 
 [features]
+default = ["big-requests"]
 try = []
+
+# Protocol Extentions
+
+# Big Requests
+# https://www.x.org/releases/X11R7.7/doc/bigreqsproto/bigreq.html
+big-requests = []
 
 [workspace]
 # XRB is defined as a workspace that automatically includes all its path

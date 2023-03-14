@@ -86,6 +86,24 @@ request_error! {
 	}
 }
 
+/// Writes the length of the request to the provided buffer.
+fn write_size(request: &impl Request, buf: &mut impl BufMut) {
+	#[cfg(not(feature = "big-requests"))]
+	buf.put_u16(request.length());
+	#[cfg(feature = "big-requests")]
+	{
+		let length = request.length();
+		match u16::try_from(length) {
+			Ok(length) => buf.put_u16(length),
+			// length is too big for u16, using the extended length field
+			Err(_) => {
+				buf.put_u16(0);
+				buf.put_u32(length);
+			},
+		}
+	}
+}
+
 derive_xrb! {
 	/// A [request] that clears a particular area of a [window].
 	///
@@ -2102,7 +2120,7 @@ impl Writable for DrawText8 {
 		buf.put_u8(Self::MAJOR_OPCODE);
 		// Unused metabyte position.
 		buf.put_u8(0);
-		buf.put_u16(self.length());
+		write_size(self, buf);
 
 		self.target.write_to(buf)?;
 		self.graphics_context.write_to(buf)?;
@@ -2470,7 +2488,7 @@ impl Writable for DrawText16 {
 		buf.put_u8(Self::MAJOR_OPCODE);
 		// Unused metabyte position.
 		buf.put_u8(0);
-		buf.put_u16(self.length());
+		write_size(self, buf);
 
 		self.target.write_to(buf)?;
 		self.graphics_context.write_to(buf)?;

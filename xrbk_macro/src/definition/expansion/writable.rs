@@ -137,10 +137,32 @@ impl Request {
 					// Metabyte position
 					#metabyte
 					// Length
+					#[cfg(not(feature = "big-requests"))]
 					<_ as ::xrbk::BufMut>::put_u16(
 						buf,
 						<Self as xrb::message::Request>::length(&self),
 					);
+					#[cfg(feature = "big-requests")]
+					{
+						let length = <Self as xrb::message::Request>::length(&self);
+						match u16::try_from(length) {
+							Ok(length) => <_ as ::xrbk::BufMut>::put_u16(
+								buf,
+								length
+							),
+							// length is too big for u16, using the extended length field
+							Err(_) => {
+								<_ as ::xrbk::BufMut>::put_u16(
+									buf,
+									0,
+								);
+								<_ as ::xrbk::BufMut>::put_u32(
+									buf,
+									length,
+								);
+							},
+						}
+					}
 
 					// Other elements
 					#writes
