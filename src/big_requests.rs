@@ -13,7 +13,7 @@
 
 /// This extension's internal name.
 /// This is used to retrieve the major opcode for this extension.
-pub const EXTENSION_NAME: &'static str = "BIG-REQUESTS";
+pub const EXTENSION_NAME: &str = "BIG-REQUESTS";
 
 pub mod reply;
 pub mod request;
