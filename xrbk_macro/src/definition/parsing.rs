@@ -59,9 +59,9 @@ impl Parse for Definition {
 						Some(ident) => ident,
 
 						None => {
-							return Err(
-								input.error("expected `Request`, `CoreRequest`, `Reply`, `Event`, or `Error`")
-							);
+							return Err(input.error(
+								"expected `Request`, `CoreRequest`, `Reply`, `Event`, or `Error`",
+							));
 						},
 					};
 

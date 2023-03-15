@@ -1413,7 +1413,7 @@ impl<const KEYSYMS_PER_KEYCODE: usize> Request for ChangeKeyboardMapping<KEYSYMS
 	type Reply = ();
 
 	fn major_opcode() -> u8 {
-	    100
+		100
 	}
 	const MINOR_OPCODE: Option<u8> = None;
 }
@@ -1542,7 +1542,7 @@ impl Request for GetKeyboardMapping {
 	type Reply = reply::GetKeyboardMapping;
 
 	fn major_opcode() -> u8 {
-	    101
+		101
 	}
 	const MINOR_OPCODE: Option<u8> = None;
 }
@@ -2022,7 +2022,7 @@ impl Request for SetModifierMapping {
 	type Reply = reply::SetModifierMapping;
 
 	fn major_opcode() -> u8 {
-	    118
+		118
 	}
 	const MINOR_OPCODE: Option<u8> = None;
 }

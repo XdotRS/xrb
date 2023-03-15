@@ -36,7 +36,10 @@ impl Request {
 				comma1: _,
 				minor_opcode,
 				comma2: _,
-			} => (quote!(unsafe { #major_opcode }), quote!(Some(#minor_opcode))),
+			} => (
+				quote!(unsafe { #major_opcode }),
+				quote!(Some(#minor_opcode)),
+			),
 		};
 
 		let other_errors = if let Some(other_errors) = &self.other_errors {

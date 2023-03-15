@@ -2031,7 +2031,7 @@ impl Request for DrawText8 {
 	type Reply = ();
 
 	fn major_opcode() -> u8 {
-	    74
+		74
 	}
 	const MINOR_OPCODE: Option<u8> = None;
 }

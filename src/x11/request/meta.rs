@@ -566,7 +566,7 @@ impl Request for NoOp {
 	type Reply = ();
 
 	fn major_opcode() -> u8 {
-	    127
+		127
 	}
 	const MINOR_OPCODE: Option<u8> = None;
 }
