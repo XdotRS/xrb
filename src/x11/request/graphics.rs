@@ -2030,8 +2030,10 @@ impl Request for DrawText8 {
 	type OtherErrors = DrawText8Error;
 	type Reply = ();
 
-	const MAJOR_OPCODE: u8 = 74;
-	const MINOR_OPCODE: Option<u16> = None;
+	fn major_opcode() -> u8 {
+	    74
+	}
+	const MINOR_OPCODE: Option<u8> = None;
 }
 
 impl X11Size for DrawText8 {
@@ -2099,7 +2101,7 @@ impl Writable for DrawText8 {
 	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
 		let buf = &mut buf.limit(self.x11_size());
 
-		buf.put_u8(Self::MAJOR_OPCODE);
+		buf.put_u8(Self::major_opcode());
 		// Unused metabyte position.
 		buf.put_u8(0);
 		buf.put_u16(self.length());
@@ -2398,8 +2400,10 @@ impl Request for DrawText16 {
 	type OtherErrors = DrawText8Error;
 	type Reply = ();
 
-	const MAJOR_OPCODE: u8 = 75;
-	const MINOR_OPCODE: Option<u16> = None;
+	fn major_opcode() -> u8 {
+		75
+	}
+	const MINOR_OPCODE: Option<u8> = None;
 }
 
 impl X11Size for DrawText16 {
@@ -2467,7 +2471,7 @@ impl Writable for DrawText16 {
 	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
 		let buf = &mut buf.limit(self.x11_size());
 
-		buf.put_u8(Self::MAJOR_OPCODE);
+		buf.put_u8(Self::major_opcode());
 		// Unused metabyte position.
 		buf.put_u8(0);
 		buf.put_u16(self.length());

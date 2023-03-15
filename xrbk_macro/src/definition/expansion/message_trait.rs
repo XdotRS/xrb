@@ -26,12 +26,19 @@ impl Request {
 			quote!(())
 		};
 
-		let major_opcode = &self.major_opcode;
-		let minor_opcode = if let Some(minor_opcode) = &self.minor_opcode {
-			quote!(Some(#minor_opcode))
-		} else {
-			quote!(None)
+		let (major_opcode, minor_opcode) = match &self.opcodes {
+			RequestOpcodes::CoreRequest {
+				major_opcode,
+				comma1: _,
+			} => (quote!(#major_opcode), quote!(None)),
+			RequestOpcodes::ExtensionRequest {
+				major_opcode,
+				comma1: _,
+				minor_opcode,
+				comma2: _,
+			} => (quote!(unsafe { #major_opcode }), quote!(Some(#minor_opcode))),
 		};
+
 		let other_errors = if let Some(other_errors) = &self.other_errors {
 			other_errors.to_token_stream()
 		} else {
@@ -47,11 +54,11 @@ impl Request {
 					type Reply = #reply;
 					type OtherErrors = #other_errors;
 
-					const MAJOR_OPCODE: u8 = {
+					fn major_opcode() -> u8 {
 						#major_opcode
-					};
+					}
 
-					const MINOR_OPCODE: Option<u16> = {
+					const MINOR_OPCODE: Option<u8> = {
 						#minor_opcode
 					};
 

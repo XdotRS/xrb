@@ -1412,8 +1412,10 @@ impl<const KEYSYMS_PER_KEYCODE: usize> Request for ChangeKeyboardMapping<KEYSYMS
 	type OtherErrors = error::Value;
 	type Reply = ();
 
-	const MAJOR_OPCODE: u8 = 100;
-	const MINOR_OPCODE: Option<u16> = None;
+	fn major_opcode() -> u8 {
+	    100
+	}
+	const MINOR_OPCODE: Option<u8> = None;
 }
 
 impl<const KEYSYMS_PER_KEYCODE: usize> X11Size for ChangeKeyboardMapping<KEYSYMS_PER_KEYCODE> {
@@ -1442,7 +1444,7 @@ impl<const KEYSYMS_PER_KEYCODE: usize> Writable for ChangeKeyboardMapping<KEYSYM
 		let buf = &mut buf.limit(usize::from(self.length()) * 4);
 
 		// The major opcode.
-		Self::MAJOR_OPCODE.write_to(buf)?;
+		Self::major_opcode().write_to(buf)?;
 		// Length of `mappings`.
 		(self.mappings.len() as u8).write_to(buf)?;
 		// The length of the message.
@@ -1539,8 +1541,10 @@ impl Request for GetKeyboardMapping {
 	type OtherErrors = error::Value;
 	type Reply = reply::GetKeyboardMapping;
 
-	const MAJOR_OPCODE: u8 = 101;
-	const MINOR_OPCODE: Option<u16> = None;
+	fn major_opcode() -> u8 {
+	    101
+	}
+	const MINOR_OPCODE: Option<u8> = None;
 }
 
 impl ConstantX11Size for GetKeyboardMapping {
@@ -1586,7 +1590,7 @@ impl Readable for GetKeyboardMapping {
 
 impl Writable for GetKeyboardMapping {
 	fn write_to(&self, buf: &mut impl BufMut) -> WriteResult {
-		Self::MAJOR_OPCODE.write_to(buf)?;
+		Self::major_opcode().write_to(buf)?;
 		// Unused metabyte.
 		buf.put_u8(0);
 		// Message length.
@@ -2017,8 +2021,10 @@ impl Request for SetModifierMapping {
 	type OtherErrors = error::Value;
 	type Reply = reply::SetModifierMapping;
 
-	const MAJOR_OPCODE: u8 = 118;
-	const MINOR_OPCODE: Option<u16> = None;
+	fn major_opcode() -> u8 {
+	    118
+	}
+	const MINOR_OPCODE: Option<u8> = None;
 }
 
 impl X11Size for SetModifierMapping {

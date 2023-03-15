@@ -60,7 +60,7 @@ impl Parse for Definition {
 
 						None => {
 							return Err(
-								input.error("expected `Request`, `Reply`, `Event`, or `Error`")
+								input.error("expected `Request`, `CoreRequest`, `Reply`, `Event`, or `Error`")
 							);
 						},
 					};
@@ -151,58 +151,36 @@ impl ParseWithContext for Request {
 
 		let paren_token = parenthesized!(content in input);
 
-		let major_opcode = content.parse()?;
-		let mut comma1 = None;
-		let mut minor_opcode = None;
-		let mut comma2 = None;
-		let mut other_errors = None;
-		let mut comma3 = None;
-
-		if content.peek(Token![,]) {
-			comma1 = content.parse()?;
-			let fork = &content.fork();
-
-			if let Ok(r#type) = fork.parse::<Type>() {
-				if fork.peek(Token![,]) {
-					let comma = fork.parse()?;
-
-					if fork.is_empty() {
-						content.advance_to(fork);
-						other_errors = Some(r#type);
-						comma3 = Some(comma);
-					} else {
-						minor_opcode = Some(content.parse::<Expr>()?);
-
-						if content.peek(Token![,]) {
-							comma2 = Some(content.parse()?);
-
-							if !content.is_empty() {
-								other_errors = Some(content.parse::<Type>()?);
-
-								if content.peek(Token![,]) {
-									comma3 = Some(content.parse()?);
-								}
-							}
-						}
-					}
+		let opcodes = if content.peek(Ident) {
+			RequestOpcodes::ExtensionRequest {
+				major_opcode: content.parse()?,
+				comma1: content.parse()?,
+				minor_opcode: content.parse()?,
+				comma2: if content.peek(Token![,]) {
+					Some(content.parse()?)
 				} else {
-					content.advance_to(fork);
-					other_errors = Some(r#type);
-				}
-			} else {
-				minor_opcode = Some(content.parse::<Expr>()?);
+					None
+				},
+			}
+		} else {
+			RequestOpcodes::CoreRequest {
+				major_opcode: content.parse()?,
+				comma1: if content.peek(Token![,]) {
+					Some(content.parse()?)
+				} else {
+					None
+				},
+			}
+		};
 
-				if content.peek(Token![,]) {
-					comma2 = Some(content.parse()?);
+		let mut other_errors = None;
+		let mut comma_end = None;
 
-					if !content.is_empty() {
-						other_errors = Some(content.parse::<Type>()?);
+		if !content.is_empty() {
+			other_errors = Some(content.parse::<Type>()?);
 
-						if content.peek(Token![,]) {
-							comma3 = Some(content.parse()?);
-						}
-					}
-				}
+			if content.peek(Token![,]) {
+				comma_end = Some(content.parse()?);
 			}
 		}
 
@@ -219,14 +197,10 @@ impl ParseWithContext for Request {
 
 			paren_token,
 
-			major_opcode,
-			comma1,
-
-			minor_opcode,
-			comma2,
+			opcodes,
 
 			other_errors,
-			comma3,
+			comma_end,
 
 			reply: if input.peek(Token![->]) {
 				Some((input.parse()?, input.parse()?))

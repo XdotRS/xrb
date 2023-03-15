@@ -90,25 +90,29 @@ impl Request {
 			}
 		});
 
-		let metabyte = if self.minor_opcode.is_some() {
-			// TODO: can't be in metabyte, must check this in protocol!!
-			quote_spanned!(trait_path.span()=>
-				<_ as ::xrbk::BufMut>::put_u16(
-					buf,
-					<Self as xrb::message::Request>::MINOR_OPCODE.unwrap(),
-				);
-			)
-		} else if let Some(element) = self.content.metabyte_element() {
-			TokenStream2::with_tokens(|tokens| {
-				element.write_tokens(tokens, DefinitionType::Request);
-			})
-		} else {
-			quote_spanned!(trait_path.span()=>
-				<_ as ::xrbk::BufMut>::put_u8(
-					buf,
-					0,
-				);
-			)
+		let metabyte = match self.opcodes {
+			RequestOpcodes::ExtensionRequest { .. } => {
+				quote_spanned!(trait_path.span()=>
+					<_ as ::xrbk::BufMut>::put_u8(
+						buf,
+						<Self as xrb::message::Request>::MINOR_OPCODE.unwrap(),
+					);
+				)
+			},
+			RequestOpcodes::CoreRequest { .. } => {
+				if let Some(element) = self.content.metabyte_element() {
+					TokenStream2::with_tokens(|tokens| {
+						element.write_tokens(tokens, DefinitionType::Request);
+					})
+				} else {
+					quote_spanned!(trait_path.span()=>
+						<_ as ::xrbk::BufMut>::put_u8(
+							buf,
+							0,
+						);
+					)
+				}
+			},
 		};
 
 		tokens.append_tokens(quote_spanned!(trait_path.span()=>
@@ -132,7 +136,7 @@ impl Request {
 					// Major opcode
 					<_ as ::xrbk::BufMut>::put_u8(
 						buf,
-						<Self as xrb::message::Request>::MAJOR_OPCODE
+						<Self as xrb::message::Request>::major_opcode(),
 					);
 					// Metabyte position
 					#metabyte

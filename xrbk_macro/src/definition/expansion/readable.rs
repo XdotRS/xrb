@@ -94,12 +94,8 @@ impl Request {
 			}
 		});
 
-		let metabyte = if self.minor_opcode.is_some() {
-			// If there is a minor opcode, then it has already been read in order to
-			// determine that this is the request to read.
-			// TODO: can't be in metabyte, must check this in protocol!!
-			None
-		} else if let Some(element) = self.content.metabyte_element() {
+		// The buffer is expected to start at the metabyte position
+		let metabyte = if let Some(element) = self.content.metabyte_element() {
 			Some(TokenStream2::with_tokens(|tokens| {
 				element.read_tokens(tokens, DefinitionType::Request);
 			}))

@@ -565,8 +565,10 @@ impl Request for NoOp {
 	type OtherErrors = Infallible;
 	type Reply = ();
 
-	const MAJOR_OPCODE: u8 = 127;
-	const MINOR_OPCODE: Option<u16> = None;
+	fn major_opcode() -> u8 {
+	    127
+	}
+	const MINOR_OPCODE: Option<u8> = None;
 }
 
 impl X11Size for NoOp {
@@ -602,7 +604,7 @@ impl Writable for NoOp {
 
 		let buf = &mut buf.limit(self.x11_size());
 
-		Self::MAJOR_OPCODE.write_to(buf)?;
+		Self::major_opcode().write_to(buf)?;
 		// Unused metabyte.
 		buf.put_u8(0);
 		// Message length.
