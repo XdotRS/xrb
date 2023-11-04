@@ -161,7 +161,9 @@ impl ToTokens for Field {
 
 		self.visibility.to_tokens(tokens);
 
-		if let FieldId::Ident(ident) = &self.id && let Some(colon) = &self.colon_token {
+		if let FieldId::Ident(ident) = &self.id
+			&& let Some(colon) = &self.colon_token
+		{
 			ident.to_tokens(tokens);
 			colon.to_tokens(tokens);
 		}

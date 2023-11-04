@@ -78,15 +78,17 @@ impl Reply {
 
 		let request = &self.request;
 		let sequence = match &self.content {
-			StructlikeContent::Regular {
-				content,
-				..
-			} if let Some(Element::Field(field)) = content.sequence_element() => &field.id,
+			StructlikeContent::Regular { content, .. }
+				if let Some(Element::Field(field)) = content.sequence_element() =>
+			{
+				&field.id
+			},
 
-			StructlikeContent::Tuple {
-				content,
-				..
-			} if let Some(Element::Field(field)) = content.sequence_element() => &field.id,
+			StructlikeContent::Tuple { content, .. }
+				if let Some(Element::Field(field)) = content.sequence_element() =>
+			{
+				&field.id
+			},
 
 			_ => panic!("replies must have a sequence field of type `u32`"),
 		};
@@ -126,18 +128,16 @@ impl Event {
 
 		let code = &self.event_code;
 		let sequence = match &self.content {
-			StructlikeContent::Regular {
-				content,
-				..
-			} if let Some(Element::Field(field)) = content.sequence_element() => {
+			StructlikeContent::Regular { content, .. }
+				if let Some(Element::Field(field)) = content.sequence_element() =>
+			{
 				let id = &field.id;
 				quote!(Some(self.#id))
 			},
 
-			StructlikeContent::Tuple {
-				content,
-				..
-			} if let Some(Element::Field(field)) = content.sequence_element() => {
+			StructlikeContent::Tuple { content, .. }
+				if let Some(Element::Field(field)) = content.sequence_element() =>
+			{
 				let id = &field.id;
 				quote!(Some(self.#id))
 			},
@@ -179,18 +179,16 @@ impl Error {
 		let error_code = &self.error_code;
 
 		let sequence = match &self.content {
-			StructlikeContent::Regular {
-				content,
-				..
-			} if let Some(Element::Field(field)) = content.sequence_element() => {
+			StructlikeContent::Regular { content, .. }
+				if let Some(Element::Field(field)) = content.sequence_element() =>
+			{
 				let id = &field.id;
 				quote!(self.#id)
 			},
 
-			StructlikeContent::Tuple {
-				content,
-				..
-			} if let Some(Element::Field(field)) = content.sequence_element() => {
+			StructlikeContent::Tuple { content, .. }
+				if let Some(Element::Field(field)) = content.sequence_element() =>
+			{
 				let id = &field.id;
 				quote!(self.#id)
 			},
@@ -199,18 +197,16 @@ impl Error {
 		};
 
 		let minor_opcode = match &self.content {
-			StructlikeContent::Regular {
-				content,
-				..
-			} if let Some(Element::Field(field)) = content.minor_opcode_element() => {
+			StructlikeContent::Regular { content, .. }
+				if let Some(Element::Field(field)) = content.minor_opcode_element() =>
+			{
 				let id = &field.id;
 				quote!(self.#id)
 			},
 
-			StructlikeContent::Tuple {
-				content,
-				..
-			} if let Some(Element::Field(field)) = content.minor_opcode_element() => {
+			StructlikeContent::Tuple { content, .. }
+				if let Some(Element::Field(field)) = content.minor_opcode_element() =>
+			{
 				let id = &field.id;
 				quote!(self.#id)
 			},
@@ -219,18 +215,16 @@ impl Error {
 		};
 
 		let major_opcode = match &self.content {
-			StructlikeContent::Regular {
-				content,
-				..
-			} if let Some(Element::Field(field)) = content.major_opcode_element() => {
+			StructlikeContent::Regular { content, .. }
+				if let Some(Element::Field(field)) = content.major_opcode_element() =>
+			{
 				let id = &field.id;
 				quote!(self.#id)
 			},
 
-			StructlikeContent::Tuple {
-				content,
-				..
-			} if let Some(Element::Field(field)) = content.major_opcode_element() => {
+			StructlikeContent::Tuple { content, .. }
+				if let Some(Element::Field(field)) = content.major_opcode_element() =>
+			{
 				let id = &field.id;
 				quote!(self.#id)
 			},

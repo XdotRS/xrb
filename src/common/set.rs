@@ -45,7 +45,7 @@ pub use window_config::*;
 /// Reads an optional value for a set if the given `condition` is true.
 ///
 /// This is not part of the public API.
- fn read_set_value<T: Readable>(
+fn read_set_value<T: Readable>(
 	buf: &mut impl Buf, x11_size: &mut usize, condition: bool,
 ) -> ReadResult<Option<T>> {
 	Ok(if condition {
@@ -59,7 +59,7 @@ pub use window_config::*;
 }
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
- struct __Px<Num>(Px<Num>);
+struct __Px<Num>(Px<Num>);
 
 impl<Num> ConstantX11Size for __Px<Num> {
 	const X11_SIZE: usize = 4;
@@ -123,7 +123,7 @@ impl_px!(get_i32, i32 => {
 	reason = "The type name is chosen to indicate an internal representation of a u8 value."
 )]
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
- struct __u8(u8);
+struct __u8(u8);
 
 impl ConstantX11Size for __u8 {
 	const X11_SIZE: usize = 4;
@@ -165,7 +165,7 @@ impl Writable for __u8 {
 	reason = "The type name is chosen to indicate an internal representation of a u16 value."
 )]
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
- struct __u16(u16);
+struct __u16(u16);
 
 impl ConstantX11Size for __u16 {
 	const X11_SIZE: usize = 4;
@@ -207,7 +207,7 @@ impl Writable for __u16 {
 	reason = "The type name is chosen to indicate an internal representation of an i16 value."
 )]
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
- struct __i16(i16);
+struct __i16(i16);
 
 impl ConstantX11Size for __i16 {
 	const X11_SIZE: usize = 4;
@@ -250,7 +250,7 @@ impl Writable for __i16 {
 	          indicate that it is internal, and `bool` to indicate its wrapped type."
 )]
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
- struct __bool(bool);
+struct __bool(bool);
 
 impl ConstantX11Size for __bool {
 	const X11_SIZE: usize = 4;

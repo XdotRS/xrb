@@ -184,7 +184,9 @@ impl ParseWithContext for Elements {
 
 				metabyte_element = Some(element);
 				elements.push_value(ElementsItem::Metabyte);
-			} else if let Element::Field(field) = &element && field.is_sequence() {
+			} else if let Element::Field(field) = &element
+				&& field.is_sequence()
+			{
 				if sequence_element.is_some() {
 					return Err(syn::Error::new(
 						field.span(),
@@ -194,27 +196,33 @@ impl ParseWithContext for Elements {
 
 				sequence_element = Some(element);
 				elements.push_value(ElementsItem::Sequence);
-			} else if let Element::Field(field) = &element && field.is_minor_opcode() {
+			} else if let Element::Field(field) = &element
+				&& field.is_minor_opcode()
+			{
 				if minor_opcode_element.is_some() {
 					return Err(syn::Error::new(
 						field.span(),
 						"no more than one minor opcode field is allowed per error",
-					))
+					));
 				}
 
 				minor_opcode_element = Some(element);
 				elements.push(ElementsItem::MinorOpcode)
-			} else if let Element::Field(field) = &element && field.is_major_opcode() {
+			} else if let Element::Field(field) = &element
+				&& field.is_major_opcode()
+			{
 				if major_opcode_element.is_some() {
 					return Err(syn::Error::new(
 						field.span(),
 						"no more than one major opcode field is allowed per error",
-					))
+					));
 				}
 
 				major_opcode_element = Some(element);
 				elements.push(ElementsItem::MajorOpcode);
-			} else if let Element::Field(field) = &element && field.is_error_data() {
+			} else if let Element::Field(field) = &element
+				&& field.is_error_data()
+			{
 				if error_data_element.is_some() {
 					return Err(syn::Error::new(
 						field.span(),
@@ -238,7 +246,9 @@ impl ParseWithContext for Elements {
 		for item in &mut elements {
 			let r#let = if let ElementsItem::Element(Element::Let(r#let)) = item {
 				Some(r#let)
-			} else if let ElementsItem::Metabyte = item && let Some(Element::Let(r#let)) = &mut metabyte_element {
+			} else if let ElementsItem::Metabyte = item
+				&& let Some(Element::Let(r#let)) = &mut metabyte_element
+			{
 				Some(r#let)
 			} else {
 				None

@@ -216,11 +216,12 @@ impl ParseWithContext for ParsedAttributes {
 				.hidden_traits
 				.iter()
 				.any(|r#trait| r#trait.is_ident(&format_ident!("Readable")))
-			{
-				return Err(syn::Error::new(
-					hide_attribute.span(),
-					"cannot hide this field when implementing Readable without a #[context(...)] attribute",
-				));
+		{
+			return Err(syn::Error::new(
+				hide_attribute.span(),
+				"cannot hide this field when implementing Readable without a #[context(...)] \
+				 attribute",
+			));
 		}
 
 		Ok(Self {

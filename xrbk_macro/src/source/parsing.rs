@@ -144,7 +144,9 @@ impl ParseWithContext for Source {
 		let args = fork.parse_with(context);
 
 		Ok(Self {
-			args: if let Ok(args) = args && fork.peek(Token![=>]) {
+			args: if let Ok(args) = args
+				&& fork.peek(Token![=>])
+			{
 				input.advance_to(fork);
 
 				Some((args, input.parse::<Token![=>]>()?))

@@ -78,7 +78,9 @@ impl Request {
 			for element in &self.content {
 				if element.is_normal() {
 					element.x11_size_tokens(tokens, DefinitionType::Request);
-				} else if let Element::Let(r#let) = element && element.is_metabyte() {
+				} else if let Element::Let(r#let) = element
+					&& element.is_metabyte()
+				{
 					r#let.function_call_tokens(tokens);
 				}
 			}
@@ -132,7 +134,9 @@ impl Reply {
 			for element in &self.content {
 				if element.is_normal() {
 					element.x11_size_tokens(tokens, DefinitionType::Reply);
-				} else if let Element::Let(r#let) = element && element.is_metabyte() {
+				} else if let Element::Let(r#let) = element
+					&& element.is_metabyte()
+				{
 					r#let.function_call_tokens(tokens);
 				}
 			}
@@ -192,7 +196,9 @@ impl Event {
 			for element in &self.content {
 				if element.is_normal() {
 					element.x11_size_tokens(tokens, DefinitionType::Event);
-				} else if let Element::Let(r#let) = element && element.is_metabyte() {
+				} else if let Element::Let(r#let) = element
+					&& element.is_metabyte()
+				{
 					r#let.function_call_tokens(tokens);
 				}
 			}
@@ -248,7 +254,9 @@ impl Error {
 			for element in &self.content {
 				if element.is_normal() {
 					element.x11_size_tokens(tokens, DefinitionType::Error);
-				} else if let Element::Let(r#let) = element && element.is_metabyte() {
+				} else if let Element::Let(r#let) = element
+					&& element.is_metabyte()
+				{
 					r#let.function_call_tokens(tokens);
 				}
 			}

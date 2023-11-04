@@ -142,25 +142,21 @@ pub fn unwrap_return(fields: &Fields) -> TokenStream2 {
 
 pub fn integer_type(data: &Data) -> &Type {
 	match data {
-		Data::Struct(data) => {
-			match &data.fields {
-				Fields::Named(FieldsNamed {
-					named: fields,
-					..
-				})
-				| Fields::Unnamed(FieldsUnnamed {
-					unnamed: fields,
-					..
-				}) => {
-					if let Some(field) = fields.first() && fields.len() == 1 {
-						&field.ty
-					} else {
-						panic!("expected a single integer field");
-					}
-				},
+		Data::Struct(data) => match &data.fields {
+			Fields::Named(FieldsNamed { named: fields, .. })
+			| Fields::Unnamed(FieldsUnnamed {
+				unnamed: fields, ..
+			}) => {
+				if let Some(field) = fields.first()
+					&& fields.len() == 1
+				{
+					&field.ty
+				} else {
+					panic!("expected a single integer field");
+				}
+			},
 
-				_ => panic!("expected a single integer field"),
-			}
+			_ => panic!("expected a single integer field"),
 		},
 
 		Data::Enum(_) | Data::Union(_) => unimplemented!("only structs are supported"),
