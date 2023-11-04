@@ -246,7 +246,7 @@ impl ParseWithContext for Elements {
 
 			if let Some(r#let) = r#let {
 				if let Some((SourceArgs { args, .. }, _)) = &mut r#let.source.args {
-					for mut arg in args {
+					for arg in args {
 						if arg.r#type.is_none() {
 							if let Some(r#type) = field_map.get(&arg.ident.to_string()) {
 								arg.r#type = Some(r#type.to_owned());
